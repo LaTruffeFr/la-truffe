@@ -224,6 +224,9 @@ function parseRecordLines(recordText: string): Vehicle | null {
   
   if (prix <= 0) return null;
   
+  // Validate kilometrage is reasonable (max 1M km)
+  const validKm = kilometrage > 0 && kilometrage <= 1000000 ? kilometrage : 0;
+  
   const marque = extractBrand(titre);
   const fullText = `${titre} ${infoField}`;
   const puissance = extractPuissance(fullText);
@@ -233,7 +236,7 @@ function parseRecordLines(recordText: string): Vehicle | null {
     titre,
     prix,
     annee: annee || 2020,
-    kilometrage: kilometrage || 0,
+    kilometrage: validKm,
     lien: lien.startsWith('http') ? lien : '#',
     image: image.startsWith('http') ? image : '',
     marque,
@@ -263,10 +266,37 @@ function extractYear(str: string): number {
 }
 
 function extractKilometrage(kmStr: string): number {
-  const match = kmStr.match(/(\d[\d\s]*)\s*km/i);
+  // Clean up the string first - remove extra spaces, normalize
+  const cleaned = kmStr.replace(/\s+/g, ' ').trim();
+  
+  // Match patterns like "201 480 km", "201480km", "201.480 km"
+  const match = cleaned.match(/(\d[\d\s.,]*)\s*km/i);
   if (match) {
-    return parseInt(match[1].replace(/\s/g, '')) || 0;
+    // Remove all spaces, dots, and commas from the number
+    const numStr = match[1].replace(/[\s.,]/g, '');
+    const km = parseInt(numStr) || 0;
+    
+    // Sanity check: no car should have more than 1,000,000 km
+    // If the value is unrealistic, it's likely a parsing error
+    if (km > 1000000) {
+      console.warn(`Unrealistic km value detected: ${km}, from "${kmStr}"`);
+      // Try to extract a reasonable number (first 6 digits max)
+      const reasonableKm = parseInt(numStr.slice(0, 6));
+      return reasonableKm > 1000000 ? 0 : reasonableKm;
+    }
+    return km;
   }
+  
+  // Try to extract just a number if no "km" suffix
+  const numOnly = cleaned.replace(/[^\d]/g, '');
+  if (numOnly) {
+    const km = parseInt(numOnly);
+    // Only accept if it looks like a reasonable km value
+    if (km >= 1000 && km <= 500000) {
+      return km;
+    }
+  }
+  
   return 0;
 }
 
