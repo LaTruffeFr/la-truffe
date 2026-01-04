@@ -36,17 +36,38 @@ function getExpectedPrice(km: number, slope: number, intercept: number): number 
 }
 
 export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProps) {
-  // Prepare chart data with trend line comparison
-  const { chartData, trendLineData } = useMemo(() => {
-    if (data.length === 0) return { chartData: [], trendLineData: [] };
+  // Prepare chart data with trend line comparison + dynamic axis domains
+  const { chartData, trendLineData, xDomain, yDomain } = useMemo(() => {
+    if (data.length === 0) return { chartData: [], trendLineData: [], xDomain: [0, 100000] as [number, number], yDomain: [0, 50000] as [number, number] };
 
-    const minKm = Math.min(...data.map(v => v.kilometrage));
-    const maxKm = Math.max(...data.map(v => v.kilometrage));
+    const kms = data.map(v => v.kilometrage);
+    const prices = data.map(v => v.prix);
+    
+    const minKm = Math.min(...kms);
+    const maxKm = Math.max(...kms);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
 
-    // Generate trend line points
+    // Dynamic padding: 5% of range, minimum 2000km / 1000€
+    const kmRange = maxKm - minKm;
+    const priceRange = maxPrice - minPrice;
+    const kmPadding = Math.max(kmRange * 0.05, 2000);
+    const pricePadding = Math.max(priceRange * 0.05, 1000);
+
+    // Calculate domains with padding
+    const xDomain: [number, number] = [
+      Math.max(0, Math.floor((minKm - kmPadding) / 1000) * 1000),
+      Math.ceil((maxKm + kmPadding) / 1000) * 1000
+    ];
+    const yDomain: [number, number] = [
+      Math.max(0, Math.floor((minPrice - pricePadding) / 1000) * 1000),
+      Math.ceil((maxPrice + pricePadding) / 1000) * 1000
+    ];
+
+    // Generate trend line points spanning the full X domain
     const trendLineData = [
-      { km: minKm, trendPrice: getExpectedPrice(minKm, trendLine.slope, trendLine.intercept) },
-      { km: maxKm, trendPrice: getExpectedPrice(maxKm, trendLine.slope, trendLine.intercept) },
+      { km: xDomain[0], trendPrice: getExpectedPrice(xDomain[0], trendLine.slope, trendLine.intercept) },
+      { km: xDomain[1], trendPrice: getExpectedPrice(xDomain[1], trendLine.slope, trendLine.intercept) },
     ];
 
     // Mark each vehicle as good deal (below trend) or expensive (above trend)
@@ -65,7 +86,7 @@ export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProp
       };
     });
 
-    return { chartData, trendLineData };
+    return { chartData, trendLineData, xDomain, yDomain };
   }, [data, trendLine]);
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -118,7 +139,7 @@ export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProp
           <XAxis
             type="number"
             dataKey="km"
-            domain={['dataMin - 5000', 'dataMax + 5000']}
+            domain={xDomain}
             tickFormatter={formatKm}
             tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
             axisLine={{ stroke: 'hsl(var(--border))' }}
@@ -133,7 +154,7 @@ export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProp
           <YAxis
             type="number"
             dataKey="price"
-            domain={['dataMin - 2000', 'dataMax + 2000']}
+            domain={yDomain}
             tickFormatter={formatPrice}
             tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
             axisLine={{ stroke: 'hsl(var(--border))' }}
@@ -147,8 +168,6 @@ export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProp
             }}
           />
           <Tooltip content={<CustomTooltip />} />
-          
-          {/* Trend line */}
           <Line
             data={trendLineData}
             type="linear"
