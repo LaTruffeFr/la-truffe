@@ -15,7 +15,8 @@ import {
   CheckCircle, 
   AlertCircle,
   Sparkles,
-  Link
+  Link,
+  Upload
 } from "lucide-react";
 import {
   Dialog,
@@ -332,17 +333,44 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
           </TabsContent>
 
           <TabsContent value="csv" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Données CSV (depuis Instant Data Scraper)</Label>
-              <Textarea
-                placeholder="Collez ici les données CSV..."
-                className="min-h-[200px] font-mono text-sm"
-                value={csvText}
-                onChange={(e) => setCsvText(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Format attendu : Titre, Prix, Année, Kilométrage, Lien, Image...
-              </p>
+            <div className="space-y-3">
+              <Label>Fichier CSV (depuis Instant Data Scraper)</Label>
+              
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        const text = event.target?.result as string;
+                        setCsvText(text);
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="flex items-center justify-center gap-3 p-6 border-2 border-dashed border-border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <Upload className="w-6 h-6 text-muted-foreground" />
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">
+                      {csvText ? "Fichier chargé ✓" : "Glissez ou cliquez pour importer"}
+                    </p>
+                    <p className="text-muted-foreground">CSV ou Excel</p>
+                  </div>
+                </div>
+              </div>
+
+              {csvText && (
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <p className="text-sm text-muted-foreground">
+                    {csvText.split('\n').length - 1} lignes détectées
+                  </p>
+                </div>
+              )}
             </div>
 
             <Button 
