@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { firecrawlApi } from "@/lib/api/firecrawl";
 import { parseCSV, analyzeMarket } from "@/lib/vehicleAnalysis";
-import { Vehicle } from "@/types/vehicle";
+import { Vehicle, Carburant, Transmission } from "@/types/vehicle";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Globe, 
@@ -15,9 +15,7 @@ import {
   CheckCircle, 
   AlertCircle,
   Sparkles,
-  Search,
-  MapPin,
-  Car
+  Link
 } from "lucide-react";
 import {
   Dialog,
@@ -28,47 +26,181 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface AdminImportPanelProps {
   onVehiclesImported: (vehicles: Vehicle[]) => void;
   existingVehicleLinks: Set<string>;
 }
 
-const CITIES = [
-  "Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux", 
-  "Lille", "Nantes", "Strasbourg", "Nice", "Montpellier",
-  "Rennes", "Grenoble", "Rouen", "Toulon", "Dijon"
-];
-
-const VEHICLE_TYPES = [
-  { value: "voiture", label: "Voitures" },
-  { value: "utilitaire", label: "Utilitaires" },
-  { value: "moto", label: "Motos" },
-  { value: "camping-car", label: "Camping-cars" },
-];
-
 export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: AdminImportPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"csv" | "search">("csv");
+  const [activeTab, setActiveTab] = useState<"url" | "csv">("url");
+  
+  // URL scrape state
+  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [isScraping, setIsScraping] = useState(false);
   
   // CSV state
   const [csvText, setCsvText] = useState("");
   const [isProcessingCsv, setIsProcessingCsv] = useState(false);
-  
-  // Search state
-  const [searchCity, setSearchCity] = useState("Paris");
-  const [searchType, setSearchType] = useState("voiture");
-  const [searchKeywords, setSearchKeywords] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  const handleUrlScrape = async () => {
+    if (!scrapeUrl.trim()) {
+      toast.error("Veuillez coller un lien LeBonCoin");
+      return;
+    }
+
+    if (!scrapeUrl.includes('leboncoin.fr')) {
+      toast.error("Le lien doit provenir de LeBonCoin");
+      return;
+    }
+
+    setIsScraping(true);
+
+    try {
+      console.log("Scraping URL:", scrapeUrl);
+      
+      const result = await firecrawlApi.scrape(scrapeUrl, {
+        formats: ['markdown'],
+        onlyMainContent: true,
+        waitFor: 3000,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "Échec du scraping");
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = result.data as any;
+      const markdown = Array.isArray(data) ? data[0]?.markdown : (data?.markdown || '');
+      
+      // Parse vehicle data from markdown
+      const vehicle = parseVehicleFromMarkdown(markdown, scrapeUrl);
+      
+      if (!vehicle) {
+        toast.error("Impossible d'extraire les données du véhicule");
+        return;
+      }
+
+      // Check duplicate
+      if (existingVehicleLinks.has(scrapeUrl)) {
+        toast.info("Ce véhicule existe déjà");
+        return;
+      }
+
+      // Analyze and save
+      const analyzed = analyzeMarket([vehicle]);
+      const vehicleToInsert = {
+        titre: analyzed[0].titre,
+        prix: analyzed[0].prix,
+        kilometrage: analyzed[0].kilometrage,
+        annee: analyzed[0].annee || null,
+        carburant: analyzed[0].carburant,
+        transmission: analyzed[0].transmission,
+        puissance: analyzed[0].puissance || 0,
+        lien: analyzed[0].lien || null,
+        image: analyzed[0].image || null,
+        localisation: analyzed[0].localisation || null,
+        marque: analyzed[0].marque,
+        modele: analyzed[0].modele,
+        prix_ajuste: analyzed[0].prixAjuste || null,
+        gain_potentiel: analyzed[0].gainPotentiel || null,
+        score_confiance: analyzed[0].scoreConfiance || null,
+        prix_median_segment: analyzed[0].prixMedianSegment || null,
+      };
+
+      const { error } = await supabase.from('vehicles').insert([vehicleToInsert]);
+      
+      if (error) throw error;
+      
+      onVehiclesImported(analyzed);
+      setScrapeUrl("");
+      toast.success("Véhicule importé avec succès !");
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Scrape error:", error);
+      toast.error(error instanceof Error ? error.message : "Erreur lors du scraping");
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
+  const parseVehicleFromMarkdown = (markdown: string, url: string): Vehicle | null => {
+    try {
+      // Extract title (usually first heading or first line)
+      const titleMatch = markdown.match(/^#\s*(.+)/m) || markdown.match(/^(.+?)[\n\r]/);
+      const titre = titleMatch ? titleMatch[1].trim() : 'Véhicule';
+
+      // Extract price
+      const priceMatch = markdown.match(/(\d{1,3}(?:[\s\u00a0]?\d{3})*)\s*€/);
+      const prix = priceMatch ? parseInt(priceMatch[1].replace(/[\s\u00a0]/g, '')) : 0;
+
+      // Extract year
+      const yearMatch = markdown.match(/\b(19|20)\d{2}\b/);
+      const annee = yearMatch ? parseInt(yearMatch[0]) : null;
+
+      // Extract km
+      const kmMatch = markdown.match(/(\d{1,3}(?:[\s\u00a0]?\d{3})*)\s*km/i);
+      const kilometrage = kmMatch ? parseInt(kmMatch[1].replace(/[\s\u00a0]/g, '')) : 0;
+
+      // Extract fuel type
+      const carburantMatch = markdown.match(/\b(diesel|essence|électrique|electrique|hybride|gpl)\b/i);
+      const carburantRaw = carburantMatch ? carburantMatch[1].toLowerCase() : 'autre';
+      const carburantMap: Record<string, Carburant> = {
+        'diesel': 'diesel', 'essence': 'essence', 'électrique': 'electrique', 
+        'electrique': 'electrique', 'hybride': 'hybride', 'gpl': 'gpl'
+      };
+      const carburant: Carburant = carburantMap[carburantRaw] || 'autre';
+
+      // Extract transmission
+      const transmissionMatch = markdown.match(/\b(automatique|manuelle?)\b/i);
+      const transmissionRaw = transmissionMatch ? transmissionMatch[1].toLowerCase() : 'autre';
+      const transmission: Transmission = transmissionRaw.startsWith('auto') ? 'automatique' : 
+        transmissionRaw.startsWith('man') ? 'manuelle' : 'autre';
+
+      // Extract brand and model from title
+      const brands = ['peugeot', 'renault', 'citroen', 'volkswagen', 'audi', 'bmw', 'mercedes', 'toyota', 'ford', 'opel', 'fiat', 'nissan', 'hyundai', 'kia', 'seat', 'skoda', 'dacia', 'mini', 'volvo', 'mazda', 'honda', 'suzuki', 'land rover', 'jeep', 'porsche', 'tesla'];
+      const titleLower = titre.toLowerCase();
+      const marque = brands.find(b => titleLower.includes(b)) || 'Autre';
+      
+      // Model is everything after brand
+      const brandIndex = titleLower.indexOf(marque.toLowerCase());
+      const modele = brandIndex >= 0 
+        ? titre.substring(brandIndex + marque.length).trim().split(/[\s-]/)[0] || 'Modèle'
+        : 'Modèle';
+
+      // Extract location
+      const locMatch = markdown.match(/(?:à|Location|Localisation)[:\s]*([A-Za-zÀ-ÿ\s-]+?)(?:\n|,|\()/i);
+      const localisation = locMatch ? locMatch[1].trim() : null;
+
+      if (prix === 0) {
+        return null;
+      }
+
+      return {
+        id: crypto.randomUUID(),
+        titre,
+        prix,
+        annee,
+        kilometrage,
+        carburant,
+        transmission,
+        marque: marque.charAt(0).toUpperCase() + marque.slice(1),
+        modele,
+        lien: url,
+        localisation,
+        image: undefined,
+        puissance: undefined,
+        prixAjuste: undefined,
+        gainPotentiel: undefined,
+        scoreConfiance: undefined,
+        prixMedianSegment: undefined,
+      };
+    } catch (e) {
+      console.error("Parse error:", e);
+      return null;
+    }
+  };
 
   const handleCsvImport = async () => {
     if (!csvText.trim()) {
@@ -126,93 +258,6 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
     }
   };
 
-  const handleSearch = async () => {
-    setIsSearching(true);
-    setSearchResults([]);
-
-    try {
-      // Build search query for LeBonCoin via Google
-      let query = `site:leboncoin.fr ${searchType} ${searchCity}`;
-      
-      if (searchKeywords.trim()) {
-        query += ` ${searchKeywords}`;
-      }
-      
-      if (maxPrice) {
-        query += ` prix -${parseInt(maxPrice) + 1}`;
-      }
-
-      console.log("Searching:", query);
-
-      const result = await firecrawlApi.search(query, {
-        limit: 20,
-        lang: 'fr',
-        country: 'fr',
-        tbs: 'qdr:d', // Last 24 hours
-        scrapeOptions: {
-          formats: ['markdown'],
-        },
-      });
-
-      if (!result.success) {
-        throw new Error(result.error || "Échec de la recherche");
-      }
-
-      const results = result.data || [];
-      setSearchResults(results);
-      
-      if (results.length > 0) {
-        toast.success(`${results.length} annonces trouvées`);
-      } else {
-        toast.info("Aucune annonce trouvée");
-      }
-    } catch (error) {
-      console.error("Search error:", error);
-      toast.error(error instanceof Error ? error.message : "Erreur lors de la recherche");
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const parseSearchResults = () => {
-    // Convert search results to CSV format for parsing
-    const csvLines: string[] = [];
-    
-    searchResults.forEach((result) => {
-      const url = result.url || result.metadata?.sourceURL || '';
-      const title = result.title || result.metadata?.title || '';
-      const markdown = result.markdown || '';
-      
-      // Extract price from markdown or title
-      const priceMatch = markdown.match(/(\d{1,3}(?:\s?\d{3})*)\s*€/) || 
-                         title.match(/(\d{1,3}(?:\s?\d{3})*)\s*€/);
-      const price = priceMatch ? priceMatch[1].replace(/\s/g, '') : '';
-      
-      // Extract year
-      const yearMatch = markdown.match(/\b(19|20)\d{2}\b/) || title.match(/\b(19|20)\d{2}\b/);
-      const year = yearMatch ? yearMatch[0] : '';
-      
-      // Extract km
-      const kmMatch = markdown.match(/(\d{1,3}(?:\s?\d{3})*)\s*km/i);
-      const km = kmMatch ? kmMatch[1].replace(/\s/g, '') : '';
-      
-      if (url && url.includes('leboncoin.fr') && price) {
-        csvLines.push(`"${title}","${price}","${year}","${km}","${url}","","${searchCity}"`);
-      }
-    });
-
-    if (csvLines.length === 0) {
-      toast.error("Impossible d'extraire les données des résultats");
-      return;
-    }
-
-    const header = "titre,prix,annee,kilometrage,lien,image,localisation";
-    const csv = [header, ...csvLines].join('\n');
-    setCsvText(csv);
-    setActiveTab("csv");
-    toast.success(`${csvLines.length} annonces prêtes à importer`);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -228,15 +273,15 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
             Import de véhicules
           </DialogTitle>
           <DialogDescription>
-            Recherchez sur LeBonCoin via Google ou importez un CSV
+            Collez un lien LeBonCoin ou importez un CSV
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "csv" | "search")}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "url" | "csv")}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="search" className="gap-2">
-              <Search className="w-4 h-4" />
-              Recherche LBC
+            <TabsTrigger value="url" className="gap-2">
+              <Link className="w-4 h-4" />
+              Lien LBC
             </TabsTrigger>
             <TabsTrigger value="csv" className="gap-2">
               <FileSpreadsheet className="w-4 h-4" />
@@ -244,125 +289,42 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="search" className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Ville
-                </Label>
-                <Select value={searchCity} onValueChange={setSearchCity}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CITIES.map(city => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Car className="w-4 h-4" />
-                  Type
-                </Label>
-                <Select value={searchType} onValueChange={setSearchType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VEHICLE_TYPES.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Mots-clés (optionnel)</Label>
-                <Input
-                  placeholder="ex: Peugeot 308, diesel..."
-                  value={searchKeywords}
-                  onChange={(e) => setSearchKeywords(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Prix max (optionnel)</Label>
-                <Input
-                  type="number"
-                  placeholder="ex: 15000"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                />
-              </div>
+          <TabsContent value="url" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label>Lien de l'annonce LeBonCoin</Label>
+              <Input
+                placeholder="https://www.leboncoin.fr/voitures/..."
+                value={scrapeUrl}
+                onChange={(e) => setScrapeUrl(e.target.value)}
+              />
             </div>
 
             <Button 
-              onClick={handleSearch} 
-              disabled={isSearching}
+              onClick={handleUrlScrape} 
+              disabled={isScraping || !scrapeUrl.trim()}
               className="w-full gap-2"
             >
-              {isSearching ? (
+              {isScraping ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Recherche en cours...
+                  Extraction en cours...
                 </>
               ) : (
                 <>
-                  <Search className="w-4 h-4" />
-                  Rechercher sur LeBonCoin
+                  <CheckCircle className="w-4 h-4" />
+                  Importer ce véhicule
                 </>
               )}
             </Button>
-
-            {searchResults.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>{searchResults.length} résultats trouvés</Label>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={parseSearchResults}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Préparer l'import
-                  </Button>
-                </div>
-                
-                <div className="max-h-[200px] overflow-y-auto space-y-2">
-                  {searchResults.slice(0, 10).map((result, i) => (
-                    <a
-                      key={i}
-                      href={result.url || result.metadata?.sourceURL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <p className="text-sm font-medium line-clamp-1">
-                        {result.title || result.metadata?.title || 'Sans titre'}
-                      </p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {result.url || result.metadata?.sourceURL}
-                      </p>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="p-4 rounded-lg bg-muted/50 border border-border">
               <div className="flex items-start gap-3">
                 <Globe className="w-5 h-5 text-primary mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-foreground mb-1">Recherche via Google</p>
+                  <p className="font-medium text-foreground mb-1">Import par lien</p>
                   <p className="text-muted-foreground">
-                    Cette méthode passe par Google pour trouver les annonces LBC, 
-                    ce qui évite les blocages directs.
+                    Copiez le lien d'une annonce LeBonCoin et collez-le ici. 
+                    Les données seront extraites automatiquement.
                   </p>
                 </div>
               </div>
@@ -371,7 +333,7 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
 
           <TabsContent value="csv" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>Données CSV (depuis Instant Data Scraper ou recherche)</Label>
+              <Label>Données CSV (depuis Instant Data Scraper)</Label>
               <Textarea
                 placeholder="Collez ici les données CSV..."
                 className="min-h-[200px] font-mono text-sm"
