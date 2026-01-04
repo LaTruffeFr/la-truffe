@@ -4,9 +4,9 @@ import { SniperChart } from './SniperChart';
 import { SniperKPIs } from './SniperKPIs';
 import { OpportunityModal } from './OpportunityModal';
 import { CSVUploader } from './CSVUploader';
-import { Loader2, Crosshair, RotateCcw } from 'lucide-react';
+import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
+import { Slider } from '@/components/ui/slider';
 // Linear regression calculation
 function calculateTrendLine(data: VehicleWithScore[]): { slope: number; intercept: number } {
   if (data.length < 2) return { slope: 0, intercept: 0 };
@@ -31,7 +31,7 @@ export function TradingDashboard() {
   const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
-
+  const [chartHeight, setChartHeight] = useState(500); // Default height in pixels
   // Handle CSV upload - simple replace mode for Sniper
   const handleFileUpload = useCallback(async (file: File) => {
     setIsLoading(true);
@@ -179,9 +179,9 @@ export function TradingDashboard() {
         opportunitiesCount={kpis.opportunitiesCount}
       />
 
-      {/* Chart - Takes remaining space (70%+) */}
-      <div className="flex-1 p-4 min-h-0">
-        <div className="h-full rounded-xl border border-border bg-card p-4">
+      {/* Chart with adjustable height */}
+      <div className="flex-1 p-4 min-h-0 overflow-auto">
+        <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="font-semibold text-foreground">Graphique Sniper</h3>
@@ -204,7 +204,23 @@ export function TradingDashboard() {
               </div>
             </div>
           </div>
-          <div className="h-[calc(100%-40px)]">
+          
+          {/* Height control */}
+          <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-muted/50">
+            <Minimize2 className="w-4 h-4 text-muted-foreground" />
+            <Slider
+              value={[chartHeight]}
+              onValueChange={(value) => setChartHeight(value[0])}
+              min={300}
+              max={900}
+              step={50}
+              className="flex-1"
+            />
+            <Maximize2 className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground w-14 text-right">{chartHeight}px</span>
+          </div>
+          
+          <div style={{ height: chartHeight }}>
             <SniperChart
               data={vehicles}
               onVehicleClick={handleVehicleClick}
