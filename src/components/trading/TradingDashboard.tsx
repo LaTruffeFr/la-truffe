@@ -33,19 +33,30 @@ export function TradingDashboard() {
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
   const [showAllOnChart, setShowAllOnChart] = useState(false);
 
-  // Handle CSV upload
+  // Handle CSV upload - accumulates data
   const handleFileUpload = useCallback(async (file: File) => {
     setIsLoading(true);
     try {
       const parsed = await parseCSVFile(file);
-      const scored = calculateDealScores(parsed);
-      setVehicles(scored);
-      console.log(`Loaded ${scored.length} vehicles`);
+      // Accumulate: merge with existing vehicles
+      setVehicles(prev => {
+        const combined = [...prev, ...parsed];
+        // Recalculate scores with combined dataset for better cluster accuracy
+        const scored = calculateDealScores(combined);
+        console.log(`Added ${parsed.length} vehicles. Total: ${scored.length}`);
+        return scored;
+      });
     } catch (error) {
       console.error('Parse error:', error);
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  // Clear all data
+  const handleClearData = useCallback(() => {
+    setVehicles([]);
+    setFilters(defaultFilters);
   }, []);
 
   // Get unique brands for filter
@@ -153,7 +164,18 @@ export function TradingDashboard() {
             <p className="text-xs text-muted-foreground">Client Edition</p>
           </div>
         </div>
-        <CSVUploader onFileUpload={handleFileUpload} compact />
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">
+            {vehicles.length.toLocaleString('fr-FR')} véhicules
+          </span>
+          <button
+            onClick={handleClearData}
+            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+          >
+            Vider
+          </button>
+          <CSVUploader onFileUpload={handleFileUpload} compact />
+        </div>
       </header>
 
       {/* KPI Bar */}
