@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -9,6 +11,34 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    );
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing authorization header');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Authenticated user:', user.id);
+
     const { query, options } = await req.json();
 
     if (!query) {
@@ -27,7 +57,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Searching:', query);
+    console.log('Searching:', query, 'for user:', user.id);
 
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
@@ -58,7 +88,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Search successful, found', data.data?.length || 0, 'results');
+    console.log('Search successful, found', data.data?.length || 0, 'results for user:', user.id);
     return new Response(
       JSON.stringify({ success: true, ...data }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
