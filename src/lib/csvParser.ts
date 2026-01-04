@@ -98,9 +98,27 @@ function detectColumns(headers: string[]): Partial<ColumnMapping> {
 
 function cleanPrice(value: string): number {
   if (!value) return 0;
+
+  const raw = String(value).trim();
   // Remove currency symbols, spaces, and convert to number
-  const cleaned = value.replace(/[€$£\s\u00a0]/g, '').replace(/\./g, '').replace(',', '.');
+  const cleaned = raw
+    .replace(/[€$£\s\u00a0]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+
   const num = parseFloat(cleaned);
+  if (!Number.isFinite(num)) return 0;
+
+  // Guardrail: prevent years/dates from being interpreted as prices
+  // (common failure mode when the "prix" column isn't detected and we fallback-scan fields)
+  const looksLikeYearOnly = /^\d{4}$/.test(cleaned) && num >= 1980 && num <= 2026;
+  if (looksLikeYearOnly) return 0;
+
+  // e.g. "2019/06" or "mise en circulation: 2020" should not become a 2,019€ price
+  const containsYearToken = /\b(19[89]\d|20[0-2]\d)\b/.test(raw);
+  const hasCurrencyHint = /[€$£]/.test(raw) || /\b(eur|euro)\b/i.test(raw);
+  if (containsYearToken && !hasCurrencyHint && num <= 3000) return 0;
+
   // Validate range (500€ - 2M€)
   if (num >= 500 && num <= 2000000) return Math.round(num);
   return 0;
@@ -118,7 +136,8 @@ function cleanKilometrage(value: string): number {
 
 function cleanYear(value: string): number {
   if (!value) return 0;
-  const match = value.match(/(19[89]\d|20[0-2]\d)/);
+  // Word boundaries are critical so a price like "19990" does NOT become year "1999"
+  const match = String(value).match(/\b(19[89]\d|20[0-2]\d)\b/);
   if (match) {
     const year = parseInt(match[1]);
     if (year >= 1980 && year <= 2026) return year;
