@@ -88,15 +88,121 @@ function detectColumnIndex(headers: string[], patterns: RegExp[]): number {
 
 function detectColumns(headers: string[]): Partial<ColumnMapping> {
   const mapping: Partial<ColumnMapping> = {};
-  
+
   for (const [key, patterns] of Object.entries(COLUMN_PATTERNS)) {
     const idx = detectColumnIndex(headers, patterns);
     if (idx >= 0) {
       mapping[key as keyof ColumnMapping] = idx;
     }
   }
-  
+
   return mapping;
+}
+
+type ColumnScore = {
+  idx: number;
+  header: string;
+  priceScore: number;
+  kmScore: number;
+  yearScore: number;
+};
+
+function headerHas(header: string, re: RegExp) {
+  return re.test(String(header || '').toLowerCase());
+}
+
+/**
+ * CSV scrapers are inconsistent: sometimes headers are weird, or columns shift.
+ * We "refine" the initial regex mapping by scoring each column on real sample values.
+ */
+function refineMapping(
+  headers: string[],
+  sampleRows: string[][],
+  initial: Partial<ColumnMapping>
+): Partial<ColumnMapping> {
+  const sample = sampleRows.slice(0, 80).filter(r => r.length > 0);
+  if (sample.length === 0) return initial;
+
+  const colCount = Math.max(headers.length, ...sample.map(r => r.length));
+
+  const scores: ColumnScore[] = Array.from({ length: colCount }).map((_, idx) => {
+    const header = String(headers[idx] ?? '');
+    let priceHits = 0;
+    let kmHits = 0;
+    let yearHits = 0;
+    let total = 0;
+
+    for (const row of sample) {
+      const val = String(row[idx] ?? '').trim();
+      if (!val) continue;
+      total++;
+
+      if (cleanPrice(val) > 0) priceHits++;
+      if (cleanKilometrage(val) > 0) kmHits++;
+      if (cleanYear(val) > 0) yearHits++;
+    }
+
+    const denom = Math.max(total, 1);
+
+    // Header bonuses
+    const priceBonus = headerHas(header, /(prix|price|€|eur|euro)/i) ? 0.35 : 0;
+    const kmBonus = headerHas(header, /(kilom|mileage|odometer|\bkm\b)/i) ? 0.35 : 0;
+    const yearBonus = headerHas(header, /(annee|année|year|mise en circulation|registration)/i) ? 0.25 : 0;
+
+    return {
+      idx,
+      header,
+      priceScore: priceHits / denom + priceBonus,
+      kmScore: kmHits / denom + kmBonus,
+      yearScore: yearHits / denom + yearBonus,
+    };
+  });
+
+  const used = new Set<number>();
+  const pickBest = (key: keyof Pick<ColumnScore, 'priceScore' | 'kmScore' | 'yearScore'>) => {
+    return scores
+      .filter(s => !used.has(s.idx))
+      .sort((a, b) => (b[key] as number) - (a[key] as number))[0];
+  };
+
+  const refined: Partial<ColumnMapping> = { ...initial };
+
+  // Decide if we should override a detected column
+  const maybeOverride = (
+    field: keyof Pick<ColumnMapping, 'prix' | 'kilometrage' | 'annee'>,
+    key: keyof Pick<ColumnScore, 'priceScore' | 'kmScore' | 'yearScore'>
+  ) => {
+    const currentIdx = refined[field];
+    const best = pickBest(key);
+    if (!best) return;
+
+    // If missing -> always set when confident
+    if (currentIdx === undefined) {
+      if ((best[key] as number) >= 0.55) {
+        refined[field] = best.idx as any;
+        used.add(best.idx);
+      }
+      return;
+    }
+
+    // If present but weak and another column is clearly better
+    const currentScore = scores.find(s => s.idx === currentIdx)?.[key] ?? 0;
+    const bestScore = best[key] as number;
+
+    used.add(currentIdx);
+
+    if (bestScore >= 0.70 && bestScore - (currentScore as number) >= 0.25) {
+      refined[field] = best.idx as any;
+      used.delete(currentIdx);
+      used.add(best.idx);
+    }
+  };
+
+  maybeOverride('prix', 'priceScore');
+  maybeOverride('kilometrage', 'kmScore');
+  maybeOverride('annee', 'yearScore');
+
+  return refined;
 }
 
 // ============================================
@@ -239,14 +345,28 @@ function parseRow(
   }
   
   if (!kilometrage) {
+    // Fallback: pick the best "km-like" numeric column.
+    // Priority: fields that mention km/kilom, otherwise pick the largest plausible value.
+    // Guardrail: avoid picking a year (e.g. 2015) as mileage.
+    const candidates: Array<{ v: number; weight: number }> = [];
+
     for (const field of row) {
-      if (/\d+\s*km/i.test(field)) {
-        const extracted = cleanKilometrage(field);
-        if (extracted > 0) { kilometrage = extracted; break; }
-      }
+      const v = cleanKilometrage(field);
+      if (v <= 0) continue;
+
+      const hasKmHint = /\bkm\b|kilom|mileage|odometer/i.test(field);
+      // If there's no explicit km hint, ignore tiny numbers that are likely years.
+      if (!hasKmHint && v < 5000) continue;
+
+      candidates.push({ v, weight: hasKmHint ? 2 : 1 });
     }
+
+    candidates.sort((a, b) => (b.weight - a.weight) || (b.v - a.v));
+
+    // Avoid accidentally using the price as km when both exist
+    const best = candidates.find(c => c.v !== prix) ?? candidates[0];
+    kilometrage = best?.v ?? 0;
   }
-  
   if (!annee) {
     for (const field of row) {
       const extracted = cleanYear(field);
@@ -313,8 +433,12 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
           
           // Detect columns from first row (headers)
           const headers = data[0].map(h => String(h || ''));
-          const mapping = detectColumns(headers);
-          
+          let mapping = detectColumns(headers);
+
+          // Refine mapping by inspecting real sample rows (fixes swapped/missed KM/Price columns)
+          const sampleRows = data.slice(1, 51).map(r => r.map(cell => String(cell || '')));
+          mapping = refineMapping(headers, sampleRows, mapping);
+
           console.log('Detected columns:', mapping);
           console.log('Headers:', headers.slice(0, 10));
           
