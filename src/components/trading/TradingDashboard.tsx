@@ -7,6 +7,37 @@ import { CSVUploader } from './CSVUploader';
 import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+
+// Filter outliers using IQR method
+function filterOutliers(data: VehicleWithScore[]): VehicleWithScore[] {
+  if (data.length < 4) return data;
+
+  // Calculate quartiles for price
+  const prices = data.map(v => v.prix).sort((a, b) => a - b);
+  const kms = data.map(v => v.kilometrage).sort((a, b) => a - b);
+
+  const q1Price = prices[Math.floor(prices.length * 0.25)];
+  const q3Price = prices[Math.floor(prices.length * 0.75)];
+  const iqrPrice = q3Price - q1Price;
+
+  const q1Km = kms[Math.floor(kms.length * 0.25)];
+  const q3Km = kms[Math.floor(kms.length * 0.75)];
+  const iqrKm = q3Km - q1Km;
+
+  // Filter out values beyond 1.5 * IQR from quartiles
+  const lowerPriceBound = q1Price - 1.5 * iqrPrice;
+  const upperPriceBound = q3Price + 1.5 * iqrPrice;
+  const lowerKmBound = q1Km - 1.5 * iqrKm;
+  const upperKmBound = q3Km + 1.5 * iqrKm;
+
+  return data.filter(v => 
+    v.prix >= lowerPriceBound && 
+    v.prix <= upperPriceBound &&
+    v.kilometrage >= lowerKmBound &&
+    v.kilometrage <= upperKmBound
+  );
+}
+
 // Linear regression calculation
 function calculateTrendLine(data: VehicleWithScore[]): { slope: number; intercept: number } {
   if (data.length < 2) return { slope: 0, intercept: 0 };
@@ -47,22 +78,24 @@ export function TradingDashboard() {
     }
   }, []);
 
-  // Calculate trend line for the dataset
-  const trendLine = useMemo(() => calculateTrendLine(vehicles), [vehicles]);
+  // Filter outliers and calculate trend line
+  const filteredVehicles = useMemo(() => filterOutliers(vehicles), [vehicles]);
+  const trendLine = useMemo(() => calculateTrendLine(filteredVehicles), [filteredVehicles]);
+  const outliersCount = vehicles.length - filteredVehicles.length;
 
-  // Calculate KPIs
+  // Calculate KPIs based on filtered data
   const kpis = useMemo(() => {
-    if (vehicles.length === 0) {
+    if (filteredVehicles.length === 0) {
       return { avgPrice: 0, decotePer10k: 0, bestOffer: null, opportunitiesCount: 0 };
     }
 
-    const avgPrice = vehicles.reduce((sum, v) => sum + v.prix, 0) / vehicles.length;
+    const avgPrice = filteredVehicles.reduce((sum, v) => sum + v.prix, 0) / filteredVehicles.length;
     
     // Décote per 10 000 km (slope * 10000)
     const decotePer10k = Math.abs(trendLine.slope * 10000);
 
     // Find opportunities (below trend line)
-    const opportunities = vehicles.filter(v => {
+    const opportunities = filteredVehicles.filter(v => {
       const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
       return v.prix < expectedPrice;
     });
@@ -83,7 +116,7 @@ export function TradingDashboard() {
       bestOffer,
       opportunitiesCount: opportunities.length,
     };
-  }, [vehicles, trendLine]);
+  }, [filteredVehicles, trendLine]);
 
   // Handle vehicle click from chart
   const handleVehicleClick = useCallback((vehicle: VehicleWithScore) => {
@@ -158,7 +191,10 @@ export function TradingDashboard() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-foreground">Mode Sniper</h1>
-            <p className="text-xs text-muted-foreground">{vehicles.length} véhicules analysés</p>
+            <p className="text-xs text-muted-foreground">
+              {filteredVehicles.length} véhicules analysés
+              {outliersCount > 0 && <span className="text-warning"> ({outliersCount} aberrants exclus)</span>}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -175,7 +211,7 @@ export function TradingDashboard() {
         avgPrice={kpis.avgPrice}
         decotePer10k={kpis.decotePer10k}
         bestOffer={kpis.bestOffer}
-        totalVehicles={vehicles.length}
+        totalVehicles={filteredVehicles.length}
         opportunitiesCount={kpis.opportunitiesCount}
       />
 
@@ -222,7 +258,7 @@ export function TradingDashboard() {
           
           <div style={{ height: chartHeight }}>
             <SniperChart
-              data={vehicles}
+              data={filteredVehicles}
               onVehicleClick={handleVehicleClick}
               trendLine={trendLine}
             />
