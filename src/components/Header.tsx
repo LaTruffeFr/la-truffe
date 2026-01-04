@@ -1,4 +1,5 @@
-import { Search, Zap, LogOut, User, Settings, HelpCircle, Shield } from "lucide-react";
+import { Zap, LogOut, User, Settings, HelpCircle, Shield } from "lucide-react";
+import logoTruffe from "@/assets/logo-truffe.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,9 +34,11 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="relative">
-              <div className="w-10 h-10 rounded-lg gradient-gold flex items-center justify-center gold-glow group-hover:scale-105 transition-transform duration-300">
-                <Search className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img 
+                src={logoTruffe} 
+                alt="La Truffe" 
+                className="w-10 h-10 rounded-lg object-cover gold-glow group-hover:scale-105 transition-transform duration-300"
+              />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full animate-pulse" />
             </div>
             <div>
