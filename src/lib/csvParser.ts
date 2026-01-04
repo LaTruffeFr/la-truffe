@@ -316,6 +316,85 @@ function extractTransmission(text: string): string {
 }
 
 // ============================================
+// COMBINED FIELD EXTRACTION (LeBonCoin format)
+// ============================================
+
+interface CombinedData {
+  annee: number;
+  kilometrage: number;
+  carburant: string;
+  transmission: string;
+}
+
+/**
+ * Extracts data from combined strings like:
+ * 'Année: "2018". Kilométrage: "54000 km". Carburant: "Essence". Boîte de vitesse: "Automatique"'
+ */
+function extractFromCombinedField(text: string): CombinedData {
+  const result: CombinedData = {
+    annee: 0,
+    kilometrage: 0,
+    carburant: 'autre',
+    transmission: 'autre',
+  };
+
+  if (!text) return result;
+
+  // Extract year: Année: "2018" or Année: 2018
+  const yearMatch = text.match(/ann[ée]e\s*[:=]?\s*"?(\d{4})"?/i);
+  if (yearMatch) {
+    const year = parseInt(yearMatch[1], 10);
+    if (year >= 1980 && year <= 2026) result.annee = year;
+  }
+
+  // Extract mileage: Kilométrage: "54000 km" or Kilométrage: "54 000 km"
+  const kmMatch = text.match(/kilom[ée]trage\s*[:=]?\s*"?([0-9\s.]+)\s*km"?/i);
+  if (kmMatch) {
+    const kmDigits = kmMatch[1].replace(/[^0-9]/g, '');
+    const km = parseInt(kmDigits, 10);
+    if (km >= 0 && km <= 500000) result.kilometrage = km;
+  }
+
+  // Extract fuel: Carburant: "Essence"
+  const fuelMatch = text.match(/carburant\s*[:=]?\s*"?([^".,]+)"?/i);
+  if (fuelMatch) {
+    const fuel = fuelMatch[1].trim().toLowerCase();
+    if (/essence/i.test(fuel)) result.carburant = 'essence';
+    else if (/diesel/i.test(fuel)) result.carburant = 'diesel';
+    else if (/[ée]lectrique/i.test(fuel)) result.carburant = 'electrique';
+    else if (/hybride/i.test(fuel)) result.carburant = 'hybride';
+    else if (/gpl|gnv/i.test(fuel)) result.carburant = 'gpl';
+  }
+
+  // Extract transmission: Boîte de vitesse: "Automatique"
+  const transMatch = text.match(/bo[îi]te\s*(?:de\s*vitesse)?\s*[:=]?\s*"?([^".,]+)"?/i);
+  if (transMatch) {
+    const trans = transMatch[1].trim().toLowerCase();
+    if (/automatique|auto/i.test(trans)) result.transmission = 'automatique';
+    else if (/manu/i.test(trans)) result.transmission = 'manuelle';
+  }
+
+  return result;
+}
+
+/**
+ * Extracts price from "Prix: 45 990 €." format
+ */
+function extractPriceFromField(text: string): number {
+  if (!text) return 0;
+  
+  // Match "Prix: 45 990 €" or "Prix: 45990€" patterns
+  const priceMatch = text.match(/prix\s*[:=]?\s*([0-9\s.]+)\s*€/i);
+  if (priceMatch) {
+    const digits = priceMatch[1].replace(/[^0-9]/g, '');
+    const price = parseInt(digits, 10);
+    if (price >= 500 && price <= 2000000) return price;
+  }
+  
+  return cleanPrice(text);
+}
+
+// ============================================
 // SMART ROW PARSING
 // ============================================
 
@@ -326,17 +405,39 @@ function parseRow(
 ): ParsedVehicle | null {
   const allText = row.join(' ');
   
+  // First pass: try to find combined data field (LeBonCoin format)
+  let combinedData: CombinedData | null = null;
+  for (const field of row) {
+    if (/ann[ée]e.*kilom[ée]trage/i.test(field) || /kilom[ée]trage.*ann[ée]e/i.test(field)) {
+      combinedData = extractFromCombinedField(field);
+      break;
+    }
+  }
+
   // Extract with mapping or fallback to detection
   let titre = mapping.titre !== undefined ? row[mapping.titre] : '';
-  let prix = mapping.prix !== undefined ? cleanPrice(row[mapping.prix]) : 0;
-  let kilometrage = mapping.kilometrage !== undefined ? cleanKilometrage(row[mapping.kilometrage]) : 0;
-  let annee = mapping.annee !== undefined ? cleanYear(row[mapping.annee]) : 0;
+  let prix = 0;
+  let kilometrage = combinedData?.kilometrage ?? 0;
+  let annee = combinedData?.annee ?? 0;
+  let carburant = combinedData?.carburant ?? 'autre';
+  let transmission = combinedData?.transmission ?? 'autre';
   let marque = mapping.marque !== undefined ? row[mapping.marque]?.trim() : '';
   let modele = mapping.modele !== undefined ? row[mapping.modele]?.trim() : '';
   let image = mapping.image !== undefined ? row[mapping.image]?.trim() : '';
   let lien = mapping.lien !== undefined ? row[mapping.lien]?.trim() : '';
   
-  // Fallback: scan all fields if primary extraction failed
+  // Try to find price from "Prix: XXX €" format first
+  for (const field of row) {
+    if (/prix\s*[:=]/i.test(field)) {
+      prix = extractPriceFromField(field);
+      if (prix > 0) break;
+    }
+  }
+  
+  // Fallback: use mapping or scan all fields
+  if (!prix && mapping.prix !== undefined) {
+    prix = cleanPrice(row[mapping.prix]);
+  }
   if (!prix) {
     for (const field of row) {
       const extracted = cleanPrice(field);
@@ -344,40 +445,50 @@ function parseRow(
     }
   }
   
+  // Fallback for km if not from combined field
   if (!kilometrage) {
-    // Fallback: pick the best "km-like" numeric column.
-    // Priority: fields that mention km/kilom, otherwise pick the largest plausible value.
-    // Guardrail: avoid picking a year (e.g. 2015) as mileage.
-    const candidates: Array<{ v: number; weight: number }> = [];
-
-    for (const field of row) {
-      const v = cleanKilometrage(field);
-      if (v <= 0) continue;
-
-      const hasKmHint = /\bkm\b|kilom|mileage|odometer/i.test(field);
-      // If there's no explicit km hint, ignore tiny numbers that are likely years.
-      if (!hasKmHint && v < 5000) continue;
-
-      candidates.push({ v, weight: hasKmHint ? 2 : 1 });
+    if (mapping.kilometrage !== undefined) {
+      kilometrage = cleanKilometrage(row[mapping.kilometrage]);
     }
-
-    candidates.sort((a, b) => (b.weight - a.weight) || (b.v - a.v));
-
-    // Avoid accidentally using the price as km when both exist
-    const best = candidates.find(c => c.v !== prix) ?? candidates[0];
-    kilometrage = best?.v ?? 0;
-  }
-  if (!annee) {
-    for (const field of row) {
-      const extracted = cleanYear(field);
-      if (extracted > 0) { annee = extracted; break; }
+    if (!kilometrage) {
+      const candidates: Array<{ v: number; weight: number }> = [];
+      for (const field of row) {
+        const v = cleanKilometrage(field);
+        if (v <= 0) continue;
+        const hasKmHint = /\bkm\b|kilom|mileage|odometer/i.test(field);
+        if (!hasKmHint && v < 5000) continue;
+        candidates.push({ v, weight: hasKmHint ? 2 : 1 });
+      }
+      candidates.sort((a, b) => (b.weight - a.weight) || (b.v - a.v));
+      const best = candidates.find(c => c.v !== prix) ?? candidates[0];
+      kilometrage = best?.v ?? 0;
     }
   }
   
-  // Extract brand/model from title or all text
+  // Fallback for year
+  if (!annee) {
+    if (mapping.annee !== undefined) {
+      annee = cleanYear(row[mapping.annee]);
+    }
+    if (!annee) {
+      for (const field of row) {
+        const extracted = cleanYear(field);
+        if (extracted > 0) { annee = extracted; break; }
+      }
+    }
+  }
+  
+  // Extract brand/model from title or all text (prioritize first cell as title)
+  if (!titre) {
+    titre = row[0] || '';
+  }
   const searchText = titre || allText;
   if (!marque) marque = extractBrand(searchText);
   if (!modele || modele === 'Inconnu') modele = extractModel(searchText, marque);
+  
+  // Fallback carburant/transmission from title if not found in combined
+  if (carburant === 'autre') carburant = extractCarburant(allText);
+  if (transmission === 'autre') transmission = extractTransmission(allText);
   
   // Find URLs
   if (!image) {
@@ -386,7 +497,7 @@ function parseRow(
   }
   
   if (!lien) {
-    const link = row.find(f => f.startsWith('http') && !image?.includes(f));
+    const link = row.find(f => f.startsWith('http') && !/\.(jpg|jpeg|png|webp|gif)/i.test(f));
     if (link) lien = link;
   }
   
@@ -399,6 +510,19 @@ function parseRow(
     titre = `${marque} ${modele}`.trim();
   }
   
+  // Extract localisation from "Située à XXX" format
+  let localisation = '';
+  for (const field of row) {
+    const locMatch = field.match(/situ[ée]e?\s*[àa]\s*(.+)/i);
+    if (locMatch) {
+      localisation = locMatch[1].trim().replace(/\.$/, '');
+      break;
+    }
+  }
+  if (!localisation && mapping.localisation !== undefined) {
+    localisation = row[mapping.localisation]?.trim() || '';
+  }
+  
   return {
     id: `v-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
     titre: titre.slice(0, 200),
@@ -407,12 +531,12 @@ function parseRow(
     prix,
     kilometrage,
     annee: annee || new Date().getFullYear(),
-    carburant: extractCarburant(allText),
-    transmission: extractTransmission(allText),
+    carburant,
+    transmission,
     puissance: cleanPuissance(allText),
     image: image || '',
     lien: lien || '#',
-    localisation: mapping.localisation !== undefined ? row[mapping.localisation]?.trim() || '' : '',
+    localisation,
   };
 }
 
