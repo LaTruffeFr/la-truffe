@@ -33,12 +33,13 @@ const TRANSMISSION_LABELS: Record<string, string> = {
 export function DealCard({ vehicle, onClick }: DealCardProps) {
   const isGreatDeal = vehicle.dealScore >= 70;
   const isGoodDeal = vehicle.dealScore >= 50;
+  const hasData = vehicle.hasEnoughData;
 
   return (
     <div
       className={`
         h-full glass-card overflow-hidden group hover:scale-[1.02] transition-all duration-300
-        ${isGreatDeal ? 'ring-1 ring-success/40 success-glow' : ''}
+        ${isGreatDeal && hasData ? 'ring-1 ring-success/40 success-glow' : ''}
       `}
     >
       {/* Image */}
@@ -59,30 +60,50 @@ export function DealCard({ vehicle, onClick }: DealCardProps) {
           </div>
         )}
 
-        {/* Deal Badge */}
-        <div
-          className={`
-            absolute top-2 right-2 px-3 py-1.5 rounded-full font-mono font-bold text-sm
-            ${isGreatDeal
-              ? 'bg-success text-success-foreground'
-              : isGoodDeal
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground'
-            }
-          `}
-        >
-          {vehicle.ecartPourcent > 0 ? '+' : ''}{vehicle.ecartPourcent}%
+        {/* Deal Badge - Shows € savings */}
+        {hasData ? (
+          <div
+            className={`
+              absolute top-2 right-2 px-3 py-1.5 rounded-full font-mono font-bold text-sm
+              ${isGreatDeal
+                ? 'bg-success text-success-foreground'
+                : isGoodDeal
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-destructive/80 text-destructive-foreground'
+              }
+            `}
+          >
+            {vehicle.ecartEuros > 0 ? '+' : ''}{vehicle.ecartEuros.toLocaleString('fr-FR')} €
+          </div>
+        ) : (
+          <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-muted text-muted-foreground text-xs">
+            Données limitées
+          </div>
+        )}
+
+        {/* Brand + Premium Badge */}
+        <div className="absolute top-2 left-2 flex items-center gap-1">
+          <span className="px-2 py-1 rounded bg-background/90 backdrop-blur-sm text-xs font-semibold text-foreground">
+            {vehicle.marque}
+          </span>
+          {vehicle.isPremium && (
+            <span className="px-2 py-1 rounded bg-primary/90 backdrop-blur-sm text-xs font-semibold text-primary-foreground">
+              Premium
+            </span>
+          )}
         </div>
 
-        {/* Brand Badge */}
-        <div className="absolute top-2 left-2 px-2 py-1 rounded bg-background/90 backdrop-blur-sm">
-          <span className="text-xs font-semibold text-foreground">{vehicle.marque}</span>
-        </div>
-
-        {/* Deal Score */}
-        <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-background/90 backdrop-blur-sm flex items-center gap-1">
-          <div className={`w-2 h-2 rounded-full ${isGreatDeal ? 'bg-success' : isGoodDeal ? 'bg-primary' : 'bg-muted-foreground'}`} />
-          <span className="text-xs font-mono">{vehicle.dealScore}</span>
+        {/* Cluster info + Score */}
+        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+          <div className="px-2 py-1 rounded bg-background/90 backdrop-blur-sm flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-full ${hasData ? (isGreatDeal ? 'bg-success' : isGoodDeal ? 'bg-primary' : 'bg-destructive') : 'bg-muted-foreground'}`} />
+            <span className="text-xs font-mono">{vehicle.dealScore}</span>
+          </div>
+          {hasData && (
+            <div className="px-2 py-1 rounded bg-background/90 backdrop-blur-sm text-xs text-muted-foreground">
+              {vehicle.clusterSize} similaires
+            </div>
+          )}
         </div>
       </div>
 
@@ -128,9 +149,16 @@ export function DealCard({ vehicle, onClick }: DealCardProps) {
               <p className="text-xl font-bold font-mono text-foreground">
                 {formatCurrency(vehicle.prix)}
               </p>
-              <p className="text-xs text-muted-foreground">
-                Marché: {formatCurrency(vehicle.prixMoyen)}
-              </p>
+              {vehicle.hasEnoughData ? (
+                <p className="text-xs text-muted-foreground">
+                  Cote cluster: {formatCurrency(vehicle.coteCluster)}
+                  <span className={`ml-1 font-semibold ${vehicle.ecartPourcent > 0 ? 'text-success' : 'text-destructive'}`}>
+                    ({vehicle.ecartPourcent > 0 ? '+' : ''}{vehicle.ecartPourcent}%)
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">Données insuffisantes</p>
+              )}
             </div>
 
             <div className="flex gap-1">

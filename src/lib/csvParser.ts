@@ -17,11 +17,18 @@ export interface ParsedVehicle {
 }
 
 export interface VehicleWithScore extends ParsedVehicle {
+  clusterId: string;          // Fingerprint: MARQUE_MODELE_ANNEE_CARBURANT_TRANS
+  clusterSize: number;        // Nombre de véhicules dans le cluster
+  coteCluster: number;        // Prix moyen du cluster exact
+  ecartEuros: number;         // coteCluster - prix (positif = bonne affaire)
+  ecartPourcent: number;      // (ecartEuros / coteCluster) * 100
+  dealScore: number;          // 0-100, higher = better deal
+  isPremium: boolean;         // Version premium détectée (S-Line, AMG, etc.)
+  hasEnoughData: boolean;     // True si cluster >= 3 véhicules
+  // Legacy compatibility
   prixMoyen: number;
   prixMedian: number;
-  ecart: number;       // prix - prixMoyen
-  ecartPourcent: number; // (prix - prixMoyen) / prixMoyen * 100
-  dealScore: number;   // 0-100, higher = better deal
+  ecart: number;
   segmentKey: string;
 }
 
@@ -329,88 +336,221 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
 }
 
 // ============================================
-// PRICING ENGINE
+// PRICING ENGINE V2 - EXACT SEGMENTATION
 // ============================================
 
-export function calculateDealScores(vehicles: ParsedVehicle[]): VehicleWithScore[] {
-  // Group by segment (Marque + Modele + Year bucket)
-  const segments: Record<string, ParsedVehicle[]> = {};
+// Premium keywords for version detection (+10% bonus on cote)
+const PREMIUM_KEYWORDS = [
+  // German performance
+  's-line', 'sline', 's line', 'rs', 'rs3', 'rs4', 'rs5', 'rs6', 'rs7',
+  'amg', 'amg-line', 'm sport', 'msport', 'm-sport', 'm performance',
+  // French premium
+  'gt-line', 'gtline', 'gt line', 'initiale', 'initiale paris', 'rivoli',
+  'tekno', 'premiere', 'première',
+  // Sport versions
+  'gti', 'gtd', 'gte', 'cupra', 'fr', 'tsi r', 'vrs', 'rs line',
+  'type r', 'type-r', 'nismo', 'n-line', 'n line',
+  // Luxury trims
+  'avantgarde', 'avant-garde', 'exclusive', 'prestige', 'lounge',
+  'business', 'executive', 'premium', 'sport', 'luxe',
+  // Italian
+  'quadrifoglio', 'veloce', 'speciale',
+];
+
+/**
+ * Normalize text for consistent fingerprinting
+ */
+function normalizeForFingerprint(text: string): string {
+  return String(text || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[^A-Z0-9]/g, '')        // Keep only alphanumeric
+    .trim();
+}
+
+/**
+ * Normalize transmission for fingerprint
+ */
+function normalizeTransmission(trans: string): string {
+  const lower = trans.toLowerCase();
+  if (lower === 'automatique' || lower === 'auto') return 'AUTO';
+  if (lower === 'manuelle' || lower === 'manuel') return 'MAN';
+  return 'AUTRE';
+}
+
+/**
+ * Normalize fuel type for fingerprint
+ */
+function normalizeCarburant(carb: string): string {
+  const lower = carb.toLowerCase();
+  if (lower === 'diesel') return 'DIESEL';
+  if (lower === 'essence') return 'ESS';
+  if (lower === 'electrique' || lower === 'électrique') return 'ELEC';
+  if (lower === 'hybride') return 'HYB';
+  return 'AUTRE';
+}
+
+/**
+ * Create unique cluster fingerprint
+ * Format: MARQUE_MODELE_ANNEE_CARBURANT_TRANSMISSION
+ */
+function createClusterFingerprint(vehicle: ParsedVehicle): string {
+  const marque = normalizeForFingerprint(vehicle.marque);
+  const modele = normalizeForFingerprint(vehicle.modele);
+  const annee = vehicle.annee.toString();
+  const carburant = normalizeCarburant(vehicle.carburant);
+  const transmission = normalizeTransmission(vehicle.transmission);
   
-  for (const vehicle of vehicles) {
-    const yearBucket = Math.floor(vehicle.annee / 2) * 2; // 2-year buckets
-    const key = `${vehicle.marque}|${vehicle.modele}|${yearBucket}`;
-    
-    if (!segments[key]) segments[key] = [];
-    segments[key].push(vehicle);
+  return `${marque}_${modele}_${annee}_${carburant}_${transmission}`;
+}
+
+/**
+ * Detect if vehicle has premium finish based on title
+ */
+function detectPremiumVersion(titre: string): boolean {
+  const lower = titre.toLowerCase();
+  return PREMIUM_KEYWORDS.some(keyword => lower.includes(keyword));
+}
+
+/**
+ * Calculate cluster statistics with IQR outlier removal
+ */
+function calculateClusterStats(prices: number[]): { moyenne: number; median: number } | null {
+  if (prices.length === 0) return null;
+  
+  const sorted = [...prices].sort((a, b) => a - b);
+  
+  // IQR outlier removal for 4+ samples
+  let filtered = sorted;
+  if (sorted.length >= 4) {
+    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+    const iqr = q3 - q1;
+    filtered = sorted.filter(p => p >= q1 - 1.5 * iqr && p <= q3 + 1.5 * iqr);
   }
   
-  // Calculate stats per segment
-  const segmentStats: Record<string, { moyenne: number; median: number; count: number }> = {};
+  if (filtered.length === 0) filtered = sorted;
   
-  for (const [key, segVehicles] of Object.entries(segments)) {
-    const prices = segVehicles.map(v => v.prix).sort((a, b) => a - b);
+  const moyenne = filtered.reduce((a, b) => a + b, 0) / filtered.length;
+  const mid = Math.floor(filtered.length / 2);
+  const median = filtered.length % 2 
+    ? filtered[mid] 
+    : (filtered[mid - 1] + filtered[mid]) / 2;
+  
+  return { moyenne, median };
+}
+
+/**
+ * Main pricing engine with exact cluster segmentation
+ */
+export function calculateDealScores(vehicles: ParsedVehicle[]): VehicleWithScore[] {
+  // STEP 1: Create clusters by exact fingerprint
+  const clusters: Record<string, ParsedVehicle[]> = {};
+  
+  for (const vehicle of vehicles) {
+    const clusterId = createClusterFingerprint(vehicle);
+    if (!clusters[clusterId]) clusters[clusterId] = [];
+    clusters[clusterId].push(vehicle);
+  }
+  
+  console.log(`Created ${Object.keys(clusters).length} unique clusters from ${vehicles.length} vehicles`);
+  
+  // STEP 2: Calculate stats per cluster
+  const clusterStats: Record<string, { 
+    moyenne: number; 
+    median: number; 
+    count: number;
+  }> = {};
+  
+  for (const [clusterId, clusterVehicles] of Object.entries(clusters)) {
+    const prices = clusterVehicles.map(v => v.prix);
+    const stats = calculateClusterStats(prices);
     
-    // Remove outliers (IQR method)
-    if (prices.length >= 4) {
-      const q1 = prices[Math.floor(prices.length * 0.25)];
-      const q3 = prices[Math.floor(prices.length * 0.75)];
-      const iqr = q3 - q1;
-      const filtered = prices.filter(p => p >= q1 - 1.5 * iqr && p <= q3 + 1.5 * iqr);
-      
-      const moyenne = filtered.reduce((a, b) => a + b, 0) / filtered.length;
-      const mid = Math.floor(filtered.length / 2);
-      const median = filtered.length % 2 ? filtered[mid] : (filtered[mid - 1] + filtered[mid]) / 2;
-      
-      segmentStats[key] = { moyenne, median, count: segVehicles.length };
-    } else if (prices.length > 0) {
-      const moyenne = prices.reduce((a, b) => a + b, 0) / prices.length;
-      const mid = Math.floor(prices.length / 2);
-      const median = prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
-      
-      segmentStats[key] = { moyenne, median, count: segVehicles.length };
+    if (stats) {
+      clusterStats[clusterId] = {
+        moyenne: stats.moyenne,
+        median: stats.median,
+        count: clusterVehicles.length,
+      };
     }
   }
   
-  // Calculate scores
+  // Log cluster distribution
+  const validClusters = Object.values(clusterStats).filter(s => s.count >= 3).length;
+  console.log(`${validClusters} clusters with 3+ vehicles (reliable data)`);
+  
+  // STEP 3: Calculate scores for each vehicle
   return vehicles.map(vehicle => {
-    const yearBucket = Math.floor(vehicle.annee / 2) * 2;
-    const key = `${vehicle.marque}|${vehicle.modele}|${yearBucket}`;
-    const stats = segmentStats[key];
+    const clusterId = createClusterFingerprint(vehicle);
+    const stats = clusterStats[clusterId];
+    const isPremium = detectPremiumVersion(vehicle.titre);
+    const hasEnoughData = stats ? stats.count >= 3 : false;
     
+    // No stats = no comparison possible
     if (!stats) {
       return {
         ...vehicle,
+        clusterId,
+        clusterSize: 1,
+        coteCluster: vehicle.prix,
+        ecartEuros: 0,
+        ecartPourcent: 0,
+        dealScore: 50,
+        isPremium,
+        hasEnoughData: false,
+        // Legacy fields
         prixMoyen: vehicle.prix,
         prixMedian: vehicle.prix,
         ecart: 0,
-        ecartPourcent: 0,
-        dealScore: 50,
-        segmentKey: key,
+        segmentKey: clusterId,
       };
     }
     
-    const ecart = vehicle.prix - stats.moyenne;
-    const ecartPourcent = (ecart / stats.moyenne) * 100;
+    // Calculate cote with premium bonus
+    let coteCluster = stats.moyenne;
+    if (isPremium) {
+      // Premium versions are worth 10% more than cluster average
+      coteCluster = coteCluster * 1.10;
+    }
     
-    // Deal score: 100 = great deal, 0 = overpriced
-    // -30% = score 100, 0% = score 50, +30% = score 0
-    const dealScore = Math.max(0, Math.min(100, 50 - (ecartPourcent * 1.67)));
+    // Calculate écart (positive = good deal, negative = overpriced)
+    const ecartEuros = coteCluster - vehicle.prix;
+    const ecartPourcent = (ecartEuros / coteCluster) * 100;
+    
+    // Deal score: map -30% to +30% écart → 0 to 100 score
+    // +30% under market = 100, 0% = 50, +30% over market = 0
+    let dealScore: number;
+    if (!hasEnoughData) {
+      // Not enough data: neutral score
+      dealScore = 50;
+    } else {
+      // Score formula: 50 + (ecartPourcent * 1.67) capped at 0-100
+      dealScore = Math.max(0, Math.min(100, 50 + (ecartPourcent * 1.67)));
+    }
     
     return {
       ...vehicle,
-      prixMoyen: Math.round(stats.moyenne),
-      prixMedian: Math.round(stats.median),
-      ecart: Math.round(ecart),
+      clusterId,
+      clusterSize: stats.count,
+      coteCluster: Math.round(coteCluster),
+      ecartEuros: Math.round(ecartEuros),
       ecartPourcent: Math.round(ecartPourcent * 10) / 10,
       dealScore: Math.round(dealScore),
-      segmentKey: key,
+      isPremium,
+      hasEnoughData,
+      // Legacy fields for compatibility
+      prixMoyen: Math.round(stats.moyenne),
+      prixMedian: Math.round(stats.median),
+      ecart: Math.round(-ecartEuros), // Legacy uses opposite sign
+      segmentKey: clusterId,
     };
   });
 }
 
 export function getTopOpportunities(vehicles: VehicleWithScore[], limit = 500): VehicleWithScore[] {
   return [...vehicles]
-    .filter(v => v.dealScore >= 50) // Only good deals
+    .filter(v => v.hasEnoughData && v.dealScore >= 50) // Only reliable good deals
     .sort((a, b) => b.dealScore - a.dealScore)
     .slice(0, limit);
 }
