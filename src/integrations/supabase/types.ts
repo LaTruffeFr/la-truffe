@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      garage_members: {
+        Row: {
+          created_at: string
+          garage_id: string
+          id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          garage_id: string
+          id?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          garage_id?: string
+          id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garage_members_garage_id_fkey"
+            columns: ["garage_id"]
+            isOneToOne: false
+            referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garages: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -41,6 +106,7 @@ export type Database = {
           carburant: string | null
           created_at: string
           gain_potentiel: number | null
+          garage_id: string | null
           id: string
           image: string | null
           kilometrage: number
@@ -61,6 +127,7 @@ export type Database = {
           carburant?: string | null
           created_at?: string
           gain_potentiel?: number | null
+          garage_id?: string | null
           id?: string
           image?: string | null
           kilometrage?: number
@@ -81,6 +148,7 @@ export type Database = {
           carburant?: string | null
           created_at?: string
           gain_potentiel?: number | null
+          garage_id?: string | null
           id?: string
           image?: string | null
           kilometrage?: number
@@ -96,13 +164,26 @@ export type Database = {
           titre?: string
           transmission?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_garage_id_fkey"
+            columns: ["garage_id"]
+            isOneToOne: false
+            referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      garage_has_subscription: {
+        Args: { _garage_id: string }
+        Returns: boolean
+      }
+      get_user_garage_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -111,6 +192,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_garage_member: {
+        Args: { _garage_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
