@@ -37,7 +37,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Authenticated user:', user.id);
+    // Admin role verification
+    const { data: roleData } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (!roleData) {
+      console.error('Admin access required for user:', user.id);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Admin access required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Admin user authenticated:', user.id);
 
     const { url, options } = await req.json();
 
@@ -63,7 +79,7 @@ Deno.serve(async (req) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    console.log('Scraping URL:', formattedUrl, 'for user:', user.id);
+    console.log('Scraping URL:', formattedUrl, 'for admin:', user.id);
 
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
@@ -90,7 +106,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Scrape successful for user:', user.id);
+    console.log('Scrape successful for admin:', user.id);
     return new Response(
       JSON.stringify(data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
