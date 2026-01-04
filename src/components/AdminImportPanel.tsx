@@ -15,7 +15,9 @@ import {
   CheckCircle, 
   AlertCircle,
   Sparkles,
-  Download
+  Search,
+  MapPin,
+  Car
 } from "lucide-react";
 import {
   Dialog,
@@ -26,24 +28,47 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AdminImportPanelProps {
   onVehiclesImported: (vehicles: Vehicle[]) => void;
   existingVehicleLinks: Set<string>;
 }
 
+const CITIES = [
+  "Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux", 
+  "Lille", "Nantes", "Strasbourg", "Nice", "Montpellier",
+  "Rennes", "Grenoble", "Rouen", "Toulon", "Dijon"
+];
+
+const VEHICLE_TYPES = [
+  { value: "voiture", label: "Voitures" },
+  { value: "utilitaire", label: "Utilitaires" },
+  { value: "moto", label: "Motos" },
+  { value: "camping-car", label: "Camping-cars" },
+];
+
 export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: AdminImportPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"csv" | "scrape">("csv");
+  const [activeTab, setActiveTab] = useState<"csv" | "search">("csv");
   
   // CSV state
   const [csvText, setCsvText] = useState("");
   const [isProcessingCsv, setIsProcessingCsv] = useState(false);
   
-  // Scrape state
-  const [scrapeUrl, setScrapeUrl] = useState("");
-  const [isScraping, setIsScraping] = useState(false);
-  const [scrapeResult, setScrapeResult] = useState<string | null>(null);
+  // Search state
+  const [searchCity, setSearchCity] = useState("Paris");
+  const [searchType, setSearchType] = useState("voiture");
+  const [searchKeywords, setSearchKeywords] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   const handleCsvImport = async () => {
     if (!csvText.trim()) {
@@ -101,40 +126,91 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
     }
   };
 
-  const handleScrape = async () => {
-    if (!scrapeUrl.trim()) {
-      toast.error("Veuillez entrer une URL");
-      return;
-    }
-
-    setIsScraping(true);
-    setScrapeResult(null);
+  const handleSearch = async () => {
+    setIsSearching(true);
+    setSearchResults([]);
 
     try {
-      const result = await firecrawlApi.scrape(scrapeUrl, {
-        formats: ['markdown'],
-        onlyMainContent: true,
-        waitFor: 5000,
+      // Build search query for LeBonCoin via Google
+      let query = `site:leboncoin.fr ${searchType} ${searchCity}`;
+      
+      if (searchKeywords.trim()) {
+        query += ` ${searchKeywords}`;
+      }
+      
+      if (maxPrice) {
+        query += ` prix -${parseInt(maxPrice) + 1}`;
+      }
+
+      console.log("Searching:", query);
+
+      const result = await firecrawlApi.search(query, {
+        limit: 20,
+        lang: 'fr',
+        country: 'fr',
+        tbs: 'qdr:d', // Last 24 hours
+        scrapeOptions: {
+          formats: ['markdown'],
+        },
       });
 
       if (!result.success) {
-        throw new Error(result.error || "Échec du scraping");
+        throw new Error(result.error || "Échec de la recherche");
       }
 
-      const markdown = result.data?.markdown || result.markdown;
+      const results = result.data || [];
+      setSearchResults(results);
       
-      if (markdown) {
-        setScrapeResult(markdown);
-        toast.success("Page scrapée avec succès");
+      if (results.length > 0) {
+        toast.success(`${results.length} annonces trouvées`);
       } else {
-        toast.warning("Aucun contenu récupéré");
+        toast.info("Aucune annonce trouvée");
       }
     } catch (error) {
-      console.error("Scrape error:", error);
-      toast.error(error instanceof Error ? error.message : "Erreur lors du scraping");
+      console.error("Search error:", error);
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la recherche");
     } finally {
-      setIsScraping(false);
+      setIsSearching(false);
     }
+  };
+
+  const parseSearchResults = () => {
+    // Convert search results to CSV format for parsing
+    const csvLines: string[] = [];
+    
+    searchResults.forEach((result) => {
+      const url = result.url || result.metadata?.sourceURL || '';
+      const title = result.title || result.metadata?.title || '';
+      const markdown = result.markdown || '';
+      
+      // Extract price from markdown or title
+      const priceMatch = markdown.match(/(\d{1,3}(?:\s?\d{3})*)\s*€/) || 
+                         title.match(/(\d{1,3}(?:\s?\d{3})*)\s*€/);
+      const price = priceMatch ? priceMatch[1].replace(/\s/g, '') : '';
+      
+      // Extract year
+      const yearMatch = markdown.match(/\b(19|20)\d{2}\b/) || title.match(/\b(19|20)\d{2}\b/);
+      const year = yearMatch ? yearMatch[0] : '';
+      
+      // Extract km
+      const kmMatch = markdown.match(/(\d{1,3}(?:\s?\d{3})*)\s*km/i);
+      const km = kmMatch ? kmMatch[1].replace(/\s/g, '') : '';
+      
+      if (url && url.includes('leboncoin.fr') && price) {
+        csvLines.push(`"${title}","${price}","${year}","${km}","${url}","","${searchCity}"`);
+      }
+    });
+
+    if (csvLines.length === 0) {
+      toast.error("Impossible d'extraire les données des résultats");
+      return;
+    }
+
+    const header = "titre,prix,annee,kilometrage,lien,image,localisation";
+    const csv = [header, ...csvLines].join('\n');
+    setCsvText(csv);
+    setActiveTab("csv");
+    toast.success(`${csvLines.length} annonces prêtes à importer`);
   };
 
   return (
@@ -145,34 +221,159 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
           Import en masse
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-primary" />
             Import de véhicules
           </DialogTitle>
           <DialogDescription>
-            Importez des véhicules via CSV ou scraping automatique
+            Recherchez sur LeBonCoin via Google ou importez un CSV
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "csv" | "scrape")}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "csv" | "search")}>
           <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="search" className="gap-2">
+              <Search className="w-4 h-4" />
+              Recherche LBC
+            </TabsTrigger>
             <TabsTrigger value="csv" className="gap-2">
               <FileSpreadsheet className="w-4 h-4" />
               Import CSV
             </TabsTrigger>
-            <TabsTrigger value="scrape" className="gap-2">
-              <Globe className="w-4 h-4" />
-              Scraping Web
-            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="search" className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Ville
+                </Label>
+                <Select value={searchCity} onValueChange={setSearchCity}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CITIES.map(city => (
+                      <SelectItem key={city} value={city}>{city}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Car className="w-4 h-4" />
+                  Type
+                </Label>
+                <Select value={searchType} onValueChange={setSearchType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VEHICLE_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Mots-clés (optionnel)</Label>
+                <Input
+                  placeholder="ex: Peugeot 308, diesel..."
+                  value={searchKeywords}
+                  onChange={(e) => setSearchKeywords(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Prix max (optionnel)</Label>
+                <Input
+                  type="number"
+                  placeholder="ex: 15000"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleSearch} 
+              disabled={isSearching}
+              className="w-full gap-2"
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Recherche en cours...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4" />
+                  Rechercher sur LeBonCoin
+                </>
+              )}
+            </Button>
+
+            {searchResults.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>{searchResults.length} résultats trouvés</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={parseSearchResults}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Préparer l'import
+                  </Button>
+                </div>
+                
+                <div className="max-h-[200px] overflow-y-auto space-y-2">
+                  {searchResults.slice(0, 10).map((result, i) => (
+                    <a
+                      key={i}
+                      href={result.url || result.metadata?.sourceURL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <p className="text-sm font-medium line-clamp-1">
+                        {result.title || result.metadata?.title || 'Sans titre'}
+                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {result.url || result.metadata?.sourceURL}
+                      </p>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <div className="flex items-start gap-3">
+                <Globe className="w-5 h-5 text-primary mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-foreground mb-1">Recherche via Google</p>
+                  <p className="text-muted-foreground">
+                    Cette méthode passe par Google pour trouver les annonces LBC, 
+                    ce qui évite les blocages directs.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
 
           <TabsContent value="csv" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>Données CSV (depuis Instant Data Scraper)</Label>
+              <Label>Données CSV (depuis Instant Data Scraper ou recherche)</Label>
               <Textarea
-                placeholder="Collez ici les données CSV exportées depuis Instant Data Scraper..."
+                placeholder="Collez ici les données CSV..."
                 className="min-h-[200px] font-mono text-sm"
                 value={csvText}
                 onChange={(e) => setCsvText(e.target.value)}
@@ -199,64 +400,14 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
                 </>
               )}
             </Button>
-          </TabsContent>
-
-          <TabsContent value="scrape" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>URL à scraper</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="https://www.leboncoin.fr/recherche?..."
-                  value={scrapeUrl}
-                  onChange={(e) => setScrapeUrl(e.target.value)}
-                />
-                <Button 
-                  onClick={handleScrape} 
-                  disabled={isScraping || !scrapeUrl.trim()}
-                >
-                  {isScraping ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Globe className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                ⚠️ Note : LeBonCoin peut bloquer le scraping automatique. Utilisez Instant Data Scraper comme fallback.
-              </p>
-            </div>
-
-            {scrapeResult && (
-              <div className="space-y-2">
-                <Label>Résultat du scraping</Label>
-                <Textarea
-                  value={scrapeResult}
-                  readOnly
-                  className="min-h-[200px] font-mono text-xs"
-                />
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(scrapeResult);
-                      toast.success("Copié dans le presse-papier");
-                    }}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Copier
-                  </Button>
-                </div>
-              </div>
-            )}
 
             <div className="p-4 rounded-lg bg-muted/50 border border-border">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-foreground mb-1">Scraping automatique</p>
+                  <p className="font-medium text-foreground mb-1">Import manuel</p>
                   <p className="text-muted-foreground">
-                    Pour un scraping fiable, utilise l'extension{" "}
+                    Utilisez{" "}
                     <a 
                       href="https://chrome.google.com/webstore/detail/instant-data-scraper/ofaokhiedipichpaobibbnahnkdoiiah" 
                       target="_blank" 
@@ -265,7 +416,7 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
                     >
                       Instant Data Scraper
                     </a>
-                    {" "}puis importe le CSV ici.
+                    {" "}pour un scraping fiable.
                   </p>
                 </div>
               </div>
