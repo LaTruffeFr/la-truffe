@@ -149,102 +149,132 @@ export function getPowerBucket(puissance: number): string {
 
 function parseLeBonCoinCSV(csvText: string): Vehicle[] {
   const vehicles: Vehicle[] = [];
-  const lines = csvText.split('\n');
+  const lines = csvText.split('\n').filter(l => l.trim());
+  
+  if (lines.length < 2) return vehicles;
+  
+  // Parse header to find column indices
   const headerLine = lines[0];
-  if (!headerLine) return vehicles;
+  const headers = parseCSVLine(headerLine).map(h => h.toLowerCase().trim());
   
-  let inQuote = false;
-  let recordLines: string[] = [];
+  console.log('CSV Headers:', headers);
   
+  // Find column indices dynamically
+  const findCol = (patterns: string[]): number => {
+    return headers.findIndex(h => patterns.some(p => h.includes(p)));
+  };
+  
+  // Map common column names
+  const colIndices = {
+    titre: Math.max(0, findCol(['titre', 'title', 'text', 'sr-only', 'annonce'])),
+    lien: findCol(['href', 'link', 'url', 'lien']),
+    image: findCol(['src', 'image', 'img', 'photo']),
+    prix: findCol(['prix', 'price', '€']),
+    annee: findCol(['année', 'annee', 'year', 'date']),
+    km: findCol(['km', 'kilom', 'mileage']),
+  };
+  
+  console.log('Column indices:', colIndices);
+  
+  // Parse each data row
   for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
+    const fields = parseCSVLine(lines[i]);
+    if (fields.length < 3) continue;
     
-    if (!inQuote && line.startsWith('"')) {
-      if (recordLines.length > 0) {
-        const vehicle = parseRecordLines(recordLines.join('\n'));
-        if (vehicle) vehicles.push(vehicle);
-      }
-      recordLines = [line];
+    // Debug: log first record
+    if (i === 1) {
+      console.log('First row fields:', fields.slice(0, 10));
+    }
+    
+    // Extract data - search through all fields if indices not found
+    let titre = '';
+    let lien = '';
+    let image = '';
+    let prix = 0;
+    let annee = 0;
+    let kilometrage = 0;
+    
+    // Title: first non-empty text field or specific column
+    if (colIndices.titre >= 0 && fields[colIndices.titre]) {
+      titre = fields[colIndices.titre];
     } else {
-      recordLines.push(line);
+      titre = fields.find(f => f.length > 10 && !f.startsWith('http') && !f.includes('€')) || '';
     }
     
-    for (const char of line) {
-      if (char === '"') inQuote = !inQuote;
+    // Link: find URL
+    if (colIndices.lien >= 0 && fields[colIndices.lien]?.startsWith('http')) {
+      lien = fields[colIndices.lien];
+    } else {
+      lien = fields.find(f => f.startsWith('http') && f.includes('leboncoin')) || 
+             fields.find(f => f.startsWith('http')) || '';
     }
-  }
-  
-  if (recordLines.length > 0) {
-    const vehicle = parseRecordLines(recordLines.join('\n'));
-    if (vehicle) vehicles.push(vehicle);
+    
+    // Image: find image URL
+    if (colIndices.image >= 0 && fields[colIndices.image]?.startsWith('http')) {
+      image = fields[colIndices.image];
+    } else {
+      image = fields.find(f => f.startsWith('http') && (f.includes('.jpg') || f.includes('.png') || f.includes('.webp') || f.includes('img'))) || '';
+    }
+    
+    // Price: find € pattern or numeric value in expected range
+    for (const field of fields) {
+      const extractedPrice = extractPrice(field);
+      if (extractedPrice > 0 && extractedPrice >= 500 && extractedPrice <= 500000) {
+        prix = extractedPrice;
+        break;
+      }
+    }
+    
+    // Year: find 4-digit year in 1990-2026 range
+    for (const field of fields) {
+      const yearMatch = field.match(/\b(19[89]\d|20[0-2]\d)\b/);
+      if (yearMatch) {
+        const y = parseInt(yearMatch[1]);
+        if (y >= 1990 && y <= 2026) {
+          annee = y;
+          break;
+        }
+      }
+    }
+    
+    // Kilometrage: find "XXX km" pattern
+    for (const field of fields) {
+      const km = extractKilometrage(field);
+      if (km > 0 && km <= 500000) {
+        kilometrage = km;
+        break;
+      }
+    }
+    
+    // Skip invalid records
+    if (!titre || titre.length < 3 || prix <= 0) {
+      continue;
+    }
+    
+    const marque = extractBrand(titre);
+    const fullText = fields.join(' ');
+    
+    const vehicle: Vehicle = {
+      id: `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      titre,
+      prix,
+      annee: annee || new Date().getFullYear(),
+      kilometrage,
+      lien: lien || '#',
+      image,
+      marque,
+      modele: extractModel(titre, marque),
+      carburant: extractCarburant(fullText),
+      transmission: extractTransmission(fullText),
+      puissance: extractPuissance(fullText),
+    };
+    
+    console.log('Parsed vehicle:', { titre: vehicle.titre.slice(0, 30), prix: vehicle.prix, annee: vehicle.annee, km: vehicle.kilometrage });
+    
+    vehicles.push(vehicle);
   }
   
   return vehicles;
-}
-
-function parseRecordLines(recordText: string): Vehicle | null {
-  const fields: string[] = [];
-  let currentField = '';
-  let inQuote = false;
-  
-  for (let i = 0; i < recordText.length; i++) {
-    const char = recordText[i];
-    
-    if (char === '"') {
-      if (inQuote && recordText[i + 1] === '"') {
-        currentField += '"';
-        i++;
-      } else {
-        inQuote = !inQuote;
-      }
-    } else if (char === ',' && !inQuote) {
-      fields.push(currentField.trim());
-      currentField = '';
-    } else {
-      currentField += char;
-    }
-  }
-  fields.push(currentField.trim());
-  
-  if (fields.length < 15) return null;
-  
-  const titre = fields[0] || '';
-  const lien = fields[1] || '';
-  const image = fields[2] || '';
-  const priceField = fields[9] || '';
-  const yearField = fields[13] || '';
-  const kmField = fields[14] || '';
-  const infoField = fields[11] || fields[12] || '';
-  
-  if (!titre || titre.length < 3) return null;
-  
-  const prix = extractPrice(priceField);
-  const annee = parseInt(yearField) || extractYear(infoField);
-  const kilometrage = extractKilometrage(kmField) || extractKilometrage(infoField);
-  
-  if (prix <= 0) return null;
-  
-  // Validate kilometrage is reasonable (max 1M km)
-  const validKm = kilometrage > 0 && kilometrage <= 1000000 ? kilometrage : 0;
-  
-  const marque = extractBrand(titre);
-  const fullText = `${titre} ${infoField}`;
-  const puissance = extractPuissance(fullText);
-  
-  return {
-    id: `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    titre,
-    prix,
-    annee: annee || 2020,
-    kilometrage: validKm,
-    lien: lien.startsWith('http') ? lien : '#',
-    image: image.startsWith('http') ? image : '',
-    marque,
-    modele: extractModel(titre, marque),
-    carburant: extractCarburant(fullText),
-    transmission: extractTransmission(fullText),
-    puissance,
-  };
 }
 
 function extractPrice(priceStr: string): number {
