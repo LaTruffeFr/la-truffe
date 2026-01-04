@@ -10,10 +10,11 @@ import { QuickActions } from "@/components/QuickActions";
 import { Vehicle, MarketStats } from "@/types/vehicle";
 import { parseCSV, analyzeMarket, calculateStats } from "@/lib/vehicleAnalysis";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, LayoutGrid, Trash2, ChevronUp } from "lucide-react";
+import { BarChart3, LayoutGrid, Trash2, ChevronUp, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +26,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
+  const { isAdmin } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,7 +58,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from('vehicles')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('gain_potentiel', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
 
@@ -80,9 +83,6 @@ const Index = () => {
           prixMedianSegment: v.prix_median_segment ? Number(v.prix_median_segment) : undefined,
         }));
         setVehicles(loadedVehicles);
-        toast.success(`${loadedVehicles.length} véhicules chargés`, {
-          description: "Données récupérées avec succès",
-        });
       }
     } catch (error) {
       console.error("Erreur chargement véhicules:", error);
@@ -153,6 +153,8 @@ const Index = () => {
   }, [vehicles]);
 
   const handleDataLoaded = useCallback((csvText: string) => {
+    if (!isAdmin) return;
+    
     setIsProcessing(true);
     
     setTimeout(async () => {
@@ -181,9 +183,11 @@ const Index = () => {
         setIsProcessing(false);
       }
     }, 100);
-  }, [vehicles]);
+  }, [vehicles, isAdmin]);
 
   const handleClearData = async () => {
+    if (!isAdmin) return;
+    
     try {
       const { error } = await supabase
         .from('vehicles')
@@ -247,8 +251,8 @@ const Index = () => {
             <div className="absolute inset-0 w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
           <div>
-            <p className="text-foreground font-medium">Chargement des données...</p>
-            <p className="text-sm text-muted-foreground">Récupération de vos véhicules</p>
+            <p className="text-foreground font-medium">Chargement des opportunités...</p>
+            <p className="text-sm text-muted-foreground">Analyse du marché en cours</p>
           </div>
         </div>
       </div>
@@ -260,47 +264,70 @@ const Index = () => {
       <Header />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Top Section: KPIs and Upload */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <KPICards stats={stats} isLoading={isProcessing} />
-            {hasData && <OpportunityBanner bestDeal={bestDeal} />}
+        {/* Admin Badge */}
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 gap-1.5">
+              <Shield className="w-3 h-3" />
+              Mode Admin
+            </Badge>
           </div>
-          <div className="space-y-4">
-            <CSVUploader onDataLoaded={handleDataLoaded} isProcessing={isProcessing} />
-            {hasData && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Effacer toutes les données
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Cette action supprimera définitivement tous les {vehicles.length} véhicules. 
-                      Cette action est irréversible.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleClearData}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        )}
+
+        {/* Top Section: KPIs and Upload (admin only) */}
+        <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-3' : ''} gap-6`}>
+          <div className={isAdmin ? "lg:col-span-2" : ""}>
+            <div className="space-y-4">
+              <KPICards stats={stats} isLoading={isProcessing} />
+              {hasData && <OpportunityBanner bestDeal={bestDeal} />}
+            </div>
+          </div>
+          
+          {/* Admin Panel - Only visible to admins */}
+          {isAdmin && (
+            <div className="space-y-4">
+              <div className="glass-card p-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <Shield className="w-4 h-4 text-primary" />
+                  Panneau Admin
+                </h3>
+                <CSVUploader onDataLoaded={handleDataLoaded} isProcessing={isProcessing} />
+              </div>
+              
+              {hasData && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     >
-                      Supprimer tout
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Effacer toutes les données
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Cette action supprimera définitivement tous les {vehicles.length} véhicules. 
+                        Cette action est irréversible.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleClearData}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Supprimer tout
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Main Content */}
@@ -335,7 +362,7 @@ const Index = () => {
             </TabsContent>
           </Tabs>
         ) : (
-          <EmptyState />
+          <ClientEmptyState isAdmin={isAdmin} />
         )}
       </main>
 
@@ -370,5 +397,33 @@ const Index = () => {
     </div>
   );
 };
+
+// Empty state for clients (not admin)
+function ClientEmptyState({ isAdmin }: { isAdmin: boolean }) {
+  if (isAdmin) {
+    return <EmptyState />;
+  }
+
+  return (
+    <div className="text-center py-16 space-y-6 animate-fade-in">
+      <div className="w-20 h-20 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+        <BarChart3 className="w-10 h-10 text-primary" />
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold text-foreground mb-2">
+          Aucune opportunité disponible
+        </h2>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Les opportunités sont mises à jour quotidiennement. 
+          Revenez bientôt pour découvrir les meilleures affaires du marché.
+        </p>
+      </div>
+      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+        Mise à jour quotidienne
+      </div>
+    </div>
+  );
+}
 
 export default Index;

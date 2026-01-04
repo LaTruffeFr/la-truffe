@@ -1,4 +1,4 @@
-import { Search, Zap, LogOut, User, Settings, HelpCircle } from "lucide-react";
+import { Search, Zap, LogOut, User, Settings, HelpCircle, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +16,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 export function Header() {
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -61,7 +62,7 @@ export function Header() {
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Analyse en temps réel active</p>
+                  <p>Opportunités mises à jour quotidiennement</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -84,18 +85,34 @@ export function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-2 hover:bg-accent/50">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/20">
-                      <User className="w-4 h-4 text-primary" />
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ring-2 ${isAdmin ? 'bg-primary/30 ring-primary/40' : 'bg-primary/20 ring-primary/20'}`}>
+                      {isAdmin ? (
+                        <Shield className="w-4 h-4 text-primary" />
+                      ) : (
+                        <User className="w-4 h-4 text-primary" />
+                      )}
                     </div>
                     <span className="hidden lg:inline text-sm text-muted-foreground max-w-32 truncate">
                       {user.email}
                     </span>
+                    {isAdmin && (
+                      <Badge variant="outline" className="hidden md:flex text-xs bg-primary/10 text-primary border-primary/30">
+                        Admin
+                      </Badge>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">Mon compte</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">Mon compte</p>
+                        {isAdmin && (
+                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                            Admin
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
