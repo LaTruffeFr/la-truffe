@@ -32,26 +32,34 @@ export function TradingDashboard() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
   const [showAllOnChart, setShowAllOnChart] = useState(false);
+  const [appendMode, setAppendMode] = useState(false); // false = Nouveau Scan, true = Ajouter
 
-  // Handle CSV upload - accumulates data
+  // Handle CSV upload
   const handleFileUpload = useCallback(async (file: File) => {
     setIsLoading(true);
     try {
       const parsed = await parseCSVFile(file);
-      // Accumulate: merge with existing vehicles
-      setVehicles(prev => {
-        const combined = [...prev, ...parsed];
-        // Recalculate scores with combined dataset for better cluster accuracy
-        const scored = calculateDealScores(combined);
-        console.log(`Added ${parsed.length} vehicles. Total: ${scored.length}`);
-        return scored;
-      });
+      
+      if (appendMode) {
+        // Append mode: merge with existing vehicles
+        setVehicles(prev => {
+          const combined = [...prev, ...parsed];
+          const scored = calculateDealScores(combined);
+          console.log(`Ajouté ${parsed.length} véhicules. Total: ${scored.length}`);
+          return scored;
+        });
+      } else {
+        // Replace mode: new scan
+        const scored = calculateDealScores(parsed);
+        setVehicles(scored);
+        console.log(`Nouveau scan: ${scored.length} véhicules`);
+      }
     } catch (error) {
       console.error('Parse error:', error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [appendMode]);
 
   // Clear all data
   const handleClearData = useCallback(() => {
@@ -164,10 +172,35 @@ export function TradingDashboard() {
             <p className="text-xs text-muted-foreground">Client Edition</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">
             {vehicles.length.toLocaleString('fr-FR')} véhicules
           </span>
+          
+          {/* Mode Toggle */}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+            <button
+              onClick={() => setAppendMode(false)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                !appendMode 
+                  ? 'bg-background text-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Nouveau Scan
+            </button>
+            <button
+              onClick={() => setAppendMode(true)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                appendMode 
+                  ? 'bg-background text-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Ajouter au Marché
+            </button>
+          </div>
+
           <button
             onClick={handleClearData}
             className="text-xs text-muted-foreground hover:text-destructive transition-colors"
