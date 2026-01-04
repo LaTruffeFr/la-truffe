@@ -72,20 +72,37 @@ export function TradingDashboard() {
     return getTopOpportunities(filteredVehicles, 500);
   }, [filteredVehicles, showAllOnChart]);
 
-  // Calculate KPIs
+  // Calculate KPIs with cluster data
   const kpis = useMemo(() => {
-    const opportunities = filteredVehicles.filter(v => v.dealScore >= 70);
-    const bestDeal = opportunities.sort((a, b) => b.dealScore - a.dealScore)[0];
-    const avgDiscount = opportunities.length > 0
-      ? opportunities.reduce((sum, v) => sum + Math.abs(v.ecartPourcent), 0) / opportunities.length
+    // Reliable opportunities: score >= 70 AND has enough data
+    const reliableOpportunities = filteredVehicles.filter(v => v.hasEnoughData && v.dealScore >= 70);
+    const allOpportunities = filteredVehicles.filter(v => v.dealScore >= 70);
+    const bestDeal = reliableOpportunities.sort((a, b) => b.dealScore - a.dealScore)[0];
+    
+    // Calculate average discount and savings for reliable opportunities
+    const avgDiscount = reliableOpportunities.length > 0
+      ? reliableOpportunities.reduce((sum, v) => sum + v.ecartPourcent, 0) / reliableOpportunities.length
       : 0;
+    const avgSavingsEuros = reliableOpportunities.length > 0
+      ? reliableOpportunities.reduce((sum, v) => sum + v.ecartEuros, 0) / reliableOpportunities.length
+      : 0;
+
+    // Count unique clusters
+    const allClusters = new Set(vehicles.map(v => v.clusterId));
+    const reliableClusters = new Set(
+      vehicles.filter(v => v.hasEnoughData).map(v => v.clusterId)
+    );
 
     return {
       totalAnalyzed: vehicles.length,
       filteredCount: filteredVehicles.length,
-      opportunitiesCount: opportunities.length,
+      opportunitiesCount: allOpportunities.length,
+      reliableOpportunities: reliableOpportunities.length,
       bestDeal,
       avgDiscount: Math.round(avgDiscount * 10) / 10,
+      avgSavingsEuros: Math.round(avgSavingsEuros),
+      clustersCount: allClusters.size,
+      reliableClusters: reliableClusters.size,
     };
   }, [vehicles, filteredVehicles]);
 

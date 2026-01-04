@@ -32,8 +32,10 @@ const TRANSMISSION_LABELS: Record<string, string> = {
 };
 
 export function ClientSheetModal({ vehicle, onClose }: ClientSheetModalProps) {
+  const hasData = vehicle.hasEnoughData;
   const discount = Math.abs(vehicle.ecartPourcent);
-  const savings = Math.abs(vehicle.ecart);
+  const savings = Math.abs(vehicle.ecartEuros);
+  const isGoodDeal = vehicle.ecartEuros > 0;
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -66,49 +68,84 @@ export function ClientSheetModal({ vehicle, onClose }: ClientSheetModalProps) {
           </button>
 
           {/* Title overlay */}
-          <div className="absolute bottom-4 left-6 right-6">
-            <p className="text-sm text-muted-foreground">{vehicle.marque}</p>
-            <h2 className="text-2xl font-bold text-foreground">{vehicle.modele}</h2>
+          <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm text-muted-foreground">{vehicle.marque}</p>
+                {vehicle.isPremium && (
+                  <span className="px-2 py-0.5 rounded bg-primary text-xs font-semibold text-primary-foreground">
+                    Version Premium
+                  </span>
+                )}
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">{vehicle.modele}</h2>
+            </div>
+            {hasData && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">{vehicle.clusterSize} véhicules similaires</p>
+                <p className="text-xs font-mono text-muted-foreground">{vehicle.clusterId}</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Deal highlight */}
-          <div className="glass-card p-4 ring-1 ring-success/30 success-glow">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-success/20 flex items-center justify-center">
-                  <TrendingDown className="w-6 h-6 text-success" />
+          {hasData ? (
+            <div className={`glass-card p-4 ring-1 ${isGoodDeal ? 'ring-success/30 success-glow' : 'ring-destructive/30'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl ${isGoodDeal ? 'bg-success/20' : 'bg-destructive/20'} flex items-center justify-center`}>
+                    <TrendingDown className={`w-6 h-6 ${isGoodDeal ? 'text-success' : 'text-destructive'}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {isGoodDeal ? 'Économie estimée' : 'Surcoût vs marché'}
+                    </p>
+                    <p className={`text-2xl font-bold font-mono ${isGoodDeal ? 'text-success' : 'text-destructive'}`}>
+                      {isGoodDeal ? '-' : '+'}{discount}%
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Économie estimée</p>
-                  <p className="text-2xl font-bold font-mono text-success">
-                    -{discount}%
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Soit</p>
+                  <p className={`text-xl font-bold font-mono ${isGoodDeal ? 'text-success' : 'text-destructive'}`}>
+                    {isGoodDeal ? '-' : '+'}{formatCurrency(savings)}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Soit</p>
-                <p className="text-xl font-bold font-mono text-success">
-                  {formatCurrency(savings)}
-                </p>
+            </div>
+          ) : (
+            <div className="glass-card p-4 ring-1 ring-muted-foreground/30">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                  <TrendingDown className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Données insuffisantes</p>
+                  <p className="text-sm text-muted-foreground">
+                    Moins de 3 véhicules identiques dans la base. Analyse imprécise.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Pricing comparison */}
           <div className="grid grid-cols-2 gap-4">
             <div className="glass-card p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Prix affiché</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Prix annonce</p>
               <p className="text-3xl font-bold font-mono text-foreground">
                 {formatCurrency(vehicle.prix)}
               </p>
             </div>
             <div className="glass-card p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Prix du marché</p>
-              <p className="text-3xl font-bold font-mono text-muted-foreground line-through">
-                {formatCurrency(vehicle.prixMoyen)}
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                Cote cluster {hasData ? `(${vehicle.clusterSize} veh.)` : ''}
+              </p>
+              <p className={`text-3xl font-bold font-mono ${hasData ? 'text-muted-foreground line-through' : 'text-muted-foreground/50'}`}>
+                {hasData ? formatCurrency(vehicle.coteCluster) : 'N/A'}
               </p>
             </div>
           </div>
@@ -178,7 +215,9 @@ export function ClientSheetModal({ vehicle, onClose }: ClientSheetModalProps) {
 
           {/* Footer */}
           <p className="text-center text-xs text-muted-foreground">
-            Score de confiance: {vehicle.dealScore}/100 • Analyse basée sur {vehicle.segmentKey.split('|')[0]} {vehicle.segmentKey.split('|')[1]}
+            Score de confiance: {vehicle.dealScore}/100 
+            {hasData && ` • Cluster: ${vehicle.clusterId}`}
+            {vehicle.isPremium && ' • +10% bonus version premium'}
           </p>
         </div>
       </DialogContent>
