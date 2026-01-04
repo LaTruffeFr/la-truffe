@@ -107,18 +107,19 @@ function cleanPrice(value: string): number {
   if (!value) return 0;
 
   const raw = String(value).trim();
-  // Remove currency symbols, spaces, and convert to number
-  const cleaned = raw
-    .replace(/[€$£\s\u00a0]/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.');
 
-  const num = parseFloat(cleaned);
+  // Normalize unicode (handles thin spaces, NBSP, etc.) and keep a copy for heuristics
+  const normalized = raw.normalize('NFKC');
+
+  // Keep only digits for "integer-ish" prices (CSV exports often use spaces, dots, NBSP, narrow NBSP, etc.)
+  const digitsOnly = normalized.replace(/[^0-9]/g, '');
+  if (!digitsOnly) return 0;
+
+  const num = parseInt(digitsOnly, 10);
   if (!Number.isFinite(num)) return 0;
 
   // Guardrail: prevent years/dates from being interpreted as prices
-  // (common failure mode when the "prix" column isn't detected and we fallback-scan fields)
-  const looksLikeYearOnly = /^\d{4}$/.test(cleaned) && num >= 1980 && num <= 2026;
+  const looksLikeYearOnly = /^\d{4}$/.test(digitsOnly) && num >= 1980 && num <= 2026;
   if (looksLikeYearOnly) return 0;
 
   // e.g. "2019/06" or "mise en circulation: 2020" should not become a 2,019€ price
@@ -127,15 +128,21 @@ function cleanPrice(value: string): number {
   if (containsYearToken && !hasCurrencyHint && num <= 3000) return 0;
 
   // Validate range (500€ - 2M€)
-  if (num >= 500 && num <= 2000000) return Math.round(num);
+  if (num >= 500 && num <= 2000000) return num;
   return 0;
 }
 
 function cleanKilometrage(value: string): number {
   if (!value) return 0;
-  // Remove "km", spaces, dots
-  const cleaned = value.replace(/km/gi, '').replace(/[\s\u00a0.]/g, '').replace(',', '');
-  const num = parseInt(cleaned);
+
+  const raw = String(value).trim().normalize('NFKC');
+  // Keep only digits (handles "45 000", "45 000", "45.000", etc.)
+  const digitsOnly = raw.replace(/[^0-9]/g, '');
+  if (!digitsOnly) return 0;
+
+  const num = parseInt(digitsOnly, 10);
+  if (!Number.isFinite(num)) return 0;
+
   // Validate range (0 - 500,000 km)
   if (num >= 0 && num <= 500000) return num;
   return 0;
