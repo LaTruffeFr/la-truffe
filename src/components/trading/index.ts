@@ -1,8 +1,10 @@
 export { TradingDashboard } from './TradingDashboard';
-export { KPICards } from './KPICards';
+export { SniperKPIs } from './SniperKPIs';
 export { FilterSidebar } from './FilterSidebar';
 export { SniperChart } from './SniperChart';
 export { DealGrid } from './DealGrid';
 export { DealCard } from './DealCard';
 export { CSVUploader } from './CSVUploader';
+export { OpportunityModal } from './OpportunityModal';
+export { KPICards } from './KPICards';
 export { ClientSheetModal } from './ClientSheetModal';

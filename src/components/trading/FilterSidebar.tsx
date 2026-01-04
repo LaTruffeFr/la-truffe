@@ -1,4 +1,11 @@
-import { FilterState } from './TradingDashboard';
+export interface FilterState {
+  marques: string[];
+  budgetMin: number;
+  budgetMax: number;
+  anneeMin: number;
+  kmMax: number;
+  dealScoreMin: number;
+}
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
