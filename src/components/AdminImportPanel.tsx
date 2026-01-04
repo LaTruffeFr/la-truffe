@@ -128,51 +128,136 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
 
   const parseVehicleFromMarkdown = (markdown: string, url: string): Vehicle | null => {
     try {
+      console.log("Parsing markdown:", markdown.substring(0, 500));
+      
       // Extract title (usually first heading or first line)
       const titleMatch = markdown.match(/^#\s*(.+)/m) || markdown.match(/^(.+?)[\n\r]/);
       const titre = titleMatch ? titleMatch[1].trim() : 'Véhicule';
 
-      // Extract price
-      const priceMatch = markdown.match(/(\d{1,3}(?:[\s\u00a0]?\d{3})*)\s*€/);
-      const prix = priceMatch ? parseInt(priceMatch[1].replace(/[\s\u00a0]/g, '')) : 0;
+      // Extract price - look for €  patterns
+      const priceMatch = markdown.match(/(\d{1,3}(?:[\s\u00a0.,]?\d{3})*)\s*€/);
+      const prix = priceMatch ? parseInt(priceMatch[1].replace(/[\s\u00a0.,]/g, '')) : 0;
 
-      // Extract year
-      const yearMatch = markdown.match(/\b(19|20)\d{2}\b/);
-      const annee = yearMatch ? parseInt(yearMatch[0]) : null;
+      // Extract year - prioritize 4-digit years in typical car year range
+      const yearMatches = markdown.match(/\b(19[89]\d|20[0-2]\d)\b/g);
+      const annee = yearMatches ? parseInt(yearMatches[0]) : null;
 
-      // Extract km
-      const kmMatch = markdown.match(/(\d{1,3}(?:[\s\u00a0]?\d{3})*)\s*km/i);
-      const kilometrage = kmMatch ? parseInt(kmMatch[1].replace(/[\s\u00a0]/g, '')) : 0;
+      // Extract km - various formats
+      const kmMatch = markdown.match(/(\d{1,3}(?:[\s\u00a0.,]?\d{3})*)\s*km/i);
+      const kilometrage = kmMatch ? parseInt(kmMatch[1].replace(/[\s\u00a0.,]/g, '')) : 0;
 
-      // Extract fuel type
-      const carburantMatch = markdown.match(/\b(diesel|essence|électrique|electrique|hybride|gpl)\b/i);
-      const carburantRaw = carburantMatch ? carburantMatch[1].toLowerCase() : 'autre';
+      // Extract power (CV / ch / chevaux)
+      const puissanceMatch = markdown.match(/(\d{1,4})\s*(?:cv|ch|chevaux)/i);
+      const puissance = puissanceMatch ? parseInt(puissanceMatch[1]) : undefined;
+
+      // Extract fuel type - motorisation
+      const carburantPatterns = [
+        /\b(diesel)\b/i,
+        /\b(essence)\b/i,
+        /\b(électrique|electrique)\b/i,
+        /\b(hybride(?:\s+rechargeable)?)\b/i,
+        /\b(gpl)\b/i,
+        /\b(phev)\b/i,
+      ];
+      let carburantRaw = 'autre';
+      for (const pattern of carburantPatterns) {
+        const match = markdown.match(pattern);
+        if (match) {
+          carburantRaw = match[1].toLowerCase();
+          break;
+        }
+      }
       const carburantMap: Record<string, Carburant> = {
-        'diesel': 'diesel', 'essence': 'essence', 'électrique': 'electrique', 
-        'electrique': 'electrique', 'hybride': 'hybride', 'gpl': 'gpl'
+        'diesel': 'diesel', 
+        'essence': 'essence', 
+        'électrique': 'electrique', 
+        'electrique': 'electrique', 
+        'hybride': 'hybride',
+        'hybride rechargeable': 'hybride',
+        'phev': 'hybride',
+        'gpl': 'gpl'
       };
       const carburant: Carburant = carburantMap[carburantRaw] || 'autre';
 
-      // Extract transmission
-      const transmissionMatch = markdown.match(/\b(automatique|manuelle?)\b/i);
-      const transmissionRaw = transmissionMatch ? transmissionMatch[1].toLowerCase() : 'autre';
-      const transmission: Transmission = transmissionRaw.startsWith('auto') ? 'automatique' : 
-        transmissionRaw.startsWith('man') ? 'manuelle' : 'autre';
+      // Extract transmission - boîte de vitesse
+      const transmissionPatterns = [
+        /\b(automatique|auto|bva|dsg|dct|tiptronic|s-tronic|edc|eat|at)\b/i,
+        /\b(manuelle?|bvm|mt)\b/i,
+        /boîte\s*(automatique|manuelle)/i,
+      ];
+      let transmission: Transmission = 'autre';
+      for (const pattern of transmissionPatterns) {
+        const match = markdown.match(pattern);
+        if (match) {
+          const val = match[1].toLowerCase();
+          if (['automatique', 'auto', 'bva', 'dsg', 'dct', 'tiptronic', 's-tronic', 'edc', 'eat', 'at'].includes(val)) {
+            transmission = 'automatique';
+          } else if (['manuelle', 'manuel', 'bvm', 'mt'].includes(val)) {
+            transmission = 'manuelle';
+          }
+          break;
+        }
+      }
 
-      // Extract brand and model from title
-      const brands = ['peugeot', 'renault', 'citroen', 'volkswagen', 'audi', 'bmw', 'mercedes', 'toyota', 'ford', 'opel', 'fiat', 'nissan', 'hyundai', 'kia', 'seat', 'skoda', 'dacia', 'mini', 'volvo', 'mazda', 'honda', 'suzuki', 'land rover', 'jeep', 'porsche', 'tesla'];
-      const titleLower = titre.toLowerCase();
-      const marque = brands.find(b => titleLower.includes(b)) || 'Autre';
+      // Extended brand list
+      const brands = [
+        'alfa romeo', 'audi', 'bmw', 'citroen', 'citroën', 'cupra', 'dacia', 
+        'ds', 'fiat', 'ford', 'honda', 'hyundai', 'jaguar', 'jeep', 'kia', 
+        'land rover', 'lexus', 'mazda', 'mercedes', 'mercedes-benz', 'mini', 
+        'mitsubishi', 'nissan', 'opel', 'peugeot', 'porsche', 'renault', 
+        'seat', 'skoda', 'smart', 'subaru', 'suzuki', 'tesla', 'toyota', 
+        'volkswagen', 'vw', 'volvo'
+      ];
       
-      // Model is everything after brand
-      const brandIndex = titleLower.indexOf(marque.toLowerCase());
-      const modele = brandIndex >= 0 
-        ? titre.substring(brandIndex + marque.length).trim().split(/[\s-]/)[0] || 'Modèle'
-        : 'Modèle';
+      const textLower = (titre + ' ' + markdown).toLowerCase();
+      let marque = 'Autre';
+      let foundBrandIndex = -1;
+      
+      for (const brand of brands) {
+        const idx = textLower.indexOf(brand);
+        if (idx !== -1 && (foundBrandIndex === -1 || idx < foundBrandIndex)) {
+          marque = brand;
+          foundBrandIndex = idx;
+        }
+      }
+      
+      // Normalize brand name
+      const brandNormalize: Record<string, string> = {
+        'vw': 'Volkswagen',
+        'citroën': 'Citroen',
+        'mercedes-benz': 'Mercedes',
+      };
+      marque = brandNormalize[marque] || marque.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+      // Extract model - look after brand name in title
+      let modele = 'Modèle';
+      const titleLower = titre.toLowerCase();
+      const brandInTitle = brands.find(b => titleLower.includes(b));
+      if (brandInTitle) {
+        const brandIdx = titleLower.indexOf(brandInTitle);
+        const afterBrand = titre.substring(brandIdx + brandInTitle.length).trim();
+        // Take first word(s) as model (handle things like "308 GT", "Golf 8")
+        const modelMatch = afterBrand.match(/^([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+)?)/);
+        if (modelMatch) {
+          modele = modelMatch[1].trim();
+        }
+      }
 
       // Extract location
-      const locMatch = markdown.match(/(?:à|Location|Localisation)[:\s]*([A-Za-zÀ-ÿ\s-]+?)(?:\n|,|\()/i);
-      const localisation = locMatch ? locMatch[1].trim() : null;
+      const locPatterns = [
+        /(?:Localisation|Ville|Location)[:\s]*([A-Za-zÀ-ÿ\s-]+?)(?:\n|,|\(|$)/i,
+        /\b(\d{5})\s+([A-Za-zÀ-ÿ\s-]+)/,
+      ];
+      let localisation: string | null = null;
+      for (const pattern of locPatterns) {
+        const match = markdown.match(pattern);
+        if (match) {
+          localisation = match[2] || match[1];
+          break;
+        }
+      }
+
+      console.log("Parsed vehicle:", { titre, prix, annee, kilometrage, puissance, carburant, transmission, marque, modele });
 
       if (prix === 0) {
         return null;
@@ -186,12 +271,12 @@ export function AdminImportPanel({ onVehiclesImported, existingVehicleLinks }: A
         kilometrage,
         carburant,
         transmission,
-        marque: marque.charAt(0).toUpperCase() + marque.slice(1),
+        marque,
         modele,
         lien: url,
         localisation,
         image: undefined,
-        puissance: undefined,
+        puissance,
         prixAjuste: undefined,
         gainPotentiel: undefined,
         scoreConfiance: undefined,
