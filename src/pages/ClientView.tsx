@@ -1,5 +1,6 @@
 import { useVehicleData } from '@/contexts/VehicleDataContext';
 import { ClientOpportunityCard } from '@/components/trading/ClientOpportunityCard';
+import { ClientPDFExport } from '@/components/trading/ClientPDFExport';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -49,6 +50,12 @@ export default function ClientView() {
             />
             <span className="text-lg font-bold text-gradient-gold">La Truffe</span>
           </div>
+
+          <ClientPDFExport 
+            opportunities={topOpportunities}
+            filters={filters}
+            totalAnalyzed={chartVehicles.length}
+          />
         </div>
       </header>
 
