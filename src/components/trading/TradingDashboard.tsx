@@ -5,9 +5,12 @@ import { SniperKPIs } from './SniperKPIs';
 import { OpportunityModal } from './OpportunityModal';
 import { CSVUploader } from './CSVUploader';
 import { MarketReportGenerator } from './MarketReportGenerator';
-import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
+import { ClientOpportunityCard } from './ClientOpportunityCard';
+import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, Users, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // Filter outliers using IQR method
 function filterOutliers(data: VehicleWithScore[]): VehicleWithScore[] {
@@ -63,7 +66,13 @@ export function TradingDashboard() {
   const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
-  const [chartHeight, setChartHeight] = useState(500); // Default height in pixels
+  const [chartHeight, setChartHeight] = useState(500);
+  const [isChartOpen, setIsChartOpen] = useState(true);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  
+  // Filters
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [kmRange, setKmRange] = useState<[number, number]>([0, 300000]);
   // Handle CSV upload - simple replace mode for Sniper
   const handleFileUpload = useCallback(async (file: File) => {
     setIsLoading(true);
@@ -84,19 +93,38 @@ export function TradingDashboard() {
   const trendLine = useMemo(() => calculateTrendLine(filteredVehicles), [filteredVehicles]);
   const outliersCount = vehicles.length - filteredVehicles.length;
 
+  // Compute min/max for filter ranges
+  const { maxPrice, maxKm } = useMemo(() => {
+    if (filteredVehicles.length === 0) return { maxPrice: 100000, maxKm: 300000 };
+    const prices = filteredVehicles.map(v => v.prix);
+    const kms = filteredVehicles.map(v => v.kilometrage);
+    return {
+      maxPrice: Math.ceil(Math.max(...prices) / 1000) * 1000,
+      maxKm: Math.ceil(Math.max(...kms) / 10000) * 10000,
+    };
+  }, [filteredVehicles]);
+
+  // Apply user filters to vehicles for chart
+  const chartVehicles = useMemo(() => {
+    return filteredVehicles.filter(v => 
+      v.prix >= priceRange[0] && v.prix <= priceRange[1] &&
+      v.kilometrage >= kmRange[0] && v.kilometrage <= kmRange[1]
+    );
+  }, [filteredVehicles, priceRange, kmRange]);
+
   // Calculate KPIs based on filtered data
   const kpis = useMemo(() => {
-    if (filteredVehicles.length === 0) {
+    if (chartVehicles.length === 0) {
       return { avgPrice: 0, decotePer10k: 0, bestOffer: null, opportunitiesCount: 0 };
     }
 
-    const avgPrice = filteredVehicles.reduce((sum, v) => sum + v.prix, 0) / filteredVehicles.length;
+    const avgPrice = chartVehicles.reduce((sum, v) => sum + v.prix, 0) / chartVehicles.length;
     
     // Décote per 10 000 km (slope * 10000)
     const decotePer10k = Math.abs(trendLine.slope * 10000);
 
     // Find opportunities (below trend line)
-    const opportunities = filteredVehicles.filter(v => {
+    const opportunities = chartVehicles.filter(v => {
       const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
       return v.prix < expectedPrice;
     });
@@ -117,6 +145,25 @@ export function TradingDashboard() {
       bestOffer,
       opportunitiesCount: opportunities.length,
     };
+  }, [chartVehicles, trendLine]);
+
+  // Top 5 opportunities for client view (most below trend line)
+  const top5Opportunities = useMemo(() => {
+    return filteredVehicles
+      .map(v => {
+        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
+        const deviation = expectedPrice - v.prix;
+        const deviationPercent = Math.round((deviation / expectedPrice) * 100);
+        return {
+          ...v,
+          expectedPrice: Math.round(expectedPrice),
+          deviation: Math.round(deviation),
+          deviationPercent,
+        };
+      })
+      .filter(v => v.deviationPercent >= 10) // At least 10% below trend
+      .sort((a, b) => b.deviationPercent - a.deviationPercent)
+      .slice(0, 5);
   }, [filteredVehicles, trendLine]);
 
   // Handle vehicle click from chart
@@ -217,57 +264,152 @@ export function TradingDashboard() {
         avgPrice={kpis.avgPrice}
         decotePer10k={kpis.decotePer10k}
         bestOffer={kpis.bestOffer}
-        totalVehicles={filteredVehicles.length}
+        totalVehicles={chartVehicles.length}
         opportunitiesCount={kpis.opportunitiesCount}
       />
 
-      {/* Chart with adjustable height */}
-      <div className="flex-1 p-4 min-h-0 overflow-auto">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h3 className="font-semibold text-foreground">Graphique Sniper</h3>
-              <p className="text-xs text-muted-foreground">
-                Cliquez sur un point vert pour voir l'opportunité
-              </p>
-            </div>
-            <div className="flex items-center gap-6 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success" />
-                <span className="text-muted-foreground">Sous le marché (Opportunité)</span>
+      {/* Main content area */}
+      <div className="flex-1 p-4 min-h-0 overflow-auto space-y-4">
+        {/* Collapsible Chart Section */}
+        <Collapsible open={isChartOpen} onOpenChange={setIsChartOpen}>
+          <div className="rounded-xl border border-border bg-card">
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+                <div>
+                  <h3 className="font-semibold text-foreground">Graphique Sniper (Analyse Expert)</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Cliquez sur un point vert pour voir l'opportunité
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-6 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-success" />
+                      <span className="text-muted-foreground">Opportunité</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-destructive/50" />
+                      <span className="text-muted-foreground">Au-dessus</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-0.5 bg-destructive" />
+                      <span className="text-muted-foreground">Tendance</span>
+                    </div>
+                  </div>
+                  {isChartOpen ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-destructive/50" />
-                <span className="text-muted-foreground">Au-dessus du marché</span>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <div className="px-4 pb-4 space-y-4">
+                {/* Filters */}
+                <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <SlidersHorizontal className="w-4 h-4" />
+                      Filtres
+                      {isFiltersOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="grid grid-cols-2 gap-6 mt-4 p-4 rounded-lg bg-muted/30 border border-border">
+                      {/* Price Filter */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">
+                          Prix : {priceRange[0].toLocaleString('fr-FR')} € - {priceRange[1].toLocaleString('fr-FR')} €
+                        </Label>
+                        <Slider
+                          value={priceRange}
+                          onValueChange={(value) => setPriceRange(value as [number, number])}
+                          min={0}
+                          max={maxPrice}
+                          step={1000}
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      {/* Km Filter */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">
+                          Kilométrage : {kmRange[0].toLocaleString('fr-FR')} km - {kmRange[1].toLocaleString('fr-FR')} km
+                        </Label>
+                        <Slider
+                          value={kmRange}
+                          onValueChange={(value) => setKmRange(value as [number, number])}
+                          min={0}
+                          max={maxKm}
+                          step={5000}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Height control */}
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                  <Minimize2 className="w-4 h-4 text-muted-foreground" />
+                  <Slider
+                    value={[chartHeight]}
+                    onValueChange={(value) => setChartHeight(value[0])}
+                    min={300}
+                    max={900}
+                    step={50}
+                    className="flex-1"
+                  />
+                  <Maximize2 className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground w-14 text-right">{chartHeight}px</span>
+                </div>
+                
+                <div style={{ height: chartHeight }}>
+                  <SniperChart
+                    data={chartVehicles}
+                    onVehicleClick={handleVehicleClick}
+                    trendLine={trendLine}
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-0.5 bg-destructive" />
-                <span className="text-muted-foreground">Ligne de tendance</span>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+
+        {/* CLIENT VIEW - Top 5 Opportunities */}
+        <div className="rounded-xl border border-gold/30 bg-card overflow-hidden">
+          <div className="px-6 py-4 bg-gradient-to-r from-gold/10 to-transparent border-b border-gold/20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                <Users className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">TOP OPPORTUNITÉS (VUE CLIENT)</h2>
+                <p className="text-sm text-muted-foreground">Les meilleures affaires sélectionnées pour vous</p>
               </div>
             </div>
           </div>
           
-          {/* Height control */}
-          <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-muted/50">
-            <Minimize2 className="w-4 h-4 text-muted-foreground" />
-            <Slider
-              value={[chartHeight]}
-              onValueChange={(value) => setChartHeight(value[0])}
-              min={300}
-              max={900}
-              step={50}
-              className="flex-1"
-            />
-            <Maximize2 className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground w-14 text-right">{chartHeight}px</span>
-          </div>
-          
-          <div style={{ height: chartHeight }}>
-            <SniperChart
-              data={filteredVehicles}
-              onVehicleClick={handleVehicleClick}
-              trendLine={trendLine}
-            />
+          <div className="p-4">
+            {top5Opportunities.length > 0 ? (
+              <div className="grid gap-4">
+                {top5Opportunities.map((vehicle, index) => (
+                  <ClientOpportunityCard
+                    key={vehicle.id || `${vehicle.marque}-${vehicle.modele}-${index}`}
+                    vehicle={vehicle}
+                    rank={index + 1}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Aucune opportunité exceptionnelle détectée</p>
+                <p className="text-sm">Les véhicules doivent être au moins 10% sous le marché</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
