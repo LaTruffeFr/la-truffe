@@ -628,6 +628,7 @@ export function extractBrand(titre: string): string {
 export function extractModel(titre: string, marque: string): string {
   const titleLower = titre.toLowerCase();
   
+  // First try to find known models for this brand
   const brandModels = MODEL_PATTERNS[marque];
   if (brandModels) {
     for (const model of brandModels) {
@@ -637,9 +638,54 @@ export function extractModel(titre: string, marque: string): string {
     }
   }
   
-  let model = titre.replace(new RegExp(marque, 'gi'), '').trim();
-  const words = model.split(/\s+/).filter(w => w.length > 1);
-  return words.slice(0, 2).join(' ') || 'Inconnu';
+  // Try to extract model from title by removing brand and cleaning up
+  // Remove brand name (case insensitive)
+  let cleaned = titre;
+  
+  // Handle "Mercedes-Benz" vs "Mercedes"
+  const brandVariants = [marque, marque.replace('-', ' '), marque.replace('-Benz', '')];
+  for (const variant of brandVariants) {
+    cleaned = cleaned.replace(new RegExp(variant, 'gi'), '');
+  }
+  
+  // Remove common prefixes/suffixes that aren't part of the model
+  cleaned = cleaned
+    .replace(/^\s*-\s*/, '') // Leading dash
+    .replace(/\s*-\s*$/, '') // Trailing dash
+    .replace(/\s+/g, ' ')    // Multiple spaces
+    .trim();
+  
+  // Try to find common model patterns
+  // Pattern: Word starting with letter followed by numbers (A3, X5, RS3, etc.)
+  const alphaNumMatch = cleaned.match(/\b([A-Za-z]+\s*\d+[A-Za-z]*)\b/i);
+  if (alphaNumMatch) {
+    return alphaNumMatch[1].toUpperCase().replace(/\s+/g, '');
+  }
+  
+  // Pattern: Number followed by letters (308, 208, 500, etc.)
+  const numAlphaMatch = cleaned.match(/\b(\d{2,3}[A-Za-z]*)\b/);
+  if (numAlphaMatch) {
+    return numAlphaMatch[1].toUpperCase();
+  }
+  
+  // Pattern: Pure word model (Golf, Clio, Megane, etc.) - take first significant word
+  const words = cleaned.split(/[\s\-,]+/).filter(w => {
+    // Filter out noise words
+    const lower = w.toLowerCase();
+    const noiseWords = ['occasion', 'vente', 'auto', 'voiture', 'tdi', 'tsi', 'tfsi', 'hdi', 'dci', 
+      'essence', 'diesel', 'hybride', 'automatique', 'manuelle', 'cv', 'ch', 'km', 
+      'sièges', 'chauffants', 'radar', 'bang', 'olufsen', 'cuir', 'gps', 'toit', 'ouvrant',
+      'garantie', 'première', 'main', 'reprise', 'possible', 'financement'];
+    return w.length > 1 && !noiseWords.includes(lower) && !/^\d+$/.test(w);
+  });
+  
+  if (words.length > 0) {
+    // Return first 1-2 meaningful words
+    const modelParts = words.slice(0, 2);
+    return modelParts.join(' ').toUpperCase();
+  }
+  
+  return 'Inconnu';
 }
 
 // ============================================
