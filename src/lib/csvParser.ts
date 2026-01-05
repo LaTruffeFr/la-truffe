@@ -67,12 +67,120 @@ const COLUMN_PATTERNS: Record<keyof ColumnMapping, RegExp[]> = {
 };
 
 const BRANDS = [
-  'Audi', 'BMW', 'Mercedes', 'Volkswagen', 'Renault', 'Peugeot', 'Citroën', 'Citroen',
-  'Toyota', 'Honda', 'Ford', 'Opel', 'Fiat', 'Seat', 'Skoda', 'Hyundai', 'Kia',
-  'Nissan', 'Mazda', 'Volvo', 'Porsche', 'Jaguar', 'Land Rover', 'Mini', 'Tesla',
-  'Dacia', 'Suzuki', 'Mitsubishi', 'Lexus', 'Alfa Romeo', 'Jeep', 'DS', 'Cupra',
-  'Chevrolet', 'Smart', 'Maserati', 'Ferrari', 'Lamborghini', 'Bentley', 'Aston Martin',
+  // Premium Allemand
+  'Audi', 'BMW', 'Mercedes', 'Mercedes-Benz', 'Volkswagen', 'Porsche',
+  // Français
+  'Renault', 'Peugeot', 'Citroën', 'Citroen', 'DS', 'Alpine', 'Dacia',
+  // Japonais
+  'Toyota', 'Honda', 'Nissan', 'Mazda', 'Suzuki', 'Mitsubishi', 'Lexus', 'Infiniti', 'Subaru', 'Isuzu',
+  // Coréen
+  'Hyundai', 'Kia', 'Genesis', 'SsangYong',
+  // Américain
+  'Ford', 'Chevrolet', 'Dodge', 'Chrysler', 'Jeep', 'Cadillac', 'GMC', 'Tesla', 'Buick', 'Lincoln', 'RAM',
+  // Italien
+  'Fiat', 'Alfa Romeo', 'Lancia', 'Maserati', 'Ferrari', 'Lamborghini', 'Abarth',
+  // Espagnol
+  'Seat', 'Cupra',
+  // Tchèque
+  'Skoda',
+  // Suédois
+  'Volvo', 'Saab', 'Polestar',
+  // Britannique
+  'Jaguar', 'Land Rover', 'Range Rover', 'Mini', 'Bentley', 'Rolls-Royce', 'Aston Martin', 'McLaren', 'Lotus', 'MG',
+  // Allemand compact
+  'Opel', 'Smart',
+  // Autre
+  'Bugatti', 'Pagani', 'Koenigsegg', 'Rimac',
 ];
+
+// Comprehensive model patterns for accurate extraction
+const MODEL_PATTERNS: Record<string, string[]> = {
+  'Audi': [
+    'rs q8', 'rsq8', 'rs q3', 'rsq3', 'rs7', 'rs6', 'rs5', 'rs4', 'rs3', 'rs e-tron gt',
+    'sq8', 'sq7', 'sq5', 'sq3', 's8', 's7', 's6', 's5', 's4', 's3', 's1',
+    'tt rs', 'ttrs', 'tts', 'tt', 'r8',
+    'a8', 'a7', 'a6', 'a5', 'a4', 'a3', 'a2', 'a1',
+    'q8', 'q7', 'q5', 'q4', 'q3', 'q2', 'e-tron gt', 'e-tron',
+  ],
+  'BMW': [
+    'm8', 'm7', 'm6', 'm5', 'm4', 'm3', 'm2', 'x6 m', 'x5 m', 'x4 m', 'x3 m',
+    'm135i', 'm140i', 'm235i', 'm240i', 'm340i', 'm440i', 'm550i',
+    'serie 1', 'série 1', 'serie 2', 'série 2', 'serie 3', 'série 3', 'serie 4', 'série 4',
+    'serie 5', 'série 5', 'serie 6', 'série 6', 'serie 7', 'série 7', 'serie 8', 'série 8',
+    'x7', 'x6', 'x5', 'x4', 'x3', 'x2', 'x1', 'ix', 'i7', 'i5', 'i4', 'i3', 'i8', 'z4',
+  ],
+  'Mercedes': [
+    'amg gt', 'a 45 amg', 'a45 amg', 'a 35 amg', 'a35 amg', 'c 63 amg', 'c63 amg', 'e 63 amg', 'e63 amg',
+    'classe a', 'classe b', 'classe c', 'classe e', 'classe s', 'classe g',
+    'cla', 'cls', 'gla', 'glb', 'glc', 'gle', 'gls',
+    'eqs', 'eqe', 'eqc', 'eqa', 'eqb', 'sl', 'slc', 'maybach',
+  ],
+  'Volkswagen': [
+    'golf r', 'golf gti', 'golf gte', 'golf gtd', 'golf', 'polo gti', 'polo',
+    'arteon r', 'arteon', 'passat', 't-roc r', 't-roc', 't-cross', 'tiguan r', 'tiguan',
+    'touareg', 'touran', 'id.7', 'id.5', 'id.4', 'id.3', 'id.buzz', 'up gti', 'up', 'scirocco',
+  ],
+  'Renault': [
+    'megane rs', 'clio rs', 'megane e-tech', 'megane', 'clio', 'captur', 'scenic',
+    'twingo', 'kadjar', 'koleos', 'austral', 'arkana', 'zoe', 'talisman', 'espace',
+  ],
+  'Peugeot': [
+    '208 gti', '308 gti', 'e-208', 'e-308', '208', '308', '408', '508',
+    'e-2008', '2008', '3008', '5008', 'rcz', '108', '107',
+  ],
+  'Citroën': [
+    'c3 aircross', 'c5 aircross', 'c4 cactus', 'c3', 'c4', 'c5 x', 'c5', 'c1', 'ami', 'berlingo',
+  ],
+  'DS': ['ds 9', 'ds9', 'ds 7', 'ds7', 'ds 4', 'ds4', 'ds 3', 'ds3'],
+  'Toyota': [
+    'gr supra', 'supra', 'gr yaris', 'gr86', 'yaris cross', 'yaris', 'corolla cross', 'corolla',
+    'c-hr', 'rav4', 'highlander', 'land cruiser', 'prius', 'camry', 'aygo', 'bz4x',
+  ],
+  'Honda': ['civic type r', 'civic', 'hr-v', 'cr-v', 'zr-v', 'jazz', 'accord', 'e', 'nsx'],
+  'Nissan': [
+    'gt-r', 'gtr', '370z', '350z', 'qashqai', 'juke', 'x-trail', 'leaf', 'ariya', 'micra',
+  ],
+  'Porsche': [
+    '911 gt3 rs', '911 gt3', '911 turbo s', '911 turbo', '911', '718 cayman', '718 boxster', '718',
+    'cayenne', 'macan', 'panamera', 'taycan', 'cayman', 'boxster',
+  ],
+  'Ford': [
+    'focus rs', 'focus st', 'fiesta st', 'focus', 'fiesta', 'puma', 'kuga',
+    'mustang mach-e', 'mustang', 'explorer', 'mondeo', 'ranger',
+  ],
+  'Opel': ['corsa-e', 'corsa opc', 'corsa', 'astra opc', 'astra', 'mokka', 'crossland', 'grandland', 'insignia'],
+  'Fiat': ['500e', '500x', '500l', '500', 'panda', 'tipo', '600e'],
+  'Seat': ['leon cupra', 'leon fr', 'leon', 'ibiza', 'ateca', 'arona', 'tarraco'],
+  'Cupra': ['formentor vz5', 'formentor vz', 'formentor', 'leon', 'ateca', 'born', 'tavascan'],
+  'Skoda': ['octavia rs', 'octavia vrs', 'octavia', 'superb', 'kodiaq rs', 'kodiaq', 'karoq', 'scala', 'fabia', 'enyaq'],
+  'Hyundai': ['i30 n', 'i20 n', 'kona n', 'i30', 'i20', 'i10', 'kona', 'tucson', 'santa fe', 'ioniq 6', 'ioniq 5'],
+  'Kia': ['stinger', 'proceed', 'ceed', 'sportage', 'sorento', 'niro', 'ev6', 'ev9', 'picanto', 'rio'],
+  'Volvo': ['xc90', 'xc60', 'xc40', 'v90', 'v60', 'v40', 's90', 's60', 'c40', 'ex30', 'ex90'],
+  'Mini': ['john cooper works', 'jcw', 'cooper s', 'cooper', 'one', 'countryman', 'clubman'],
+  'Alfa Romeo': ['giulia quadrifoglio', 'stelvio quadrifoglio', 'giulia', 'stelvio', 'giulietta', '4c', 'tonale'],
+  'Jaguar': ['f-type', 'xe', 'xf', 'xj', 'e-pace', 'f-pace', 'i-pace'],
+  'Land Rover': ['range rover sport', 'range rover velar', 'range rover evoque', 'range rover', 'discovery sport', 'discovery', 'defender'],
+  'Jeep': ['grand cherokee', 'wrangler', 'compass', 'renegade', 'gladiator', 'avenger'],
+  'Tesla': ['model s', 'model 3', 'model x', 'model y'],
+  'Dacia': ['duster', 'sandero stepway', 'sandero', 'jogger', 'spring', 'logan'],
+  'Maserati': ['mc20', 'ghibli', 'quattroporte', 'levante', 'granturismo', 'grecale'],
+  'Ferrari': ['sf90', 'f8 tributo', 'f8', 'roma', 'portofino', '296 gtb', '296', '812', 'purosangue', '488', '458'],
+  'Lamborghini': ['revuelto', 'urus', 'huracan', 'aventador'],
+  'Lexus': ['lc', 'ls', 'es', 'is', 'nx', 'rx', 'ux', 'rz'],
+  'Mazda': ['mx-5', 'mazda3', 'mazda2', 'mazda6', 'cx-60', 'cx-5', 'cx-30', 'cx-3'],
+  'Suzuki': ['swift sport', 'swift', 'vitara', 's-cross', 'jimny', 'ignis'],
+  'Mitsubishi': ['outlander phev', 'outlander', 'eclipse cross', 'asx', 'l200'],
+  'Smart': ['fortwo', 'forfour', '#1', '#3'],
+  'Genesis': ['g80', 'g70', 'g90', 'gv80', 'gv70', 'gv60'],
+  'Aston Martin': ['dbs', 'db11', 'db12', 'vantage', 'dbx'],
+  'McLaren': ['720s', '765lt', '750s', 'gt', 'artura', '570s', '600lt'],
+  'Bentley': ['continental gt', 'flying spur', 'bentayga'],
+  'Subaru': ['wrx sti', 'wrx', 'brz', 'impreza', 'outback', 'forester', 'xv'],
+  'Alpine': ['a110 s', 'a110 r', 'a110 gt', 'a110'],
+  'MG': ['mg4', 'zs', 'hs', 'mg5', 'cyberster'],
+  'Polestar': ['polestar 1', 'polestar 2', 'polestar 3', 'polestar 4'],
+  'Abarth': ['595', '695', '500e'],
+};
 
 function detectColumnIndex(headers: string[], patterns: RegExp[]): number {
   for (let i = 0; i < headers.length; i++) {
@@ -277,6 +385,17 @@ function cleanPuissance(value: string): number {
 
 function extractBrand(text: string): string {
   const lower = text.toLowerCase();
+  
+  // First check model patterns (more specific)
+  for (const [brand, models] of Object.entries(MODEL_PATTERNS)) {
+    for (const model of models) {
+      if (lower.includes(model.toLowerCase())) {
+        return brand;
+      }
+    }
+  }
+  
+  // Then check brand names
   for (const brand of BRANDS) {
     if (lower.includes(brand.toLowerCase())) {
       return brand;
@@ -288,9 +407,39 @@ function extractBrand(text: string): string {
 function extractModel(text: string, brand: string): string {
   if (brand === 'Autre') return 'Inconnu';
   
-  // Remove brand from title and get remaining words
+  const lower = text.toLowerCase();
+  
+  // First try to match known model patterns for this brand
+  const brandModels = MODEL_PATTERNS[brand];
+  if (brandModels) {
+    for (const model of brandModels) {
+      if (lower.includes(model.toLowerCase())) {
+        return model.toUpperCase();
+      }
+    }
+  }
+  
+  // Fallback: Remove brand from title and get remaining words
   const withoutBrand = text.replace(new RegExp(brand, 'gi'), '').trim();
-  const words = withoutBrand.split(/\s+/).filter(w => w.length > 1 && !/^\d+$/.test(w));
+  
+  // Common patterns to extract model
+  const patterns = [
+    // Model like "A3", "X5", "C220", "E350"
+    /\b([A-Z]{1,2}\s?\d{1,3}[A-Za-z]?)\b/i,
+    // Model like "Golf", "Clio", "308"
+    /\b(\d{3})\b/,
+    // First meaningful word after brand removal
+  ];
+  
+  for (const pattern of patterns) {
+    const match = withoutBrand.match(pattern);
+    if (match) {
+      return match[1].toUpperCase();
+    }
+  }
+  
+  // Last resort: first 2 words
+  const words = withoutBrand.split(/\s+/).filter(w => w.length > 1 && !/^\d+$/.test(w) && !/^(ch|cv|km|€)$/i.test(w));
   
   if (words.length > 0) {
     return words.slice(0, 2).join(' ').toUpperCase();
