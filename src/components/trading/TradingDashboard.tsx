@@ -4,6 +4,7 @@ import { SniperChart } from './SniperChart';
 import { SniperKPIs } from './SniperKPIs';
 import { OpportunityModal } from './OpportunityModal';
 import { CSVUploader } from './CSVUploader';
+import { MarketReportGenerator } from './MarketReportGenerator';
 import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -198,6 +199,11 @@ export function TradingDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <MarketReportGenerator 
+            vehicles={filteredVehicles} 
+            trendLine={trendLine} 
+            kpis={kpis} 
+          />
           <Button variant="ghost" size="sm" onClick={handleClear} className="gap-2 text-muted-foreground">
             <RotateCcw className="w-4 h-4" />
             Nouveau scan
