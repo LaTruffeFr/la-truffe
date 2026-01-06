@@ -740,7 +740,7 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
 }
 
 // ============================================
-// PRICING ENGINE V2 - EXACT SEGMENTATION
+// PRICING ENGINE V3 - ADVANCED SEGMENTATION
 // ============================================
 
 // Premium keywords for version detection (+10% bonus on cote)
@@ -760,6 +760,38 @@ const PREMIUM_KEYWORDS = [
   // Italian
   'quadrifoglio', 'veloce', 'speciale',
 ];
+
+// Equipment/options keywords for +5% bonus
+const EQUIPMENT_KEYWORDS = [
+  'toit ouvrant', 'toit panoramique', 'cuir', 'full', 'gps', 'navigation',
+  'carplay', 'android auto', 'camera', 'caméra', '360', 'led', 'matrix',
+  'acc', 'régulateur adaptatif', 'park assist', 'keyless', 'main libre',
+  'sièges chauffants', 'sièges ventilés', 'attelage', 'jantes 19', 'jantes 20',
+  'sound system', 'harman', 'bose', 'b&o', 'bang', 'burmester', 'meridian',
+];
+
+// Transmission premium
+const TRANSMISSION_PREMIUM: Record<string, number> = {
+  'automatique': 1.04,  // +4% for automatic
+  'manuelle': 1.0,
+  'autre': 1.0,
+};
+
+// Power category multipliers
+const POWER_MULTIPLIERS: Record<string, number> = {
+  'eco': 0.95,          // <100cv: -5%
+  'standard': 1.0,      // 100-150cv: baseline
+  'sport': 1.06,        // 150-250cv: +6%
+  'performance': 1.12,  // >250cv: +12%
+};
+
+function getPowerCategory(puissance: number): string {
+  if (puissance <= 0) return 'standard';
+  if (puissance < 100) return 'eco';
+  if (puissance < 150) return 'standard';
+  if (puissance < 250) return 'sport';
+  return 'performance';
+}
 
 /**
  * Normalize text for consistent fingerprinting
@@ -810,6 +842,18 @@ function createClusterFingerprint(vehicle: ParsedVehicle): string {
 }
 
 /**
+ * Create broader cluster (year ±1) for fallback
+ */
+function createBroadClusterFingerprint(vehicle: ParsedVehicle): string {
+  const marque = normalizeForFingerprint(vehicle.marque);
+  const modele = normalizeForFingerprint(vehicle.modele);
+  const yearBucket = Math.floor(vehicle.annee / 2) * 2; // Group by 2-year buckets
+  const carburant = normalizeCarburant(vehicle.carburant);
+  
+  return `${marque}_${modele}_${yearBucket}_${carburant}_BROAD`;
+}
+
+/**
  * Detect if vehicle has premium finish based on title
  */
 function detectPremiumVersion(titre: string): boolean {
@@ -818,84 +862,169 @@ function detectPremiumVersion(titre: string): boolean {
 }
 
 /**
- * Calculate cluster statistics with IQR outlier removal
+ * Detect equipment level (bonus options) based on title
  */
-function calculateClusterStats(prices: number[]): { moyenne: number; median: number } | null {
-  if (prices.length === 0) return null;
+function detectEquipmentLevel(titre: string): number {
+  const lower = titre.toLowerCase();
+  let count = 0;
+  for (const keyword of EQUIPMENT_KEYWORDS) {
+    if (lower.includes(keyword)) count++;
+  }
+  // Max 3 equipment bonuses
+  return Math.min(count, 3);
+}
+
+/**
+ * Calculate cluster statistics with IQR outlier removal + weighted median
+ */
+function calculateClusterStats(vehicles: Array<{ prix: number; kilometrage: number }>): {
+  moyenne: number;
+  median: number;
+  kmMoyen: number;
+  prixParKm: number;
+} | null {
+  if (vehicles.length === 0) return null;
   
+  const prices = vehicles.map(v => v.prix);
   const sorted = [...prices].sort((a, b) => a - b);
   
   // IQR outlier removal for 4+ samples
-  let filtered = sorted;
+  let filteredVehicles = vehicles;
   if (sorted.length >= 4) {
     const q1 = sorted[Math.floor(sorted.length * 0.25)];
     const q3 = sorted[Math.floor(sorted.length * 0.75)];
     const iqr = q3 - q1;
-    filtered = sorted.filter(p => p >= q1 - 1.5 * iqr && p <= q3 + 1.5 * iqr);
+    const lowerBound = q1 - 1.5 * iqr;
+    const upperBound = q3 + 1.5 * iqr;
+    filteredVehicles = vehicles.filter(v => v.prix >= lowerBound && v.prix <= upperBound);
   }
   
-  if (filtered.length === 0) filtered = sorted;
+  if (filteredVehicles.length === 0) filteredVehicles = vehicles;
   
-  const moyenne = filtered.reduce((a, b) => a + b, 0) / filtered.length;
-  const mid = Math.floor(filtered.length / 2);
-  const median = filtered.length % 2 
-    ? filtered[mid] 
-    : (filtered[mid - 1] + filtered[mid]) / 2;
+  const filteredPrices = filteredVehicles.map(v => v.prix).sort((a, b) => a - b);
+  const filteredKms = filteredVehicles.map(v => v.kilometrage);
   
-  return { moyenne, median };
+  const moyenne = filteredPrices.reduce((a, b) => a + b, 0) / filteredPrices.length;
+  const mid = Math.floor(filteredPrices.length / 2);
+  const median = filteredPrices.length % 2 
+    ? filteredPrices[mid] 
+    : (filteredPrices[mid - 1] + filteredPrices[mid]) / 2;
+  
+  const kmMoyen = filteredKms.reduce((a, b) => a + b, 0) / filteredKms.length;
+  
+  // Calculate €/km using linear regression
+  let prixParKm = 0;
+  if (filteredVehicles.length >= 3) {
+    const n = filteredVehicles.length;
+    let sumKm = 0, sumPrix = 0, sumKmPrix = 0, sumKm2 = 0;
+    
+    for (const v of filteredVehicles) {
+      sumKm += v.kilometrage;
+      sumPrix += v.prix;
+      sumKmPrix += v.kilometrage * v.prix;
+      sumKm2 += v.kilometrage * v.kilometrage;
+    }
+    
+    const denominator = n * sumKm2 - sumKm * sumKm;
+    if (denominator !== 0) {
+      prixParKm = Math.abs((n * sumKmPrix - sumKm * sumPrix) / denominator);
+    }
+  }
+  
+  // Fallback: use 2.5% per 10k km of average price
+  if (prixParKm === 0 || !isFinite(prixParKm) || prixParKm > 1) {
+    prixParKm = (moyenne * 0.025) / 10000;
+  }
+  
+  return { moyenne, median, kmMoyen, prixParKm };
 }
 
 /**
- * Main pricing engine with exact cluster segmentation
+ * Main pricing engine V3 with advanced multi-factor analysis
  */
-export function calculateDealScores(vehicles: ParsedVehicle[]): VehicleWithScore[] {
-  // STEP 1: Create clusters by exact fingerprint
-  const clusters: Record<string, ParsedVehicle[]> = {};
+export function calculateDealScores(
+  vehicles: ParsedVehicle[],
+  forcedMarque?: string,
+  forcedModele?: string
+): VehicleWithScore[] {
+  // Apply forced brand/model if provided
+  const processedVehicles = vehicles.map(v => ({
+    ...v,
+    marque: forcedMarque || v.marque,
+    modele: forcedModele || v.modele,
+  }));
   
-  for (const vehicle of vehicles) {
-    const clusterId = createClusterFingerprint(vehicle);
-    if (!clusters[clusterId]) clusters[clusterId] = [];
-    clusters[clusterId].push(vehicle);
+  // STEP 1: Create exact clusters
+  const exactClusters: Record<string, ParsedVehicle[]> = {};
+  const broadClusters: Record<string, ParsedVehicle[]> = {};
+  
+  for (const vehicle of processedVehicles) {
+    const exactId = createClusterFingerprint(vehicle);
+    const broadId = createBroadClusterFingerprint(vehicle);
+    
+    if (!exactClusters[exactId]) exactClusters[exactId] = [];
+    exactClusters[exactId].push(vehicle);
+    
+    if (!broadClusters[broadId]) broadClusters[broadId] = [];
+    broadClusters[broadId].push(vehicle);
   }
   
-  console.log(`Created ${Object.keys(clusters).length} unique clusters from ${vehicles.length} vehicles`);
+  console.log(`Created ${Object.keys(exactClusters).length} exact clusters, ${Object.keys(broadClusters).length} broad clusters from ${vehicles.length} vehicles`);
   
   // STEP 2: Calculate stats per cluster
-  const clusterStats: Record<string, { 
-    moyenne: number; 
-    median: number; 
+  type ClusterStat = {
+    moyenne: number;
+    median: number;
+    kmMoyen: number;
+    prixParKm: number;
     count: number;
-  }> = {};
+  };
   
-  for (const [clusterId, clusterVehicles] of Object.entries(clusters)) {
-    const prices = clusterVehicles.map(v => v.prix);
-    const stats = calculateClusterStats(prices);
-    
+  const exactStats: Record<string, ClusterStat> = {};
+  const broadStats: Record<string, ClusterStat> = {};
+  
+  for (const [clusterId, clusterVehicles] of Object.entries(exactClusters)) {
+    const stats = calculateClusterStats(clusterVehicles.map(v => ({ prix: v.prix, kilometrage: v.kilometrage })));
     if (stats) {
-      clusterStats[clusterId] = {
-        moyenne: stats.moyenne,
-        median: stats.median,
-        count: clusterVehicles.length,
-      };
+      exactStats[clusterId] = { ...stats, count: clusterVehicles.length };
+    }
+  }
+  
+  for (const [clusterId, clusterVehicles] of Object.entries(broadClusters)) {
+    const stats = calculateClusterStats(clusterVehicles.map(v => ({ prix: v.prix, kilometrage: v.kilometrage })));
+    if (stats) {
+      broadStats[clusterId] = { ...stats, count: clusterVehicles.length };
     }
   }
   
   // Log cluster distribution
-  const validClusters = Object.values(clusterStats).filter(s => s.count >= 3).length;
-  console.log(`${validClusters} clusters with 3+ vehicles (reliable data)`);
+  const validExact = Object.values(exactStats).filter(s => s.count >= 3).length;
+  const validBroad = Object.values(broadStats).filter(s => s.count >= 3).length;
+  console.log(`${validExact} exact clusters with 3+ vehicles, ${validBroad} broad clusters with 3+ vehicles`);
   
-  // STEP 3: Calculate scores for each vehicle
-  return vehicles.map(vehicle => {
-    const clusterId = createClusterFingerprint(vehicle);
-    const stats = clusterStats[clusterId];
+  // STEP 3: Calculate advanced scores for each vehicle
+  return processedVehicles.map(vehicle => {
+    const exactId = createClusterFingerprint(vehicle);
+    const broadId = createBroadClusterFingerprint(vehicle);
+    
+    // Try exact stats first, fallback to broad
+    let stats = exactStats[exactId];
+    let usedBroad = false;
+    
+    if (!stats || stats.count < 3) {
+      stats = broadStats[broadId];
+      usedBroad = true;
+    }
+    
     const isPremium = detectPremiumVersion(vehicle.titre);
+    const equipmentLevel = detectEquipmentLevel(vehicle.titre);
     const hasEnoughData = stats ? stats.count >= 3 : false;
     
     // No stats = no comparison possible
     if (!stats) {
       return {
         ...vehicle,
-        clusterId,
+        clusterId: exactId,
         clusterSize: 1,
         coteCluster: vehicle.prix,
         ecartEuros: 0,
@@ -903,39 +1032,71 @@ export function calculateDealScores(vehicles: ParsedVehicle[]): VehicleWithScore
         dealScore: 50,
         isPremium,
         hasEnoughData: false,
-        // Legacy fields
         prixMoyen: vehicle.prix,
         prixMedian: vehicle.prix,
         ecart: 0,
-        segmentKey: clusterId,
+        segmentKey: exactId,
       };
     }
     
-    // Calculate cote with premium bonus
-    let coteCluster = stats.moyenne;
+    // ADVANCED COTE CALCULATION
+    let coteCluster = stats.median; // Start with median (more robust)
+    
+    // 1. Adjust for km difference from cluster average
+    const kmDiff = vehicle.kilometrage - stats.kmMoyen;
+    const kmAdjustment = kmDiff * stats.prixParKm;
+    coteCluster -= kmAdjustment;
+    
+    // 2. Apply premium bonus (+10% for premium versions)
     if (isPremium) {
-      // Premium versions are worth 10% more than cluster average
-      coteCluster = coteCluster * 1.10;
+      coteCluster *= 1.10;
     }
+    
+    // 3. Apply equipment bonus (+2% per notable equipment, max 6%)
+    if (equipmentLevel > 0) {
+      coteCluster *= (1 + equipmentLevel * 0.02);
+    }
+    
+    // 4. Apply transmission premium (if not already in exact cluster)
+    if (usedBroad && vehicle.transmission !== 'autre') {
+      const transPremium = TRANSMISSION_PREMIUM[vehicle.transmission] || 1.0;
+      coteCluster *= transPremium;
+    }
+    
+    // 5. Apply power category adjustment (if not already in exact cluster)
+    if (usedBroad && vehicle.puissance > 0) {
+      const powerCat = getPowerCategory(vehicle.puissance);
+      const powerMult = POWER_MULTIPLIERS[powerCat] || 1.0;
+      coteCluster *= powerMult;
+    }
+    
+    // Ensure minimum reasonable price
+    coteCluster = Math.max(1000, coteCluster);
     
     // Calculate écart (positive = good deal, negative = overpriced)
     const ecartEuros = coteCluster - vehicle.prix;
     const ecartPourcent = (ecartEuros / coteCluster) * 100;
     
-    // Deal score: map -30% to +30% écart → 0 to 100 score
-    // +30% under market = 100, 0% = 50, +30% over market = 0
+    // Deal score with confidence weighting
     let dealScore: number;
     if (!hasEnoughData) {
-      // Not enough data: neutral score
       dealScore = 50;
     } else {
-      // Score formula: 50 + (ecartPourcent * 1.67) capped at 0-100
-      dealScore = Math.max(0, Math.min(100, 50 + (ecartPourcent * 1.67)));
+      // Base score from écart
+      const baseScore = 50 + (ecartPourcent * 1.67);
+      
+      // Confidence penalty for broad clusters
+      const confidenceMultiplier = usedBroad ? 0.85 : 1.0;
+      
+      // Bonus for larger clusters (more reliable)
+      const sizeBonus = Math.min(10, stats.count);
+      
+      dealScore = Math.max(0, Math.min(100, baseScore * confidenceMultiplier + sizeBonus * 0.5));
     }
     
     return {
       ...vehicle,
-      clusterId,
+      clusterId: exactId,
       clusterSize: stats.count,
       coteCluster: Math.round(coteCluster),
       ecartEuros: Math.round(ecartEuros),
@@ -943,18 +1104,17 @@ export function calculateDealScores(vehicles: ParsedVehicle[]): VehicleWithScore
       dealScore: Math.round(dealScore),
       isPremium,
       hasEnoughData,
-      // Legacy fields for compatibility
       prixMoyen: Math.round(stats.moyenne),
       prixMedian: Math.round(stats.median),
-      ecart: Math.round(-ecartEuros), // Legacy uses opposite sign
-      segmentKey: clusterId,
+      ecart: Math.round(-ecartEuros),
+      segmentKey: usedBroad ? broadId : exactId,
     };
   });
 }
 
 export function getTopOpportunities(vehicles: VehicleWithScore[], limit = 500): VehicleWithScore[] {
   return [...vehicles]
-    .filter(v => v.hasEnoughData && v.dealScore >= 50) // Only reliable good deals
+    .filter(v => v.hasEnoughData && v.dealScore >= 55) // Slightly higher threshold
     .sort((a, b) => b.dealScore - a.dealScore)
     .slice(0, limit);
 }
