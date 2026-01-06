@@ -3,11 +3,11 @@ import { VehicleWithScore } from '@/lib/csvParser';
 import { SniperChart } from './SniperChart';
 import { SniperKPIs } from './SniperKPIs';
 import { OpportunityModal } from './OpportunityModal';
-import { CSVUploader } from './CSVUploader';
+import { CSVImportModal } from './CSVImportModal';
 import { MarketReportGenerator } from './MarketReportGenerator';
 import { useVehicleData } from '@/contexts/VehicleDataContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, Users, ChevronDown, ChevronUp, SlidersHorizontal, ExternalLink } from 'lucide-react';
+import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, Users, ChevronDown, ChevronUp, SlidersHorizontal, ExternalLink, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ export function TradingDashboard() {
     filters,
     dataRanges,
     isLoading,
+    vehicleInfo,
     setFilters,
     resetFilters,
     uploadCSV,
@@ -36,6 +37,11 @@ export function TradingDashboard() {
   const [chartHeight, setChartHeight] = useState(500);
   const [isChartOpen, setIsChartOpen] = useState(true);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const handleImport = useCallback((file: File, marque: string, modele: string) => {
+    uploadCSV(file, marque, modele);
+  }, [uploadCSV]);
 
   // Handle vehicle click from chart
   const handleVehicleClick = useCallback((vehicle: VehicleWithScore) => {
@@ -86,9 +92,17 @@ export function TradingDashboard() {
                 Chargez un CSV contenant un seul modèle (ex: 500 Audi RS3) pour une analyse précise du marché.
               </p>
             </div>
-            <CSVUploader onFileUpload={uploadCSV} />
+            <Button onClick={() => setIsImportModalOpen(true)} size="lg" className="gap-2">
+              <Upload className="w-5 h-5" />
+              Importer un fichier CSV
+            </Button>
           </div>
         </div>
+        <CSVImportModal 
+          open={isImportModalOpen} 
+          onOpenChange={setIsImportModalOpen} 
+          onImport={handleImport}
+        />
       </div>
     );
   }
@@ -103,7 +117,14 @@ export function TradingDashboard() {
             <Crosshair className="w-4 h-4 text-success-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-foreground">Mode Sniper</h1>
+            <h1 className="text-lg font-bold text-foreground">
+              Mode Sniper
+              {vehicleInfo && (
+                <span className="ml-2 text-sm font-normal text-primary">
+                  — {vehicleInfo.marque} {vehicleInfo.modele}
+                </span>
+              )}
+            </h1>
             <p className="text-xs text-muted-foreground">
               {filteredVehicles.length} véhicules analysés
               {outliersCount > 0 && <span className="text-warning"> ({outliersCount} aberrants exclus)</span>}
@@ -130,7 +151,10 @@ export function TradingDashboard() {
             <RotateCcw className="w-4 h-4" />
             Nouveau scan
           </Button>
-          <CSVUploader onFileUpload={uploadCSV} compact />
+          <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)} className="gap-2">
+            <Upload className="w-4 h-4" />
+            Nouveau CSV
+          </Button>
         </div>
       </header>
 
@@ -339,6 +363,13 @@ export function TradingDashboard() {
           onClose={() => setSelectedVehicle(null)}
         />
       )}
+
+      {/* Import Modal */}
+      <CSVImportModal 
+        open={isImportModalOpen} 
+        onOpenChange={setIsImportModalOpen} 
+        onImport={handleImport}
+      />
     </div>
   );
 }

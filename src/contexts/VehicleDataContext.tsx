@@ -56,6 +56,11 @@ export interface Filters {
   maxKm: number;
 }
 
+export interface VehicleInfo {
+  marque: string;
+  modele: string;
+}
+
 interface VehicleDataContextType {
   vehicles: VehicleWithScore[];
   filteredVehicles: VehicleWithScore[];
@@ -65,9 +70,10 @@ interface VehicleDataContextType {
   filters: Filters;
   dataRanges: { minPrice: number; maxPrice: number; minKm: number; maxKm: number };
   isLoading: boolean;
+  vehicleInfo: VehicleInfo | null;
   setFilters: (filters: Partial<Filters>) => void;
   resetFilters: () => void;
-  uploadCSV: (file: File) => Promise<void>;
+  uploadCSV: (file: File, marque: string, modele: string) => Promise<void>;
   clearData: () => void;
   topOpportunities: Array<VehicleWithScore & { expectedPrice: number; deviation: number; deviationPercent: number }>;
   kpis: { avgPrice: number; decotePer10k: number; bestOffer: VehicleWithScore | null; opportunitiesCount: number };
@@ -78,6 +84,7 @@ const VehicleDataContext = createContext<VehicleDataContextType | null>(null);
 export function VehicleDataProvider({ children }: { children: ReactNode }) {
   const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo | null>(null);
   const [filters, setFiltersState] = useState<Filters>({
     minPrice: 0,
     maxPrice: 999999,
@@ -163,12 +170,14 @@ export function VehicleDataProvider({ children }: { children: ReactNode }) {
       .slice(0, 5);
   }, [chartVehicles, trendLine]);
 
-  const uploadCSV = useCallback(async (file: File) => {
+  const uploadCSV = useCallback(async (file: File, marque: string, modele: string) => {
     setIsLoading(true);
     try {
       const parsed = await parseCSVFile(file);
-      const scored = calculateDealScores(parsed);
+      // Pass forced brand/model to scoring function
+      const scored = calculateDealScores(parsed, marque, modele);
       setVehicles(scored);
+      setVehicleInfo({ marque, modele });
       // Reset filters to data range
       const prices = scored.map(v => v.prix);
       const kms = scored.map(v => v.kilometrage);
@@ -187,6 +196,7 @@ export function VehicleDataProvider({ children }: { children: ReactNode }) {
 
   const clearData = useCallback(() => {
     setVehicles([]);
+    setVehicleInfo(null);
     setFiltersState({ minPrice: 0, maxPrice: 999999, minKm: 0, maxKm: 999999 });
   }, []);
 
@@ -213,6 +223,7 @@ export function VehicleDataProvider({ children }: { children: ReactNode }) {
       filters,
       dataRanges,
       isLoading,
+      vehicleInfo,
       setFilters,
       resetFilters,
       uploadCSV,
