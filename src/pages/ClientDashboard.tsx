@@ -37,7 +37,7 @@ const statusConfig = {
 };
 
 const ClientDashboard = () => {
-  const { user, signOut, isLoading: authLoading, isAdmin } = useAuth();
+  const { user, signOut, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -49,20 +49,6 @@ const ClientDashboard = () => {
   // Simple form - just model name
   const [modelSearch, setModelSearch] = useState('');
   const [notes, setNotes] = useState('');
-
-  // Redirect admin to admin dashboard
-  useEffect(() => {
-    if (!authLoading && isAdmin) {
-      navigate('/admin-dashboard', { replace: true });
-    }
-  }, [authLoading, isAdmin, navigate]);
-
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth', { replace: true });
-    }
-  }, [authLoading, user, navigate]);
 
   // Fetch reports
   useEffect(() => {

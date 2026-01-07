@@ -26,10 +26,10 @@ const LoadingSpinner = () => (
 
 // Protected route for authenticated users (clients)
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, isAdmin } = useAuth();
+  const { user, isLoading, isRoleLoading, isAdmin } = useAuth();
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Show loading while checking auth/role
+  if (isLoading || (user && isRoleLoading)) {
     return <LoadingSpinner />;
   }
 
@@ -48,10 +48,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Admin route - only for admins
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, isAdmin } = useAuth();
+  const { user, isLoading, isRoleLoading, isAdmin } = useAuth();
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Show loading while checking auth/role
+  if (isLoading || (user && isRoleLoading)) {
     return <LoadingSpinner />;
   }
 
@@ -70,10 +70,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Auth route - redirect if already logged in
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, isAdmin } = useAuth();
+  const { user, isLoading, isRoleLoading, isAdmin } = useAuth();
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Show loading while checking auth/role
+  if (isLoading || (user && isRoleLoading)) {
     return <LoadingSpinner />;
   }
 
@@ -90,10 +90,10 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Public route - redirect logged-in users
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, isAdmin } = useAuth();
+  const { user, isLoading, isRoleLoading, isAdmin } = useAuth();
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Show loading while checking auth/role
+  if (isLoading || (user && isRoleLoading)) {
     return <LoadingSpinner />;
   }
 
