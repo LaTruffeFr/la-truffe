@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAdminRole = useCallback(async (userId: string): Promise<boolean> => {
     try {
+      console.log('Checking admin role for user:', userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
+      console.log('Admin role check result:', data);
       return !!data;
     } catch (error) {
       console.error('Error checking admin role:', error);
@@ -43,31 +45,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Prevent double initialization
+    // Prevent double initialization in React StrictMode
     if (initialCheckDone.current) return;
     initialCheckDone.current = true;
 
     let mounted = true;
 
-    // Check for existing session FIRST
     const initAuth = async () => {
+      console.log('Initializing auth...');
       try {
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (mounted) setIsLoading(false);
+          return;
+        }
         
         if (!mounted) return;
         
         if (existingSession?.user) {
+          console.log('Found existing session for user:', existingSession.user.email);
           setSession(existingSession);
           setUser(existingSession.user);
+          
           const adminStatus = await checkAdminRole(existingSession.user.id);
           if (mounted) {
             setIsAdmin(adminStatus);
+            console.log('User is admin:', adminStatus);
           }
+        } else {
+          console.log('No existing session found');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
         if (mounted) {
+          console.log('Auth initialization complete, setting isLoading to false');
           setIsLoading(false);
         }
       }
@@ -75,21 +89,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     initAuth();
 
-    // Set up auth state listener for future changes
+    // Set up auth state listener for future changes (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('Auth state changed:', event);
         if (!mounted) return;
         
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
         if (newSession?.user) {
-          // Don't block on admin check for state changes
-          checkAdminRole(newSession.user.id).then((adminStatus) => {
-            if (mounted) {
-              setIsAdmin(adminStatus);
-            }
-          });
+          const adminStatus = await checkAdminRole(newSession.user.id);
+          if (mounted) {
+            setIsAdmin(adminStatus);
+          }
         } else {
           setIsAdmin(false);
         }
