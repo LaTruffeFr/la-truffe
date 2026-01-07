@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { VehicleWithScore } from '@/lib/csvParser';
 import { SniperChart } from './SniperChart';
 import { SniperKPIs } from './SniperKPIs';
+import { SavingsSimulator } from './SavingsSimulator';
 import { OpportunityModal } from './OpportunityModal';
 import { CSVImportModal } from './CSVImportModal';
 import { MarketReportGenerator } from './MarketReportGenerator';
@@ -38,6 +39,11 @@ export function TradingDashboard() {
   const [isChartOpen, setIsChartOpen] = useState(true);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const dealsRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollToDeals = useCallback(() => {
+    dealsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const handleImport = useCallback((file: File, marque: string, modele: string) => {
     uploadCSV(file, marque, modele);
@@ -169,7 +175,14 @@ export function TradingDashboard() {
 
       {/* Main content area */}
       <div className="flex-1 p-4 min-h-0 overflow-auto space-y-4">
+        {/* Savings Simulator */}
+        <SavingsSimulator 
+          vehicles={chartVehicles} 
+          onScrollToDeals={handleScrollToDeals} 
+        />
+
         {/* Filters Panel */}
+        <div ref={dealsRef}></div>
         <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
           <div className="rounded-xl border border-border bg-card">
             <CollapsibleTrigger asChild>
