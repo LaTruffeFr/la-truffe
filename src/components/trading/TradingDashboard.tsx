@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { VehicleWithScore } from '@/lib/csvParser';
 import { SniperChart } from './SniperChart';
 import { SniperKPIs } from './SniperKPIs';
@@ -6,6 +6,7 @@ import { SavingsSimulator } from './SavingsSimulator';
 import { OpportunityModal } from './OpportunityModal';
 import { CSVImportModal } from './CSVImportModal';
 import { MarketReportGenerator } from './MarketReportGenerator';
+import { FreemiumDealCard } from './FreemiumDealCard';
 import { useVehicleData } from '@/contexts/VehicleDataContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, Users, ChevronDown, ChevronUp, SlidersHorizontal, ExternalLink, Upload } from 'lucide-react';
@@ -59,6 +60,23 @@ export function TradingDashboard() {
       deviationPercent: Math.round(((expectedPrice - vehicle.prix) / expectedPrice) * 100),
     } as any);
   }, [trendLine]);
+
+  // Top 3 freemium deals (best opportunities for teaser)
+  const freemiumDeals = useMemo(() => {
+    return [...chartVehicles]
+      .filter(v => v.dealScore < 0) // Green opportunities only
+      .sort((a, b) => a.dealScore - b.dealScore)
+      .slice(0, 3)
+      .map(v => {
+        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
+        return {
+          ...v,
+          expectedPrice: Math.round(expectedPrice),
+          deviation: Math.round(expectedPrice - v.prix),
+          deviationPercent: Math.round(((expectedPrice - v.prix) / expectedPrice) * 100),
+        };
+      });
+  }, [chartVehicles, trendLine]);
 
   // Loading state
   if (isLoading) {
@@ -181,8 +199,30 @@ export function TradingDashboard() {
           onScrollToDeals={handleScrollToDeals} 
         />
 
+        {/* Freemium Deal Cards Section */}
+        <div ref={dealsRef} className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">🔥 TOP 3 OPPORTUNITÉS</h2>
+            <span className="text-sm text-muted-foreground">Aperçu des meilleures affaires</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+            {freemiumDeals.map((vehicle, index) => (
+              <FreemiumDealCard
+                key={vehicle.id || index}
+                vehicle={vehicle}
+                rank={index + 1}
+                paymentLink="#"
+              />
+            ))}
+          </div>
+          {freemiumDeals.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucune opportunité détectée dans ce dataset
+            </div>
+          )}
+        </div>
+
         {/* Filters Panel */}
-        <div ref={dealsRef}></div>
         <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
           <div className="rounded-xl border border-border bg-card">
             <CollapsibleTrigger asChild>
