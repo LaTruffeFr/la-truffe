@@ -13,13 +13,12 @@ export function SavingsSimulator({ vehicles, onScrollToDeals }: SavingsSimulator
     ? Math.round(vehicles.reduce((sum, v) => sum + v.prix, 0) / vehicles.length)
     : 0;
 
-  // Get top 5 green opportunities (lowest dealScore = best deals, negative values)
+  // Get top 5 cheapest vehicles (lowest price)
   const topOpportunities = [...vehicles]
-    .filter(v => v.dealScore < 0) // Only green/good deals
-    .sort((a, b) => a.dealScore - b.dealScore)
+    .sort((a, b) => a.prix - b.prix)
     .slice(0, 5);
 
-  // Calculate La Truffe price (average of top 5 opportunities)
+  // Calculate La Truffe price (average of 5 cheapest vehicles)
   const laTruffePrice = topOpportunities.length > 0
     ? Math.round(topOpportunities.reduce((sum, v) => sum + v.prix, 0) / topOpportunities.length)
     : avgMarketPrice;
