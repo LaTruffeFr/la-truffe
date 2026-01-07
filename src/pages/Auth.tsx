@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -23,27 +23,12 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if already logged in based on role
-  useEffect(() => {
-    if (!authLoading && user) {
-      if (isAdmin) {
-        navigate('/admin-dashboard', { replace: true });
-      } else {
-        navigate('/client-dashboard', { replace: true });
-      }
-    }
-  }, [user, authLoading, isAdmin, navigate]);
-
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (user) {
-    return null;
   }
 
   const handleSubmit = async (mode: 'login' | 'signup') => {

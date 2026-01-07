@@ -1,40 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
 import { Search, FileText, TrendingDown, Shield, ArrowRight, CheckCircle, LogIn } from 'lucide-react';
-import { useEffect } from 'react';
 import { DemoSavingsSimulator } from '@/components/DemoSavingsSimulator';
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { user, isLoading, isAdmin } = useAuth();
-
-  // Redirect logged-in users to their appropriate dashboard
-  useEffect(() => {
-    if (!isLoading && user) {
-      if (isAdmin) {
-        navigate('/admin-dashboard', { replace: true });
-      } else {
-        navigate('/client-dashboard', { replace: true });
-      }
-    }
-  }, [user, isLoading, isAdmin, navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Don't render landing if user is logged in (will redirect)
-  if (user) {
-    return null;
-  }
-
-  return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
