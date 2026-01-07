@@ -19,8 +19,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
 
   const checkAdminRole = useCallback(async (userId: string) => {
+    setIsAdminLoading(true);
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -39,6 +41,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Error checking admin role:', error);
       setIsAdmin(false);
+    } finally {
+      setIsAdminLoading(false);
     }
   }, []);
 
@@ -50,10 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to avoid potential race conditions with Supabase
-          setTimeout(() => {
-            checkAdminRole(session.user.id);
-          }, 0);
+          // Check admin role synchronously after auth state change
+          await checkAdminRole(session.user.id);
         } else {
           setIsAdmin(false);
         }
