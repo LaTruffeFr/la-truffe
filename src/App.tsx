@@ -5,10 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { VehicleDataProvider } from "@/contexts/VehicleDataContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
+import { AdminRoute } from "@/components/AdminRoute";
+import PublicHome from "./pages/PublicHome";
+import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
-import ClientView from "./pages/ClientView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,20 +23,15 @@ const App = () => (
           <VehicleDataProvider>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              {/* Public home - Freemium view */}
+              <Route path="/" element={<PublicHome />} />
+              {/* Admin route - Protected for admins only */}
               <Route 
-                path="/" 
+                path="/admin" 
                 element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/vue-client" 
-                element={
-                  <ProtectedRoute>
-                    <ClientView />
-                  </ProtectedRoute>
+                  <AdminRoute>
+                    <Admin />
+                  </AdminRoute>
                 } 
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

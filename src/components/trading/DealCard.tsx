@@ -4,7 +4,8 @@ import { ExternalLink, FileText, Calendar, Gauge, Fuel, Settings, Zap } from 'lu
 
 interface DealCardProps {
   vehicle: VehicleWithScore;
-  onClick: () => void;
+  onClick?: () => void;
+  rank?: number;
 }
 
 function formatCurrency(value: number): string {
@@ -30,7 +31,7 @@ const TRANSMISSION_LABELS: Record<string, string> = {
   autre: '',
 };
 
-export function DealCard({ vehicle, onClick }: DealCardProps) {
+export function DealCard({ vehicle, onClick, rank }: DealCardProps) {
   const isGreatDeal = vehicle.dealScore >= 70;
   const isGoodDeal = vehicle.dealScore >= 50;
   const hasData = vehicle.hasEnoughData;
@@ -162,17 +163,19 @@ export function DealCard({ vehicle, onClick }: DealCardProps) {
             </div>
 
             <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick();
-                }}
-                className="h-8 px-2"
-              >
-                <FileText className="w-4 h-4" />
-              </Button>
+              {onClick && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClick();
+                  }}
+                  className="h-8 px-2"
+                >
+                  <FileText className="w-4 h-4" />
+                </Button>
+              )}
               <Button
                 variant="gold"
                 size="sm"
