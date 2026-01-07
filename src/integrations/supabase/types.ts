@@ -79,6 +79,63 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          admin_notes: string | null
+          annee_max: number | null
+          annee_min: number | null
+          carburant: string | null
+          created_at: string
+          id: string
+          kilometrage_max: number | null
+          marque: string
+          modele: string
+          notes: string | null
+          prix_max: number | null
+          report_url: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          transmission: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          annee_max?: number | null
+          annee_min?: number | null
+          carburant?: string | null
+          created_at?: string
+          id?: string
+          kilometrage_max?: number | null
+          marque: string
+          modele: string
+          notes?: string | null
+          prix_max?: number | null
+          report_url?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          transmission?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          annee_max?: number | null
+          annee_min?: number | null
+          carburant?: string | null
+          created_at?: string
+          id?: string
+          kilometrage_max?: number | null
+          marque?: string
+          modele?: string
+          notes?: string | null
+          prix_max?: number | null
+          report_url?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          transmission?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -199,6 +256,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      report_status: "pending" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -327,6 +385,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      report_status: ["pending", "in_progress", "completed"],
     },
   },
 } as const
