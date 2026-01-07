@@ -6,6 +6,8 @@ import { DemoSavingsSimulator } from '@/components/DemoSavingsSimulator';
 
 const Landing = () => {
   const navigate = useNavigate();
+
+  return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
