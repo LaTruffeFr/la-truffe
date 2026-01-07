@@ -31,9 +31,9 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
     );
   }
 
-  // If not logged in, redirect to auth
+  // If not logged in, redirect to landing
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // If admin, show content
@@ -53,6 +53,6 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
     );
   }
 
-  // If logged in but not admin after waiting, redirect to home
-  return <Navigate to="/" replace />;
+  // If logged in but not admin after waiting, redirect to client dashboard
+  return <Navigate to="/client-dashboard" replace />;
 };
