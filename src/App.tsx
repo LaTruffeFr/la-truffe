@@ -6,9 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { VehicleDataProvider } from "@/contexts/VehicleDataContext";
 import { AdminRoute } from "@/components/AdminRoute";
-import PublicHome from "./pages/PublicHome";
+import Landing from "./pages/Landing";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import ClientDashboard from "./pages/ClientDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,8 +24,10 @@ const App = () => (
           <VehicleDataProvider>
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              {/* Public home - Freemium view */}
-              <Route path="/" element={<PublicHome />} />
+              {/* Landing page - for everyone */}
+              <Route path="/" element={<Landing />} />
+              {/* Client dashboard - for logged in users */}
+              <Route path="/client" element={<ClientDashboard />} />
               {/* Admin route - Protected for admins only */}
               <Route 
                 path="/admin" 

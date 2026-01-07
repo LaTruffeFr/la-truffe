@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -17,15 +17,32 @@ const authSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isLoading: authLoading, isAdmin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if already logged in
+  // Redirect if already logged in based on role
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/client', { replace: true });
+      }
+    }
+  }, [user, authLoading, isAdmin, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (user) {
-    navigate('/');
     return null;
   }
 
