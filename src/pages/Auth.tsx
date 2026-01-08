@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import logoTruffe from '@/assets/logo-truffe.jpg';
 
 const authSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -17,7 +18,7 @@ const authSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, user, isLoading: authLoading, isAdmin } = useAuth();
+  const { signIn, signUp, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -77,31 +78,41 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-dark flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
+        {/* Back button */}
+        <button 
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour à l'accueil
+        </button>
+
         {/* Logo */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-3">
-            <div className="relative">
-              <Search className="h-10 w-10 text-primary" />
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
-            </div>
-            <h1 className="text-4xl font-bold text-gradient-gold">La Truffe</h1>
+            <img 
+              src={logoTruffe}
+              alt="Logo La Truffe" 
+              className="h-12 w-12 rounded-lg object-cover shadow-corporate"
+            />
+            <h1 className="text-3xl font-bold text-foreground">La Truffe</h1>
           </div>
-          <p className="text-muted-foreground">Car Flipping Intelligence</p>
+          <p className="text-muted-foreground">Audit de prix automobile basé sur l'IA</p>
         </div>
 
         {/* Auth Card */}
-        <Card className="glass-card border-border/50">
+        <Card className="corporate-card-elevated">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-xl">Bienvenue</CardTitle>
             <CardDescription>
-              Connectez-vous pour accéder à votre dashboard
+              Connectez-vous pour accéder à votre espace
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 bg-secondary">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Connexion</TabsTrigger>
                 <TabsTrigger value="signup">Inscription</TabsTrigger>
               </TabsList>
@@ -118,7 +129,7 @@ const Auth = () => {
                         placeholder="votre@email.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 bg-secondary border-border"
+                        className="pl-10"
                       />
                     </div>
                   </div>
@@ -132,7 +143,7 @@ const Auth = () => {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 bg-secondary border-border"
+                        className="pl-10"
                       />
                     </div>
                   </div>
@@ -146,7 +157,7 @@ const Auth = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full gradient-gold text-primary-foreground font-semibold"
+                    className="w-full font-semibold"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -173,7 +184,7 @@ const Auth = () => {
                         placeholder="votre@email.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 bg-secondary border-border"
+                        className="pl-10"
                       />
                     </div>
                   </div>
@@ -187,7 +198,7 @@ const Auth = () => {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 bg-secondary border-border"
+                        className="pl-10"
                       />
                     </div>
                   </div>
@@ -201,7 +212,7 @@ const Auth = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full gradient-gold text-primary-foreground font-semibold"
+                    className="w-full font-semibold"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -220,7 +231,7 @@ const Auth = () => {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground">
-          © 2024 La Truffe • Solution professionnelle pour garages et concessionnaires
+          © {new Date().getFullYear()} La Truffe • Audit de prix automobile
         </p>
       </div>
     </div>

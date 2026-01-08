@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut, Download, ShoppingCart, CreditCard } from 'lucide-react';
+import { Loader2, Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut, Download, CreditCard } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import logoTruffe from '@/assets/logo-truffe.jpg';
 
 interface Report {
   id: string;
@@ -31,9 +32,9 @@ interface Report {
 }
 
 const statusConfig = {
-  pending: { label: 'En attente de traitement', icon: Clock, color: 'bg-yellow-500' },
-  in_progress: { label: 'En cours d\'analyse', icon: AlertCircle, color: 'bg-blue-500' },
-  completed: { label: 'Disponible ✅', icon: CheckCircle, color: 'bg-green-500' },
+  pending: { label: 'En attente', icon: Clock, className: 'bg-warning/10 text-warning border-warning/30' },
+  in_progress: { label: 'En cours', icon: AlertCircle, className: 'bg-primary/10 text-primary border-primary/30' },
+  completed: { label: 'Disponible', icon: CheckCircle, className: 'bg-success/10 text-success border-success/30' },
 };
 
 const ClientDashboard = () => {
@@ -139,16 +140,16 @@ const ClientDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="bg-card border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img 
-                src="/lovable-uploads/76765751-c461-4096-a57b-30bb3f498569.png" 
-                alt="Logo" 
-                className="h-10 w-10 rounded-full object-cover"
+                src={logoTruffe}
+                alt="Logo La Truffe" 
+                className="h-10 w-10 rounded-lg object-cover shadow-corporate"
               />
-              <span className="text-xl font-bold">Auto Sniper</span>
+              <span className="text-xl font-bold text-foreground">La Truffe</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden md:block">
@@ -167,20 +168,20 @@ const ClientDashboard = () => {
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Section 1: Commander un rapport */}
         <section>
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30">
+          <Card className="corporate-card-elevated border-primary/20 bg-primary/5">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-primary" />
-                Commander un rapport
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <FileText className="h-5 w-5 text-primary" />
+                Commander un rapport d'audit
               </CardTitle>
               <CardDescription>
-                Dites-nous quel modèle vous cherchez et recevez un rapport détaillé
+                Dites-nous quel modèle vous cherchez et recevez un rapport détaillé avec les meilleures opportunités
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="lg" className="gap-2">
+                  <Button size="lg" className="gap-2 font-bold">
                     <Plus className="h-5 w-5" />
                     Commander l'audit (19€)
                   </Button>
@@ -217,9 +218,9 @@ const ClientDashboard = () => {
                       />
                     </div>
                     
-                    <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <div className="bg-muted rounded-lg p-4 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">Rapport d'analyse</span>
+                        <span className="font-medium text-foreground">Rapport d'analyse</span>
                         <span className="text-xl font-bold text-primary">19€</span>
                       </div>
                       <p className="text-sm text-muted-foreground">
@@ -227,7 +228,7 @@ const ClientDashboard = () => {
                       </p>
                     </div>
                     
-                    <Button type="submit" className="w-full gap-2" size="lg" disabled={isSubmitting}>
+                    <Button type="submit" className="w-full gap-2 font-bold" size="lg" disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -254,7 +255,7 @@ const ClientDashboard = () => {
         <section>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Mes Rapports</h2>
+              <h2 className="text-2xl font-bold text-foreground">Mes Rapports</h2>
               <p className="text-muted-foreground">Historique de vos demandes</p>
             </div>
           </div>
@@ -264,10 +265,10 @@ const ClientDashboard = () => {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : reports.length === 0 ? (
-            <Card className="text-center py-12">
+            <Card className="corporate-card text-center py-12">
               <CardContent>
                 <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Aucun rapport</h3>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Aucun rapport</h3>
                 <p className="text-muted-foreground mb-4">
                   Vous n'avez pas encore commandé de rapport
                 </p>
@@ -282,18 +283,18 @@ const ClientDashboard = () => {
               {reports.map((report) => {
                 const StatusIcon = statusConfig[report.status].icon;
                 return (
-                  <Card key={report.id}>
+                  <Card key={report.id} className="corporate-card">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
                         <div>
-                          <CardTitle className="text-lg">
+                          <CardTitle className="text-lg text-foreground">
                             {report.modele}
                           </CardTitle>
                           <CardDescription>
                             Commandé le {new Date(report.created_at).toLocaleDateString('fr-FR')}
                           </CardDescription>
                         </div>
-                        <Badge className={`${statusConfig[report.status].color} text-white`}>
+                        <Badge variant="outline" className={statusConfig[report.status].className}>
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {statusConfig[report.status].label}
                         </Badge>
@@ -318,7 +319,7 @@ const ClientDashboard = () => {
                       
                       {report.admin_notes && report.status === 'completed' && (
                         <div className="mt-4 p-3 bg-muted rounded-lg">
-                          <p className="text-sm font-medium">Note de l'équipe :</p>
+                          <p className="text-sm font-medium text-foreground">Note de l'équipe :</p>
                           <p className="text-sm text-muted-foreground">{report.admin_notes}</p>
                         </div>
                       )}

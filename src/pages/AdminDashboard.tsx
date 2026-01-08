@@ -102,9 +102,9 @@ export default function AdminDashboard() {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Admin Header */}
-      <header className="border-b border-border px-6 py-3 flex items-center justify-between shrink-0 bg-primary/5">
+      <header className="border-b border-border px-6 py-3 flex items-center justify-between shrink-0 bg-card">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
             <Shield className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
