@@ -5,3 +5,8 @@ export { PriceAuditSimulator } from './PriceAuditSimulator';
 export { ExampleReportCard } from './ExampleReportCard';
 export { AuditVehicleItem } from './AuditVehicleItem';
 export { Disclaimer } from './Disclaimer';
+export { WhyUsSection } from './WhyUsSection';
+export { ReportPreviewSection } from './ReportPreviewSection';
+export { StatisticsSection } from './StatisticsSection';
+export { FAQSection } from './FAQSection';
+export { Footer } from './Footer';
