@@ -49,213 +49,292 @@ export function ClientPDFExport({ opportunities, filters, totalAnalyzed }: Clien
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
-      let y = 15;
+      const margin = 20;
+      let y = 20;
 
-      // Colors - Premium dark theme
-      const goldColor: [number, number, number] = [212, 175, 55];
-      const greenColor: [number, number, number] = [34, 197, 94];
-      const darkBg: [number, number, number] = [18, 18, 20];
-      const cardBg: [number, number, number] = [30, 30, 35];
-      const textColor: [number, number, number] = [250, 250, 250];
-      const mutedColor: [number, number, number] = [140, 140, 150];
-
-      // Full page dark background
-      pdf.setFillColor(...darkBg);
-      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+      // Colors - Professional Light Theme
+      const primaryBlue: [number, number, number] = [37, 99, 235]; // #2563EB
+      const darkText: [number, number, number] = [0, 0, 0]; // #000000
+      const mutedGray: [number, number, number] = [107, 114, 128]; // #6B7280
+      const lightGray: [number, number, number] = [243, 244, 246]; // #F3F4F6
+      const successGreen: [number, number, number] = [16, 185, 129]; // #10B981
+      const white: [number, number, number] = [255, 255, 255];
 
       // === HEADER SECTION ===
-      // Gold accent line
-      pdf.setFillColor(...goldColor);
-      pdf.rect(0, 0, pageWidth, 3, 'F');
+      // Logo placeholder (blue shield)
+      pdf.setFillColor(...primaryBlue);
+      pdf.roundedRect(margin, y, 15, 15, 2, 2, 'F');
+      pdf.setTextColor(...white);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('LT', margin + 7.5, y + 10, { align: 'center' });
 
-      // Logo placeholder circle with gold border
-      pdf.setDrawColor(...goldColor);
-      pdf.setLineWidth(1.5);
-      pdf.circle(pageWidth / 2, y + 18, 12, 'S');
-      
-      // "LT" initials in circle
-      pdf.setTextColor(...goldColor);
+      // Title
+      pdf.setTextColor(...primaryBlue);
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('LT', pageWidth / 2, y + 21, { align: 'center' });
-
-      y += 38;
-
-      // Brand name
-      pdf.setFontSize(24);
-      pdf.setTextColor(...goldColor);
-      pdf.text('LA TRUFFE', pageWidth / 2, y, { align: 'center' });
+      pdf.text("RAPPORT D'ÉVALUATION DE MARCHÉ", pageWidth - margin, y + 6, { align: 'right' });
       
-      y += 10;
+      // Subtitle with date
+      const dateStr = new Date().toLocaleDateString('fr-FR', { 
+        day: 'numeric', month: 'long', year: 'numeric' 
+      });
+      const vehicleModel = opportunities[0] ? `${opportunities[0].marque} ${cleanModelName(opportunities[0].modele)}` : 'Analyse';
       
-      // Tagline
-      pdf.setFontSize(10);
-      pdf.setTextColor(...mutedColor);
+      pdf.setTextColor(...mutedGray);
+      pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Votre Expert en Opportunités Automobiles', pageWidth / 2, y, { align: 'center' });
+      pdf.text(`Dossier généré le ${dateStr} pour ${vehicleModel}`, pageWidth - margin, y + 12, { align: 'right' });
+
+      y += 22;
+
+      // Separator line
+      pdf.setDrawColor(...primaryBlue);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, y, pageWidth - margin, y);
 
       y += 15;
 
-      // === TITLE SECTION ===
-      // Gold bordered box for title
-      pdf.setDrawColor(...goldColor);
-      pdf.setLineWidth(0.5);
-      pdf.roundedRect(margin, y, pageWidth - 2 * margin, 22, 3, 3, 'S');
-      
-      pdf.setFillColor(goldColor[0], goldColor[1], goldColor[2], 0.1);
-      pdf.setFillColor(35, 32, 25);
-      pdf.roundedRect(margin + 0.5, y + 0.5, pageWidth - 2 * margin - 1, 21, 2.5, 2.5, 'F');
+      // === SECTION 1: SYNTHÈSE ===
+      pdf.setTextColor(...primaryBlue);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('SYNTHÈSE', margin, y);
 
-      pdf.setTextColor(...goldColor);
+      y += 10;
+
+      // Calculate summary stats
+      const avgMarketPrice = opportunities.reduce((sum, v) => sum + v.expectedPrice, 0) / opportunities.length;
+      const avgActualPrice = opportunities.reduce((sum, v) => sum + v.prix, 0) / opportunities.length;
+      const avgSavings = avgMarketPrice - avgActualPrice;
+      const avgScore = opportunities.reduce((sum, v) => sum + calculateDealScore(v.deviationPercent), 0) / opportunities.length;
+
+      // 4 KPI boxes
+      const boxWidth = (pageWidth - 2 * margin - 15) / 4;
+      const boxHeight = 25;
+
+      const kpis = [
+        { label: 'Prix Marché Moyen', value: formatCurrency(avgMarketPrice) },
+        { label: 'Prix La Truffe', value: formatCurrency(avgActualPrice) },
+        { label: 'Économie Potentielle', value: formatCurrency(avgSavings), highlight: true },
+        { label: 'Score Fiabilité', value: `${avgScore.toFixed(1)}/10` },
+      ];
+
+      kpis.forEach((kpi, index) => {
+        const x = margin + index * (boxWidth + 5);
+        
+        // Box border
+        pdf.setDrawColor(...lightGray);
+        pdf.setLineWidth(0.3);
+        pdf.roundedRect(x, y, boxWidth, boxHeight, 2, 2, 'S');
+
+        // Label
+        pdf.setTextColor(...mutedGray);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(kpi.label, x + boxWidth / 2, y + 8, { align: 'center' });
+
+        // Value
+        if (kpi.highlight) {
+          pdf.setTextColor(...successGreen);
+        } else {
+          pdf.setTextColor(...darkText);
+        }
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(kpi.value, x + boxWidth / 2, y + 18, { align: 'center' });
+      });
+
+      y += boxHeight + 15;
+
+      // === SECTION 2: POSITIONNEMENT PRIX (Gauge visualization) ===
+      pdf.setTextColor(...primaryBlue);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('POSITIONNEMENT PRIX', margin, y);
+
+      y += 10;
+
+      // Simple gauge representation
+      const gaugeWidth = 80;
+      const gaugeHeight = 10;
+      const gaugeX = margin;
+      
+      // Background gradient representation (red to green)
+      const segments = 10;
+      const segmentWidth = gaugeWidth / segments;
+      for (let i = 0; i < segments; i++) {
+        const r = Math.round(239 - (i / segments) * 200);
+        const g = Math.round(68 + (i / segments) * 120);
+        const b = Math.round(68 - (i / segments) * 30);
+        pdf.setFillColor(r, g, b);
+        pdf.rect(gaugeX + i * segmentWidth, y, segmentWidth + 0.5, gaugeHeight, 'F');
+      }
+
+      // Position indicator
+      const savingsPercent = (avgSavings / avgMarketPrice) * 100;
+      const indicatorPos = Math.min(90, Math.max(10, 50 + savingsPercent * 2));
+      const indicatorX = gaugeX + (indicatorPos / 100) * gaugeWidth;
+      
+      pdf.setFillColor(...darkText);
+      pdf.triangle(indicatorX, y - 2, indicatorX - 3, y - 6, indicatorX + 3, y - 6, 'F');
+
+      // Labels
+      pdf.setTextColor(...mutedGray);
+      pdf.setFontSize(7);
+      pdf.text('CHER', gaugeX, y + gaugeHeight + 5);
+      pdf.text('AFFAIRE', gaugeX + gaugeWidth, y + gaugeHeight + 5, { align: 'right' });
+
+      // Savings display next to gauge
+      pdf.setTextColor(...successGreen);
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('SÉLECTION PREMIUM', pageWidth / 2, y + 10, { align: 'center' });
-      
-      pdf.setTextColor(...textColor);
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Les meilleures opportunités du marché', pageWidth / 2, y + 17, { align: 'center' });
-
-      y += 30;
-
-      // === FILTERS SUMMARY ===
-      pdf.setFillColor(...cardBg);
-      pdf.roundedRect(margin, y, pageWidth - 2 * margin, 18, 2, 2, 'F');
-      
-      pdf.setTextColor(...mutedColor);
+      pdf.text(formatCurrency(avgSavings), gaugeX + gaugeWidth + 20, y + 7);
+      pdf.setTextColor(...mutedGray);
       pdf.setFontSize(8);
-      const filterText = `Budget: ${formatCurrency(filters.minPrice)} - ${formatCurrency(filters.maxPrice)}  •  Kilométrage: ${formatNumber(filters.minKm)} - ${formatNumber(filters.maxKm)} km  •  ${totalAnalyzed} véhicules analysés`;
-      pdf.text(filterText, pageWidth / 2, y + 11, { align: 'center' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.text("d'économie moyenne", gaugeX + gaugeWidth + 20, y + 13);
 
-      y += 25;
+      y += gaugeHeight + 25;
 
-      // === OPPORTUNITIES CARDS ===
+      // === SECTION 3: LISTE DES OPPORTUNITÉS ===
+      pdf.setTextColor(...primaryBlue);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('LISTE DES OPPORTUNITÉS', margin, y);
+
+      y += 8;
+
+      // Table header
+      const colWidths = {
+        rank: 10,
+        model: 55,
+        km: 30,
+        marketPrice: 30,
+        price: 30,
+        savings: 25,
+      };
+      
+      const tableWidth = colWidths.rank + colWidths.model + colWidths.km + colWidths.marketPrice + colWidths.price + colWidths.savings;
+
+      // Header row
+      pdf.setFillColor(...lightGray);
+      pdf.rect(margin, y, tableWidth, 8, 'F');
+      
+      pdf.setTextColor(...mutedGray);
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      
+      let colX = margin + 2;
+      pdf.text('#', colX, y + 5.5);
+      colX += colWidths.rank;
+      pdf.text('Modèle', colX, y + 5.5);
+      colX += colWidths.model;
+      pdf.text('Km', colX, y + 5.5);
+      colX += colWidths.km;
+      pdf.text('Prix Marché', colX, y + 5.5);
+      colX += colWidths.marketPrice;
+      pdf.text('Prix Annonce', colX, y + 5.5);
+      colX += colWidths.price;
+      pdf.text('Gain', colX, y + 5.5);
+
+      y += 8;
+
+      // Table rows
       opportunities.forEach((vehicle, index) => {
         // Check if we need a new page
-        if (y + 55 > pageHeight - 20) {
+        if (y + 10 > pageHeight - 30) {
           pdf.addPage();
-          pdf.setFillColor(...darkBg);
-          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-          y = 15;
+          y = 20;
+          
+          // Re-add header
+          pdf.setFillColor(...lightGray);
+          pdf.rect(margin, y, tableWidth, 8, 'F');
+          pdf.setTextColor(...mutedGray);
+          pdf.setFontSize(7);
+          pdf.setFont('helvetica', 'bold');
+          
+          colX = margin + 2;
+          pdf.text('#', colX, y + 5.5);
+          colX += colWidths.rank;
+          pdf.text('Modèle', colX, y + 5.5);
+          colX += colWidths.km;
+          pdf.text('Km', colX, y + 5.5);
+          colX += colWidths.marketPrice;
+          pdf.text('Prix Marché', colX, y + 5.5);
+          colX += colWidths.price;
+          pdf.text('Prix Annonce', colX, y + 5.5);
+          colX += colWidths.savings;
+          pdf.text('Gain', colX, y + 5.5);
+          y += 8;
         }
 
-        // Card background
-        pdf.setFillColor(...cardBg);
-        pdf.roundedRect(margin, y, pageWidth - 2 * margin, 50, 3, 3, 'F');
+        // Alternating row background
+        if (index % 2 === 1) {
+          pdf.setFillColor(250, 250, 252);
+          pdf.rect(margin, y, tableWidth, 8, 'F');
+        }
 
-        // Rank badge (gold circle)
-        pdf.setFillColor(...goldColor);
-        pdf.circle(margin + 12, y + 12, 8, 'F');
-        pdf.setTextColor(...darkBg);
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(`#${index + 1}`, margin + 12, y + 15, { align: 'center' });
-
-        // Vehicle title
-        const cleanedModel = cleanModelName(vehicle.modele);
-        const vehicleTitle = `${cleanedModel} ${vehicle.annee || ''}`.trim();
-        
-        pdf.setTextColor(...textColor);
-        pdf.setFontSize(16);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(vehicleTitle, margin + 28, y + 14);
-
-        // Brand and specs
-        pdf.setTextColor(...mutedColor);
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(`${vehicle.marque} • ${formatNumber(vehicle.kilometrage)} km`, margin + 28, y + 22);
-
-        // Price section
-        // Market price (strikethrough effect)
-        pdf.setTextColor(...mutedColor);
-        pdf.setFontSize(10);
-        pdf.text('Prix Marché :', margin + 10, y + 33);
-        
-        const marketPriceText = formatCurrency(vehicle.expectedPrice);
-        pdf.text(marketPriceText, margin + 42, y + 33);
-        // Strikethrough line
-        const marketPriceWidth = pdf.getTextWidth(marketPriceText);
-        pdf.setDrawColor(...mutedColor);
-        pdf.setLineWidth(0.3);
-        pdf.line(margin + 42, y + 31, margin + 42 + marketPriceWidth, y + 31);
-
-        // Actual price (big green)
-        pdf.setTextColor(...greenColor);
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text('Prix Annonce :', margin + 10, y + 42);
-        pdf.setFontSize(14);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(formatCurrency(vehicle.prix), margin + 45, y + 42);
-
-        // Right side - Score and savings
-        const rightX = pageWidth - margin - 45;
-        
-        // Score box
-        pdf.setFillColor(50, 45, 35);
-        pdf.roundedRect(rightX, y + 5, 40, 20, 2, 2, 'F');
-        
-        pdf.setTextColor(...goldColor);
-        pdf.setFontSize(7);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('SCORE LA TRUFFE', rightX + 20, y + 12, { align: 'center' });
-        
-        const dealScore = calculateDealScore(vehicle.deviationPercent);
-        pdf.setFontSize(12);
-        pdf.text(`${dealScore}/10`, rightX + 20, y + 21, { align: 'center' });
-
-        // Savings badge
-        pdf.setFillColor(...greenColor);
-        pdf.roundedRect(rightX, y + 28, 40, 16, 2, 2, 'F');
-        
-        pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(7);
         pdf.setFont('helvetica', 'normal');
-        pdf.text('ÉCONOMIE', rightX + 20, y + 35, { align: 'center' });
-        pdf.setFontSize(10);
+        
+        colX = margin + 2;
+        
+        // Rank
+        pdf.setTextColor(...darkText);
+        pdf.text(`${index + 1}`, colX, y + 5.5);
+        colX += colWidths.rank;
+        
+        // Model
+        const modelName = `${vehicle.marque} ${cleanModelName(vehicle.modele)} ${vehicle.annee || ''}`.substring(0, 35);
+        pdf.text(modelName, colX, y + 5.5);
+        colX += colWidths.model;
+        
+        // Km
+        pdf.setTextColor(...mutedGray);
+        pdf.text(`${formatNumber(vehicle.kilometrage)} km`, colX, y + 5.5);
+        colX += colWidths.km;
+        
+        // Market Price
+        pdf.setTextColor(...mutedGray);
+        pdf.text(formatCurrency(vehicle.expectedPrice), colX, y + 5.5);
+        colX += colWidths.marketPrice;
+        
+        // Actual Price
+        pdf.setTextColor(...darkText);
+        pdf.text(formatCurrency(vehicle.prix), colX, y + 5.5);
+        colX += colWidths.price;
+        
+        // Savings (green bold)
+        pdf.setTextColor(...successGreen);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(formatCurrency(vehicle.deviation), rightX + 20, y + 42, { align: 'center' });
+        pdf.text(formatCurrency(vehicle.deviation), colX, y + 5.5);
 
-        y += 55;
+        y += 8;
       });
 
       // === FOOTER ===
-      // Add some space before footer
-      y = pageHeight - 25;
+      y = pageHeight - 15;
       
-      // Footer line
-      pdf.setDrawColor(...goldColor);
+      // Footer separator
+      pdf.setDrawColor(...lightGray);
       pdf.setLineWidth(0.3);
       pdf.line(margin, y - 5, pageWidth - margin, y - 5);
 
       // Footer text
-      pdf.setTextColor(...mutedColor);
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      
-      const dateStr = new Date().toLocaleDateString('fr-FR', { 
-        day: 'numeric', month: 'long', year: 'numeric' 
-      });
-      pdf.text(`Document généré le ${dateStr}`, margin, y + 2);
-      
-      pdf.setTextColor(...goldColor);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('LA TRUFFE', pageWidth / 2, y + 2, { align: 'center' });
-      
-      pdf.setTextColor(...mutedColor);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('www.la-truffe.fr', pageWidth - margin, y + 2, { align: 'right' });
-
+      pdf.setTextColor(...mutedGray);
       pdf.setFontSize(7);
-      pdf.text('Analyse basée sur les données du marché • Prix indicatifs', pageWidth / 2, y + 8, { align: 'center' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.text("Document certifié par l'algorithme La Truffe. Ne constitue pas une garantie mécanique.", margin, y);
+      
+      // Page number
+      pdf.text(`Page 1/${pdf.getNumberOfPages()}`, pageWidth - margin, y, { align: 'right' });
 
       // Download
-      const filename = `selection-la-truffe-${new Date().toISOString().split('T')[0]}.pdf`;
+      const filename = `rapport-la-truffe-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       
-      toast.success('PDF client téléchargé !');
+      toast.success('PDF téléchargé avec succès !');
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error('Erreur lors de la génération du PDF');
@@ -266,7 +345,6 @@ export function ClientPDFExport({ opportunities, filters, totalAnalyzed }: Clien
 
   return (
     <Button 
-      variant="gold" 
       onClick={generateClientPDF}
       disabled={isGenerating || opportunities.length === 0}
       className="gap-2"

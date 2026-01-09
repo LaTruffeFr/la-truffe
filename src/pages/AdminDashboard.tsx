@@ -100,7 +100,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Admin Header */}
       <header className="border-b border-border px-6 py-3 flex items-center justify-between shrink-0 bg-card">
         <div className="flex items-center gap-3">
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
       </header>
 
       {/* Tabs Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <div className="border-b border-border px-6">
           <TabsList className="h-12">
             <TabsTrigger value="scanner" className="gap-2">
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Scanner Tab */}
-        <TabsContent value="scanner" className="flex-1 overflow-hidden m-0">
+        <TabsContent value="scanner" className="flex-1 m-0">
           {vehicles.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="text-center space-y-6 max-w-md">
