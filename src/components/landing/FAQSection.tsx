@@ -25,18 +25,18 @@ export function FAQSection() {
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-12 animate-fade-in-up">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground">
               Questions Fréquentes
             </h2>
           </div>
           
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full animate-fade-in-up animate-delay-100">
             {faqs.map((faq, index) => (
               <AccordionItem 
                 key={index} 
                 value={`item-${index}`}
-                className="bg-card rounded-lg mb-3 px-6 border shadow-sm"
+                className="bg-card rounded-lg mb-3 px-6 border shadow-sm hover:shadow-md transition-shadow"
               >
                 <AccordionTrigger className="text-left text-lg font-semibold text-foreground hover:no-underline py-5">
                   {faq.question}

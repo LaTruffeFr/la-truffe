@@ -15,14 +15,17 @@ export function ReportPreviewSection() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left - Text content */}
-            <div>
+            <div className="animate-fade-in-up">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
                 Ce que contient votre Audit de Prix.
               </h2>
               
               <ul className="space-y-4">
                 {features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
+                  <li 
+                    key={index} 
+                    className={`flex items-start gap-3 animate-fade-in-up animate-delay-${(index + 1) * 100}`}
+                  >
                     <div className="w-6 h-6 bg-success/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Check className="h-4 w-4 text-success" />
                     </div>
@@ -33,7 +36,7 @@ export function ReportPreviewSection() {
             </div>
 
             {/* Right - Gauge Preview */}
-            <div className="bg-card rounded-2xl shadow-corporate p-8">
+            <div className="bg-card rounded-2xl shadow-lg p-8 border border-border hover-lift animate-fade-in-up animate-delay-200">
               <div className="text-center mb-4">
                 <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
                   APERÇU DU RAPPORT

@@ -6,15 +6,18 @@ const stats = [
 
 export function StatisticsSection() {
   return (
-    <section className="py-16 bg-[#0F172A]">
+    <section className="py-16 bg-foreground">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto text-center">
           {stats.map((stat, index) => (
-            <div key={index}>
-              <p className="text-4xl md:text-5xl font-extrabold text-white mb-2">
+            <div 
+              key={index} 
+              className={`animate-fade-in-up animate-delay-${(index + 1) * 100}`}
+            >
+              <p className="text-4xl md:text-5xl font-extrabold text-primary-foreground mb-2">
                 {stat.value}
               </p>
-              <p className="text-white/70 text-lg">
+              <p className="text-primary-foreground/70 text-lg">
                 {stat.label}
               </p>
             </div>
