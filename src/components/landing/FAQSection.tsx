@@ -7,16 +7,16 @@ import {
 
 const faqs = [
   {
-    question: "Est-ce fiable ?",
-    answer: "Nos données proviennent de l'analyse en temps réel de toutes les plateformes majeures (Leboncoin, LaCentrale...). Notre algorithme IA croise des milliers de points de données pour vous fournir une estimation précise."
+    question: "D'où viennent vos données ?",
+    answer: "Nous scannons en temps réel les plus grandes plateformes d'annonces européennes pour établir un prix de marché ultra-précis."
   },
   {
-    question: "Combien ça coûte ?",
-    answer: "19€ par rapport complet. Pas d'abonnement caché. Vous payez uniquement pour les rapports dont vous avez besoin."
+    question: "Est-ce que ça marche pour toutes les voitures ?",
+    answer: "Oui, tant qu'il y a suffisamment d'annonces comparables sur le marché pour que l'IA puisse travailler."
   },
   {
-    question: "Et si je ne trouve pas d'économie ?",
-    answer: "C'est que vous achetez au bon prix ! Le rapport vous évite aussi de perdre de l'argent en surpayant. Dans tous les cas, vous avez une vision claire du marché."
+    question: "Pourquoi payer 19€ ?",
+    answer: "Pour économiser 2000€. C'est l'investissement le plus rentable de votre achat auto."
   }
 ];
 

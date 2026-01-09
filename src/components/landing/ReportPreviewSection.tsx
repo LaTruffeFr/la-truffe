@@ -2,10 +2,10 @@ import { Check } from 'lucide-react';
 import { PriceGauge } from './PriceGauge';
 
 const features = [
-  "Positionnement exact par rapport au marché (Jauge couleur).",
-  "Analyse de la décote kilométrique (Courbe de tendance).",
-  "Score de fiabilité de l'annonce (sur 10).",
-  "Liste des concurrents moins chers (Preuves pour négocier)."
+  "La Jauge de Prix : Êtes-vous dans le Vert (Affaire) ou le Rouge (Arnaque) ?",
+  "Le Score de Confiance : Une note sur 10 pour décider vite.",
+  "L'Estimation de Négociation : Le montant exact à demander au vendeur.",
+  "Comparatif Marché : Les 5 annonces concurrentes moins chères."
 ];
 
 export function ReportPreviewSection() {
@@ -17,7 +17,7 @@ export function ReportPreviewSection() {
             {/* Left - Text content */}
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-                Un Audit de Prix Complet.
+                Ce que contient votre Audit de Prix.
               </h2>
               
               <ul className="space-y-4">
