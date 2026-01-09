@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Clock, CheckCircle, AlertCircle, Upload, ExternalLink, FileText } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Upload, ExternalLink, FileText, Send, Link, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,6 +48,10 @@ export function ClientOrdersPanel() {
   const [reportUrl, setReportUrl] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState<'pending' | 'in_progress' | 'completed'>('pending');
+  const [isSendingEmail, setIsSendingEmail] = useState<string | null>(null);
+  const [clientEmail, setClientEmail] = useState('');
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [selectedReportForEmail, setSelectedReportForEmail] = useState<Report | null>(null);
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -114,6 +118,59 @@ export function ClientOrdersPanel() {
     }
     
     setIsSubmitting(false);
+  };
+
+  const getPublicAuditUrl = (reportId: string) => {
+    return `${window.location.origin}/audit/${reportId}`;
+  };
+
+  const copyLinkToClipboard = async (reportId: string) => {
+    const url = getPublicAuditUrl(reportId);
+    await navigator.clipboard.writeText(url);
+    toast({
+      title: 'Lien copié !',
+      description: 'Le lien de l\'audit a été copié dans le presse-papier',
+    });
+  };
+
+  const openEmailDialog = (report: Report) => {
+    setSelectedReportForEmail(report);
+    setClientEmail('');
+    setIsEmailDialogOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedReportForEmail || !clientEmail) return;
+    
+    setIsSendingEmail(selectedReportForEmail.id);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('send-report-email', {
+        body: { 
+          reportId: selectedReportForEmail.id, 
+          clientEmail 
+        }
+      });
+      
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Erreur lors de l\'envoi');
+      }
+      
+      toast({
+        title: 'Email envoyé !',
+        description: `L'audit a été envoyé à ${clientEmail}`,
+      });
+      setIsEmailDialogOpen(false);
+    } catch (err: unknown) {
+      console.error('Email send error:', err);
+      toast({
+        title: 'Erreur',
+        description: err instanceof Error ? err.message : 'Impossible d\'envoyer l\'email',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingEmail(null);
+    }
   };
 
   if (isLoading) {
@@ -290,6 +347,40 @@ export function ClientOrdersPanel() {
                       </DialogContent>
                     </Dialog>
                     
+                    {/* Actions pour les rapports terminés */}
+                    {report.status === 'completed' && (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => copyLinkToClipboard(report.id)}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copier le lien
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => openEmailDialog(report)}
+                          disabled={isSendingEmail === report.id}
+                        >
+                          {isSendingEmail === report.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4 mr-2" />
+                          )}
+                          Envoyer au client
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => window.open(getPublicAuditUrl(report.id), '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Voir l'audit
+                        </Button>
+                      </>
+                    )}
+                    
                     {report.report_url && (
                       <Button 
                         variant="ghost" 
@@ -307,6 +398,55 @@ export function ClientOrdersPanel() {
           })}
         </div>
       )}
+      
+      {/* Dialog pour envoyer email */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Envoyer l'audit au client</DialogTitle>
+            <DialogDescription>
+              {selectedReportForEmail && `${selectedReportForEmail.marque} ${selectedReportForEmail.modele}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email du client</Label>
+              <Input
+                type="email"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                placeholder="client@exemple.com"
+              />
+            </div>
+            
+            <div className="p-3 bg-muted rounded-lg">
+              <Label className="text-xs text-muted-foreground">Lien de l'audit</Label>
+              <p className="text-sm font-mono truncate">
+                {selectedReportForEmail && getPublicAuditUrl(selectedReportForEmail.id)}
+              </p>
+            </div>
+            
+            <Button 
+              className="w-full" 
+              onClick={handleSendEmail}
+              disabled={!clientEmail || isSendingEmail !== null}
+            >
+              {isSendingEmail ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Envoyer l'email
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

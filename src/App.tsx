@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import ClientDashboard from "./pages/ClientDashboard";
 import ReportView from "./pages/ReportView";
+import PublicAudit from "./pages/PublicAudit";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -162,6 +163,12 @@ const AppRoutes = () => {
               <ReportView />
             </ProtectedRoute>
           } 
+        />
+        
+        {/* Public audit view - accessible to anyone with link */}
+        <Route 
+          path="/audit/:id" 
+          element={<PublicAudit />}
         />
         
         {/* Legacy redirects for old routes */}
