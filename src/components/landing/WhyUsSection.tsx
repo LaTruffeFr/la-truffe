@@ -23,7 +23,7 @@ export function WhyUsSection() {
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 animate-fade-in-up">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
             Pourquoi 90% des acheteurs perdent de l'argent ?
           </h2>
@@ -31,9 +31,12 @@ export function WhyUsSection() {
         
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {features.map((feature, index) => (
-            <Card key={index} className="corporate-card border-0 text-center">
+            <Card 
+              key={index} 
+              className={`corporate-card border-0 text-center hover-lift animate-fade-in-up animate-delay-${(index + 1) * 100}`}
+            >
               <CardContent className="p-8">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-transform duration-300 group-hover:scale-110">
                   <feature.icon className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-foreground">{feature.title}</h3>
