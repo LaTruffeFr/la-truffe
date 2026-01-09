@@ -10,7 +10,7 @@ export function SocialProof() {
   ];
 
   return (
-    <section className="social-proof-bar">
+    <section className="py-6 bg-muted/50 border-y border-border">
       <div className="container mx-auto px-4">
         {/* Stats */}
         <div className="flex items-center justify-center gap-2 mb-6">

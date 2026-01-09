@@ -40,7 +40,7 @@ export function Footer() {
 
           {/* Copyright */}
           <p className="text-muted-foreground text-sm">
-            © 2024 La Truffe. Tous droits réservés.
+            © 2026 La Truffe. Tous droits réservés.
           </p>
         </div>
       </div>
