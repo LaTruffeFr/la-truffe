@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import ClientDashboard from "./pages/ClientDashboard";
+import ReportView from "./pages/ReportView";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -150,6 +151,16 @@ const AppRoutes = () => {
             <AdminRoute>
               <AdminDashboard />
             </AdminRoute>
+          } 
+        />
+        
+        {/* Report view - protected */}
+        <Route 
+          path="/report/:id" 
+          element={
+            <ProtectedRoute>
+              <ReportView />
+            </ProtectedRoute>
           } 
         />
         

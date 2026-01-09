@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut, Download, CreditCard } from 'lucide-react';
+import { Loader2, Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut, Eye, CreditCard } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import logoTruffe from '@/assets/logo-truffe.jpg';
 
@@ -307,13 +307,13 @@ const ClientDashboard = () => {
                         </p>
                       )}
                       
-                      {report.status === 'completed' && report.report_url && (
+                      {report.status === 'completed' && (
                         <Button 
-                          onClick={() => window.open(report.report_url!, '_blank')}
+                          onClick={() => navigate(`/report/${report.id}`)}
                           className="gap-2"
                         >
-                          <Download className="h-4 w-4" />
-                          Télécharger le PDF
+                          <Eye className="h-4 w-4" />
+                          Voir mon audit
                         </Button>
                       )}
                       
