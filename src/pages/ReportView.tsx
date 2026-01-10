@@ -49,6 +49,14 @@ interface Report {
   status: 'pending' | 'in_progress' | 'completed';
   report_url: string | null;
   admin_notes: string | null;
+  // New analysis fields
+  prix_moyen: number | null;
+  prix_truffe: number | null;
+  economie_moyenne: number | null;
+  decote_par_10k: number | null;
+  total_vehicules: number | null;
+  opportunites_count: number | null;
+  vehicles_data: Vehicle[] | null;
 }
 
 interface Vehicle {
@@ -93,7 +101,7 @@ const ReportView = () => {
     const fetchData = async () => {
       setIsLoading(true);
       
-      // Fetch report
+      // Fetch report with all analysis data
       const { data: reportData, error: reportError } = await supabase
         .from('reports')
         .select('*')
@@ -111,18 +119,25 @@ const ReportView = () => {
         return;
       }
       
-      setReport(reportData);
+      // Cast to our Report interface (Supabase types may not have new columns yet)
+      const report = reportData as unknown as Report;
+      setReport(report);
       
-      // Fetch vehicles related to this report (mock data for now - would come from a real analysis)
-      // In a real app, you'd have a vehicles_reports junction table or store vehicle data with report
-      const { data: vehiclesData } = await supabase
-        .from('vehicles')
-        .select('*')
-        .ilike('modele', `%${reportData.modele.split(' ')[0]}%`)
-        .order('gain_potentiel', { ascending: false, nullsFirst: false })
-        .limit(10);
+      // Use vehicles_data from the report if available (published from admin)
+      if (report.vehicles_data && Array.isArray(report.vehicles_data)) {
+        setVehicles(report.vehicles_data);
+      } else {
+        // Fallback to fetching from vehicles table (legacy behavior)
+        const { data: vehiclesData } = await supabase
+          .from('vehicles')
+          .select('*')
+          .ilike('modele', `%${report.modele.split(' ')[0]}%`)
+          .order('gain_potentiel', { ascending: false, nullsFirst: false })
+          .limit(10);
+        
+        setVehicles(vehiclesData || []);
+      }
       
-      setVehicles(vehiclesData || []);
       setIsLoading(false);
     };
     
@@ -133,15 +148,16 @@ const ReportView = () => {
     window.print();
   };
 
-  // Calculate KPIs from vehicles
-  const avgMarketPrice = vehicles.length > 0 
+  // Use stored KPIs from report if available, otherwise calculate from vehicles
+  const avgMarketPrice = report?.prix_moyen ?? (vehicles.length > 0 
     ? vehicles.reduce((acc, v) => acc + (v.prix_median_segment || v.prix), 0) / vehicles.length 
-    : 0;
-  const avgActualPrice = vehicles.length > 0 
+    : 0);
+  const avgActualPrice = report?.prix_truffe ?? (vehicles.length > 0 
     ? vehicles.reduce((acc, v) => acc + v.prix, 0) / vehicles.length 
-    : 0;
-  const totalSavings = vehicles.reduce((acc, v) => acc + (v.gain_potentiel || 0), 0);
-  const avgSavings = vehicles.length > 0 ? totalSavings / vehicles.length : 0;
+    : 0);
+  const avgSavings = report?.economie_moyenne ?? (vehicles.length > 0
+    ? vehicles.reduce((acc, v) => acc + (v.gain_potentiel || 0), 0) / vehicles.length
+    : 0);
 
   // Generate chart data from vehicles
   const chartData = vehicles
