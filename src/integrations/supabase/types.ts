@@ -86,17 +86,24 @@ export type Database = {
           annee_min: number | null
           carburant: string | null
           created_at: string
+          decote_par_10k: number | null
+          economie_moyenne: number | null
           id: string
           kilometrage_max: number | null
           marque: string
           modele: string
           notes: string | null
+          opportunites_count: number | null
           prix_max: number | null
+          prix_moyen: number | null
+          prix_truffe: number | null
           report_url: string | null
           status: Database["public"]["Enums"]["report_status"]
+          total_vehicules: number | null
           transmission: string | null
           updated_at: string
           user_id: string
+          vehicles_data: Json | null
         }
         Insert: {
           admin_notes?: string | null
@@ -104,17 +111,24 @@ export type Database = {
           annee_min?: number | null
           carburant?: string | null
           created_at?: string
+          decote_par_10k?: number | null
+          economie_moyenne?: number | null
           id?: string
           kilometrage_max?: number | null
           marque: string
           modele: string
           notes?: string | null
+          opportunites_count?: number | null
           prix_max?: number | null
+          prix_moyen?: number | null
+          prix_truffe?: number | null
           report_url?: string | null
           status?: Database["public"]["Enums"]["report_status"]
+          total_vehicules?: number | null
           transmission?: string | null
           updated_at?: string
           user_id: string
+          vehicles_data?: Json | null
         }
         Update: {
           admin_notes?: string | null
@@ -122,17 +136,24 @@ export type Database = {
           annee_min?: number | null
           carburant?: string | null
           created_at?: string
+          decote_par_10k?: number | null
+          economie_moyenne?: number | null
           id?: string
           kilometrage_max?: number | null
           marque?: string
           modele?: string
           notes?: string | null
+          opportunites_count?: number | null
           prix_max?: number | null
+          prix_moyen?: number | null
+          prix_truffe?: number | null
           report_url?: string | null
           status?: Database["public"]["Enums"]["report_status"]
+          total_vehicules?: number | null
           transmission?: string | null
           updated_at?: string
           user_id?: string
+          vehicles_data?: Json | null
         }
         Relationships: []
       }

@@ -10,8 +10,9 @@ import { CSVImportModal } from '@/components/trading/CSVImportModal';
 import { MarketReportGenerator } from '@/components/trading/MarketReportGenerator';
 import { DealCard } from '@/components/trading/DealCard';
 import { ClientOrdersPanel } from '@/components/admin/ClientOrdersPanel';
+import { PublishReportModal } from '@/components/admin/PublishReportModal';
 import { useVehicleData } from '@/contexts/VehicleDataContext';
-import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, ChevronDown, ChevronUp, SlidersHorizontal, Upload, Shield, LogOut, ShoppingBag, BarChart3 } from 'lucide-react';
+import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, ChevronDown, ChevronUp, SlidersHorizontal, Upload, Shield, LogOut, ShoppingBag, BarChart3, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
   const [isChartOpen, setIsChartOpen] = useState(true);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('scanner');
   const dealsRef = useRef<HTMLDivElement>(null);
 
@@ -181,6 +183,13 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Button 
+                      onClick={() => setIsPublishModalOpen(true)} 
+                      className="gap-2 bg-primary hover:bg-primary/90"
+                    >
+                      <Send className="w-4 h-4" />
+                      PUBLIER POUR LE CLIENT
+                    </Button>
                     <MarketReportGenerator 
                       vehicles={filteredVehicles} 
                       trendLine={trendLine} 
@@ -433,6 +442,16 @@ export default function AdminDashboard() {
         open={isImportModalOpen} 
         onOpenChange={setIsImportModalOpen} 
         onImport={handleImport}
+      />
+
+      {/* Publish Report Modal */}
+      <PublishReportModal
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        vehicles={chartVehicles}
+        trendLine={trendLine}
+        kpis={kpis}
+        vehicleInfo={vehicleInfo}
       />
     </div>
   );
