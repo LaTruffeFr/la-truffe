@@ -8,3 +8,4 @@ export { CSVUploader } from './CSVUploader';
 export { OpportunityModal } from './OpportunityModal';
 export { KPICards } from './KPICards';
 export { ClientSheetModal } from './ClientSheetModal';
+export { MarketAnalysisSection } from './MarketAnalysisSection';

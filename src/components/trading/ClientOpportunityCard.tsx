@@ -1,5 +1,5 @@
 import { VehicleWithScore } from '@/lib/csvParser';
-import { Car, ExternalLink, Award } from 'lucide-react';
+import { Car, ExternalLink, Award, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -10,6 +10,7 @@ interface ClientOpportunityCardProps {
     deviationPercent: number;
   };
   rank: number;
+  onAnalyze?: () => void;
 }
 
 function formatCurrency(value: number): string {
@@ -38,7 +39,7 @@ function calculateDealScore(deviationPercent: number): number {
   return Math.round(score * 10) / 10; // One decimal
 }
 
-export function ClientOpportunityCard({ vehicle, rank }: ClientOpportunityCardProps) {
+export function ClientOpportunityCard({ vehicle, rank, onAnalyze }: ClientOpportunityCardProps) {
   const dealScore = calculateDealScore(vehicle.deviationPercent);
   const hasImage = vehicle.image && vehicle.image.length > 10;
 
@@ -117,19 +118,29 @@ export function ClientOpportunityCard({ vehicle, rank }: ClientOpportunityCardPr
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="px-4 pb-4">
+      {/* Action Buttons */}
+      <div className="px-4 pb-4 flex gap-2">
+        {onAnalyze && (
+          <Button
+            variant="outline"
+            className="flex-1 gap-2"
+            onClick={onAnalyze}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Analyser
+          </Button>
+        )}
         {vehicle.lien ? (
           <Button
             variant="gold"
-            className="w-full gap-2"
+            className={`gap-2 ${onAnalyze ? 'flex-1' : 'w-full'}`}
             onClick={() => window.open(vehicle.lien, '_blank')}
           >
             <ExternalLink className="w-4 h-4" />
             Voir l'annonce
           </Button>
         ) : (
-          <Button variant="secondary" className="w-full" disabled>
+          <Button variant="secondary" className={onAnalyze ? 'flex-1' : 'w-full'} disabled>
             Lien non disponible
           </Button>
         )}

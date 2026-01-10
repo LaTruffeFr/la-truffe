@@ -1,14 +1,35 @@
+import { useState } from 'react';
 import { useVehicleData } from '@/contexts/VehicleDataContext';
 import { ClientOpportunityCard } from '@/components/trading/ClientOpportunityCard';
 import { ClientPDFExport } from '@/components/trading/ClientPDFExport';
+import { MarketAnalysisSection } from '@/components/trading/MarketAnalysisSection';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Sparkles } from 'lucide-react';
+import { ArrowLeft, Users, Sparkles, BarChart3, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logoTruffe from '@/assets/logo-truffe.jpg';
+import { VehicleWithScore } from '@/lib/csvParser';
 
 export default function ClientView() {
   const navigate = useNavigate();
   const { topOpportunities, filters, chartVehicles, vehicles } = useVehicleData();
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
+
+  // Convert VehicleWithScore to the format expected by MarketAnalysisSection
+  const convertToMarketVehicle = (v: VehicleWithScore) => ({
+    id: v.id,
+    titre: v.titre,
+    marque: v.marque,
+    modele: v.modele,
+    prix: v.prix,
+    kilometrage: v.kilometrage,
+    annee: v.annee,
+    carburant: v.carburant,
+    localisation: v.localisation,
+    lien: v.lien,
+    image: v.image,
+    gainPotentiel: v.ecartEuros, // Map from VehicleWithScore
+    prixMedianSegment: v.prixMedian, // Map from VehicleWithScore
+  });
 
   // No data - redirect to main page
   if (vehicles.length === 0) {
@@ -97,11 +118,13 @@ export default function ClientView() {
         {topOpportunities.length > 0 ? (
           <div className="space-y-4">
             {topOpportunities.map((vehicle, index) => (
-              <ClientOpportunityCard
-                key={vehicle.id || `${vehicle.marque}-${vehicle.modele}-${index}`}
-                vehicle={vehicle}
-                rank={index + 1}
-              />
+              <div key={vehicle.id || `${vehicle.marque}-${vehicle.modele}-${index}`}>
+                <ClientOpportunityCard
+                  vehicle={vehicle}
+                  rank={index + 1}
+                  onAnalyze={() => setSelectedVehicle(vehicle)}
+                />
+              </div>
             ))}
           </div>
         ) : (
@@ -115,6 +138,33 @@ export default function ClientView() {
             <Button variant="outline" onClick={() => navigate('/')} className="mt-6">
               Modifier les filtres
             </Button>
+          </div>
+        )}
+
+        {/* Market Analysis Section - Shows when a vehicle is selected */}
+        {selectedVehicle && (
+          <div className="mt-12 pt-8 border-t border-border">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-6 h-6 text-primary" />
+                <span className="text-lg font-semibold">
+                  Analyse : {selectedVehicle.titre}
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSelectedVehicle(null)}
+                className="gap-2"
+              >
+                <X className="w-4 h-4" />
+                Fermer
+              </Button>
+            </div>
+            <MarketAnalysisSection
+              currentVehicle={convertToMarketVehicle(selectedVehicle)}
+              allVehicles={chartVehicles.map(convertToMarketVehicle)}
+            />
           </div>
         )}
 
