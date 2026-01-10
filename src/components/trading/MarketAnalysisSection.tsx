@@ -154,14 +154,12 @@ export function MarketAnalysisSection({ currentVehicle, allVehicles }: MarketAna
     const savings = avgMarketPrice - currentPrice;
     const savingsPercent = (savings / avgMarketPrice) * 100;
 
-    // Determine price positioning badge
+    // Determine price positioning badge - simpler: "Super Affaire" ou "Prix Marché"
     let positioning: { label: string; color: string; bgColor: string };
-    if (savingsPercent >= 10) {
-      positioning = { label: "Excellent", color: "text-green-600", bgColor: "bg-green-500/10 border-green-500/30" };
-    } else if (savingsPercent >= -10) {
-      positioning = { label: "Juste", color: "text-amber-600", bgColor: "bg-amber-500/10 border-amber-500/30" };
+    if (savings > 0) {
+      positioning = { label: "Super Affaire", color: "text-green-600", bgColor: "bg-green-500/10 border-green-500/30" };
     } else {
-      positioning = { label: "Premium", color: "text-muted-foreground", bgColor: "bg-muted/50 border-muted-foreground/30" };
+      positioning = { label: "Prix Marché", color: "text-muted-foreground", bgColor: "bg-muted/50 border-muted-foreground/30" };
     }
 
     return {
@@ -347,8 +345,8 @@ export function MarketAnalysisSection({ currentVehicle, allVehicles }: MarketAna
               <span className="text-muted-foreground">Marché ({chartData.market.length} annonces)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-amber-500" />
-              <span className="text-muted-foreground">Offre Actuelle</span>
+              <div className="w-4 h-4 rounded-full bg-red-500" />
+              <span className="text-muted-foreground">Votre Offre</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-0.5 bg-primary" style={{ background: 'repeating-linear-gradient(90deg, hsl(var(--primary)) 0, hsl(var(--primary)) 4px, transparent 4px, transparent 8px)' }} />
@@ -421,18 +419,18 @@ export function MarketAnalysisSection({ currentVehicle, allVehicles }: MarketAna
                   ))}
                 </Scatter>
 
-                {/* Current vehicle - highlighted */}
+                {/* Current vehicle - highlighted with RED */}
                 <Scatter
                   data={chartData.current}
-                  fill="#f59e0b"
+                  fill="#ef4444"
                 >
                   {chartData.current.map((entry, index) => (
                     <Cell
                       key={`current-${index}`}
-                      fill="#f59e0b"
-                      stroke="#f59e0b"
+                      fill="#ef4444"
+                      stroke="#ef4444"
                       strokeWidth={3}
-                      r={10}
+                      r={12}
                     />
                   ))}
                 </Scatter>
@@ -466,7 +464,7 @@ export function MarketAnalysisSection({ currentVehicle, allVehicles }: MarketAna
                 {topOpportunities.map((vehicle, index) => (
                   <TableRow 
                     key={vehicle.id} 
-                    className={vehicle.isCurrentVehicle ? 'bg-amber-500/10 border-amber-500/30' : ''}
+                    className={vehicle.isCurrentVehicle ? 'bg-yellow-200/70 dark:bg-yellow-500/20' : ''}
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -475,8 +473,8 @@ export function MarketAnalysisSection({ currentVehicle, allVehicles }: MarketAna
                           {vehicle.titre}
                         </div>
                         {vehicle.isCurrentVehicle && (
-                          <Badge variant="outline" className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-xs shrink-0">
-                            Offre actuelle
+                          <Badge variant="outline" className="bg-yellow-400/30 text-yellow-700 dark:text-yellow-500 border-yellow-500/50 text-xs shrink-0">
+                            Votre annonce
                           </Badge>
                         )}
                       </div>
