@@ -1,37 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Loader2, 
   ArrowLeft, 
   Printer, 
-  CheckCircle, 
-  TrendingDown, 
-  Car, 
-  Gauge,
-  ExternalLink,
-  MapPin,
-  Calendar,
-  Fuel
+  CheckCircle,
+  FileText,
+  Calendar
 } from 'lucide-react';
 import logoTruffe from '@/assets/logo-truffe.jpg';
-import { PriceGauge } from '@/components/landing/PriceGauge';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Area,
-  AreaChart
-} from 'recharts';
+import { SniperKPIs } from '@/components/trading/SniperKPIs';
+import { SniperChart } from '@/components/trading/SniperChart';
+import { DealCard } from '@/components/trading/DealCard';
+import { OpportunityModal } from '@/components/trading/OpportunityModal';
+import { VehicleWithScore } from '@/lib/csvParser';
 
 interface Report {
   id: string;
@@ -49,41 +36,37 @@ interface Report {
   status: 'pending' | 'in_progress' | 'completed';
   report_url: string | null;
   admin_notes: string | null;
-  // New analysis fields
   prix_moyen: number | null;
   prix_truffe: number | null;
   economie_moyenne: number | null;
   decote_par_10k: number | null;
   total_vehicules: number | null;
   opportunites_count: number | null;
-  vehicles_data: Vehicle[] | null;
+  vehicles_data: VehicleWithScore[] | null;
 }
 
-interface Vehicle {
-  id: string;
-  titre: string;
-  marque: string;
-  modele: string;
-  prix: number;
-  kilometrage: number;
-  annee: number | null;
-  carburant: string | null;
-  transmission: string | null;
-  localisation: string | null;
-  image: string | null;
-  lien: string | null;
-  prix_median_segment: number | null;
-  gain_potentiel: number | null;
-  score_confiance: number | null;
+// Calculate trend line from vehicles data
+function calculateTrendLine(data: VehicleWithScore[]): { slope: number; intercept: number } {
+  if (data.length < 2) return { slope: 0, intercept: 0 };
+
+  const n = data.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+
+  data.forEach(v => {
+    sumX += v.kilometrage;
+    sumY += v.prix;
+    sumXY += v.kilometrage * v.prix;
+    sumXX += v.kilometrage * v.kilometrage;
+  });
+
+  const denominator = n * sumXX - sumX * sumX;
+  if (denominator === 0) return { slope: 0, intercept: sumY / n };
+
+  const slope = (n * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / n;
+
+  return { slope, intercept };
 }
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
-};
-
-const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('fr-FR').format(value);
-};
 
 const ReportView = () => {
   const { id } = useParams<{ id: string }>();
@@ -92,8 +75,9 @@ const ReportView = () => {
   const { toast } = useToast();
   
   const [report, setReport] = useState<Report | null>(null);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
 
   useEffect(() => {
     if (!user || !id) return;
@@ -101,7 +85,6 @@ const ReportView = () => {
     const fetchData = async () => {
       setIsLoading(true);
       
-      // Fetch report with all analysis data
       const { data: reportData, error: reportError } = await supabase
         .from('reports')
         .select('*')
@@ -119,23 +102,30 @@ const ReportView = () => {
         return;
       }
       
-      // Cast to our Report interface (Supabase types may not have new columns yet)
       const report = reportData as unknown as Report;
       setReport(report);
       
-      // Use vehicles_data from the report if available (published from admin)
+      // Use vehicles_data from the report (published from admin)
       if (report.vehicles_data && Array.isArray(report.vehicles_data)) {
-        setVehicles(report.vehicles_data);
-      } else {
-        // Fallback to fetching from vehicles table (legacy behavior)
-        const { data: vehiclesData } = await supabase
-          .from('vehicles')
-          .select('*')
-          .ilike('modele', `%${report.modele.split(' ')[0]}%`)
-          .order('gain_potentiel', { ascending: false, nullsFirst: false })
-          .limit(10);
+        // Ensure all vehicles have required fields for VehicleWithScore
+        const enrichedVehicles = report.vehicles_data.map((v, index) => ({
+          ...v,
+          id: v.id || `vehicle-${index}`,
+          clusterId: v.clusterId || `${v.marque}_${v.modele}_${v.annee}`,
+          clusterSize: v.clusterSize || 1,
+          coteCluster: v.coteCluster || v.prix,
+          ecartEuros: v.ecartEuros || 0,
+          ecartPourcent: v.ecartPourcent || 0,
+          dealScore: v.dealScore || 50,
+          isPremium: v.isPremium || false,
+          hasEnoughData: v.hasEnoughData !== false,
+          prixMoyen: v.prixMoyen || v.prix,
+          prixMedian: v.prixMedian || v.prix,
+          ecart: v.ecart || 0,
+          segmentKey: v.segmentKey || '',
+        })) as VehicleWithScore[];
         
-        setVehicles(vehiclesData || []);
+        setVehicles(enrichedVehicles);
       }
       
       setIsLoading(false);
@@ -144,35 +134,74 @@ const ReportView = () => {
     fetchData();
   }, [user, id, toast, navigate]);
 
+  // Calculate trend line from vehicles
+  const trendLine = useMemo(() => {
+    return calculateTrendLine(vehicles);
+  }, [vehicles]);
+
+  // Calculate KPIs from stored data or vehicles
+  const kpis = useMemo(() => {
+    const avgPrice = report?.prix_moyen || (vehicles.length > 0
+      ? vehicles.reduce((acc, v) => acc + v.prix, 0) / vehicles.length
+      : 0);
+
+    const decotePer10k = report?.decote_par_10k || Math.abs(trendLine.slope * 10000);
+
+    const opportunities = vehicles.filter(v => v.dealScore < 0 || v.ecartEuros > 0);
+    const opportunitiesCount = report?.opportunites_count || opportunities.length;
+
+    const bestOffer = opportunities.length > 0
+      ? opportunities.sort((a, b) => b.ecartEuros - a.ecartEuros)[0]
+      : null;
+
+    return {
+      avgPrice: Math.round(avgPrice),
+      decotePer10k: Math.round(decotePer10k),
+      bestOffer,
+      totalVehicles: vehicles.length,
+      opportunitiesCount,
+    };
+  }, [report, vehicles, trendLine]);
+
+  // Top 10 deals for DealCard display
+  const topDeals = useMemo(() => {
+    return [...vehicles]
+      .filter(v => v.ecartEuros > 0 || v.dealScore < 0)
+      .sort((a, b) => b.ecartEuros - a.ecartEuros)
+      .slice(0, 10)
+      .map(v => {
+        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
+        return {
+          ...v,
+          expectedPrice: Math.round(expectedPrice),
+          deviation: Math.round(expectedPrice - v.prix),
+          deviationPercent: Math.round(((expectedPrice - v.prix) / expectedPrice) * 100),
+        };
+      });
+  }, [vehicles, trendLine]);
+
+  // Handle vehicle click from chart
+  const handleVehicleClick = useCallback((vehicle: VehicleWithScore) => {
+    const expectedPrice = trendLine.slope * vehicle.kilometrage + trendLine.intercept;
+    setSelectedVehicle({
+      ...vehicle,
+      expectedPrice: Math.round(expectedPrice),
+      deviation: Math.round(expectedPrice - vehicle.prix),
+      deviationPercent: Math.round(((expectedPrice - vehicle.prix) / expectedPrice) * 100),
+    } as any);
+  }, [trendLine]);
+
   const handlePrint = () => {
     window.print();
   };
 
-  // Use stored KPIs from report if available, otherwise calculate from vehicles
-  const avgMarketPrice = report?.prix_moyen ?? (vehicles.length > 0 
-    ? vehicles.reduce((acc, v) => acc + (v.prix_median_segment || v.prix), 0) / vehicles.length 
-    : 0);
-  const avgActualPrice = report?.prix_truffe ?? (vehicles.length > 0 
-    ? vehicles.reduce((acc, v) => acc + v.prix, 0) / vehicles.length 
-    : 0);
-  const avgSavings = report?.economie_moyenne ?? (vehicles.length > 0
-    ? vehicles.reduce((acc, v) => acc + (v.gain_potentiel || 0), 0) / vehicles.length
-    : 0);
-
-  // Generate chart data from vehicles
-  const chartData = vehicles
-    .filter(v => v.prix && v.kilometrage)
-    .sort((a, b) => a.kilometrage - b.kilometrage)
-    .map(v => ({
-      km: v.kilometrage,
-      prix: v.prix,
-      marche: v.prix_median_segment || v.prix * 1.1
-    }));
-
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-lg text-muted-foreground">Chargement du rapport...</p>
+        </div>
       </div>
     );
   }
@@ -186,19 +215,24 @@ const ReportView = () => {
     return null;
   }
 
+  const isCompleted = report.status === 'completed';
+
   return (
-    <div className="min-h-screen bg-background print:bg-white">
-      {/* Header - Hidden on print */}
+    <div className="min-h-screen flex flex-col bg-background print:bg-white">
+      {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-50 print:hidden">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <img 
                 src={logoTruffe}
                 alt="Logo La Truffe" 
                 className="h-10 w-10 rounded-lg object-cover shadow-corporate"
               />
-              <span className="text-xl font-bold text-foreground">La Truffe</span>
+              <div>
+                <span className="text-xl font-bold text-foreground">La Truffe</span>
+                <p className="text-xs text-muted-foreground">Audit de Prix Automobile</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/client-dashboard')}>
@@ -214,264 +248,174 @@ const ReportView = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 space-y-8 print:py-4">
-        {/* Report Header */}
-        <div className="text-center space-y-4 print:space-y-2">
-          <div className="flex items-center justify-center gap-3">
-            <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-sm px-4 py-1">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              AUDIT COMPLÉTÉ
-            </Badge>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground print:text-2xl">
-            Audit de Prix : {report.modele}
-          </h1>
-          <p className="text-muted-foreground">
-            Généré le {new Date(report.updated_at).toLocaleDateString('fr-FR', { 
-              day: 'numeric', 
-              month: 'long', 
-              year: 'numeric' 
-            })}
-          </p>
-        </div>
-
-        {/* Section 1: Key Figures */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 print:gap-4">
-          <Card className="corporate-card border-2 border-muted">
-            <CardContent className="pt-6 text-center">
-              <div className="text-sm font-medium text-muted-foreground mb-2">Prix Marché Moyen</div>
-              <div className="text-3xl font-bold text-foreground print:text-2xl">
-                {formatCurrency(avgMarketPrice)}
+      {/* Report Header */}
+      <div className="bg-card/50 border-b border-border px-6 py-6 print:py-4">
+        <div className="container mx-auto">
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <Badge className={`${isCompleted ? 'bg-success/10 text-success border-success/30' : 'bg-warning/10 text-warning border-warning/30'} text-sm px-4 py-1`}>
+                  {isCompleted ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      AUDIT COMPLÉTÉ
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      EN COURS
+                    </>
+                  )}
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Basé sur {vehicles.length} annonces
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground print:text-2xl">
+                {report.marque} {report.modele}
+              </h1>
+              <p className="text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Rapport généré le {new Date(report.updated_at).toLocaleDateString('fr-FR', { 
+                  day: 'numeric', 
+                  month: 'long', 
+                  year: 'numeric' 
+                })}
               </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="corporate-card border-2 border-primary/30 bg-primary/5">
-            <CardContent className="pt-6 text-center">
-              <div className="text-sm font-medium text-muted-foreground mb-2">Prix La Truffe</div>
-              <div className="text-3xl font-bold text-primary print:text-2xl">
-                {formatCurrency(avgActualPrice)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Nos meilleures sélections
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="corporate-card border-2 border-green-500/30 bg-green-500/5">
-            <CardContent className="pt-6 text-center">
-              <div className="text-sm font-medium text-muted-foreground mb-2">Économie Potentielle</div>
-              <div className="text-3xl font-bold text-green-600 print:text-2xl">
-                {formatCurrency(avgSavings)}
-              </div>
-              <TrendingDown className="h-5 w-5 text-green-600 mx-auto mt-1" />
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Price Gauge */}
-        <section className="print:hidden">
-          <Card className="corporate-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gauge className="h-5 w-5 text-primary" />
-                Positionnement Prix
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <div className="w-full max-w-md">
-                <PriceGauge 
-                  marketPrice={avgMarketPrice} 
-                  ourPrice={avgActualPrice} 
-                  savings={avgSavings}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Section 2: Top Opportunities */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2 print:text-xl">
-              <Car className="h-6 w-6 text-primary" />
-              Top {vehicles.length} Opportunités
-            </h2>
-          </div>
-          
-          {vehicles.length === 0 ? (
-            <Card className="corporate-card text-center py-12">
-              <CardContent>
-                <Car className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2 text-foreground">Analyse en cours</h3>
-                <p className="text-muted-foreground">
-                  Les opportunités seront affichées ici une fois l'analyse terminée
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4 print:space-y-2">
-              {vehicles.map((vehicle, index) => (
-                <Card 
-                  key={vehicle.id} 
-                  className="corporate-card hover:shadow-lg transition-shadow print:shadow-none print:border"
-                >
-                  <CardContent className="p-4 print:p-2">
-                    <div className="flex flex-col md:flex-row gap-4 items-start">
-                      {/* Rank Badge */}
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary print:bg-gray-100">
-                        #{index + 1}
-                      </div>
-                      
-                      {/* Image */}
-                      <div className="flex-shrink-0 w-full md:w-32 h-24 rounded-lg overflow-hidden bg-muted print:hidden">
-                        {vehicle.image ? (
-                          <img 
-                            src={vehicle.image} 
-                            alt={vehicle.titre}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Car className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Details */}
-                      <div className="flex-grow min-w-0">
-                        <h3 className="font-semibold text-foreground truncate text-lg print:text-base">
-                          {vehicle.titre || `${vehicle.marque} ${vehicle.modele}`}
-                        </h3>
-                        <div className="flex flex-wrap gap-3 mt-2 text-sm text-muted-foreground">
-                          {vehicle.annee && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {vehicle.annee}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Gauge className="h-4 w-4" />
-                            {formatNumber(vehicle.kilometrage)} km
-                          </span>
-                          {vehicle.carburant && (
-                            <span className="flex items-center gap-1">
-                              <Fuel className="h-4 w-4" />
-                              {vehicle.carburant}
-                            </span>
-                          )}
-                          {vehicle.localisation && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              {vehicle.localisation}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Price & Savings */}
-                      <div className="flex-shrink-0 text-right space-y-1">
-                        <div className="text-2xl font-bold text-foreground print:text-xl">
-                          {formatCurrency(vehicle.prix)}
-                        </div>
-                        {vehicle.gain_potentiel && vehicle.gain_potentiel > 0 && (
-                          <Badge className="bg-green-500/10 text-green-600 border-green-500/30 font-bold">
-                            -{formatCurrency(vehicle.gain_potentiel)}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {/* Action Button */}
-                      {vehicle.lien && (
-                        <div className="flex-shrink-0 print:hidden">
-                          <Button 
-                            onClick={() => window.open(vehicle.lien!, '_blank')}
-                            className="gap-2"
-                          >
-                            Voir l'annonce
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
             </div>
-          )}
-        </section>
+            <div className="text-right hidden md:block">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Référence</p>
+              <p className="font-mono text-sm text-foreground">{report.id.slice(0, 8)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Section 3: Price Distribution Chart */}
-        {chartData.length > 2 && (
-          <section className="print:hidden">
-            <Card className="corporate-card">
-              <CardHeader>
-                <CardTitle>Distribution des Prix par Kilométrage</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis 
-                        dataKey="km" 
-                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                        className="text-xs"
-                      />
-                      <YAxis 
-                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`}
-                        className="text-xs"
-                      />
-                      <Tooltip 
-                        formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(label) => `${formatNumber(label)} km`}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="marche" 
-                        stroke="hsl(var(--muted-foreground))" 
-                        fill="hsl(var(--muted))"
-                        name="Prix Marché"
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="prix" 
-                        stroke="hsl(var(--primary))" 
-                        fill="hsl(var(--primary) / 0.3)"
-                        name="Nos Prix"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+      {/* Main Content */}
+      {!isCompleted || vehicles.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center space-y-6 max-w-md">
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+              <FileText className="w-10 h-10 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Analyse en cours</h2>
+              <p className="text-muted-foreground">
+                Notre équipe analyse actuellement le marché pour trouver les meilleures opportunités. 
+                Vous recevrez une notification dès que le rapport sera prêt.
+              </p>
+            </div>
+            {report.notes && (
+              <div className="p-4 rounded-xl bg-muted/50 border border-border text-left">
+                <p className="text-sm font-medium text-foreground mb-1">Vos notes :</p>
+                <p className="text-sm text-muted-foreground">{report.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-auto">
+          {/* KPIs Bar - Same as Admin */}
+          <SniperKPIs
+            avgPrice={kpis.avgPrice}
+            decotePer10k={kpis.decotePer10k}
+            bestOffer={kpis.bestOffer}
+            totalVehicles={kpis.totalVehicles}
+            opportunitiesCount={kpis.opportunitiesCount}
+          />
+
+          <div className="p-6 space-y-8">
+            {/* Vehicle Info Header */}
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                Analyse du marché : {report.marque} {report.modele}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {vehicles.length} véhicules analysés sur le marché
+              </p>
+            </div>
+
+            {/* Sniper Chart - Interactive */}
+            <div className="rounded-xl border border-border bg-card overflow-hidden print:hidden">
+              <div className="p-4 border-b border-border">
+                <h3 className="font-semibold text-foreground">Graphique Prix vs Kilométrage</h3>
+                <p className="text-xs text-muted-foreground">
+                  Cliquez sur un point <span className="text-success font-medium">vert</span> pour voir les détails de l'opportunité
+                </p>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center gap-6 mb-4 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-success" />
+                    <span className="text-muted-foreground">Opportunité (sous la tendance)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-destructive/50" />
+                    <span className="text-muted-foreground">Au-dessus de la tendance</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-0.5 bg-destructive" />
+                    <span className="text-muted-foreground">Ligne de tendance</span>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </section>
-        )}
+                <div className="h-[400px]">
+                  <SniperChart
+                    data={vehicles}
+                    onVehicleClick={handleVehicleClick}
+                    trendLine={trendLine}
+                  />
+                </div>
+              </div>
+            </div>
 
-        {/* Admin Notes */}
-        {report.admin_notes && (
-          <section>
-            <Card className="corporate-card border-primary/20 bg-primary/5">
-              <CardHeader>
-                <CardTitle className="text-lg">Note de l'équipe La Truffe</CardTitle>
-              </CardHeader>
-              <CardContent>
+            {/* Top Opportunities - Using DealCard */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-foreground">🎯 TOP {topDeals.length} OPPORTUNITÉS</h2>
+                <span className="text-sm text-success font-medium">Meilleures affaires détectées</span>
+              </div>
+              
+              {topDeals.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 print:grid-cols-1">
+                  {topDeals.map((vehicle, index) => (
+                    <DealCard
+                      key={vehicle.id || index}
+                      vehicle={vehicle}
+                      rank={index + 1}
+                      onClick={() => handleVehicleClick(vehicle)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 rounded-xl border border-border bg-muted/30">
+                  <p className="text-muted-foreground">Aucune opportunité détectée dans ce dataset</p>
+                </div>
+              )}
+            </div>
+
+            {/* Admin Notes */}
+            {report.admin_notes && (
+              <div className="p-6 rounded-xl bg-primary/5 border border-primary/20">
+                <h3 className="text-lg font-semibold text-foreground mb-2">💡 Recommandation de l'équipe La Truffe</h3>
                 <p className="text-foreground">{report.admin_notes}</p>
-              </CardContent>
-            </Card>
-          </section>
-        )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-        {/* Footer - Print only */}
-        <footer className="hidden print:block border-t pt-4 mt-8 text-center text-xs text-gray-500">
-          <p>Document généré par l'algorithme La Truffe. Ne constitue pas une garantie mécanique.</p>
-          <p className="mt-1">© {new Date().getFullYear()} La Truffe - Tous droits réservés</p>
-        </footer>
-      </main>
+      {/* Print Footer */}
+      <div className="hidden print:block fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-card">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>La Truffe - Audit de Prix Automobile</span>
+          <span>{new Date().toLocaleDateString('fr-FR')}</span>
+        </div>
+      </div>
+
+      {/* Opportunity Modal */}
+      {selectedVehicle && (
+        <OpportunityModal
+          vehicle={selectedVehicle}
+          onClose={() => setSelectedVehicle(null)}
+        />
+      )}
     </div>
   );
 };
