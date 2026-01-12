@@ -97,43 +97,58 @@ export function PublishReportModal({
 
     setIsLoading(true);
     try {
-      // Prepare top 10 opportunities data
-      const topDeals = vehicles
-        .filter(v => v.dealScore < 0)
-        .sort((a, b) => a.dealScore - b.dealScore)
-        .slice(0, 10)
-        .map(v => {
-          const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-          return {
-            id: v.id,
-            titre: v.titre,
-            marque: v.marque,
-            modele: v.modele,
-            prix: v.prix,
-            kilometrage: v.kilometrage,
-            annee: v.annee,
-            carburant: v.carburant,
-            transmission: v.transmission,
-            localisation: v.localisation,
-            image: v.image,
-            lien: v.lien,
-            prix_median_segment: Math.round(expectedPrice),
-            gain_potentiel: Math.round(expectedPrice - v.prix),
-            score_confiance: Math.abs(v.dealScore),
-          };
-        });
+      // Prepare ALL vehicles data for the chart
+      const allVehiclesData = vehicles.map(v => {
+        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
+        return {
+          id: v.id,
+          titre: v.titre,
+          marque: v.marque,
+          modele: v.modele,
+          prix: v.prix,
+          kilometrage: v.kilometrage,
+          annee: v.annee,
+          carburant: v.carburant,
+          transmission: v.transmission,
+          puissance: v.puissance,
+          localisation: v.localisation,
+          image: v.image,
+          lien: v.lien,
+          // Cluster data
+          clusterId: v.clusterId,
+          clusterSize: v.clusterSize,
+          coteCluster: v.coteCluster,
+          ecartEuros: v.ecartEuros,
+          ecartPourcent: v.ecartPourcent,
+          dealScore: v.dealScore,
+          isPremium: v.isPremium,
+          hasEnoughData: v.hasEnoughData,
+          // Legacy fields
+          prixMoyen: v.prixMoyen,
+          prixMedian: v.prixMedian,
+          ecart: v.ecart,
+          segmentKey: v.segmentKey,
+          // Calculated fields
+          prix_median_segment: Math.round(expectedPrice),
+          gain_potentiel: Math.round(expectedPrice - v.prix),
+          score_confiance: Math.abs(v.dealScore),
+        };
+      });
+
+      // Filter opportunities (deals below trendline = ecartEuros > 0 or dealScore < 0)
+      const opportunities = allVehiclesData.filter(v => v.ecartEuros > 0 || v.dealScore < 0);
 
       // Calculate prix_truffe (average of top opportunities)
-      const avgTruffePrice = topDeals.length > 0
-        ? Math.round(topDeals.reduce((sum, v) => sum + v.prix, 0) / topDeals.length)
+      const avgTruffePrice = opportunities.length > 0
+        ? Math.round(opportunities.slice(0, 10).reduce((sum, v) => sum + v.prix, 0) / Math.min(opportunities.length, 10))
         : kpis.avgPrice;
 
-      const avgSavings = topDeals.length > 0
-        ? Math.round(topDeals.reduce((sum, v) => sum + (v.gain_potentiel || 0), 0) / topDeals.length)
+      const avgSavings = opportunities.length > 0
+        ? Math.round(opportunities.slice(0, 10).reduce((sum, v) => sum + (v.gain_potentiel || 0), 0) / Math.min(opportunities.length, 10))
         : 0;
 
       if (selectedOrderId) {
-        // Update existing order with analysis data
+        // Update existing order with ALL vehicles data (for the chart)
         const { error } = await supabase
           .from('reports')
           .update({
@@ -144,7 +159,7 @@ export function PublishReportModal({
             decote_par_10k: kpis.decotePer10k,
             total_vehicules: vehicles.length,
             opportunites_count: kpis.opportunitiesCount,
-            vehicles_data: topDeals,
+            vehicles_data: allVehiclesData, // All vehicles, not just top 10
             updated_at: new Date().toISOString(),
           })
           .eq('id', selectedOrderId);

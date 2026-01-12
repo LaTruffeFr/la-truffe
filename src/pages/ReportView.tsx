@@ -147,11 +147,17 @@ const ReportView = () => {
 
     const decotePer10k = report?.decote_par_10k || Math.abs(trendLine.slope * 10000);
 
-    const opportunities = vehicles.filter(v => v.dealScore < 0 || v.ecartEuros > 0);
+    // Filter opportunities - vehicles below the trend line (ecartEuros > 0 means cheaper than expected)
+    const opportunities = vehicles.filter(v => {
+      // Check if vehicle is below trend (using trendLine calculation)
+      const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
+      const isBelowTrend = v.prix < expectedPrice;
+      return isBelowTrend || v.ecartEuros > 0;
+    });
     const opportunitiesCount = report?.opportunites_count || opportunities.length;
 
     const bestOffer = opportunities.length > 0
-      ? opportunities.sort((a, b) => b.ecartEuros - a.ecartEuros)[0]
+      ? [...opportunities].sort((a, b) => b.ecartEuros - a.ecartEuros)[0]
       : null;
 
     return {
@@ -166,8 +172,17 @@ const ReportView = () => {
   // Top 10 deals for DealCard display
   const topDeals = useMemo(() => {
     return [...vehicles]
-      .filter(v => v.ecartEuros > 0 || v.dealScore < 0)
-      .sort((a, b) => b.ecartEuros - a.ecartEuros)
+      .filter(v => {
+        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
+        const isBelowTrend = v.prix < expectedPrice;
+        return isBelowTrend || v.ecartEuros > 0;
+      })
+      .sort((a, b) => {
+        // Sort by deviation (best deals first)
+        const devA = (trendLine.slope * a.kilometrage + trendLine.intercept) - a.prix;
+        const devB = (trendLine.slope * b.kilometrage + trendLine.intercept) - b.prix;
+        return devB - devA;
+      })
       .slice(0, 10)
       .map(v => {
         const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
