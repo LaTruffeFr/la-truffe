@@ -20,6 +20,67 @@ serve(async (req) => {
   }
 
   try {
+    // 1. Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - No valid token provided' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Create client with anon key for auth verification
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify the JWT and get user claims
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth verification failed:", claimsError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+
+    // 2. Verify admin role using service role client
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (roleError) {
+      console.error("Role check error:", roleError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify permissions' }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!roleData) {
+      console.warn(`Non-admin user ${userId} attempted to send email`);
+      return new Response(
+        JSON.stringify({ error: 'Admin access required' }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // 3. Parse and validate request body
     const { reportId, clientEmail }: SendReportEmailRequest = await req.json();
 
     if (!reportId || !clientEmail) {
@@ -29,13 +90,16 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with service role
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(clientEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    // Fetch report details
+    // 4. Fetch report details and ensure it has a share token
     const { data: report, error: reportError } = await supabaseAdmin
       .from("reports")
       .select("*")
@@ -50,11 +114,36 @@ serve(async (req) => {
       );
     }
 
-    // Build public report URL
-    const appUrl = Deno.env.get("APP_URL") || "https://votre-app.lovable.app";
-    const reportUrl = `${appUrl}/audit/${reportId}`;
+    // Generate share token if not exists
+    let shareToken = report.share_token;
+    if (!shareToken) {
+      // Generate secure random token
+      const randomBytes = new Uint8Array(32);
+      crypto.getRandomValues(randomBytes);
+      shareToken = Array.from(randomBytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      // Update report with share token
+      const { error: updateError } = await supabaseAdmin
+        .from("reports")
+        .update({ share_token: shareToken })
+        .eq("id", reportId);
+      
+      if (updateError) {
+        console.error("Failed to update share token:", updateError);
+        return new Response(
+          JSON.stringify({ error: "Failed to generate share link" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    }
 
-    // Send email
+    // Build public report URL using share token
+    const appUrl = Deno.env.get("APP_URL") || "https://votre-app.lovable.app";
+    const reportUrl = `${appUrl}/audit/${shareToken}`;
+
+    // 5. Send email
     const emailResponse = await resend.emails.send({
       from: "La Truffe <onboarding@resend.dev>",
       to: [clientEmail],
@@ -139,7 +228,7 @@ serve(async (req) => {
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log(`Email sent successfully by admin ${userId} to ${clientEmail} for report ${reportId}:`, emailResponse);
 
     return new Response(
       JSON.stringify({ success: true, emailResponse }),

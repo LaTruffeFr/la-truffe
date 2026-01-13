@@ -28,6 +28,7 @@ interface Report {
   status: 'pending' | 'in_progress' | 'completed';
   report_url: string | null;
   admin_notes: string | null;
+  share_token: string | null;
 }
 
 const statusConfig = {
@@ -120,17 +121,28 @@ export function ClientOrdersPanel() {
     setIsSubmitting(false);
   };
 
-  const getPublicAuditUrl = (reportId: string) => {
-    return `${window.location.origin}/audit/${reportId}`;
+  const getPublicAuditUrl = (shareToken: string | null) => {
+    if (!shareToken) return null;
+    return `${window.location.origin}/audit/${shareToken}`;
   };
 
-  const copyLinkToClipboard = async (reportId: string) => {
-    const url = getPublicAuditUrl(reportId);
-    await navigator.clipboard.writeText(url);
-    toast({
-      title: 'Lien copié !',
-      description: 'Le lien de l\'audit a été copié dans le presse-papier',
-    });
+  const copyLinkToClipboard = async (shareToken: string | null) => {
+    if (!shareToken) {
+      toast({
+        title: 'Lien non disponible',
+        description: 'Envoyez d\'abord le rapport au client pour générer un lien sécurisé',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const url = getPublicAuditUrl(shareToken);
+    if (url) {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: 'Lien copié !',
+        description: 'Le lien de l\'audit a été copié dans le presse-papier',
+      });
+    }
   };
 
   const openEmailDialog = (report: Report) => {
@@ -350,14 +362,16 @@ export function ClientOrdersPanel() {
                     {/* Actions pour les rapports terminés */}
                     {report.status === 'completed' && (
                       <>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => copyLinkToClipboard(report.id)}
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copier le lien
-                        </Button>
+                        {report.share_token ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => copyLinkToClipboard(report.share_token)}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copier le lien
+                          </Button>
+                        ) : null}
                         <Button 
                           size="sm"
                           onClick={() => openEmailDialog(report)}
@@ -368,16 +382,18 @@ export function ClientOrdersPanel() {
                           ) : (
                             <Send className="h-4 w-4 mr-2" />
                           )}
-                          Envoyer au client
+                          {report.share_token ? 'Renvoyer au client' : 'Envoyer au client'}
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => window.open(getPublicAuditUrl(report.id), '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Voir l'audit
-                        </Button>
+                        {report.share_token && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => window.open(getPublicAuditUrl(report.share_token), '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Voir l'audit
+                          </Button>
+                        )}
                       </>
                     )}
                     
@@ -420,12 +436,21 @@ export function ClientOrdersPanel() {
               />
             </div>
             
-            <div className="p-3 bg-muted rounded-lg">
-              <Label className="text-xs text-muted-foreground">Lien de l'audit</Label>
-              <p className="text-sm font-mono truncate">
-                {selectedReportForEmail && getPublicAuditUrl(selectedReportForEmail.id)}
-              </p>
-            </div>
+            {selectedReportForEmail?.share_token && (
+              <div className="p-3 bg-muted rounded-lg">
+                <Label className="text-xs text-muted-foreground">Lien de l'audit</Label>
+                <p className="text-sm font-mono truncate">
+                  {getPublicAuditUrl(selectedReportForEmail.share_token)}
+                </p>
+              </div>
+            )}
+            {!selectedReportForEmail?.share_token && (
+              <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <p className="text-sm text-yellow-600">
+                  Un lien sécurisé sera généré automatiquement lors de l'envoi de l'email.
+                </p>
+              </div>
+            )}
             
             <Button 
               className="w-full" 

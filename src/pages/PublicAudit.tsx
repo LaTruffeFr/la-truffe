@@ -71,14 +71,15 @@ const formatNumber = (value: number) => {
 };
 
 const PublicAudit = () => {
-  const { id } = useParams<{ id: string }>();
+  // The URL param is now a share_token instead of report ID
+  const { id: shareToken } = useParams<{ id: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return;
+    if (!shareToken) return;
     
     const fetchData = async () => {
       setIsLoading(true);
@@ -86,7 +87,7 @@ const PublicAudit = () => {
       
       try {
         const { data, error: fetchError } = await supabase.functions.invoke('get-public-report', {
-          body: { reportId: id }
+          body: { shareToken }
         });
         
         if (fetchError || data?.error) {
@@ -96,7 +97,9 @@ const PublicAudit = () => {
         }
         
         setReport(data.report);
-        setVehicles(data.vehicles || []);
+        // Extract vehicles from the report's vehicles_data JSONB column
+        const vehiclesData = data.report?.vehicles_data || [];
+        setVehicles(Array.isArray(vehiclesData) ? vehiclesData : []);
       } catch (err) {
         console.error('Error:', err);
         setError('Une erreur est survenue');
@@ -106,7 +109,7 @@ const PublicAudit = () => {
     };
     
     fetchData();
-  }, [id]);
+  }, [shareToken]);
 
   // Calculate KPIs
   const avgMarketPrice = vehicles.length > 0 
