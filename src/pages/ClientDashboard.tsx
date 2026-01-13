@@ -12,9 +12,17 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Loader2, Plus, FileText, Clock, CheckCircle, AlertCircle, 
   Search, User, CreditCard, Settings, Receipt, Car, FolderOpen,
-  ArrowRight, Calendar, Eye
+  ArrowRight, Calendar, Eye, LogOut, Lock
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Link } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import logoTruffe from '@/assets/logo-truffe.jpg';
 
 interface Report {
@@ -244,15 +252,15 @@ const ClientDashboard = () => {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Logo */}
-            <div className="flex items-center gap-3">
+            {/* Left: Logo - Clickable */}
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <img 
                 src={logoTruffe}
                 alt="Logo La Truffe" 
                 className="h-9 w-9 rounded-lg object-cover"
               />
               <span className="text-lg font-bold text-gray-900">La Truffe</span>
-            </div>
+            </Link>
 
             {/* Center: Navigation Links */}
             <nav className="hidden md:flex items-center gap-1">
@@ -276,21 +284,38 @@ const ClientDashboard = () => {
               ))}
             </nav>
 
-            {/* Right: Credits + Profile */}
+            {/* Right: Credits + Profile Dropdown */}
             <div className="flex items-center gap-4">
               <Badge className="bg-primary/10 text-primary border-primary/20 font-semibold px-3 py-1">
                 <CreditCard className="h-3.5 w-3.5 mr-1.5" />
                 {userCredits} crédits
               </Badge>
-              <div className="relative">
-                <button 
-                  onClick={handleSignOut}
-                  className="flex items-center justify-center h-9 w-9 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                  title="Déconnexion"
-                >
-                  <User className="h-5 w-5 text-gray-600" />
-                </button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center justify-center h-9 w-9 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                    <User className="h-5 w-5 text-gray-600" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg z-50">
+                  <DropdownMenuItem onClick={() => setActiveNav('settings')} className="gap-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    Mon Profil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveNav('settings')} className="gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    Paramètres
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveNav('billing')} className="gap-2 cursor-pointer">
+                    <CreditCard className="h-4 w-4" />
+                    Facturation
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                    <LogOut className="h-4 w-4" />
+                    Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -299,12 +324,106 @@ const ClientDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
-        {/* Action Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mes Rapports</h1>
-            <p className="text-gray-500 mt-1">Gérez vos analyses de véhicules</p>
+        {/* Conditional Content Based on activeNav */}
+        {activeNav === 'settings' ? (
+          /* Settings Page */
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
+              <p className="text-gray-500 mt-1">Gérez votre compte et vos préférences</p>
+            </div>
+            
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6 space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Prénom</Label>
+                    <Input id="firstName" placeholder="Votre prénom" defaultValue="" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Nom</Label>
+                    <Input id="lastName" placeholder="Votre nom" defaultValue="" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={user?.email || ''} disabled className="bg-gray-50" />
+                  <p className="text-xs text-gray-500">L'email ne peut pas être modifié</p>
+                </div>
+                
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Changer de mot de passe
+                  </h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                      <Input id="newPassword" type="password" placeholder="••••••••" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                      <Input id="confirmPassword" type="password" placeholder="••••••••" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button className="gap-2">
+                    Enregistrer les modifications
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
+        ) : activeNav === 'billing' ? (
+          /* Billing Page */
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Facturation</h1>
+              <p className="text-gray-500 mt-1">Vos factures et abonnements</p>
+            </div>
+            
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6">
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
+                    <Receipt className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune facture</h3>
+                  <p className="text-gray-500 max-w-md mx-auto">
+                    Vous n'avez pas encore de factures. Elles apparaîtront ici une fois que vous aurez effectué un achat.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Vos crédits</h3>
+                <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/10">
+                  <div>
+                    <p className="text-sm text-gray-600">Crédits disponibles</p>
+                    <p className="text-3xl font-bold text-primary">{userCredits}</p>
+                  </div>
+                  <Button variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Acheter des crédits
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          /* Reports Page (Default) */
+          <>
+            {/* Action Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Mes Rapports</h1>
+                <p className="text-gray-500 mt-1">Gérez vos analyses de véhicules</p>
+              </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2 shadow-md">
@@ -507,7 +626,9 @@ const ClientDashboard = () => {
                 </Card>
               );
             })}
-          </div>
+            </div>
+          )}
+          </>
         )}
       </main>
     </div>

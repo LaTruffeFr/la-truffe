@@ -97,31 +97,43 @@ export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProp
     const isBelowTrend = v.isBelowTrend;
 
     return (
-      <div className="bg-background/95 backdrop-blur-md p-4 shadow-2xl border border-border rounded-xl">
-        <p className="font-bold text-foreground">{v.marque} {v.modele}</p>
-        <p className="text-sm text-muted-foreground">{v.annee} • {v.kilometrage.toLocaleString()} km</p>
-        <div className="mt-3 space-y-2">
+      <div className="bg-white p-5 shadow-lg rounded-2xl border border-gray-100 min-w-[240px]">
+        {/* Header with model info */}
+        <div className="mb-4">
+          <p className="font-bold text-gray-900 text-lg">{v.marque} {v.modele}</p>
+          <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+            <span className="font-medium">{v.annee}</span>
+            <span className="w-1 h-1 rounded-full bg-gray-300" />
+            <span>{v.kilometrage.toLocaleString('fr-FR')} km</span>
+          </div>
+        </div>
+        
+        {/* Price info */}
+        <div className="space-y-3 mb-4">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Prix affiché</span>
-            <span className="text-lg font-mono font-bold text-foreground">
+            <span className="text-sm text-gray-500">Prix affiché</span>
+            <span className="text-xl font-bold text-gray-900">
               {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v.prix)}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Prix estimé</span>
-            <span className="text-sm font-mono text-muted-foreground">
+            <span className="text-sm text-gray-500">Prix estimé</span>
+            <span className="text-sm font-medium text-gray-600">
               {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v.expectedPrice)}
             </span>
           </div>
-          <div className={`flex justify-between items-center pt-2 border-t border-border`}>
-            <span className="text-sm">{isBelowTrend ? 'Économie' : 'Surcoût'}</span>
-            <span className={`font-bold font-mono ${isBelowTrend ? 'text-success' : 'text-destructive'}`}>
-              {isBelowTrend ? '-' : '+'}{Math.abs(v.deviationPercent)}%
-            </span>
-          </div>
         </div>
+        
+        {/* Deal indicator */}
+        <div className={`flex items-center justify-between p-3 rounded-xl ${isBelowTrend ? 'bg-green-50' : 'bg-red-50'}`}>
+          <span className="text-sm font-medium text-gray-700">{isBelowTrend ? 'Économie' : 'Surcoût'}</span>
+          <span className={`text-lg font-bold ${isBelowTrend ? 'text-green-600' : 'text-red-500'}`}>
+            {isBelowTrend ? '-' : '+'}{Math.abs(v.deviationPercent)}%
+          </span>
+        </div>
+        
         {isBelowTrend && (
-          <p className="mt-3 text-xs text-success font-medium">✓ Cliquez pour voir l'opportunité</p>
+          <p className="mt-3 text-xs text-green-600 font-medium text-center">✓ Cliquez pour voir l'opportunité</p>
         )}
       </div>
     );
