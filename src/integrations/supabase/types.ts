@@ -98,6 +98,7 @@ export type Database = {
           prix_moyen: number | null
           prix_truffe: number | null
           report_url: string | null
+          share_token: string | null
           status: Database["public"]["Enums"]["report_status"]
           total_vehicules: number | null
           transmission: string | null
@@ -123,6 +124,7 @@ export type Database = {
           prix_moyen?: number | null
           prix_truffe?: number | null
           report_url?: string | null
+          share_token?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           total_vehicules?: number | null
           transmission?: string | null
@@ -148,6 +150,7 @@ export type Database = {
           prix_moyen?: number | null
           prix_truffe?: number | null
           report_url?: string | null
+          share_token?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           total_vehicules?: number | null
           transmission?: string | null
@@ -261,6 +264,7 @@ export type Database = {
         Args: { _garage_id: string }
         Returns: boolean
       }
+      generate_share_token: { Args: never; Returns: string }
       get_user_garage_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
