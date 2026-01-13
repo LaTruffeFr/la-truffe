@@ -12,7 +12,16 @@ import { DealCard } from '@/components/trading/DealCard';
 import { ClientOrdersPanel } from '@/components/admin/ClientOrdersPanel';
 import { PublishReportModal } from '@/components/admin/PublishReportModal';
 import { useVehicleData } from '@/contexts/VehicleDataContext';
-import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, ChevronDown, ChevronUp, SlidersHorizontal, Upload, Shield, LogOut, ShoppingBag, BarChart3, Send } from 'lucide-react';
+import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, ChevronDown, ChevronUp, SlidersHorizontal, Upload, Shield, LogOut, ShoppingBag, BarChart3, Send, User, Settings, CreditCard } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import logoTruffe from '@/assets/logo-truffe.jpg';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -105,23 +114,47 @@ export default function AdminDashboard() {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Admin Header */}
       <header className="border-b border-border px-6 py-3 flex items-center justify-between shrink-0 bg-card">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <Shield className="w-4 h-4 text-primary-foreground" />
-          </div>
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <img 
+            src={logoTruffe}
+            alt="Logo La Truffe" 
+            className="h-9 w-9 rounded-lg object-cover"
+          />
           <div>
             <h1 className="text-lg font-bold text-foreground">
-              Admin Dashboard
+              La Truffe
             </h1>
             <p className="text-xs text-muted-foreground">
-              {user?.email}
+              Admin Dashboard
             </p>
           </div>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2">
-          <LogOut className="w-4 h-4" />
-          Déconnexion
-        </Button>
+        </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center justify-center h-9 w-9 rounded-full bg-muted hover:bg-muted/80 transition-colors">
+              <User className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg z-50">
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <User className="h-4 w-4" />
+              Mon Profil
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <Settings className="h-4 w-4" />
+              Paramètres
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <CreditCard className="h-4 w-4" />
+              Facturation
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+              <LogOut className="h-4 w-4" />
+              Déconnexion
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Tabs Navigation */}
