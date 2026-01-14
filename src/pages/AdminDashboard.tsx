@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import logoTruffe from '@/assets/logo-truffe.jpg';
+import logoLatruffe from '@/assets/logo-latruffe.png';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -116,8 +116,8 @@ export default function AdminDashboard() {
       <header className="border-b border-border px-6 py-3 flex items-center justify-between shrink-0 bg-card">
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <img 
-            src={logoTruffe}
-            alt="Logo La Truffe" 
+            src={logoLatruffe}
+            alt="Logo La Truffe"
             className="h-9 w-9 rounded-lg object-cover"
           />
           <div>
