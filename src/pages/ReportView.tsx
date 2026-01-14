@@ -457,7 +457,8 @@ const ReportView = () => {
               </div>
               
               {topDeals.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 print:grid-cols-1">
+                // MODIFICATION : Forcé à 2 colonnes (grid-cols-1 -> md:grid-cols-2 lg:grid-cols-2)
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 print:grid-cols-1">
                   {topDeals.map((vehicle, index) => (
                     <DealCard
                       key={vehicle.id || index}
