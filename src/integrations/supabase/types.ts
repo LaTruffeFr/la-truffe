@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      garage_billing: {
+        Row: {
+          created_at: string
+          garage_id: string
+          id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          garage_id: string
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          garage_id?: string
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garage_billing_garage_id_fkey"
+            columns: ["garage_id"]
+            isOneToOne: true
+            referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garage_members: {
         Row: {
           created_at: string
@@ -52,9 +90,6 @@ export type Database = {
           id: string
           name: string
           owner_id: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          subscription_status: string | null
           updated_at: string
         }
         Insert: {
@@ -62,9 +97,6 @@ export type Database = {
           id?: string
           name: string
           owner_id: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_status?: string | null
           updated_at?: string
         }
         Update: {
@@ -72,9 +104,6 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -275,6 +304,10 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_garage_member: {
+        Args: { _garage_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_garage_owner: {
         Args: { _garage_id: string; _user_id: string }
         Returns: boolean
       }
