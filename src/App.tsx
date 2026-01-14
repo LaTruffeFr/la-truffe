@@ -155,6 +155,12 @@ const AppRoutes = () => {
           } 
         />
         
+        {/* Demo report view - public, no auth required */}
+        <Route 
+          path="/demo/:id" 
+          element={<ReportView />}
+        />
+        
         {/* Report view - protected */}
         <Route 
           path="/report/:id" 

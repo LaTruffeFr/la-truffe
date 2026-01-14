@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogIn } from 'lucide-react';
 import { 
@@ -12,14 +13,40 @@ import {
   Footer
 } from '@/components/landing';
 import logoLatruffe from '@/assets/logo-latruffe.png';
+import { demoReports } from '@/data/demoData';
 
 const Landing = () => {
   const navigate = useNavigate();
 
+  // Transform demo reports to card format
   const exampleReports = [
-    { brand: 'Volkswagen', model: 'Golf 7 TDI', year: 2019, mileage: 78000, savings: 2400, score: 9.2 },
-    { brand: 'Peugeot', model: '308 GT Line', year: 2020, mileage: 45000, savings: 1850, score: 8.8 },
-    { brand: 'BMW', model: 'Série 3 320d', year: 2018, mileage: 92000, savings: 3200, score: 9.5 },
+    { 
+      id: 'demo-1',
+      brand: demoReports['demo-1'].marque, 
+      model: demoReports['demo-1'].modele, 
+      year: demoReports['demo-1'].annee_max, 
+      mileage: 60000, 
+      savings: 5200, 
+      score: 9.2 
+    },
+    { 
+      id: 'demo-2',
+      brand: demoReports['demo-2'].marque, 
+      model: demoReports['demo-2'].modele, 
+      year: demoReports['demo-2'].annee_max, 
+      mileage: 92000, 
+      savings: 3200, 
+      score: 9.5 
+    },
+    { 
+      id: 'demo-3',
+      brand: demoReports['demo-3'].marque, 
+      model: demoReports['demo-3'].modele, 
+      year: demoReports['demo-3'].annee_max, 
+      mileage: 150000, 
+      savings: 1800, 
+      score: 8.8 
+    },
   ];
 
   return (
@@ -28,14 +55,14 @@ const Landing = () => {
       <header className="bg-card border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <img 
                 src={logoLatruffe}
                 alt="Logo La Truffe" 
-                className="h-10 w-auto"
+                className="h-10 w-10 rounded-lg object-cover"
               />
               <span className="text-xl font-bold text-foreground">La Truffe</span>
-            </div>
+            </Link>
             <div className="flex items-center gap-3">
               <Button 
                 onClick={() => navigate('/auth')} 
@@ -83,7 +110,11 @@ const Landing = () => {
           
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {exampleReports.map((report, index) => (
-              <ExampleReportCard key={index} {...report} />
+              <ExampleReportCard 
+                key={index} 
+                {...report} 
+                onClick={() => navigate(`/demo/${report.id}`)}
+              />
             ))}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,14 +11,16 @@ import {
   Printer, 
   CheckCircle,
   FileText,
-  Calendar
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
-import logoTruffe from '@/assets/logo-truffe.jpg';
+import logoLatruffe from '@/assets/logo-latruffe.png';
 import { SniperKPIs } from '@/components/trading/SniperKPIs';
 import { SniperChart } from '@/components/trading/SniperChart';
 import { DealCard } from '@/components/trading/DealCard';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 import { VehicleWithScore } from '@/lib/csvParser';
+import { getDemoReport, isDemoReport, DemoReport } from '@/data/demoData';
 
 interface Report {
   id: string;
@@ -70,17 +72,57 @@ function calculateTrendLine(data: VehicleWithScore[]): { slope: number; intercep
 
 const ReportView = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Check if this is a demo report
+  const isDemo = id ? isDemoReport(id) : false;
+  
   const [report, setReport] = useState<Report | null>(null);
   const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isDemo); // Demo loads instantly
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
 
+  // Load demo data immediately if it's a demo report
   useEffect(() => {
-    if (!user || !id) return;
+    if (isDemo && id) {
+      const demoReport = getDemoReport(id);
+      if (demoReport) {
+        setReport({
+          id: demoReport.id,
+          created_at: demoReport.created_at,
+          updated_at: demoReport.updated_at,
+          marque: demoReport.marque,
+          modele: demoReport.modele,
+          annee_min: demoReport.annee_min,
+          annee_max: demoReport.annee_max,
+          kilometrage_max: null,
+          prix_max: null,
+          carburant: null,
+          transmission: null,
+          notes: null,
+          status: demoReport.status,
+          report_url: null,
+          admin_notes: demoReport.admin_notes,
+          prix_moyen: demoReport.prix_moyen,
+          prix_truffe: null,
+          economie_moyenne: null,
+          decote_par_10k: demoReport.decote_par_10k,
+          total_vehicules: demoReport.vehicles_data.length,
+          opportunites_count: demoReport.opportunites_count,
+          vehicles_data: demoReport.vehicles_data,
+        });
+        setVehicles(demoReport.vehicles_data);
+      }
+      setIsLoading(false);
+    }
+  }, [isDemo, id]);
+
+  // Fetch real report from database (only for non-demo reports)
+  useEffect(() => {
+    if (isDemo || !user || !id) return;
     
     const fetchData = async () => {
       setIsLoading(true);
@@ -132,7 +174,7 @@ const ReportView = () => {
     };
     
     fetchData();
-  }, [user, id, toast, navigate]);
+  }, [user, id, toast, navigate, isDemo]);
 
   // Calculate trend line from vehicles
   const trendLine = useMemo(() => {
@@ -210,7 +252,16 @@ const ReportView = () => {
     window.print();
   };
 
-  if (authLoading || isLoading) {
+  const handleBackClick = () => {
+    if (isDemo) {
+      navigate('/');
+    } else {
+      navigate('/client-dashboard');
+    }
+  };
+
+  // Loading state
+  if (isLoading || (!isDemo && authLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -221,7 +272,8 @@ const ReportView = () => {
     );
   }
 
-  if (!user) {
+  // Redirect non-demo reports without auth
+  if (!isDemo && !user) {
     navigate('/auth');
     return null;
   }
@@ -234,13 +286,25 @@ const ReportView = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background print:bg-white">
+      {/* Demo Banner */}
+      {isDemo && (
+        <div className="bg-warning/20 border-b border-warning/30 py-2 px-4 print:hidden">
+          <div className="container mx-auto flex items-center justify-center gap-2 text-warning-foreground">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span className="text-sm font-medium">
+              Mode Démonstration – Données d'exemple pour illustrer les fonctionnalités
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-50 print:hidden">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
               <img 
-                src={logoTruffe}
+                src={logoLatruffe}
                 alt="Logo La Truffe" 
                 className="h-10 w-10 rounded-lg object-cover shadow-corporate"
               />
@@ -248,11 +312,11 @@ const ReportView = () => {
                 <span className="text-xl font-bold text-foreground">La Truffe</span>
                 <p className="text-xs text-muted-foreground">Audit de Prix Automobile</p>
               </div>
-            </div>
+            </Link>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/client-dashboard')}>
+              <Button variant="outline" size="sm" onClick={handleBackClick}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
+                {isDemo ? 'Accueil' : 'Retour'}
               </Button>
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
@@ -282,6 +346,11 @@ const ReportView = () => {
                     </>
                   )}
                 </Badge>
+                {isDemo && (
+                  <Badge className="bg-muted text-muted-foreground border-muted-foreground/30 text-sm px-4 py-1">
+                    DÉMO
+                  </Badge>
+                )}
               </div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground print:text-2xl">
                 {report.marque} {report.modele}
@@ -410,6 +479,19 @@ const ReportView = () => {
               <div className="p-6 rounded-xl bg-primary/5 border border-primary/20">
                 <h3 className="text-lg font-semibold text-foreground mb-2">💡 Recommandation de l'équipe La Truffe</h3>
                 <p className="text-foreground">{report.admin_notes}</p>
+              </div>
+            )}
+
+            {/* CTA for Demo */}
+            {isDemo && (
+              <div className="p-6 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 text-center">
+                <h3 className="text-lg font-semibold text-foreground mb-2">Convaincu par notre analyse ?</h3>
+                <p className="text-muted-foreground mb-4">
+                  Créez votre compte pour obtenir un rapport personnalisé sur le véhicule de votre choix.
+                </p>
+                <Button onClick={() => navigate('/auth')} size="lg">
+                  Créer mon compte gratuitement
+                </Button>
               </div>
             )}
           </div>

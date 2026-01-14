@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Lock, Mail, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import logoTruffe from '@/assets/logo-truffe.jpg';
+import logoLatruffe from '@/assets/logo-latruffe.png';
 
 const authSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -119,7 +119,7 @@ const Auth = () => {
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-3">
             <img 
-              src={logoTruffe}
+              src={logoLatruffe}
               alt="Logo La Truffe" 
               className="h-12 w-12 rounded-lg object-cover shadow-corporate"
             />

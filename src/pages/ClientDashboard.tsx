@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import logoTruffe from '@/assets/logo-truffe.jpg';
+import logoLatruffe from '@/assets/logo-latruffe.png';
 
 interface Report {
   id: string;
@@ -255,9 +255,9 @@ const ClientDashboard = () => {
             {/* Left: Logo - Clickable */}
             <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <img 
-                src={logoTruffe}
+                src={logoLatruffe}
                 alt="Logo La Truffe" 
-                className="h-9 w-9 rounded-lg object-cover"
+                className="h-10 w-10 rounded-lg object-cover"
               />
               <span className="text-lg font-bold text-gray-900">La Truffe</span>
             </Link>

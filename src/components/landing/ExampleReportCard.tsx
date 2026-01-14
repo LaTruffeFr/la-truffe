@@ -2,6 +2,7 @@ import { CheckCircle, TrendingDown, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ExampleReportCardProps {
+  id?: string;
   brand: string;
   model: string;
   year: number;
@@ -9,6 +10,7 @@ interface ExampleReportCardProps {
   savings: number;
   score: number;
   imageUrl?: string;
+  onClick?: () => void;
 }
 
 export function ExampleReportCard({
@@ -19,11 +21,15 @@ export function ExampleReportCard({
   savings,
   score,
   imageUrl = 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400&h=300&fit=crop',
+  onClick,
 }: ExampleReportCardProps) {
   const isGoodScore = score >= 8;
 
   return (
-    <div className="corporate-card overflow-hidden group">
+    <div 
+      className="corporate-card overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
+      onClick={onClick}
+    >
       {/* Image with badges */}
       <div className="relative h-48 bg-muted overflow-hidden">
         <img
@@ -69,7 +75,7 @@ export function ExampleReportCard({
         </div>
         
         <Button variant="outline" className="w-full gap-2" size="sm">
-          Voir un exemple de rapport
+          Voir l'exemple de rapport
           <ExternalLink className="h-4 w-4" />
         </Button>
       </div>
