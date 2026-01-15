@@ -1,4 +1,4 @@
-export { TradingDashboard } from './TradingDashboard';
+export { default as TradingDashboard } from './TradingDashboard';
 export { SniperKPIs } from './SniperKPIs';
 export { FilterSidebar } from './FilterSidebar';
 export { SniperChart } from './SniperChart';
