@@ -1,58 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Lock, Loader2, ShieldCheck, Star } from 'lucide-react';
+import { ArrowLeft, Lock, Loader2, ShieldCheck, Star, CreditCard, Mail } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import logoTruffe from '@/assets/logo-latruffe.png';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
-// --- CONFIGURATION STRIPE ---
-// Remplace ceci par ta Clé Publique Stripe (pk_test_...)
-const stripePromise = loadStripe("pk_test_51Sp4kbPpfbp0KU2MylVzZku0P8mnAS5OwvaSazTs0QwA08TpW5ZwaBSxY8oXNYfQFUgF98d8mA08EfC03RIo3in500t4uRSthx");
-
-// Composant interne pour le formulaire Stripe
-const StripeForm = ({ amount, onSuccess }: { amount: number, onSuccess: () => void }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) return;
-
-    setLoading(true);
-
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        // Redirection après paiement (optionnel si tu gères tout en JS)
-        return_url: window.location.origin + "/client-dashboard",
-      },
-      redirect: 'if_required' // Empêche la redirection si pas nécessaire (ex: CB simple)
-    });
-
-    if (error) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message });
-      setLoading(false);
-    } else {
-      onSuccess();
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
-      <Button disabled={!stripe || loading} className="w-full h-12 text-lg font-bold bg-slate-900 hover:bg-slate-800 mt-4">
-        {loading ? <Loader2 className="animate-spin" /> : `Payer ${amount.toFixed(2)} €`}
-      </Button>
-    </form>
-  );
+// IDs des prix Stripe - À remplacer par vos vrais price_id
+const PRICE_IDS = {
+  '1': 'price_1_audit',   // Remplacer par le vrai price_id
+  '2': 'price_2_audits',  // Remplacer par le vrai price_id
+  '3': 'price_3_audits',  // Remplacer par le vrai price_id
 };
 
 const Checkout = () => {
@@ -60,7 +23,10 @@ const Checkout = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialPlan = searchParams.get('plan') || '1';
   const [selectedPlanId, setSelectedPlanId] = useState(initialPlan);
-  const [clientSecret, setClientSecret] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   const packs = {
     '1': { id: '1', name: "Audit Unitaire", price: 9.90, credits: 1, desc: "Analyse complète pour 1 véhicule", tag: null },
@@ -70,19 +36,48 @@ const Checkout = () => {
 
   // @ts-ignore
   const selectedPack = packs[selectedPlanId] || packs['1'];
+  const priceId = PRICE_IDS[selectedPlanId as keyof typeof PRICE_IDS];
 
-  useEffect(() => {
-    setSearchParams({ plan: selectedPlanId });
+  const handleCheckout = async () => {
+    // Validation email pour les invités
+    if (!user && !guestEmail) {
+      toast({
+        variant: "destructive",
+        title: "Email requis",
+        description: "Veuillez entrer votre email pour continuer.",
+      });
+      return;
+    }
 
-    // Appel au Backend pour créer l'intention de paiement
-    fetch("https://cautious-space-engine-5gj66pppr4w627jwx-8080.app.github.dev/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: selectedPack.price }),
-    })
-      .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret));
-  }, [selectedPlanId]);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          priceId,
+          guestEmail: !user ? guestEmail : undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Ouvrir Stripe Checkout dans un nouvel onglet
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error("Aucune URL de paiement reçue");
+      }
+    } catch (error: any) {
+      console.error('Erreur checkout:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue lors de la création du paiement.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900">
@@ -126,21 +121,65 @@ const Checkout = () => {
               </div>
             </section>
 
-            {/* ZONE DE PAIEMENT STRIPE */}
+            {/* ZONE DE PAIEMENT */}
             <section>
               <h2 className="text-xl font-bold text-slate-900 mb-4">2. Paiement sécurisé</h2>
               <Card className="border-slate-200 shadow-sm">
-                <CardContent className="p-6">
-                  {clientSecret ? (
-                    <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
-                      <StripeForm 
-                        amount={selectedPack.price} 
-                        onSuccess={() => navigate('/client-dashboard')} 
-                      />
-                    </Elements>
+                <CardContent className="p-6 space-y-6">
+                  {/* Afficher l'email de l'utilisateur connecté ou demander un email */}
+                  {user ? (
+                    <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <Mail className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="text-sm text-green-700 font-medium">Connecté en tant que</p>
+                        <p className="text-green-800 font-bold">{user.email}</p>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" /></div>
+                    <div className="space-y-2">
+                      <Label htmlFor="guest-email" className="text-slate-700 font-medium">
+                        Votre email
+                      </Label>
+                      <Input
+                        id="guest-email"
+                        type="email"
+                        placeholder="votre@email.com"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        className="h-12"
+                      />
+                      <p className="text-xs text-slate-500">
+                        Vous recevrez votre rapport à cette adresse
+                      </p>
+                    </div>
                   )}
+
+                  {/* Bouton de paiement */}
+                  <Button 
+                    onClick={handleCheckout}
+                    disabled={loading}
+                    className="w-full h-14 text-lg font-bold bg-slate-900 hover:bg-slate-800 gap-3"
+                  >
+                    {loading ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5" />
+                        Payer {selectedPack.price.toFixed(2)} €
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Méthodes de paiement acceptées */}
+                  <div className="flex items-center justify-center gap-4 pt-4 border-t border-slate-100">
+                    <span className="text-xs text-slate-500">Paiements acceptés :</span>
+                    <div className="flex gap-2">
+                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Visa</div>
+                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Mastercard</div>
+                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Apple Pay</div>
+                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Google Pay</div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </section>

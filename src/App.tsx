@@ -17,6 +17,7 @@ import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
 import Settings from "./pages/Settings";
 import Transactions from "./pages/Transactions";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             {/* Routes supplémentaires pour être sûr */}
             <Route path="/demo/:id" element={<DemoReportPage />} />
 
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/settings" element={<Settings />} />
