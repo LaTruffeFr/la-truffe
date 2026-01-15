@@ -3,17 +3,18 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Lock, ShieldCheck, CreditCard, CheckCircle2, 
-  ArrowLeft, Star, ChevronDown, LogIn 
+  Lock, CreditCard, CheckCircle2, Star, Loader2
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import logoTruffe from '@/assets/logo-latruffe.png';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 // Configuration des plans
 const PLANS = {
@@ -53,10 +54,12 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // État du plan sélectionné (par défaut 3 si rien n'est spécifié)
   const [selectedPlanId, setSelectedPlanId] = useState<number>(3);
   const [isLoading, setIsLoading] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
 
   // Récupérer le plan depuis l'URL au chargement
   useEffect(() => {
@@ -68,20 +71,47 @@ const Checkout = () => {
 
   const selectedPlan = PLANS[selectedPlanId as keyof typeof PLANS];
 
-  const handlePayment = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStripeCheckout = async () => {
     setIsLoading(true);
     
-    // Simulation de paiement
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Paiement réussi !",
-        description: `Vous avez acheté ${selectedPlan.credits} crédits d'audit.`,
+    try {
+      const email = user?.email || guestEmail;
+      
+      if (!email) {
+        toast({
+          title: "Email requis",
+          description: "Veuillez entrer votre adresse e-mail pour continuer.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          planId: selectedPlanId.toString(),
+          email 
+        },
       });
-      // Redirection vers le dashboard après achat
-      navigate('/client-dashboard');
-    }, 2000);
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Ouvrir Stripe Checkout dans un nouvel onglet
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error("URL de paiement non reçue");
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Erreur de paiement",
+        description: error.message || "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -161,7 +191,7 @@ const Checkout = () => {
               </RadioGroup>
             </section>
 
-            {/* 2. Formulaire de Paiement */}
+            {/* 2. Paiement Sécurisé */}
             <section>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs">2</span>
@@ -171,51 +201,81 @@ const Checkout = () => {
               <Card className="border-slate-200 shadow-sm overflow-hidden">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-medium">Carte Bancaire</CardTitle>
-                    <div className="flex gap-2">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-6" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
+                    <CardTitle className="text-base font-medium">Méthodes de paiement</CardTitle>
+                    <div className="flex gap-2 items-center">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-5" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-5" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple Pay" className="h-5" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" className="h-5" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-5" />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <form onSubmit={handlePayment} className="space-y-4">
+                  {/* Email pour les utilisateurs non connectés */}
+                  {!user && (
                     <div className="space-y-2">
                       <Label htmlFor="email">Adresse e-mail</Label>
-                      <Input id="email" type="email" placeholder="Pour recevoir votre rapport" required className="bg-white" />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="Pour recevoir votre rapport" 
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        required 
+                        className="bg-white" 
+                      />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="card">Numéro de carte</Label>
-                      <div className="relative">
-                        <CreditCard className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                        <Input id="card" placeholder="0000 0000 0000 0000" className="pl-10 font-mono" />
-                      </div>
+                  )}
+                  
+                  {user && (
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-700">
+                        Connecté en tant que <strong>{user.email}</strong>
+                      </span>
                     </div>
+                  )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="expiry">Expiration</Label>
-                        <Input id="expiry" placeholder="MM/AA" className="font-mono" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cvc">CVC</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                          <Input id="cvc" placeholder="123" className="pl-9 font-mono" />
-                        </div>
-                      </div>
-                    </div>
+                  <div className="pt-4">
+                    <Button 
+                      size="lg" 
+                      className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 shadow-lg gap-2" 
+                      onClick={handleStripeCheckout}
+                      disabled={isLoading || (!user && !guestEmail)}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Redirection...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-5 h-5" />
+                          Payer {selectedPlan.price.toFixed(2)} €
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-1">
+                      <Lock className="w-3 h-3" /> Paiement sécurisé par Stripe
+                    </p>
+                  </div>
 
-                    <div className="pt-4">
-                      <Button type="submit" size="lg" className="w-full h-12 text-lg font-bold bg-primary hover:bg-primary/90 shadow-lg" disabled={isLoading}>
-                        {isLoading ? "Traitement..." : `Payer ${selectedPlan.price.toFixed(2)} €`}
-                      </Button>
-                      <p className="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-1">
-                        <Lock className="w-3 h-3" /> Transaction chiffrée SSL 256-bit
-                      </p>
+                  {/* Badges de confiance */}
+                  <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+                    <div className="flex flex-col items-center text-center p-2">
+                      <Lock className="w-5 h-5 text-slate-400 mb-1" />
+                      <span className="text-[10px] text-slate-500">SSL 256-bit</span>
                     </div>
-                  </form>
+                    <div className="flex flex-col items-center text-center p-2">
+                      <CheckCircle2 className="w-5 h-5 text-slate-400 mb-1" />
+                      <span className="text-[10px] text-slate-500">Conforme PCI-DSS</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center p-2">
+                      <CreditCard className="w-5 h-5 text-slate-400 mb-1" />
+                      <span className="text-[10px] text-slate-500">3D Secure</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </section>
