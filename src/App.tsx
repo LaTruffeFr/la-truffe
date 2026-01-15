@@ -13,6 +13,8 @@ import ReportView from "./pages/ReportView";
 import PublicAudit from "./pages/PublicAudit";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import WhyUs from "./pages/WhyUs";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +126,10 @@ const AppRoutes = () => {
             </PublicRoute>
           } 
         />
+
+        <Route path="/why-us" element={<PublicRoute><WhyUs /></PublicRoute>} />
+
+        <Route path="/enterprise" element={<PublicRoute><About /></PublicRoute>} />
         
         {/* Auth page - redirects logged in users */}
         <Route 
