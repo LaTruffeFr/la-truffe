@@ -1,363 +1,178 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Lock, CreditCard, CheckCircle2, Star, Loader2
-} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Lock, Loader2, ShieldCheck, Star } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import logoTruffe from '@/assets/logo-latruffe.png';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 
-// Configuration des plans
-const PLANS = {
-  1: {
-    id: 1,
-    name: "Audit Unitaire",
-    credits: 1,
-    price: 29.99,
-    originalPrice: 29.99,
-    discount: 0,
-    badge: null,
-    features: ["1 Rapport complet", "Analyse Prix & Décote"]
-  },
-  2: {
-    id: 2,
-    name: "Pack Duo",
-    credits: 2,
-    price: 39.98,
-    originalPrice: 59.98,
-    discount: 33,
-    badge: "Populaire",
-    features: ["2 Rapports complets", "Idéal pour comparer"]
-  },
-  3: {
-    id: 3,
-    name: "Pack Chasseur",
-    credits: 3,
-    price: 53.97,
-    originalPrice: 89.97,
-    discount: 40,
-    badge: "Meilleure Offre",
-    features: ["3 Rapports complets", "Prix le plus bas (17,99€/u)"]
-  }
-};
+// --- CONFIGURATION STRIPE ---
+// Remplace ceci par ta Clé Publique Stripe (pk_test_...)
+const stripePromise = loadStripe("pk_test_51Sp4kbPpfbp0KU2MylVzZku0P8mnAS5OwvaSazTs0QwA08TpW5ZwaBSxY8oXNYfQFUgF98d8mA08EfC03RIo3in500t4uRSthx");
 
-const Checkout = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+// Composant interne pour le formulaire Stripe
+const StripeForm = ({ amount, onSuccess }: { amount: number, onSuccess: () => void }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
-  
-  // État du plan sélectionné (par défaut 3 si rien n'est spécifié)
-  const [selectedPlanId, setSelectedPlanId] = useState<number>(3);
-  const [isLoading, setIsLoading] = useState(false);
-  const [guestEmail, setGuestEmail] = useState('');
 
-  // Récupérer le plan depuis l'URL au chargement
-  useEffect(() => {
-    const planParam = searchParams.get('plan');
-    if (planParam && PLANS[Number(planParam) as keyof typeof PLANS]) {
-      setSelectedPlanId(Number(planParam));
-    }
-  }, [searchParams]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const selectedPlan = PLANS[selectedPlanId as keyof typeof PLANS];
+    if (!stripe || !elements) return;
 
-  const handleStripeCheckout = async () => {
-    setIsLoading(true);
-    
-    try {
-      const email = user?.email || guestEmail;
-      
-      if (!email) {
-        toast({
-          title: "Email requis",
-          description: "Veuillez entrer votre adresse e-mail pour continuer.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
+    setLoading(true);
 
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
-          planId: selectedPlanId.toString(),
-          email 
-        },
-      });
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        // Redirection après paiement (optionnel si tu gères tout en JS)
+        return_url: window.location.origin + "/client-dashboard",
+      },
+      redirect: 'if_required' // Empêche la redirection si pas nécessaire (ex: CB simple)
+    });
 
-      if (error) throw error;
-
-      if (data?.url) {
-        // Ouvrir Stripe Checkout dans un nouvel onglet
-        window.open(data.url, '_blank');
-      } else {
-        throw new Error("URL de paiement non reçue");
-      }
-    } catch (error: any) {
-      console.error('Checkout error:', error);
-      toast({
-        title: "Erreur de paiement",
-        description: error.message || "Une erreur est survenue. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+      setLoading(false);
+    } else {
+      onSuccess();
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
-      
-      {/* --- HEADER SIMPLIFIÉ (Rassurant pour le paiement) --- */}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement />
+      <Button disabled={!stripe || loading} className="w-full h-12 text-lg font-bold bg-slate-900 hover:bg-slate-800 mt-4">
+        {loading ? <Loader2 className="animate-spin" /> : `Payer ${amount.toFixed(2)} €`}
+      </Button>
+    </form>
+  );
+};
+
+const Checkout = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialPlan = searchParams.get('plan') || '1';
+  const [selectedPlanId, setSelectedPlanId] = useState(initialPlan);
+  const [clientSecret, setClientSecret] = useState("");
+
+  const packs = {
+    '1': { id: '1', name: "Audit Unitaire", price: 9.90, credits: 1, desc: "Analyse complète pour 1 véhicule", tag: null },
+    '2': { id: '2', name: "Pack Duo", price: 17.90, credits: 2, desc: "Idéal pour comparer deux modèles", tag: "Populaire" },
+    '3': { id: '3', name: "Pack Chasseur", price: 24.90, credits: 3, desc: "Le choix des experts (Recommandé)", tag: "Meilleure offre" },
+  };
+
+  // @ts-ignore
+  const selectedPack = packs[selectedPlanId] || packs['1'];
+
+  useEffect(() => {
+    setSearchParams({ plan: selectedPlanId });
+
+    // Appel au Backend pour créer l'intention de paiement
+    fetch("https://cautious-space-engine-5gj66pppr4w627jwx-8080.app.github.dev/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: selectedPack.price }),
+    })
+      .then((res) => res.json())
+      .then((data) => setClientSecret(data.clientSecret));
+  }, [selectedPlanId]);
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logoTruffe} alt="Logo La Truffe" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="text-lg font-bold text-slate-900">La Truffe</span>
-          </Link>
-          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full font-medium">
-            <Lock className="w-3 h-3" /> Paiement 100% Sécurisé
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+            <img src={logoTruffe} alt="Logo" className="h-8 w-8 rounded-lg" />
+            <span className="text-lg font-bold">La Truffe</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+            <Lock className="w-3 h-3" /> Paiement Sécurisé Stripe
           </div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-          
-          {/* --- COLONNE GAUCHE : SÉLECTION & PAIEMENT --- */}
-          <div className="lg:col-span-7 space-y-8">
-            
-            {/* 1. Sélection de l'offre */}
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
+        <Button variant="ghost" className="mb-6 pl-0 hover:pl-2 transition-all" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Retour
+        </Button>
+
+        <div className="grid md:grid-cols-12 gap-8">
+          <div className="md:col-span-7 space-y-8">
+            {/* SÉLECTEUR DE PACK */}
             <section>
-              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs">1</span>
-                Choisissez votre pack
-              </h2>
-              
-              <RadioGroup 
-                value={selectedPlanId.toString()} 
-                onValueChange={(val) => setSelectedPlanId(Number(val))}
-                className="grid gap-4"
-              >
-                {Object.values(PLANS).map((plan) => (
-                  <div key={plan.id}>
-                    <RadioGroupItem value={plan.id.toString()} id={`plan-${plan.id}`} className="peer sr-only" />
-                    <Label
-                      htmlFor={`plan-${plan.id}`}
-                      className={`
-                        flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all hover:bg-slate-50
-                        ${selectedPlanId === plan.id 
-                          ? 'border-primary bg-primary/5 ring-1 ring-primary' 
-                          : 'border-slate-200 bg-white'
-                        }
-                      `}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedPlanId === plan.id ? 'border-primary' : 'border-slate-300'}`}>
-                          {selectedPlanId === plan.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900 flex items-center gap-2">
-                            {plan.name}
-                            {plan.badge && (
-                              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                                {plan.badge}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-slate-500 mt-0.5">
-                            {plan.features[0]} • {plan.features[1]}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-lg text-slate-900">{plan.price.toFixed(2)} €</div>
-                        {plan.discount > 0 && (
-                          <div className="text-xs text-slate-400 line-through">{plan.originalPrice.toFixed(2)} €</div>
-                        )}
-                      </div>
-                    </Label>
+              <h2 className="text-xl font-bold text-slate-900 mb-4">1. Choisissez votre pack</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {Object.values(packs).map((pack: any) => (
+                  <div 
+                    key={pack.id}
+                    onClick={() => setSelectedPlanId(pack.id)}
+                    className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all ${selectedPlanId === pack.id ? 'border-primary bg-primary/5 shadow-md' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                  >
+                    {pack.tag && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{pack.tag}</div>}
+                    <div className="text-center">
+                      <h3 className={`font-bold ${selectedPlanId === pack.id ? 'text-primary' : 'text-slate-900'}`}>{pack.name}</h3>
+                      <div className="text-xl font-bold my-2">{pack.price} €</div>
+                      <div className="text-xs text-slate-500">{pack.credits} Crédits</div>
+                    </div>
                   </div>
                 ))}
-              </RadioGroup>
+              </div>
             </section>
 
-            {/* 2. Paiement Sécurisé */}
+            {/* ZONE DE PAIEMENT STRIPE */}
             <section>
-              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs">2</span>
-                Paiement sécurisé
-              </h2>
-              
-              <Card className="border-slate-200 shadow-sm overflow-hidden">
-                <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-medium">Méthodes de paiement</CardTitle>
-                    <div className="flex gap-2 items-center">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-5" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-5" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple Pay" className="h-5" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" className="h-5" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-5" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  {/* Email pour les utilisateurs non connectés */}
-                  {!user && (
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Adresse e-mail</Label>
-                      <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="Pour recevoir votre rapport" 
-                        value={guestEmail}
-                        onChange={(e) => setGuestEmail(e.target.value)}
-                        required 
-                        className="bg-white" 
+              <h2 className="text-xl font-bold text-slate-900 mb-4">2. Paiement sécurisé</h2>
+              <Card className="border-slate-200 shadow-sm">
+                <CardContent className="p-6">
+                  {clientSecret ? (
+                    <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
+                      <StripeForm 
+                        amount={selectedPack.price} 
+                        onSuccess={() => navigate('/client-dashboard')} 
                       />
-                    </div>
+                    </Elements>
+                  ) : (
+                    <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" /></div>
                   )}
-                  
-                  {user && (
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      <span className="text-sm text-green-700">
-                        Connecté en tant que <strong>{user.email}</strong>
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="pt-4">
-                    <Button 
-                      size="lg" 
-                      className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 shadow-lg gap-2" 
-                      onClick={handleStripeCheckout}
-                      disabled={isLoading || (!user && !guestEmail)}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Redirection...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="w-5 h-5" />
-                          Payer {selectedPlan.price.toFixed(2)} €
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-1">
-                      <Lock className="w-3 h-3" /> Paiement sécurisé par Stripe
-                    </p>
-                  </div>
-
-                  {/* Badges de confiance */}
-                  <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
-                    <div className="flex flex-col items-center text-center p-2">
-                      <Lock className="w-5 h-5 text-slate-400 mb-1" />
-                      <span className="text-[10px] text-slate-500">SSL 256-bit</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center p-2">
-                      <CheckCircle2 className="w-5 h-5 text-slate-400 mb-1" />
-                      <span className="text-[10px] text-slate-500">Conforme PCI-DSS</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center p-2">
-                      <CreditCard className="w-5 h-5 text-slate-400 mb-1" />
-                      <span className="text-[10px] text-slate-500">3D Secure</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </section>
           </div>
 
-          {/* --- COLONNE DROITE : RÉCAPITULATIF (Sticky) --- */}
-          <div className="lg:col-span-5">
+          {/* RÉCAPITULATIF À DROITE */}
+          <div className="md:col-span-5">
             <div className="sticky top-24 space-y-6">
-              <Card className="border-slate-200 shadow-lg bg-white">
-                <CardHeader className="bg-slate-900 text-white rounded-t-xl py-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                    Récapitulatif
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
+              <Card className="bg-slate-900 text-white border-none shadow-xl">
+                <CardHeader><CardTitle>Récapitulatif</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-start pb-4 border-b border-slate-700">
                     <div>
-                      <h3 className="font-bold text-lg text-slate-900">{selectedPlan.name}</h3>
-                      <p className="text-sm text-slate-500">{selectedPlan.credits} crédits d'audit</p>
+                      <h3 className="font-bold text-lg">{selectedPack.name}</h3>
+                      <p className="text-sm text-slate-400">{selectedPack.desc}</p>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-xl">{selectedPlan.price.toFixed(2)} €</div>
-                      {selectedPlan.discount > 0 && (
-                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 mt-1">
-                          -{selectedPlan.discount}%
-                        </Badge>
-                      )}
-                    </div>
+                    <div className="text-xl font-bold">{selectedPack.price.toFixed(2)} €</div>
                   </div>
-
-                  <Separator className="my-4" />
-
-                  <ul className="space-y-3 mb-6">
-                    {selectedPlan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        {feature}
-                      </li>
-                    ))}
-                    <li className="flex items-start gap-2 text-sm text-slate-600">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      Accès immédiat
-                    </li>
-                    <li className="flex items-start gap-2 text-sm text-slate-600">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      Valable 1 an
-                    </li>
-                  </ul>
-
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6">
-                    <p className="text-xs text-blue-700 font-medium leading-relaxed">
-                      💡 <strong>Le saviez-vous ?</strong> Les utilisateurs qui achètent ce pack économisent en moyenne 1500€ sur leur achat automobile grâce à la négociation.
-                    </p>
-                  </div>
-
-                  <div className="flex justify-between items-center text-sm font-medium pt-2 border-t border-slate-100">
-                    <span className="text-slate-500">Total à payer</span>
-                    <span className="text-2xl font-bold text-slate-900">{selectedPlan.price.toFixed(2)} €</span>
+                  <div className="flex justify-between text-xl font-bold pt-2">
+                    <span>Total à payer</span>
+                    <span>{selectedPack.price.toFixed(2)} €</span>
                   </div>
                 </CardContent>
+                <CardContent className="bg-slate-800/50 p-4 text-xs text-slate-400 flex flex-col gap-2 rounded-b-xl">
+                  <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-green-400" /> Paiement sécurisé par Stripe</div>
+                  <div className="flex items-center gap-2"><Star className="w-4 h-4 text-yellow-400" /> 4.9/5 par nos clients</div>
+                </CardContent>
               </Card>
-
-              {/* Témoignage rapide */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 shrink-0">
-                  LC
-                </div>
-                <div>
-                  <div className="flex text-yellow-400 mb-1">
-                    {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 fill-current" />)}
-                  </div>
-                  <p className="text-xs text-slate-600 italic">"Rapport reçu en 30 secondes. J'ai évité une voiture surcotée de 2000€. Merci !"</p>
-                  <p className="text-xs font-bold text-slate-900 mt-1">Lucie C.</p>
-                </div>
-              </div>
             </div>
           </div>
-
         </div>
       </main>
-
       <Footer />
     </div>
   );

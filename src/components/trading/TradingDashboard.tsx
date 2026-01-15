@@ -1,428 +1,189 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
-import { VehicleWithScore } from '@/lib/csvParser';
-import { SniperChart } from './SniperChart';
-import { SniperKPIs } from './SniperKPIs';
-import { SavingsSimulator } from './SavingsSimulator';
-import { OpportunityModal } from './OpportunityModal';
-import { CSVImportModal } from './CSVImportModal';
-import { MarketReportGenerator } from './MarketReportGenerator';
-import { FreemiumDealCard } from './FreemiumDealCard';
-import { useVehicleData } from '@/contexts/VehicleDataContext';
-import { useNavigate } from 'react-router-dom';
-import { Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, Users, ChevronDown, ChevronUp, SlidersHorizontal, ExternalLink, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import React, { useMemo } from 'react';
+import { 
+  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ArrowUpRight, Target, Car, Filter, ExternalLink } from 'lucide-react';
 
-export function TradingDashboard() {
-  const navigate = useNavigate();
-  const {
-    vehicles,
-    filteredVehicles,
-    chartVehicles,
-    trendLine,
-    outliersCount,
-    filters,
-    dataRanges,
-    isLoading,
-    vehicleInfo,
-    setFilters,
-    resetFilters,
-    uploadCSV,
-    clearData,
-    kpis,
-  } = useVehicleData();
+interface Vehicle {
+  id: string;
+  titre: string;
+  prix: number;
+  kilometrage: number;
+  annee: number;
+  image: string;
+  lien: string;
+  dealScore: number;
+  ecartEuros: number;
+}
 
-  const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
-  const [chartHeight, setChartHeight] = useState(500);
-  const [isChartOpen, setIsChartOpen] = useState(true);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const dealsRef = useRef<HTMLDivElement>(null);
+interface MarketStats {
+  averagePrice: number;
+  vehicleCount: number;
+  lowestPrice: number;
+  highestPrice: number;
+  brand: string;
+  model: string;
+}
 
-  const handleScrollToDeals = useCallback(() => {
-    dealsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
+interface TradingDashboardProps {
+  data: Vehicle[];
+  marketStats: MarketStats;
+}
 
-  const handleImport = useCallback((file: File, marque: string, modele: string) => {
-    uploadCSV(file, marque, modele);
-  }, [uploadCSV]);
-
-  // Handle vehicle click from chart
-  const handleVehicleClick = useCallback((vehicle: VehicleWithScore) => {
-    const expectedPrice = trendLine.slope * vehicle.kilometrage + trendLine.intercept;
-    setSelectedVehicle({
-      ...vehicle,
-      expectedPrice: Math.round(expectedPrice),
-      deviation: Math.round(expectedPrice - vehicle.prix),
-      deviationPercent: Math.round(((expectedPrice - vehicle.prix) / expectedPrice) * 100),
-    } as any);
-  }, [trendLine]);
-
-  // Top 3 freemium deals (best opportunities for teaser)
-  const freemiumDeals = useMemo(() => {
-    return [...chartVehicles]
-      .filter(v => v.dealScore < 0) // Green opportunities only
-      .sort((a, b) => a.dealScore - b.dealScore)
-      .slice(0, 3)
-      .map(v => {
-        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-        return {
-          ...v,
-          expectedPrice: Math.round(expectedPrice),
-          deviation: Math.round(expectedPrice - v.prix),
-          deviationPercent: Math.round(((expectedPrice - v.prix) / expectedPrice) * 100),
-        };
-      });
-  }, [chartVehicles, trendLine]);
-
-  // Loading state
-  if (isLoading) {
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-          <p className="text-lg text-muted-foreground">Analyse en cours...</p>
-        </div>
+      <div className="bg-slate-900 text-white p-3 rounded-lg shadow-xl border border-slate-700 text-xs">
+        <p className="font-bold mb-1">{data.titre}</p>
+        <p className="text-emerald-400 font-mono">{data.prix.toLocaleString()} €</p>
+        <p className="text-slate-400">{data.kilometrage.toLocaleString()} km</p>
+        <p className="mt-1 font-semibold">Score: {data.dealScore}/100</p>
       </div>
     );
   }
+  return null;
+};
 
-  // No data state - full screen upload
-  if (vehicles.length === 0) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <header className="border-b border-border px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-success to-success/60 flex items-center justify-center">
-              <Crosshair className="w-5 h-5 text-success-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Mode Sniper</h1>
-              <p className="text-xs text-muted-foreground">Analyse Mono-Modèle</p>
-            </div>
-          </div>
-        </header>
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center space-y-6 max-w-md">
-            <div className="w-20 h-20 rounded-2xl bg-success/10 flex items-center justify-center mx-auto">
-              <Crosshair className="w-10 h-10 text-success" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Importez votre fichier</h2>
-              <p className="text-muted-foreground">
-                Chargez un CSV contenant un seul modèle (ex: 500 Audi RS3) pour une analyse précise du marché.
-              </p>
-            </div>
-            <Button onClick={() => setIsImportModalOpen(true)} size="lg" className="gap-2">
-              <Upload className="w-5 h-5" />
-              Importer un fichier CSV
-            </Button>
-          </div>
-        </div>
-        <CSVImportModal 
-          open={isImportModalOpen} 
-          onOpenChange={setIsImportModalOpen} 
-          onImport={handleImport}
-        />
-      </div>
-    );
-  }
+const TradingDashboard: React.FC<TradingDashboardProps> = ({ data, marketStats }) => {
+  
+  // Trier les véhicules par "Deal Score" pour le top 5
+  const topDeals = useMemo(() => {
+    return [...data].sort((a, b) => b.dealScore - a.dealScore).slice(0, 5);
+  }, [data]);
 
-  // Main Sniper view
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
-      {/* Compact Header */}
-      <header className="border-b border-border px-6 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-success to-success/60 flex items-center justify-center">
-            <Crosshair className="w-4 h-4 text-success-foreground" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">
-              Mode Sniper
-              {vehicleInfo && (
-                <span className="ml-2 text-sm font-normal text-primary">
-                  — {vehicleInfo.marque} {vehicleInfo.modele}
-                </span>
-              )}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {filteredVehicles.length} véhicules analysés
-              {outliersCount > 0 && <span className="text-warning"> ({outliersCount} aberrants exclus)</span>}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="gold"
-            size="sm"
-            onClick={() => navigate('/vue-client')}
-            className="gap-2"
-          >
-            <Users className="w-4 h-4" />
-            Vue Client
-            <ExternalLink className="w-3 h-3" />
-          </Button>
-          <MarketReportGenerator 
-            vehicles={filteredVehicles} 
-            trendLine={trendLine} 
-            kpis={kpis} 
-          />
-          <Button variant="ghost" size="sm" onClick={clearData} className="gap-2 text-muted-foreground">
-            <RotateCcw className="w-4 h-4" />
-            Nouveau scan
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)} className="gap-2">
-            <Upload className="w-4 h-4" />
-            Nouveau CSV
-          </Button>
-        </div>
-      </header>
-
-      {/* KPIs Bar */}
-      <SniperKPIs
-        avgPrice={kpis.avgPrice}
-        decotePer10k={kpis.decotePer10k}
-        bestOffer={kpis.bestOffer}
-        totalVehicles={chartVehicles.length}
-        opportunitiesCount={kpis.opportunitiesCount}
-      />
-
-      {/* Main content area */}
-      <div className="flex-1 p-4 min-h-0 overflow-auto space-y-4">
-        {/* Savings Simulator */}
-        <SavingsSimulator 
-          vehicles={chartVehicles} 
-          onScrollToDeals={handleScrollToDeals} 
-        />
-
-        {/* Freemium Deal Cards Section */}
-        <div ref={dealsRef} className="space-y-4">
+    <div className="space-y-8">
+      
+      {/* --- GRAPHIQUE SNIPER (SCATTER PLOT) --- */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 pb-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-foreground">🔥 TOP 3 OPPORTUNITÉS</h2>
-            <span className="text-sm text-muted-foreground">Aperçu des meilleures affaires</span>
-          </div>
-          <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
-            {freemiumDeals.map((vehicle, index) => (
-              <FreemiumDealCard
-                key={vehicle.id || index}
-                vehicle={vehicle}
-                rank={index + 1}
-                paymentLink="#"
-              />
-            ))}
-          </div>
-          {freemiumDeals.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucune opportunité détectée dans ce dataset
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" /> 
+              Matrice de marché "Sniper"
+            </CardTitle>
+            <div className="flex gap-2">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div> Bonne affaire
+              </Badge>
+              <Badge variant="outline" className="bg-slate-50 text-slate-600">
+                <div className="w-2 h-2 rounded-full bg-slate-400 mr-1"></div> Prix marché
+              </Badge>
             </div>
-          )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis 
+                type="number" 
+                dataKey="kilometrage" 
+                name="Kilométrage" 
+                unit=" km" 
+                reversed={false} 
+                tick={{ fontSize: 12, fill: '#64748b' }}
+                label={{ value: 'Kilométrage', position: 'bottom', offset: 0, fill: '#94a3b8', fontSize: 12 }}
+              />
+              <YAxis 
+                type="number" 
+                dataKey="prix" 
+                name="Prix" 
+                unit=" €" 
+                domain={['auto', 'auto']}
+                tick={{ fontSize: 12, fill: '#64748b' }}
+                tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+              
+              {/* Ligne de tendance moyenne (Approx) */}
+              <ReferenceLine y={marketStats.averagePrice} stroke="#94a3b8" strokeDasharray="3 3" label={{ position: 'right', value: 'Moyenne', fill: '#94a3b8', fontSize: 10 }} />
+
+              <Scatter name="Véhicules" data={data} fill="#8884d8">
+                {data.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.dealScore > 80 ? '#22c55e' : entry.dealScore > 50 ? '#3b82f6' : '#ef4444'} 
+                    stroke="white"
+                    strokeWidth={2}
+                    r={entry.dealScore > 80 ? 8 : 5} // Les bonnes affaires sont plus grosses
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  />
+                ))}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* --- LISTE DES TOP OPPORTUNITÉS --- */}
+      <div>
+        <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <ArrowUpRight className="w-6 h-6 text-green-600" />
+          Top 5 Opportunités identifiées
+        </h3>
+        
+        <div className="grid gap-4">
+          {topDeals.map((vehicule) => (
+            <Card key={vehicule.id} className="group overflow-hidden border-slate-200 hover:border-primary/50 transition-all hover:shadow-md">
+              <div className="flex flex-col sm:flex-row">
+                {/* Image */}
+                <div className="sm:w-48 h-48 sm:h-auto relative overflow-hidden bg-slate-100">
+                  <img 
+                    src={vehicule.image} 
+                    alt={vehicule.titre} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/e2e8f0/94a3b8?text=No+Image' }}
+                  />
+                  <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
+                    Score {vehicule.dealScore}
+                  </div>
+                </div>
+
+                {/* Contenu */}
+                <div className="flex-1 p-5 flex flex-col justify-between">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-lg group-hover:text-primary transition-colors">
+                        {vehicule.titre}
+                      </h4>
+                      <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
+                        <Car className="w-4 h-4" /> {vehicule.annee} • {vehicule.kilometrage.toLocaleString()} km
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-slate-900">{vehicule.prix.toLocaleString()} €</div>
+                      {vehicule.ecartEuros > 0 && (
+                        <div className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded inline-block mt-1">
+                          -{vehicule.ecartEuros.toLocaleString()} € sous la cote
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+                    <div className="flex gap-2 text-xs text-slate-500">
+                      <span className="bg-slate-100 px-2 py-1 rounded">Garantie 12 mois</span>
+                      <span className="bg-slate-100 px-2 py-1 rounded">Première main</span>
+                    </div>
+                    <Button size="sm" className="gap-2" asChild>
+                      <a href={vehicule.lien} target="_blank" rel="noopener noreferrer">
+                        Voir l'annonce <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
-
-        {/* Filters Panel */}
-        <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
-          <div className="rounded-xl border border-border bg-card">
-            <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-                <div className="flex items-center gap-3">
-                  <SlidersHorizontal className="w-5 h-5 text-primary" />
-                  <div>
-                    <h3 className="font-semibold text-foreground">Filtres</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {chartVehicles.length} / {filteredVehicles.length} véhicules affichés
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-2 text-xs">
-                    <span className="px-2 py-1 rounded bg-muted">
-                      {filters.minPrice.toLocaleString('fr-FR')} - {filters.maxPrice.toLocaleString('fr-FR')} €
-                    </span>
-                    <span className="px-2 py-1 rounded bg-muted">
-                      {filters.minKm.toLocaleString('fr-FR')} - {filters.maxKm.toLocaleString('fr-FR')} km
-                    </span>
-                  </div>
-                  {isFiltersOpen ? (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
-              </div>
-            </CollapsibleTrigger>
-            
-            <CollapsibleContent>
-              <div className="px-4 pb-4 border-t border-border pt-4">
-                <div className="grid grid-cols-2 gap-6">
-                  {/* Price Filter */}
-                  <div className="space-y-4">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-primary" />
-                      Prix (€)
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Min</Label>
-                        <Input
-                          type="number"
-                          value={filters.minPrice}
-                          onChange={(e) => setFilters({ minPrice: Number(e.target.value) || 0 })}
-                          placeholder="0"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Max</Label>
-                        <Input
-                          type="number"
-                          value={filters.maxPrice}
-                          onChange={(e) => setFilters({ maxPrice: Number(e.target.value) || dataRanges.maxPrice })}
-                          placeholder={dataRanges.maxPrice.toString()}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    <Slider
-                      value={[filters.minPrice, filters.maxPrice]}
-                      onValueChange={(value) => setFilters({ minPrice: value[0], maxPrice: value[1] })}
-                      min={0}
-                      max={dataRanges.maxPrice}
-                      step={1000}
-                      className="w-full"
-                    />
-                  </div>
-                  
-                  {/* Km Filter */}
-                  <div className="space-y-4">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-success" />
-                      Kilométrage (km)
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Min</Label>
-                        <Input
-                          type="number"
-                          value={filters.minKm}
-                          onChange={(e) => setFilters({ minKm: Number(e.target.value) || 0 })}
-                          placeholder="0"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Max</Label>
-                        <Input
-                          type="number"
-                          value={filters.maxKm}
-                          onChange={(e) => setFilters({ maxKm: Number(e.target.value) || dataRanges.maxKm })}
-                          placeholder={dataRanges.maxKm.toString()}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    <Slider
-                      value={[filters.minKm, filters.maxKm]}
-                      onValueChange={(value) => setFilters({ minKm: value[0], maxKm: value[1] })}
-                      min={0}
-                      max={dataRanges.maxKm}
-                      step={5000}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end mt-4">
-                  <Button variant="outline" size="sm" onClick={resetFilters}>
-                    Réinitialiser les filtres
-                  </Button>
-                </div>
-              </div>
-            </CollapsibleContent>
-          </div>
-        </Collapsible>
-
-        {/* Chart Section */}
-        <Collapsible open={isChartOpen} onOpenChange={setIsChartOpen}>
-          <div className="rounded-xl border border-border bg-card">
-            <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-                <div>
-                  <h3 className="font-semibold text-foreground">Graphique Sniper</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Cliquez sur un point vert pour voir l'opportunité
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-6 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-success" />
-                      <span className="text-muted-foreground">Opportunité</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-destructive/50" />
-                      <span className="text-muted-foreground">Au-dessus</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-0.5 bg-destructive" />
-                      <span className="text-muted-foreground">Tendance</span>
-                    </div>
-                  </div>
-                  {isChartOpen ? (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
-              </div>
-            </CollapsibleTrigger>
-            
-            <CollapsibleContent>
-              <div className="px-4 pb-4 space-y-4">
-                {/* Height control */}
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                  <Minimize2 className="w-4 h-4 text-muted-foreground" />
-                  <Slider
-                    value={[chartHeight]}
-                    onValueChange={(value) => setChartHeight(value[0])}
-                    min={300}
-                    max={900}
-                    step={50}
-                    className="flex-1"
-                  />
-                  <Maximize2 className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground w-14 text-right">{chartHeight}px</span>
-                </div>
-                
-                <div style={{ height: chartHeight }}>
-                  <SniperChart
-                    data={chartVehicles}
-                    onVehicleClick={handleVehicleClick}
-                    trendLine={trendLine}
-                  />
-                </div>
-              </div>
-            </CollapsibleContent>
-          </div>
-        </Collapsible>
       </div>
-
-      {/* Opportunity Modal */}
-      {selectedVehicle && (
-        <OpportunityModal
-          vehicle={selectedVehicle}
-          onClose={() => setSelectedVehicle(null)}
-        />
-      )}
-
-      {/* Import Modal */}
-      <CSVImportModal 
-        open={isImportModalOpen} 
-        onOpenChange={setIsImportModalOpen} 
-        onImport={handleImport}
-      />
     </div>
   );
-}
+};
+
+export default TradingDashboard;

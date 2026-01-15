@@ -3,22 +3,23 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { 
-  LogIn, Search, ShieldCheck, Target, TrendingDown, TrendingUp, 
-  BarChart3, CheckCircle2, Euro, Globe, ChevronDown, Award, 
-  LineChart, Zap, Star
+  LogIn, Target, TrendingDown, 
+  BarChart3, CheckCircle2, Euro, ChevronDown, Award, 
+  LineChart, Zap, Star, User
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import logoLatruffe from '@/assets/logo-latruffe.png';
-
-// Import des images
 import imgValeur from '@/assets/analyse-valeur.jpg'; 
 import imgDecote from '@/assets/analyse-decote.jpg';
 
+// ✅ CORRECTION ICI : Ajout du "s" à contexts et chemin relatif sûr
+import { useAuth } from '../contexts/AuthContext';
+
 const Landing = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth(); // Ceci fait planter la page si l'import est mauvais
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
 
@@ -30,7 +31,6 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans text-slate-900">
       
-      {/* --- HEADER --- */}
       <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50 transition-all duration-200">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -41,7 +41,6 @@ const Landing = () => {
           <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
             <Link to="/" className="text-primary font-semibold">Accueil</Link>
             
-            {/* Menu Rapports */}
             <div className="relative group">
               <button className="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none py-2">
                 Rapports <ChevronDown className="w-4 h-4" />
@@ -54,7 +53,6 @@ const Landing = () => {
               </div>
             </div>
 
-            {/* Menu Entreprise (CORRIGÉ : Lien vers /qui-sommes-nous) */}
             <div className="relative group">
               <button className="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none py-2">
                 Entreprise <ChevronDown className="w-4 h-4" />
@@ -63,7 +61,7 @@ const Landing = () => {
                 <Link to="/qui-sommes-nous" className="block px-4 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-colors">
                   Qui sommes-nous ?
                 </Link>
-                <Link to="/contact" className="block px-4 py-2.5 font-medium bg-primary/5 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                <Link to="/contact" className="block px-4 py-2.5 hover:bg-slate-50 hover:text-primary rounded-lg transition-colors">
                   Contact
                 </Link>
               </div>
@@ -71,11 +69,25 @@ const Landing = () => {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden sm:flex hover:text-primary">Se connecter</Button>
-            <Button onClick={() => navigate('/auth')} className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all hover:scale-105">
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Mon Espace</span>
-            </Button>
+            {isAuthenticated ? (
+              <Button 
+                onClick={() => navigate('/client-dashboard')} 
+                className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-lg transition-all"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Mon Espace</span>
+              </Button>
+            ) : (
+              <>
+                <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden sm:flex hover:text-primary">
+                  Se connecter
+                </Button>
+                <Button onClick={() => navigate('/auth')} className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all hover:scale-105">
+                  <LogIn className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mon Espace</span>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -278,110 +290,64 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- PRICING CARDS --- */}
-      <section className="py-16 bg-slate-50 -mt-10 rounded-t-[3rem] relative z-20">
+      {/* --- PRICING (PACKS) --- */}
+      <section className="py-24 bg-slate-50">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
-            
-            {/* CARD 3 RAPPORTS (Meilleure offre) */}
-            <div className="bg-white rounded-2xl shadow-xl border-2 border-primary relative overflow-hidden order-1 md:order-2 transform md:-translate-y-6">
-              <div className="bg-primary text-white text-center py-2 text-sm font-bold uppercase tracking-wider">
-                Recommandé pour économiser
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">Vérifier 3 voitures</h3>
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">-40%</Badge>
-                </div>
-                <p className="text-slate-500 text-sm mb-6">Idéal pour comparer plusieurs annonces</p>
-                
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-4xl font-bold text-primary">17,99 €</span>
-                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
-                </div>
-                <p className="text-xs text-slate-400 mb-6">Prix total 53,97 € <span className="line-through">89,97 €</span></p>
-
-                <Button className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mb-4">
-                  Acheter 3 rapports
-                </Button>
-                
-                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 3 crédits valables 1 an</p>
-
-                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Audit de prix complet</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Analyse courbe décote</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Aide à la négociation</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* CARD 2 RAPPORTS */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 relative overflow-hidden order-2 md:order-1">
-              <div className="bg-slate-100 text-slate-600 text-center py-2 text-sm font-bold uppercase tracking-wider">
-                Populaire
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">Vérifier 2 voitures</h3>
-                  <Badge variant="outline" className="text-green-600 border-green-200">-33%</Badge>
-                </div>
-                <p className="text-slate-500 text-sm mb-6">Pour départager deux modèles</p>
-                
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-4xl font-bold text-slate-900">19,99 €</span>
-                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
-                </div>
-                <p className="text-xs text-slate-400 mb-6">Prix total 39,98 € <span className="line-through">59,98 €</span></p>
-
-                <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4">
-                  Acheter 2 rapports
-                </Button>
-                
-                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 2 crédits</p>
-
-                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Audit de prix complet</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Analyse du marché</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* CARD 1 RAPPORT */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 relative overflow-hidden order-3">
-              <div className="bg-white text-white text-center py-2 text-sm font-bold uppercase tracking-wider">
-                &nbsp;
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">Vérifier 1 voiture</h3>
-                </div>
-                <p className="text-slate-500 text-sm mb-6">Pour une vérification unique</p>
-                
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-4xl font-bold text-slate-900">29,99 €</span>
-                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
-                </div>
-                <p className="text-xs text-slate-400 mb-6">Plein tarif</p>
-
-                <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4">
-                  Acheter 1 rapport
-                </Button>
-                
-                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 1 crédit</p>
-
-                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Audit de prix complet</li>
-                </ul>
-              </div>
-            </div>
-
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Économisez des milliers d'euros pour le prix d'un café</h2>
+            <p className="text-slate-600">Choisissez le pack adapté à votre recherche.</p>
           </div>
-          
-          <div className="text-center mt-8">
-            <Link to="/enterprise" className="text-sm text-primary font-medium hover:underline">
-              Afficher les tarifs pour les professionnels
-            </Link>
-            <p className="text-xs text-slate-400 mt-2">La TVA peut s'appliquer selon votre localisation.</p>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Pack Découverte */}
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-lg transition-shadow relative">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Audit Unitaire</h3>
+              <p className="text-slate-500 text-sm mb-6">Pour vérifier une voiture précise</p>
+              
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-4xl font-bold text-slate-900">9,90 €</span>
+              </div>
+              <div className="text-sm text-slate-500 mb-8">
+                Paiement unique
+              </div>
+
+              <ul className="space-y-3 mb-8 text-sm text-slate-600">
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 1 Audit de marché complet</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Analyse du prix vs Marché</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Graphique "Sniper"</li>
+              </ul>
+
+              <Button className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800">
+                Choisir ce pack
+              </Button>
+            </div>
+
+            {/* Pack Chasseur (Populaire) */}
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-2 border-primary relative transform md:-translate-y-4">
+              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">
+                RECOMMANDÉ
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Pack Chasseur</h3>
+              <p className="text-slate-500 text-sm mb-6">Pour ceux qui cherchent la perle rare</p>
+              
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-4xl font-bold text-primary">24,90 €</span>
+                <span className="text-slate-400 line-through text-sm">29,70 €</span>
+              </div>
+              <div className="text-sm text-green-600 font-semibold mb-8 bg-green-50 inline-block px-2 py-1 rounded">
+                3 Audits Complets (8,30€ / audit)
+              </div>
+
+              <ul className="space-y-3 mb-8 text-sm text-slate-600">
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 3 Audits de marché</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Comparaison des cotes</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Aide à la négociation</li>
+              </ul>
+
+              <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                Choisir ce pack
+              </Button>
+            </div>
           </div>
         </div>
       </section>

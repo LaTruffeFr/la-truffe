@@ -1,636 +1,243 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Loader2, Plus, FileText, Clock, CheckCircle, AlertCircle, 
-  Search, User, CreditCard, Settings, Receipt, Car, FolderOpen,
-  ArrowRight, Calendar, Eye, LogOut, Lock
+  LayoutDashboard, Settings, CreditCard, LogOut, 
+  Plus, FileText, FolderOpen, User, Search
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Link } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import logoLatruffe from '@/assets/logo-latruffe.png';
+import { Footer } from '@/components/landing';
+import logoTruffe from '@/assets/logo-latruffe.png';
 
-interface Report {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  marque: string;
-  modele: string;
-  annee_min: number | null;
-  annee_max: number | null;
-  kilometrage_max: number | null;
-  prix_max: number | null;
-  carburant: string | null;
-  transmission: string | null;
-  notes: string | null;
-  status: 'pending' | 'in_progress' | 'completed';
-  report_url: string | null;
-  admin_notes: string | null;
-}
-
-// Mock data for demonstration
-const mockReports: Omit<Report, 'user_id'>[] = [
-  {
-    id: '1',
-    created_at: '2025-01-12T10:00:00Z',
-    updated_at: '2025-01-12T10:00:00Z',
-    marque: 'BMW',
-    modele: 'X5 xDrive',
-    annee_min: 2018,
-    annee_max: 2020,
-    kilometrage_max: 80000,
-    prix_max: 45000,
-    carburant: 'Diesel',
-    transmission: 'Automatique',
-    notes: null,
-    status: 'completed',
-    report_url: '/report/1',
-    admin_notes: 'Excellent choix, plusieurs opportunités trouvées',
-  },
-  {
-    id: '2',
-    created_at: '2025-01-10T14:30:00Z',
-    updated_at: '2025-01-10T14:30:00Z',
-    marque: 'Mercedes',
-    modele: 'Classe C 220d',
-    annee_min: 2019,
-    annee_max: 2021,
-    kilometrage_max: 60000,
-    prix_max: 35000,
-    carburant: 'Diesel',
-    transmission: 'Automatique',
-    notes: 'Recherche berline confortable',
-    status: 'completed',
-    report_url: '/report/2',
-    admin_notes: null,
-  },
-  {
-    id: '3',
-    created_at: '2025-01-08T09:15:00Z',
-    updated_at: '2025-01-08T09:15:00Z',
-    marque: 'Audi',
-    modele: 'A4 Avant',
-    annee_min: 2020,
-    annee_max: 2022,
-    kilometrage_max: 50000,
-    prix_max: 40000,
-    carburant: 'Essence',
-    transmission: 'Automatique',
-    notes: null,
-    status: 'in_progress',
-    report_url: null,
-    admin_notes: null,
-  },
-  {
-    id: '4',
-    created_at: '2025-01-05T16:45:00Z',
-    updated_at: '2025-01-05T16:45:00Z',
-    marque: 'Volkswagen',
-    modele: 'Golf 8 GTI',
-    annee_min: 2021,
-    annee_max: 2023,
-    kilometrage_max: 30000,
-    prix_max: 38000,
-    carburant: 'Essence',
-    transmission: 'Manuelle',
-    notes: 'Version performance uniquement',
-    status: 'pending',
-    report_url: null,
-    admin_notes: null,
-  },
-];
-
-const statusConfig = {
-  pending: { 
-    label: 'En attente', 
-    icon: Clock, 
-    badgeClass: 'bg-amber-100 text-amber-700 border-amber-200' 
-  },
-  in_progress: { 
-    label: 'En cours', 
-    icon: AlertCircle, 
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200' 
-  },
-  completed: { 
-    label: 'Bonne affaire', 
-    icon: CheckCircle, 
-    badgeClass: 'bg-green-100 text-green-700 border-green-200' 
-  },
-};
+// ✅ CORRECTION ICI : Ajout du "s" à "contexts" pour correspondre à ton dossier
+import { useAuth } from '../contexts/AuthContext';
 
 const ClientDashboard = () => {
-  const { user, signOut, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [reports, setReports] = useState<Report[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState('reports');
+  // Récupération du contexte
+  const { user, logout } = useAuth();
   
-  // Form state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [modelSearch, setModelSearch] = useState('');
-  const [notes, setNotes] = useState('');
-
-  // Credits (mock)
-  const userCredits = 3;
-
-  // Fetch reports
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchReports = async () => {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('reports')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching reports:', error);
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de charger vos rapports',
-          variant: 'destructive',
-        });
-        // Use mock data for demo
-        setReports(mockReports as Report[]);
-      } else {
-        setReports(data?.length ? data : mockReports as Report[]);
-      }
-      setIsLoading(false);
-    };
-    
-    fetchReports();
-  }, [user, toast]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !modelSearch.trim()) return;
-    
-    setIsSubmitting(true);
-    
-    const searchTerm = modelSearch.trim();
-    
-    const { error } = await supabase.from('reports').insert({
-      user_id: user.id,
-      marque: searchTerm.split(' ')[0] || searchTerm,
-      modele: searchTerm,
-      notes: notes || null,
-    });
-    
-    if (error) {
-      console.error('Error creating report:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de créer la demande',
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'Demande envoyée !',
-        description: 'Vous recevrez votre rapport sous 24-48h',
-      });
-      setIsDialogOpen(false);
-      setModelSearch('');
-      setNotes('');
-      const { data } = await supabase
-        .from('reports')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setReports(data || []);
-    }
-    
-    setIsSubmitting(false);
+  // Sécurité anti-crash si le user est null
+  const currentUser = user || {
+    email: "client@latruffe.com",
+    type: "Individuel",
+    credits: 0, 
+    initials: "CL"
   };
 
-  const handleQuickSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setModelSearch(searchQuery);
-      setIsDialogOpen(true);
-    }
-  };
+  const [marque, setMarque] = useState('');
+  const [modele, setModele] = useState('');
+  const [precision, setPrecision] = useState('');
 
-  const handleSignOut = async () => {
-    await signOut();
+  const handleLogout = () => {
+    logout();
+    toast({ description: "Déconnexion réussie." });
     navigate('/');
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handleNavigation = (path: string, featureName: string) => {
+    if (path === '#') {
+      toast({ 
+        title: "Bientôt disponible", 
+        description: `La section ${featureName} arrive prochainement.` 
+      });
+    } else {
+      navigate(path);
+    }
+  };
 
-  if (!user) {
-    return null;
-  }
+  const handleGenerateReport = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!marque || !modele) {
+      toast({
+        variant: "destructive",
+        title: "Champs manquants",
+        description: "Veuillez entrer au moins une marque et un modèle.",
+      });
+      return;
+    }
+
+    if (currentUser.credits === 0) {
+      toast({
+        variant: "destructive",
+        title: "Crédits insuffisants",
+        description: "Vous devez recharger vos crédits pour lancer une analyse.",
+      });
+      navigate('/pricing');
+    } else {
+      toast({
+        title: "Analyse lancée !",
+        description: "Votre rapport est en cours de génération...",
+      });
+      navigate('/audit/demo-1');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] font-['Inter',sans-serif]">
-      {/* Top Navigation Bar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Left: Logo - Clickable */}
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <img 
-                src={logoLatruffe}
-                alt="Logo La Truffe" 
-                className="h-10 w-10 rounded-lg object-cover"
-              />
-              <span className="text-lg font-bold text-gray-900">La Truffe</span>
-            </Link>
-
-            {/* Center: Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1">
-              {[
-                { id: 'reports', label: 'Rapports', icon: FileText },
-                { id: 'settings', label: 'Paramètres', icon: Settings },
-                { id: 'billing', label: 'Facturation', icon: Receipt },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveNav(item.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeNav === item.id
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-
-            {/* Right: Credits + Profile Dropdown */}
-            <div className="flex items-center gap-4">
-              <Badge className="bg-primary/10 text-primary border-primary/20 font-semibold px-3 py-1">
-                <CreditCard className="h-3.5 w-3.5 mr-1.5" />
-                {userCredits} crédits
-              </Badge>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center h-9 w-9 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-                    <User className="h-5 w-5 text-gray-600" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg z-50">
-                  <DropdownMenuItem onClick={() => setActiveNav('settings')} className="gap-2 cursor-pointer">
-                    <User className="h-4 w-4" />
-                    Mon Profil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveNav('settings')} className="gap-2 cursor-pointer">
-                    <Settings className="h-4 w-4" />
-                    Paramètres
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveNav('billing')} className="gap-2 cursor-pointer">
-                    <CreditCard className="h-4 w-4" />
-                    Facturation
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
-                    <LogOut className="h-4 w-4" />
-                    Déconnexion
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+    <div className="min-h-screen bg-[#F3F4F6] flex flex-col font-sans text-slate-900">
+      
+      {/* --- HEADER --- */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logoTruffe} alt="Logo La Truffe" className="h-8 w-8 rounded-lg object-cover" />
+            <span className="text-lg font-bold text-slate-900">La Truffe</span>
+          </Link>
+          <div className="flex items-center gap-3">
+             <div className="text-sm text-right hidden sm:block">
+                <div className="font-bold text-slate-900 text-xs sm:text-sm">{currentUser.email}</div>
+                <div className="text-xs text-slate-500">{currentUser.type}</div>
+             </div>
+             <Avatar className="h-9 w-9 border border-slate-200">
+               <AvatarFallback className="bg-primary text-white font-bold text-xs">{currentUser.initials}</AvatarFallback>
+             </Avatar>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        {/* Conditional Content Based on activeNav */}
-        {activeNav === 'settings' ? (
-          /* Settings Page */
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
-              <p className="text-gray-500 mt-1">Gérez votre compte et vos préférences</p>
-            </div>
-            
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-6 space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">Prénom</Label>
-                    <Input id="firstName" placeholder="Votre prénom" defaultValue="" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Nom</Label>
-                    <Input id="lastName" placeholder="Votre nom" defaultValue="" />
-                  </div>
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* --- SIDEBAR --- */}
+          <aside className="lg:col-span-3 space-y-6">
+            <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
+              <div className="p-6 text-center border-b border-slate-100">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                  <User className="w-8 h-8" />
                 </div>
+                <div className="font-bold text-slate-900 text-sm truncate" title={currentUser.email}>{currentUser.email}</div>
+                <div className="text-xs text-slate-500 mb-6">{currentUser.type}</div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={user?.email || ''} disabled className="bg-gray-50" />
-                  <p className="text-xs text-gray-500">L'email ne peut pas être modifié</p>
-                </div>
-                
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    Changer de mot de passe
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-                      <Input id="newPassword" type="password" placeholder="••••••••" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                      <Input id="confirmPassword" type="password" placeholder="••••••••" />
-                    </div>
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Crédits restants</div>
+                  <div className={`text-3xl font-bold mb-3 ${currentUser.credits === 0 ? 'text-red-500' : 'text-primary'}`}>
+                    {currentUser.credits}
                   </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button className="gap-2">
-                    Enregistrer les modifications
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold h-9 text-xs shadow-md"
+                    onClick={() => navigate('/pricing')}
+                  >
+                    <Plus className="w-3 h-3 mr-1.5" /> Obtenir plus
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : activeNav === 'billing' ? (
-          /* Billing Page */
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Facturation</h1>
-              <p className="text-gray-500 mt-1">Vos factures et abonnements</p>
-            </div>
-            
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
-                    <Receipt className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune facture</h3>
-                  <p className="text-gray-500 max-w-md mx-auto">
-                    Vous n'avez pas encore de factures. Elles apparaîtront ici une fois que vous aurez effectué un achat.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Vos crédits</h3>
-                <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/10">
-                  <div>
-                    <p className="text-sm text-gray-600">Crédits disponibles</p>
-                    <p className="text-3xl font-bold text-primary">{userCredits}</p>
-                  </div>
-                  <Button variant="outline" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Acheter des crédits
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          /* Reports Page (Default) */
-          <>
-            {/* Action Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Mes Rapports</h1>
-                <p className="text-gray-500 mt-1">Gérez vos analyses de véhicules</p>
               </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 shadow-md">
-                <Plus className="h-4 w-4" />
-                Nouveau Rapport
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Commander un rapport</DialogTitle>
-                <DialogDescription>
-                  Quel modèle cherchez-vous ? (ex: Golf 7, 308 GTi, Clio 4...)
-                </DialogDescription>
-              </DialogHeader>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="model">Modèle recherché *</Label>
-                  <Input
-                    id="model"
-                    value={modelSearch}
-                    onChange={(e) => setModelSearch(e.target.value)}
-                    placeholder="Ex: Golf 7 TDI 150"
-                    required
-                    className="text-base h-12"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Précisions (optionnel)</Label>
-                  <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Budget, année souhaitée, kilométrage max, couleur..."
-                    rows={3}
-                  />
-                </div>
-                
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">Rapport d'analyse</span>
-                    <span className="text-xl font-bold text-primary">19€</span>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Rapport livré sous 24-48h
-                  </p>
-                </div>
-                
-                <Button type="submit" className="w-full gap-2 h-11" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Envoi en cours...
-                    </>
-                  ) : (
-                    <>
-                      Commander (19€)
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
+              <nav className="p-2 space-y-1">
+                <Button variant="ghost" className="w-full justify-start text-primary bg-primary/5 font-semibold h-10">
+                  <LayoutDashboard className="w-4 h-4 mr-3" /> Mes rapports
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* VIN/Search Hero Section */}
-        <Card className="bg-white border border-gray-200 shadow-sm overflow-hidden">
-          <CardContent className="p-6 sm:p-8">
-            <div className="max-w-2xl mx-auto text-center">
-              <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mb-4">
-                <Car className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Vérifier un nouveau véhicule
-              </h2>
-              <p className="text-gray-500 mb-6">
-                Entrez le modèle du véhicule pour obtenir une analyse complète du marché
-              </p>
-              
-              <form onSubmit={handleQuickSearch} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Entrer le modèle (ex: Golf 7, BMW X3...)"
-                    className="pl-12 h-14 text-base border-gray-200 focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                <Button type="submit" size="lg" className="h-14 px-8 shadow-md">
-                  Vérifier
-                </Button>
-              </form>
-              
-              <p className="text-sm text-gray-400 mt-4">
-                Il vous reste <span className="font-semibold text-primary">{userCredits} crédits</span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Reports List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : reports.length === 0 ? (
-          /* Empty State */
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardContent className="py-16 text-center">
-              <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-gray-100 mb-6">
-                <FolderOpen className="h-10 w-10 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Vous n'avez pas encore de rapports
-              </h3>
-              <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                Vérifiez votre premier véhicule et obtenez une analyse complète du marché pour faire les meilleurs choix !
-              </p>
-              <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Commander mon premier rapport
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          /* Reports Grid */
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-            {reports.map((report) => {
-              const StatusIcon = statusConfig[report.status].icon;
-              const statusInfo = statusConfig[report.status];
-              
-              return (
-                <Card 
-                  key={report.id} 
-                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-slate-600 hover:text-primary hover:bg-slate-50 h-10"
+                  onClick={() => navigate('/settings')}
                 >
-                  <CardContent className="p-0">
-                    <div className="flex">
-                      {/* Left: Car Thumbnail */}
-                      <div className="w-32 sm:w-40 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center shrink-0">
-                        <Car className="h-12 w-12 text-gray-300" />
+                  <Settings className="w-4 h-4 mr-3" /> Paramètres
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-slate-600 hover:text-primary hover:bg-slate-50 h-10"
+                  onClick={() => navigate('/transactions')}
+                >
+                  <CreditCard className="w-4 h-4 mr-3" /> Transactions
+                </Button>
+                <Separator className="my-2" />
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 h-10"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4 mr-3" /> Déconnexion
+                </Button>
+              </nav>
+            </Card>
+          </aside>
+
+          {/* --- MAIN CONTENT --- */}
+          <div className="lg:col-span-9 space-y-8">
+            <section>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Générer un nouveau rapport</h2>
+              
+              <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
+                <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+                  <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
+                    <Search className="w-4 h-4" /> Critères du véhicule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 md:p-8">
+                  <form onSubmit={handleGenerateReport} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="marque" className="text-sm font-semibold text-slate-700">Marque</Label>
+                        <Input 
+                          id="marque"
+                          placeholder="Ex: Audi, BMW..." 
+                          className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
+                          value={marque}
+                          onChange={(e) => setMarque(e.target.value)}
+                        />
                       </div>
-                      
-                      {/* Right: Content */}
-                      <div className="flex-1 p-4 sm:p-5">
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="min-w-0">
-                            <h3 className="font-bold text-gray-900 truncate">
-                              {report.marque} {report.modele}
-                              {report.annee_min && ` (${report.annee_min})`}
-                            </h3>
-                            <p className="text-sm text-gray-400 font-mono truncate">
-                              ID: {report.id.substring(0, 8)}...
-                            </p>
-                          </div>
-                          <Badge 
-                            variant="outline" 
-                            className={`shrink-0 ${statusInfo.badgeClass}`}
-                          >
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusInfo.label}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            Généré le {new Date(report.created_at).toLocaleDateString('fr-FR', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                        
-                        {report.status === 'completed' ? (
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/report/${report.id}`)}
-                            className="gap-2"
-                          >
-                            <Eye className="h-4 w-4" />
-                            Voir le rapport
-                          </Button>
-                        ) : (
-                          <p className="text-sm text-gray-400">
-                            {report.status === 'pending' 
-                              ? 'Traitement sous 24-48h'
-                              : 'Analyse en cours...'
-                            }
-                          </p>
-                        )}
+                      <div className="space-y-2">
+                        <Label htmlFor="modele" className="text-sm font-semibold text-slate-700">Modèle</Label>
+                        <Input 
+                          id="modele"
+                          placeholder="Ex: A3, Serie 1..." 
+                          className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
+                          value={modele}
+                          onChange={(e) => setModele(e.target.value)}
+                        />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-            </div>
-          )}
-          </>
-        )}
+                    <div className="space-y-2">
+                      <Label htmlFor="precision" className="text-sm font-semibold text-slate-700">Précision (Année, Finition...)</Label>
+                      <Input 
+                        id="precision"
+                        placeholder="Ex: 2020, S-Line..." 
+                        className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
+                        value={precision}
+                        onChange={(e) => setPrecision(e.target.value)}
+                      />
+                    </div>
+                    <div className="pt-2">
+                      <Button type="submit" size="lg" className="w-full md:w-auto h-12 px-8 font-bold bg-primary hover:bg-primary/90 shadow-md">
+                        Lancer l'analyse de marché
+                      </Button>
+                      <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
+                        <FileText className="w-3 h-3" /> Cette action consommera 1 crédit.
+                      </p>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Ma liste de rapports</h2>
+              <Card className="border-slate-200 shadow-sm border-dashed min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                  <FolderOpen className="w-10 h-10 text-slate-300" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Tu n'as pas encore de rapports</h3>
+                <p className="text-slate-500 max-w-md mx-auto mb-6">
+                  Commencez par lancer une analyse de véhicule ci-dessus. Vos rapports apparaîtront ici une fois le calcul terminé.
+                </p>
+                <Button variant="outline" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  <Plus className="w-4 h-4 mr-2" /> Créer mon premier rapport
+                </Button>
+              </Card>
+            </section>
+          </div>
+        </div>
       </main>
+      <Footer />
     </div>
   );
 };
