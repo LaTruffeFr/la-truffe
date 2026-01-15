@@ -3,17 +3,17 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { 
-  LogIn, Search, Target, TrendingDown, 
-  BarChart3, CheckCircle2, Euro, ChevronDown, Award, 
+  LogIn, Search, ShieldCheck, Target, TrendingDown, TrendingUp, 
+  BarChart3, CheckCircle2, Euro, Globe, ChevronDown, Award, 
   LineChart, Zap, Star
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import logoLatruffe from '@/assets/logo-latruffe.png';
 
-// --- IMPORT DES IMAGES GÉNÉRÉES ---
-// Assure-toi que les noms de fichiers dans src/assets correspondent bien à ceux-ci :
+// Import des images
 import imgValeur from '@/assets/analyse-valeur.jpg'; 
 import imgDecote from '@/assets/analyse-decote.jpg';
 
@@ -40,6 +40,8 @@ const Landing = () => {
           
           <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
             <Link to="/" className="text-primary font-semibold">Accueil</Link>
+            
+            {/* Menu Rapports */}
             <div className="relative group">
               <button className="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none py-2">
                 Rapports <ChevronDown className="w-4 h-4" />
@@ -51,7 +53,21 @@ const Landing = () => {
                 <Link to="/why-us" className="block px-4 py-2.5 font-medium bg-primary/5 text-primary hover:bg-primary/10 rounded-lg">Pourquoi nous choisir ?</Link>
               </div>
             </div>
-            <Link to="/enterprise" className="hover:text-primary transition-colors">Entreprise</Link>
+
+            {/* Menu Entreprise (CORRIGÉ : Lien vers /qui-sommes-nous) */}
+            <div className="relative group">
+              <button className="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none py-2">
+                Entreprise <ChevronDown className="w-4 h-4" />
+              </button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-56 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden hidden group-hover:block p-1 animate-in fade-in zoom-in-95 duration-200">
+                <Link to="/qui-sommes-nous" className="block px-4 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-colors">
+                  Qui sommes-nous ?
+                </Link>
+                <Link to="/contact" className="block px-4 py-2.5 font-medium bg-primary/5 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                  Contact
+                </Link>
+              </div>
+            </div>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -157,7 +173,7 @@ const Landing = () => {
               </div>
               <h3 className="text-xl font-bold mb-3 text-slate-900">Ciblez les vraies affaires</h3>
               <p className="text-slate-600 leading-relaxed">
-                Nos algorithmes "Truffe" isolent les annonces qui sont réellement sous la cote, en excluant les arnaques potentielles.
+                Nos algorithmes "Sniper" isolent les annonces qui sont réellement sous la cote, en excluant les arnaques potentielles.
               </p>
             </div>
 
@@ -262,64 +278,110 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* --- PRICING (PACKS) --- */}
-      <section className="py-24 bg-slate-50">
+      {/* --- PRICING CARDS --- */}
+      <section className="py-16 bg-slate-50 -mt-10 rounded-t-[3rem] relative z-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Économisez des milliers d'euros pour le prix d'un café</h2>
-            <p className="text-slate-600">Choisissez le pack adapté à votre recherche.</p>
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
+            
+            {/* CARD 3 RAPPORTS (Meilleure offre) */}
+            <div className="bg-white rounded-2xl shadow-xl border-2 border-primary relative overflow-hidden order-1 md:order-2 transform md:-translate-y-6">
+              <div className="bg-primary text-white text-center py-2 text-sm font-bold uppercase tracking-wider">
+                Recommandé pour économiser
+              </div>
+              <div className="p-8">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-slate-900">Vérifier 3 voitures</h3>
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">-40%</Badge>
+                </div>
+                <p className="text-slate-500 text-sm mb-6">Idéal pour comparer plusieurs annonces</p>
+                
+                <div className="flex items-end gap-2 mb-2">
+                  <span className="text-4xl font-bold text-primary">17,99 €</span>
+                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
+                </div>
+                <p className="text-xs text-slate-400 mb-6">Prix total 53,97 € <span className="line-through">89,97 €</span></p>
+
+                <Button className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mb-4">
+                  Acheter 3 rapports
+                </Button>
+                
+                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 3 crédits valables 1 an</p>
+
+                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Audit de prix complet</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Analyse courbe décote</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Aide à la négociation</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* CARD 2 RAPPORTS */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 relative overflow-hidden order-2 md:order-1">
+              <div className="bg-slate-100 text-slate-600 text-center py-2 text-sm font-bold uppercase tracking-wider">
+                Populaire
+              </div>
+              <div className="p-8">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-slate-900">Vérifier 2 voitures</h3>
+                  <Badge variant="outline" className="text-green-600 border-green-200">-33%</Badge>
+                </div>
+                <p className="text-slate-500 text-sm mb-6">Pour départager deux modèles</p>
+                
+                <div className="flex items-end gap-2 mb-2">
+                  <span className="text-4xl font-bold text-slate-900">19,99 €</span>
+                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
+                </div>
+                <p className="text-xs text-slate-400 mb-6">Prix total 39,98 € <span className="line-through">59,98 €</span></p>
+
+                <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4">
+                  Acheter 2 rapports
+                </Button>
+                
+                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 2 crédits</p>
+
+                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Audit de prix complet</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Analyse du marché</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* CARD 1 RAPPORT */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 relative overflow-hidden order-3">
+              <div className="bg-white text-white text-center py-2 text-sm font-bold uppercase tracking-wider">
+                &nbsp;
+              </div>
+              <div className="p-8">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-slate-900">Vérifier 1 voiture</h3>
+                </div>
+                <p className="text-slate-500 text-sm mb-6">Pour une vérification unique</p>
+                
+                <div className="flex items-end gap-2 mb-2">
+                  <span className="text-4xl font-bold text-slate-900">29,99 €</span>
+                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
+                </div>
+                <p className="text-xs text-slate-400 mb-6">Plein tarif</p>
+
+                <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4">
+                  Acheter 1 rapport
+                </Button>
+                
+                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 1 crédit</p>
+
+                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Audit de prix complet</li>
+                </ul>
+              </div>
+            </div>
+
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Pack Découverte */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-lg transition-shadow relative">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Audit Unitaire</h3>
-              <p className="text-slate-500 text-sm mb-6">Pour vérifier une voiture précise</p>
-              
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-4xl font-bold text-slate-900">9,90 €</span>
-              </div>
-              <div className="text-sm text-slate-500 mb-8">
-                Paiement unique
-              </div>
-
-              <ul className="space-y-3 mb-8 text-sm text-slate-600">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 1 Audit de marché complet</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Analyse du prix vs Marché</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Graphique "Truffe"</li>
-              </ul>
-
-              <Button className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800">
-                Choisir ce pack
-              </Button>
-            </div>
-
-            {/* Pack Chasseur (Populaire) */}
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-2 border-primary relative transform md:-translate-y-4">
-              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">
-                RECOMMANDÉ
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Pack Chasseur</h3>
-              <p className="text-slate-500 text-sm mb-6">Pour ceux qui cherchent la perle rare</p>
-              
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-4xl font-bold text-primary">24,90 €</span>
-                <span className="text-slate-400 line-through text-sm">29,70 €</span>
-              </div>
-              <div className="text-sm text-green-600 font-semibold mb-8 bg-green-50 inline-block px-2 py-1 rounded">
-                3 Audits Complets (8,30€ / audit)
-              </div>
-
-              <ul className="space-y-3 mb-8 text-sm text-slate-600">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 3 Audits de marché</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Comparaison des cotes</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Aide à la négociation</li>
-              </ul>
-
-              <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                Choisir ce pack
-              </Button>
-            </div>
+          
+          <div className="text-center mt-8">
+            <Link to="/enterprise" className="text-sm text-primary font-medium hover:underline">
+              Afficher les tarifs pour les professionnels
+            </Link>
+            <p className="text-xs text-slate-400 mt-2">La TVA peut s'appliquer selon votre localisation.</p>
           </div>
         </div>
       </section>
@@ -356,7 +418,7 @@ const Landing = () => {
             {/* Step 3 */}
             <div className="relative pl-20 md:pl-0 md:grid md:grid-cols-2 md:gap-16 items-center">
               <div className="md:text-right">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">3. Obtenez votre "Truffe Score"</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">3. Obtenez votre "Sniper Score"</h3>
                 <p className="text-slate-600 text-sm">Visualisez immédiatement si le véhicule est une bonne affaire (Zone Verte) ou trop cher (Zone Rouge).</p>
               </div>
               <div className="absolute left-0 top-0 w-14 h-14 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center font-bold text-xl text-primary md:left-1/2 md:-ml-7 z-10 shadow-sm">3</div>
@@ -418,7 +480,7 @@ const Landing = () => {
                 {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
               </div>
               <p className="text-slate-700 mb-6 text-sm italic">
-                "Le graphique Truffe est génial. En un coup d'œil, j'ai vu que la voiture que je visais était une mauvaise affaire. J'ai trouvé mieux ailleurs."
+                "Le graphique Sniper est génial. En un coup d'œil, j'ai vu que la voiture que je visais était une mauvaise affaire. J'ai trouvé mieux ailleurs."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-500">S</div>

@@ -1,8 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
-  Users, Database, Lightbulb, Globe, 
-  ArrowRight, LogIn, ChevronDown, CheckCircle2, TrendingUp 
+  Database, Lightbulb, Globe, LogIn, ChevronDown 
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import logoTruffe from '@/assets/logo-latruffe.png';
@@ -13,7 +12,7 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans text-slate-900">
       
-      {/* --- HEADER (Identique pour la cohérence) --- */}
+      {/* --- HEADER UNIFIÉ --- */}
       <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50 transition-all duration-200">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -21,8 +20,9 @@ const About = () => {
             <span className="text-xl font-bold text-slate-900 tracking-tight">La Truffe</span>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
             <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
+            
             <div className="relative group">
               <button className="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none py-2">
                 Rapports <ChevronDown className="w-4 h-4" />
@@ -34,7 +34,20 @@ const About = () => {
                 <Link to="/why-us" className="block px-4 py-2.5 font-medium bg-primary/5 text-primary hover:bg-primary/10 rounded-lg">Pourquoi nous choisir ?</Link>
               </div>
             </div>
-            <Link to="/enterprise" className="text-primary font-semibold">Entreprise</Link>
+
+            <div className="relative group">
+              <button className="flex items-center gap-1 text-primary font-semibold transition-colors focus:outline-none py-2">
+                Entreprise <ChevronDown className="w-4 h-4" />
+              </button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-56 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden hidden group-hover:block p-1 animate-in fade-in zoom-in-95 duration-200">
+                <Link to="/qui-sommes-nous" className="block px-4 py-2.5 text-slate-600 bg-slate-50 font-medium hover:text-primary rounded-lg transition-colors">
+                  Qui sommes-nous ?
+                </Link>
+                <Link to="/contact" className="block px-4 py-2.5 font-medium bg-primary/5 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                  Contact
+                </Link>
+              </div>
+            </div>
           </nav>
 
           <div className="flex items-center gap-3">

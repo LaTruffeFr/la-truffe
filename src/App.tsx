@@ -15,6 +15,9 @@ import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import WhyUs from "./pages/WhyUs";
 import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Pricing from "./pages/Pricing";
+import Checkout from "./pages/Checkout";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +133,14 @@ const AppRoutes = () => {
         <Route path="/why-us" element={<PublicRoute><WhyUs /></PublicRoute>} />
 
         <Route path="/enterprise" element={<PublicRoute><About /></PublicRoute>} />
+
+        <Route path="/contact" element={<PublicRoute><Contact /></PublicRoute>} />
+
+        <Route path="/qui-sommes-nous" element={<PublicRoute><About /></PublicRoute>} />
+
+        <Route path="/pricing" element={<PublicRoute><Pricing /></PublicRoute>} />
+
+        <Route path="/checkout" element={<PublicRoute><Checkout /></PublicRoute>} />
         
         {/* Auth page - redirects logged in users */}
         <Route 
