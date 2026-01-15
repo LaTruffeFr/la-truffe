@@ -18,6 +18,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -140,7 +141,9 @@ const AppRoutes = () => {
 
         <Route path="/pricing" element={<PublicRoute><Pricing /></PublicRoute>} />
 
-        <Route path="/checkout" element={<PublicRoute><Checkout /></PublicRoute>} />
+        <Route path="/checkout" element={<Checkout />} />
+
+        <Route path="/payment-success" element={<PaymentSuccess />} />
         
         {/* Auth page - redirects logged in users */}
         <Route 
