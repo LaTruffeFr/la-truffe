@@ -11,11 +11,11 @@ import logoTruffe from '@/assets/logo-latruffe.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-// IDs des prix Stripe - À remplacer par vos vrais price_id
-const PRICE_IDS = {
-  '1': 'price_1_audit',   // Remplacer par le vrai price_id
-  '2': 'price_2_audits',  // Remplacer par le vrai price_id
-  '3': 'price_3_audits',  // Remplacer par le vrai price_id
+// IDs des prix Stripe (vrais price_id)
+const PRICE_IDS: Record<string, string> = {
+  '1': 'price_1SqKnwPpNQZ47toNVMJLXVaA',  // Audit Unitaire - 9.90€
+  '2': 'price_1SqKo7PpNQZ47toNWEW27KV7',  // Pack Duo - 17.90€
+  '3': 'price_1SqKoHPpNQZ47toNQ3RduPl3',  // Pack Chasseur - 24.90€
 };
 
 const Checkout = () => {
@@ -54,8 +54,8 @@ const Checkout = () => {
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
-          priceId,
-          guestEmail: !user ? guestEmail : undefined,
+          planId: selectedPlanId,
+          email: !user ? guestEmail : undefined,
         },
       });
 
