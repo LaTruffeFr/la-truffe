@@ -7,11 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Configuration des prix Stripe (à créer dans Stripe Dashboard)
+// Configuration des prix Stripe (vrais price_id)
 const PRICE_IDS: Record<string, string> = {
-  "1": "price_1_audit", // Placeholder - à remplacer par le vrai price_id
-  "2": "price_2_audits", // Placeholder - à remplacer par le vrai price_id
-  "3": "price_3_audits", // Placeholder - à remplacer par le vrai price_id
+  "1": "price_1SqKnwPpNQZ47toNVMJLXVaA", // Audit Unitaire - 9.90€
+  "2": "price_1SqKo7PpNQZ47toNWEW27KV7", // Pack Duo - 17.90€
+  "3": "price_1SqKoHPpNQZ47toNQ3RduPl3", // Pack Chasseur - 24.90€
 };
 
 const logStep = (step: string, details?: any) => {
