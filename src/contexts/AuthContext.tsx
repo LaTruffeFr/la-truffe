@@ -1,74 +1,68 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-// Définition du profil utilisateur
 interface User {
-  email: string;
   name: string;
-  type: string;
-  credits: number;
-  initials: string;
+  email: string;
+  credits: number; // On s'assure qu'il a des crédits
 }
 
 interface AuthContextType {
-  isAuthenticated: boolean;
   user: User | null;
   login: (email: string) => void;
   logout: () => void;
+  addCredits: (amount: number) => void; // Nouvelle fonction
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  // 1. Vérifier au chargement de la page si une session existe
+  // Au chargement, on vérifie si un utilisateur est déjà sauvegardé
   useEffect(() => {
-    const storedAuth = localStorage.getItem('laTruffe_auth');
-    if (storedAuth === 'true') {
-      setIsAuthenticated(true);
-      setUser({
-        email: "n_e_z_o_62860@outlook.com",
-        name: "Client La Truffe",
-        type: "Individuel",
-        credits: 0,
-        initials: "NE"
-      });
+    const savedUser = localStorage.getItem("user_data");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    } else {
+      // Utilisateur par défaut pour la démo (si vide)
+      setUser({ name: "Client Démo", email: "client@latruffe.com", credits: 5 });
     }
   }, []);
 
-  // 2. Fonction de Connexion
   const login = (email: string) => {
-    localStorage.setItem('laTruffe_auth', 'true');
-    setIsAuthenticated(true);
-    setUser({
-      email: email || "n_e_z_o_62860@outlook.com",
-      name: "Client La Truffe",
-      type: "Individuel",
-      credits: 0,
-      initials: "NE"
-    });
+    const newUser = { name: "Client Connecté", email, credits: 0 };
+    setUser(newUser);
+    localStorage.setItem("user_data", JSON.stringify(newUser));
   };
 
-  // 3. Fonction de Déconnexion
   const logout = () => {
-    localStorage.removeItem('laTruffe_auth');
-    setIsAuthenticated(false);
     setUser(null);
+    localStorage.removeItem("user_data");
+  };
+
+  // ✅ LA FONCTION MAGIQUE
+  const addCredits = (amount: number) => {
+    if (user) {
+      const updatedUser = { ...user, credits: user.credits + amount };
+      setUser(updatedUser);
+      // On sauvegarde le nouveau solde pour ne pas le perdre
+      localStorage.setItem("user_data", JSON.stringify(updatedUser));
+      console.log(`🤑 Ajout de ${amount} crédits. Nouveau solde : ${updatedUser.credits}`);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, addCredits, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook personnalisé pour utiliser l'auth partout
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
