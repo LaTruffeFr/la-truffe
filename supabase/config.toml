@@ -1,7 +1,21 @@
 project_id = "gbevncdgkbgcjkeodter"
 
 [functions.firecrawl-scrape]
-verify_jwt = false
+# Defense-in-depth: JWT verification at platform level + manual checks in code
+verify_jwt = true
 
 [functions.firecrawl-search]
+# Defense-in-depth: JWT verification at platform level + manual checks in code
+verify_jwt = true
+
+[functions.create-checkout]
+# Guest checkout support requires manual auth handling
+verify_jwt = false
+
+[functions.get-public-report]
+# Public endpoint for share token access
+verify_jwt = false
+
+[functions.send-report-email]
+# Admin-only function with manual JWT verification
 verify_jwt = false
