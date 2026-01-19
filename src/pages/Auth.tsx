@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import logoTruffe from '@/assets/logo-latruffe.png';
 
 // ✅ CORRECTION ICI : Ajout du "s" à contexts et chemin relatif sûr
 import { useAuth } from '../contexts/AuthContext';
@@ -30,7 +29,7 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <img src={logoTruffe} alt="Logo" className="h-12 w-12 rounded-xl" />
+            <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">La Truffe</Link>
           </div>
           <CardTitle className="text-2xl font-bold text-slate-900">Bienvenue sur La Truffe</CardTitle>
           <CardDescription>

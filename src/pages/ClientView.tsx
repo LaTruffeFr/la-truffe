@@ -5,8 +5,7 @@ import { ClientPDFExport } from '@/components/trading/ClientPDFExport';
 import { MarketAnalysisSection } from '@/components/trading/MarketAnalysisSection';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Sparkles, BarChart3, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import logoTruffe from '@/assets/logo-truffe.jpg';
+import { useNavigate, Link } from 'react-router-dom';
 import { VehicleWithScore } from '@/lib/csvParser';
 
 export default function ClientView() {
@@ -63,14 +62,9 @@ export default function ClientView() {
             Retour
           </Button>
           
-          <div className="flex items-center gap-3">
-            <img 
-              src={logoTruffe} 
-              alt="La Truffe" 
-              className="w-10 h-10 rounded-full object-cover border-2 border-gold/50"
-            />
-            <span className="text-lg font-bold text-gradient-gold">La Truffe</span>
-          </div>
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+            La Truffe
+          </Link>
 
           <ClientPDFExport 
             opportunities={topOpportunities}

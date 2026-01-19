@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, ArrowRight, Download } from 'lucide-react';
 import { Footer } from '@/components/landing';
-import logoTruffe from '@/assets/logo-latruffe.png';
 import { useToast } from '@/hooks/use-toast';
 
 const PaymentSuccess = () => {
@@ -27,9 +26,8 @@ const PaymentSuccess = () => {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logoTruffe} alt="Logo La Truffe" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="text-lg font-bold text-slate-900">La Truffe</span>
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+            La Truffe
           </Link>
         </div>
       </header>

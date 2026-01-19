@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
   ArrowLeft, Download, Share2, CheckCircle2, 
   AlertTriangle, TrendingDown, Calendar, Gauge, Fuel, 
@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import TradingDashboard from "@/components/trading/TradingDashboard";
 import { getDemoReport, DemoReport } from "@/data/demoData";
 import { Footer } from "@/components/landing";
-import logoTruffe from '@/assets/logo-latruffe.png';
 
 const DemoReportPage = () => {
   const { id } = useParams();
@@ -72,10 +71,9 @@ const DemoReportPage = () => {
       {/* --- HEADER NAVIGATION --- */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-            <img src={logoTruffe} alt="Logo" className="h-8 w-8 rounded-lg" />
-            <span className="text-lg font-bold">La Truffe</span>
-          </div>
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+            La Truffe
+          </Link>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/client-dashboard')}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Retour

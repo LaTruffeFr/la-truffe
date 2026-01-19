@@ -16,7 +16,6 @@ import {
   LogIn, ChevronDown, Mail, MessageSquare, Send
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
-import logoTruffe from '@/assets/logo-latruffe.png';
 import { useToast } from '@/hooks/use-toast';
 
 const Contact = () => {
@@ -45,9 +44,8 @@ const Contact = () => {
       {/* --- HEADER (Avec Menu Entreprise Déroulant) --- */}
       <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50 transition-all duration-200">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src={logoTruffe} alt="Logo La Truffe" className="h-10 w-10 rounded-lg object-cover shadow-sm" />
-            <span className="text-xl font-bold text-slate-900 tracking-tight">La Truffe</span>
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+            La Truffe
           </Link>
           
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">

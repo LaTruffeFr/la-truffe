@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -9,7 +9,6 @@ import {
   User, Download, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
-import logoTruffe from '@/assets/logo-latruffe.png';
 import { useAuth } from '../contexts/AuthContext';
 
 const Transactions = () => {
@@ -36,10 +35,9 @@ const Transactions = () => {
       {/* HEADER */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-            <img src={logoTruffe} alt="Logo" className="h-8 w-8 rounded-lg" />
-            <span className="text-lg font-bold">La Truffe</span>
-          </div>
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+            La Truffe
+          </Link>
           <div className="flex items-center gap-3">
              <div className="text-sm text-right hidden sm:block">
                 <div className="font-bold">{currentUser.email}</div>
