@@ -77,6 +77,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        logo: ['Outfit', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",

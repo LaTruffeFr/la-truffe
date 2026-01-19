@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Lock, Loader2, ShieldCheck, Star, CreditCard, Mail } from 'lucide-react';
 import { Footer } from '@/components/landing';
-import logoTruffe from '@/assets/logo-latruffe.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -83,10 +82,9 @@ const Checkout = () => {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-            <img src={logoTruffe} alt="Logo" className="h-8 w-8 rounded-lg" />
-            <span className="text-lg font-bold">La Truffe</span>
-          </div>
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+            La Truffe
+          </Link>
           <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
             <Lock className="w-3 h-3" /> Paiement Sécurisé Stripe
           </div>

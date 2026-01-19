@@ -12,7 +12,6 @@ import {
   Plus, FileText, FolderOpen, User, Search
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
-import logoTruffe from '@/assets/logo-latruffe.png';
 
 // ✅ CORRECTION ICI : Ajout du "s" à "contexts" pour correspondre à ton dossier
 import { useAuth } from '../contexts/AuthContext';
@@ -87,9 +86,8 @@ const ClientDashboard = () => {
       {/* --- HEADER --- */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logoTruffe} alt="Logo La Truffe" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="text-lg font-bold text-slate-900">La Truffe</span>
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+            La Truffe
           </Link>
           <div className="flex items-center gap-3">
              <div className="text-sm text-right hidden sm:block">
