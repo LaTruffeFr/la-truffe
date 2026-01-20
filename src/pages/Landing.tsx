@@ -14,12 +14,11 @@ import logoLatruffe from '@/assets/logo-latruffe.png';
 import imgValeur from '@/assets/analyse-valeur.jpg'; 
 import imgDecote from '@/assets/analyse-decote.jpg';
 
-// ✅ CORRECTION ICI : Ajout du "s" à contexts et chemin relatif sûr
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth(); // Ceci fait planter la page si l'import est mauvais
+  const { user } = useAuth();
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
 
@@ -69,7 +68,7 @@ const Landing = () => {
           </nav>
 
           <div className="flex items-center gap-3">
-            {isAuthenticated ? (
+            {user ? (
               <Button 
                 onClick={() => navigate('/client-dashboard')} 
                 className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-lg transition-all"

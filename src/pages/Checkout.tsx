@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Lock, Loader2, ShieldCheck, Star, CreditCard, Mail } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 // IDs des prix Stripe (vrais price_id)
 const PRICE_IDS: Record<string, string> = {

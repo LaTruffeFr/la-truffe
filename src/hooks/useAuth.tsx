@@ -4,6 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 type AppRole = 'admin' | 'client';
 
+interface UserProfile {
+  credits: number;
+  email: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -15,6 +20,8 @@ interface AuthContextType {
 
   role: AppRole | null;
   isAdmin: boolean;
+  credits: number;
+  userEmail: string | null;
 
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -39,6 +46,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRoleLoading, setIsRoleLoading] = useState(false);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [credits, setCredits] = useState<number>(0);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const initialCheckDone = useRef(false);
 
@@ -58,10 +67,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return !!data;
   }, []);
 
+  const fetchProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('credits, email')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
+
+    return data;
+  }, []);
+
   const resolveRoleForUser = useCallback(
     async (u: User | null) => {
       if (!u) {
         setRole(null);
+        setCredits(0);
+        setUserEmail(null);
         setIsRoleLoading(false);
         return;
       }
@@ -70,12 +96,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsRoleLoading(true);
       setRole(null);
 
-      // If role query fails/blocked by RLS, we must not freeze the app.
-      const isAdmin = await withTimeout(fetchIsAdmin(u.id), 4000, false);
+      // Fetch admin status and profile in parallel
+      const [isAdmin, profile] = await Promise.all([
+        withTimeout(fetchIsAdmin(u.id), 4000, false),
+        withTimeout(fetchProfile(u.id), 4000, null)
+      ]);
+
       setRole(isAdmin ? 'admin' : 'client');
+      setCredits(profile?.credits ?? 0);
+      setUserEmail(profile?.email ?? u.email ?? null);
       setIsRoleLoading(false);
     },
-    [fetchIsAdmin]
+    [fetchIsAdmin, fetchProfile]
   );
 
   useEffect(() => {
@@ -150,6 +182,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     setRole(null);
+    setCredits(0);
+    setUserEmail(null);
     setIsRoleLoading(false);
     await supabase.auth.signOut();
   };
@@ -165,6 +199,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isRoleLoading,
         role,
         isAdmin,
+        credits,
+        userEmail,
         signUp,
         signIn,
         signOut,

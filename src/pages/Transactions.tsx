@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -9,13 +9,14 @@ import {
   User, Download, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const Transactions = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, signOut, userEmail } = useAuth();
   
-  const currentUser = user || { email: "client@latruffe.com", type: "Individuel", credits: 0, initials: "CL" };
+  const displayEmail = userEmail || user?.email || "client@latruffe.com";
+  const initials = displayEmail.substring(0, 2).toUpperCase();
 
   // Données factices pour l'exemple
   const transactions = [
@@ -24,27 +25,27 @@ const Transactions = () => {
     { id: "TRX-9823", date: "10 Nov 2023", pack: "Audit Unitaire", amount: "29.99 €", status: "failed", invoice: "-" },
   ];
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-muted flex flex-col font-sans text-foreground">
       
       {/* HEADER */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-card border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-foreground">
             La Truffe
           </Link>
           <div className="flex items-center gap-3">
              <div className="text-sm text-right hidden sm:block">
-                <div className="font-bold">{currentUser.email}</div>
-                <div className="text-xs text-slate-500">{currentUser.type}</div>
+                <div className="font-bold">{displayEmail}</div>
+                <div className="text-xs text-muted-foreground">Individuel</div>
              </div>
-             <Avatar className="h-9 w-9 border border-slate-200 bg-white">
-               <AvatarFallback className="bg-primary text-white font-bold text-xs">{currentUser.initials}</AvatarFallback>
+             <Avatar className="h-9 w-9 border border-border bg-card">
+               <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">{initials}</AvatarFallback>
              </Avatar>
           </div>
         </div>
@@ -55,25 +56,25 @@ const Transactions = () => {
           
           {/* SIDEBAR */}
           <aside className="lg:col-span-3 space-y-6">
-            <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
-              <div className="p-6 text-center border-b border-slate-100">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+            <Card className="border-border shadow-sm bg-card overflow-hidden">
+              <div className="p-6 text-center border-b border-border">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
                   <User className="w-8 h-8" />
                 </div>
-                <div className="font-bold text-sm truncate px-2">{currentUser.email}</div>
+                <div className="font-bold text-sm truncate px-2">{displayEmail}</div>
               </div>
               <nav className="p-2 space-y-1">
-                <Button variant="ghost" onClick={() => navigate('/client-dashboard')} className="w-full justify-start text-slate-600 hover:text-primary hover:bg-slate-50 h-10">
+                <Button variant="ghost" onClick={() => navigate('/client-dashboard')} className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-muted h-10">
                   <LayoutDashboard className="w-4 h-4 mr-3" /> Mes rapports
                 </Button>
-                <Button variant="ghost" onClick={() => navigate('/settings')} className="w-full justify-start text-slate-600 hover:text-primary hover:bg-slate-50 h-10">
+                <Button variant="ghost" onClick={() => navigate('/settings')} className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-muted h-10">
                   <Settings className="w-4 h-4 mr-3" /> Paramètres
                 </Button>
                 <Button variant="ghost" className="w-full justify-start text-primary bg-primary/5 font-semibold h-10">
                   <CreditCard className="w-4 h-4 mr-3" /> Transactions
                 </Button>
                 <Separator className="my-2" />
-                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 h-10">
+                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 h-10">
                   <LogOut className="w-4 h-4 mr-3" /> Déconnexion
                 </Button>
               </nav>
@@ -83,14 +84,14 @@ const Transactions = () => {
           {/* MAIN CONTENT */}
           <div className="lg:col-span-9 space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-900">Historique des transactions</h2>
+              <h2 className="text-2xl font-bold text-foreground">Historique des transactions</h2>
               <Button onClick={() => navigate('/pricing')} className="bg-primary hover:bg-primary/90">Nouvel achat</Button>
             </div>
 
-            <Card className="border-slate-200 shadow-sm overflow-hidden">
+            <Card className="border-border shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                  <thead className="bg-muted text-muted-foreground font-semibold border-b border-border">
                     <tr>
                       <th className="px-6 py-4">Date</th>
                       <th className="px-6 py-4">Description</th>
@@ -99,12 +100,12 @@ const Transactions = () => {
                       <th className="px-6 py-4 text-right">Facture</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border">
                     {transactions.map((trx) => (
-                      <tr key={trx.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-slate-900">{trx.date}</td>
-                        <td className="px-6 py-4 text-slate-600">{trx.pack}</td>
-                        <td className="px-6 py-4 font-bold text-slate-900">{trx.amount}</td>
+                      <tr key={trx.id} className="hover:bg-muted/50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-foreground">{trx.date}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{trx.pack}</td>
+                        <td className="px-6 py-4 font-bold text-foreground">{trx.amount}</td>
                         <td className="px-6 py-4">
                           {trx.status === 'completed' ? (
                             <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none shadow-none font-medium">
@@ -118,7 +119,7 @@ const Transactions = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           {trx.status === 'completed' && (
-                            <Button variant="ghost" size="sm" className="h-8 text-slate-500 hover:text-primary">
+                            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-primary">
                               <Download className="w-4 h-4 mr-2" /> PDF
                             </Button>
                           )}
