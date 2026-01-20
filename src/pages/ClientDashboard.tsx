@@ -9,34 +9,28 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
-  Plus, FileText, FolderOpen, User, Search
+  Plus, FileText, FolderOpen, User, Search, Shield
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
-
-// ✅ CORRECTION ICI : Ajout du "s" à "contexts" pour correspondre à ton dossier
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Récupération du contexte
-  const { user, logout } = useAuth();
+  // Récupération du contexte auth Supabase
+  const { user, signOut, isAdmin, credits, userEmail } = useAuth();
   
   // Sécurité anti-crash si le user est null
-  const currentUser = user || {
-    email: "client@latruffe.com",
-    type: "Individuel",
-    credits: 0, 
-    initials: "CL"
-  };
+  const displayEmail = userEmail || user?.email || "client@latruffe.com";
+  const initials = displayEmail.substring(0, 2).toUpperCase();
 
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
   const [precision, setPrecision] = useState('');
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     toast({ description: "Déconnexion réussie." });
     navigate('/');
   };
@@ -64,7 +58,7 @@ const ClientDashboard = () => {
       return;
     }
 
-    if (currentUser.credits === 0) {
+    if (credits === 0) {
       toast({
         variant: "destructive",
         title: "Crédits insuffisants",
@@ -91,11 +85,11 @@ const ClientDashboard = () => {
           </Link>
           <div className="flex items-center gap-3">
              <div className="text-sm text-right hidden sm:block">
-                <div className="font-bold text-slate-900 text-xs sm:text-sm">{currentUser.email}</div>
-                <div className="text-xs text-slate-500">{currentUser.type}</div>
+                <div className="font-bold text-foreground text-xs sm:text-sm">{displayEmail}</div>
+                <div className="text-xs text-muted-foreground">Individuel</div>
              </div>
-             <Avatar className="h-9 w-9 border border-slate-200">
-               <AvatarFallback className="bg-primary text-white font-bold text-xs">{currentUser.initials}</AvatarFallback>
+             <Avatar className="h-9 w-9 border border-border">
+               <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">{initials}</AvatarFallback>
              </Avatar>
           </div>
         </div>
@@ -106,22 +100,22 @@ const ClientDashboard = () => {
           
           {/* --- SIDEBAR --- */}
           <aside className="lg:col-span-3 space-y-6">
-            <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
-              <div className="p-6 text-center border-b border-slate-100">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+            <Card className="border-border shadow-sm bg-card overflow-hidden">
+              <div className="p-6 text-center border-b border-border">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
                   <User className="w-8 h-8" />
                 </div>
-                <div className="font-bold text-slate-900 text-sm truncate" title={currentUser.email}>{currentUser.email}</div>
-                <div className="text-xs text-slate-500 mb-6">{currentUser.type}</div>
+                <div className="font-bold text-foreground text-sm truncate" title={displayEmail}>{displayEmail}</div>
+                <div className="text-xs text-muted-foreground mb-6">Individuel</div>
                 
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                  <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Crédits restants</div>
-                  <div className={`text-3xl font-bold mb-3 ${currentUser.credits === 0 ? 'text-red-500' : 'text-primary'}`}>
-                    {currentUser.credits}
+                <div className="bg-muted rounded-xl p-4 border border-border">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Crédits restants</div>
+                  <div className={`text-3xl font-bold mb-3 ${credits === 0 ? 'text-destructive' : 'text-primary'}`}>
+                    {credits}
                   </div>
                   <Button 
                     size="sm" 
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold h-9 text-xs shadow-md"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-9 text-xs shadow-md"
                     onClick={() => navigate('/pricing')}
                   >
                     <Plus className="w-3 h-3 mr-1.5" /> Obtenir plus
@@ -130,19 +124,29 @@ const ClientDashboard = () => {
               </div>
               
               <nav className="p-2 space-y-1">
+                {/* Admin Button - Only visible for admins */}
+                {isAdmin && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 font-semibold h-10"
+                    onClick={() => navigate('/admin')}
+                  >
+                    <Shield className="w-4 h-4 mr-3" /> Espace Admin
+                  </Button>
+                )}
                 <Button variant="ghost" className="w-full justify-start text-primary bg-primary/5 font-semibold h-10">
                   <LayoutDashboard className="w-4 h-4 mr-3" /> Mes rapports
                 </Button>
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start text-slate-600 hover:text-primary hover:bg-slate-50 h-10"
+                  className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-muted h-10"
                   onClick={() => navigate('/settings')}
                 >
                   <Settings className="w-4 h-4 mr-3" /> Paramètres
                 </Button>
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start text-slate-600 hover:text-primary hover:bg-slate-50 h-10"
+                  className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-muted h-10"
                   onClick={() => navigate('/transactions')}
                 >
                   <CreditCard className="w-4 h-4 mr-3" /> Transactions
@@ -150,7 +154,7 @@ const ClientDashboard = () => {
                 <Separator className="my-2" />
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 h-10"
+                  className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 h-10"
                   onClick={handleLogout}
                 >
                   <LogOut className="w-4 h-4 mr-3" /> Déconnexion
