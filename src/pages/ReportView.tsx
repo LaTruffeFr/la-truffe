@@ -1,519 +1,519 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Loader2, 
-  ArrowLeft, 
-  Printer, 
-  CheckCircle,
-  FileText,
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import {
+  ArrowLeft,
+  Download,
+  Share2,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingDown,
   Calendar,
-  AlertTriangle
-} from 'lucide-react';
-import logoLatruffe from '@/assets/logo-latruffe.png';
-import { SniperKPIs } from '@/components/trading/SniperKPIs';
-import { SniperChart } from '@/components/trading/SniperChart';
-import { DealCard } from '@/components/trading/DealCard';
-import { OpportunityModal } from '@/components/trading/OpportunityModal';
-import { VehicleWithScore } from '@/lib/csvParser';
-import { getDemoReport, isDemoReport, DemoReport } from '@/data/demoData';
+  Gauge,
+  Fuel,
+  Euro,
+  ShieldCheck,
+  Loader2,
+} from "lucide-react";
 
+// Imports des composants graphiques et données
+import { SniperChart } from "@/components/trading/SniperChart";
+import { VehicleWithScore } from "@/lib/csvParser"; // Assure-toi que ce fichier existe
+import { getDemoReport, isDemoReport } from "@/data/demoData";
+
+// --- TYPES ---
 interface Report {
   id: string;
   created_at: string;
   updated_at: string;
   marque: string;
   modele: string;
-  annee_min: number | null;
-  annee_max: number | null;
-  kilometrage_max: number | null;
-  prix_max: number | null;
-  carburant: string | null;
-  transmission: string | null;
-  notes: string | null;
-  status: 'pending' | 'in_progress' | 'completed';
-  report_url: string | null;
+  status: "pending" | "in_progress" | "completed";
   admin_notes: string | null;
   prix_moyen: number | null;
-  prix_truffe: number | null;
-  economie_moyenne: number | null;
   decote_par_10k: number | null;
-  total_vehicules: number | null;
   opportunites_count: number | null;
   vehicles_data: VehicleWithScore[] | null;
 }
 
-// Calculate trend line from vehicles data
+// Fonction mathématique pour la ligne de tendance
 function calculateTrendLine(data: VehicleWithScore[]): { slope: number; intercept: number } {
   if (data.length < 2) return { slope: 0, intercept: 0 };
-
   const n = data.length;
-  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-
-  data.forEach(v => {
+  let sumX = 0,
+    sumY = 0,
+    sumXY = 0,
+    sumXX = 0;
+  data.forEach((v) => {
     sumX += v.kilometrage;
     sumY += v.prix;
     sumXY += v.kilometrage * v.prix;
     sumXX += v.kilometrage * v.kilometrage;
   });
-
   const denominator = n * sumXX - sumX * sumX;
   if (denominator === 0) return { slope: 0, intercept: sumY / n };
-
   const slope = (n * sumXY - sumX * sumY) / denominator;
   const intercept = (sumY - slope * sumX) / n;
-
   return { slope, intercept };
 }
 
 const ReportView = () => {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Check if this is a demo report
+
   const isDemo = id ? isDemoReport(id) : false;
-  
+
   const [report, setReport] = useState<Report | null>(null);
   const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
-  const [isLoading, setIsLoading] = useState(!isDemo); // Demo loads instantly
-  const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
+  const [isLoading, setIsLoading] = useState(!isDemo);
 
-  // Load demo data immediately if it's a demo report
+  // --- 1. CHARGEMENT DES DONNÉES ---
   useEffect(() => {
+    // Cas DÉMO
     if (isDemo && id) {
       const demoReport = getDemoReport(id);
       if (demoReport) {
-        setReport({
-          id: demoReport.id,
-          created_at: demoReport.created_at,
-          updated_at: demoReport.updated_at,
-          marque: demoReport.marque,
-          modele: demoReport.modele,
-          annee_min: demoReport.annee_min,
-          annee_max: demoReport.annee_max,
-          kilometrage_max: null,
-          prix_max: null,
-          carburant: null,
-          transmission: null,
-          notes: null,
-          status: demoReport.status,
-          report_url: null,
-          admin_notes: demoReport.admin_notes,
-          prix_moyen: demoReport.prix_moyen,
-          prix_truffe: null,
-          economie_moyenne: null,
-          decote_par_10k: demoReport.decote_par_10k,
-          total_vehicules: demoReport.vehicles_data.length,
-          opportunites_count: demoReport.opportunites_count,
-          vehicles_data: demoReport.vehicles_data,
-        });
+        setReport(demoReport as unknown as Report);
         setVehicles(demoReport.vehicles_data);
       }
       setIsLoading(false);
     }
   }, [isDemo, id]);
 
-  // Fetch real report from database (only for non-demo reports)
   useEffect(() => {
+    // Cas RÉEL (Supabase)
     if (isDemo || !user || !id) return;
-    
+
     const fetchData = async () => {
       setIsLoading(true);
-      
-      const { data: reportData, error: reportError } = await supabase
-        .from('reports')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (reportError || !reportData) {
-        console.error('Error fetching report:', reportError);
-        toast({
-          title: 'Erreur',
-          description: 'Rapport introuvable',
-          variant: 'destructive',
-        });
-        navigate('/client-dashboard');
+
+      const { data: reportData, error } = await supabase.from("reports").select("*").eq("id", id).single();
+
+      if (error || !reportData) {
+        toast({ title: "Erreur", description: "Rapport introuvable", variant: "destructive" });
+        navigate("/client-dashboard");
         return;
       }
-      
+
       const report = reportData as unknown as Report;
       setReport(report);
-      
-      // Use vehicles_data from the report (published from admin)
+
       if (report.vehicles_data && Array.isArray(report.vehicles_data)) {
-        // Ensure all vehicles have required fields for VehicleWithScore
+        // Normalisation des données pour éviter les bugs
         const enrichedVehicles = report.vehicles_data.map((v, index) => ({
           ...v,
           id: v.id || `vehicle-${index}`,
-          clusterId: v.clusterId || `${v.marque}_${v.modele}_${v.annee}`,
-          clusterSize: v.clusterSize || 1,
-          coteCluster: v.coteCluster || v.prix,
-          ecartEuros: v.ecartEuros || 0,
-          ecartPourcent: v.ecartPourcent || 0,
           dealScore: v.dealScore || 50,
-          isPremium: v.isPremium || false,
-          hasEnoughData: v.hasEnoughData !== false,
-          prixMoyen: v.prixMoyen || v.prix,
-          prixMedian: v.prixMedian || v.prix,
-          ecart: v.ecart || 0,
-          segmentKey: v.segmentKey || '',
+          ecartEuros: v.ecartEuros || 0,
         })) as VehicleWithScore[];
-        
+
         setVehicles(enrichedVehicles);
       }
-      
+
       setIsLoading(false);
     };
-    
+
     fetchData();
   }, [user, id, toast, navigate, isDemo]);
 
-  // Calculate trend line from vehicles
-  const trendLine = useMemo(() => {
-    return calculateTrendLine(vehicles);
+  // --- 2. CALCULS KPI ---
+  const trendLine = useMemo(() => calculateTrendLine(vehicles), [vehicles]);
+
+  // Trouver la meilleure affaire (triée par score)
+  const bestDeal = useMemo(() => {
+    if (vehicles.length === 0) return null;
+    return [...vehicles].sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0))[0];
   }, [vehicles]);
 
-  // Calculate KPIs from stored data or vehicles
-  const kpis = useMemo(() => {
-    const avgPrice = report?.prix_moyen || (vehicles.length > 0
-      ? vehicles.reduce((acc, v) => acc + v.prix, 0) / vehicles.length
-      : 0);
+  const stats = useMemo(() => {
+    if (!report || vehicles.length === 0 || !bestDeal) return null;
 
-    const decotePer10k = report?.decote_par_10k || Math.abs(trendLine.slope * 10000);
+    const avgPrice = report.prix_moyen || vehicles.reduce((acc, v) => acc + v.prix, 0) / vehicles.length;
+    const economy = Math.max(0, avgPrice - bestDeal.prix);
+    const percentEconomy = Math.round((economy / avgPrice) * 100);
+    const score = bestDeal.dealScore || 50;
+    const isGoodDeal = score > 70;
 
-    // Filter opportunities - vehicles below the trend line (ecartEuros > 0 means cheaper than expected)
-    const opportunities = vehicles.filter(v => {
-      // Check if vehicle is below trend (using trendLine calculation)
-      const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-      const isBelowTrend = v.prix < expectedPrice;
-      return isBelowTrend || v.ecartEuros > 0;
-    });
-    const opportunitiesCount = report?.opportunites_count || opportunities.length;
-
-    const bestOffer = opportunities.length > 0
-      ? [...opportunities].sort((a, b) => b.ecartEuros - a.ecartEuros)[0]
-      : null;
-
-    return {
-      avgPrice: Math.round(avgPrice),
-      decotePer10k: Math.round(decotePer10k),
-      bestOffer,
-      totalVehicles: vehicles.length,
-      opportunitiesCount,
-    };
-  }, [report, vehicles, trendLine]);
-
-  // Top 10 deals for DealCard display
-  const topDeals = useMemo(() => {
-    return [...vehicles]
-      .filter(v => {
-        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-        const isBelowTrend = v.prix < expectedPrice;
-        return isBelowTrend || v.ecartEuros > 0;
-      })
-      .sort((a, b) => {
-        // Sort by deviation (best deals first)
-        const devA = (trendLine.slope * a.kilometrage + trendLine.intercept) - a.prix;
-        const devB = (trendLine.slope * b.kilometrage + trendLine.intercept) - b.prix;
-        return devB - devA;
-      })
-      .slice(0, 10)
-      .map(v => {
-        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-        return {
-          ...v,
-          expectedPrice: Math.round(expectedPrice),
-          deviation: Math.round(expectedPrice - v.prix),
-          deviationPercent: Math.round(((expectedPrice - v.prix) / expectedPrice) * 100),
-        };
-      });
-  }, [vehicles, trendLine]);
-
-  // Handle vehicle click from chart
-  const handleVehicleClick = useCallback((vehicle: VehicleWithScore) => {
-    const expectedPrice = trendLine.slope * vehicle.kilometrage + trendLine.intercept;
-    setSelectedVehicle({
-      ...vehicle,
-      expectedPrice: Math.round(expectedPrice),
-      deviation: Math.round(expectedPrice - vehicle.prix),
-      deviationPercent: Math.round(((expectedPrice - vehicle.prix) / expectedPrice) * 100),
-    } as any);
-  }, [trendLine]);
+    return { avgPrice, economy, percentEconomy, score, isGoodDeal };
+  }, [report, vehicles, bestDeal]);
 
   const handlePrint = () => {
-    window.print();
+    toast({ title: "Impression", description: "Préparation du document..." });
+    setTimeout(() => window.print(), 500);
   };
 
-  const handleBackClick = () => {
-    if (isDemo) {
-      navigate('/');
-    } else {
-      navigate('/client-dashboard');
-    }
-  };
-
-  // Loading state
+  // --- 3. AFFICHAGE ETATS D'ATTENTE ---
   if (isLoading || (!isDemo && authLoading)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-lg text-muted-foreground">Chargement du rapport...</p>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+        <Loader2 className="h-12 w-12 animate-spin text-slate-900" />
+        <p className="text-slate-500 font-medium animate-pulse">Analyse du marché en temps réel...</p>
       </div>
     );
   }
 
-  // Redirect non-demo reports without auth
-  if (!isDemo && !user) {
-    navigate('/auth');
-    return null;
-  }
-
-  if (!report) {
-    return null;
-  }
-
-  const isCompleted = report.status === 'completed';
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background print:bg-white">
-      {/* Demo Banner */}
-      {isDemo && (
-        <div className="bg-warning/20 border-b border-warning/30 py-2 px-4 print:hidden">
-          <div className="container mx-auto flex items-center justify-center gap-2 text-warning-foreground">
-            <AlertTriangle className="h-4 w-4 text-warning" />
-            <span className="text-sm font-medium">
-              Mode Démonstration – Données d'exemple pour illustrer les fonctionnalités
-            </span>
-          </div>
+  if (!report || !bestDeal || !stats) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-8 text-center">
+        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+          <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
         </div>
-      )}
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Analyse en cours</h2>
+        <p className="text-slate-500 max-w-md">
+          Nos algorithmes scannent le marché pour {report?.marque} {report?.modele}. Revenez dans quelques instants.
+        </p>
+        <Button variant="outline" className="mt-6" onClick={() => navigate("/client-dashboard")}>
+          Retour au tableau de bord
+        </Button>
+      </div>
+    );
+  }
 
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50 print:hidden">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-              <img 
-                src={logoLatruffe}
-                alt="Logo La Truffe" 
-                className="h-10 w-10 rounded-lg object-cover shadow-corporate"
-              />
-              <div>
-                <span className="text-xl font-bold text-foreground">La Truffe</span>
-                <p className="text-xs text-muted-foreground">Audit de Prix Automobile</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleBackClick}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {isDemo ? 'Accueil' : 'Retour'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Imprimer
-              </Button>
-            </div>
+  // --- 4. RENDU VISUEL (DESIGN DÉMO) ---
+  return (
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900 print:bg-white">
+      {/* HEADER */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 print:hidden">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="font-bold text-2xl tracking-tight text-slate-900 flex items-center gap-2">
+            La Truffe{" "}
+            <Badge variant="secondary" className="text-xs font-normal">
+              Audit Certifié
+            </Badge>
+          </Link>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/client-dashboard")}>
+              <ArrowLeft className="w-4 h-4 mr-2" /> Retour
+            </Button>
+            <Button size="sm" onClick={handlePrint} className="hidden sm:flex bg-slate-900 hover:bg-slate-800">
+              <Download className="w-4 h-4 mr-2" /> Télécharger PDF
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Report Header */}
-      <div className="bg-card/50 border-b border-border px-6 py-6 print:py-4">
-        <div className="container mx-auto">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Badge className={`${isCompleted ? 'bg-success/10 text-success border-success/30' : 'bg-warning/10 text-warning border-warning/30'} text-sm px-4 py-1`}>
-                  {isCompleted ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      AUDIT COMPLÉTÉ
-                    </>
-                  ) : (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      EN COURS
-                    </>
-                  )}
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+        {/* --- SECTION HÉROS (VÉHICULE STAR) --- */}
+        <div className="flex flex-col md:flex-row gap-6 mb-8">
+          {/* Image */}
+          <div className="w-full md:w-1/3">
+            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-[4/3] group bg-slate-100">
+              {/* Image dynamique Unsplash basée sur la marque */}
+              <img
+                src={`https://source.unsplash.com/800x600/?car,${report.marque}`}
+                alt={`${report.marque} ${report.modele}`}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                onError={(e) => (e.currentTarget.style.display = "none")}
+              />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/10">
+                {/* Fallback text si l'image ne charge pas vite */}
+              </div>
+
+              <div className="absolute top-3 right-3 z-10">
+                <Badge
+                  className={`${stats.isGoodDeal ? "bg-green-500" : "bg-orange-500"} text-white px-3 py-1 shadow-md border-0`}
+                >
+                  {stats.isGoodDeal ? "Excellent Deal" : "Offre Correcte"}
                 </Badge>
-                {isDemo && (
-                  <Badge className="bg-muted text-muted-foreground border-muted-foreground/30 text-sm px-4 py-1">
-                    DÉMO
-                  </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Infos Détails */}
+          <div className="w-full md:w-2/3 flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h1 className="text-3xl font-extrabold text-slate-900 mb-1">
+                    {report.marque} {report.modele}
+                  </h1>
+                  <p className="text-slate-500 flex items-center gap-2 text-sm">
+                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium">
+                      {bestDeal.annee}
+                    </span>
+                    • {bestDeal.titre || `${report.marque} ${report.modele}`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-slate-900">{bestDeal.prix.toLocaleString()} €</div>
+                  <div className="text-sm text-slate-500">Prix analysé</div>
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <Gauge className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-bold">Kilométrage</p>
+                    <p className="font-bold text-slate-900">{bestDeal.kilometrage.toLocaleString()} km</p>
+                  </div>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                  <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
+                    <Fuel className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-bold">Carburant</p>
+                    <p className="font-bold text-slate-900">N/A</p>
+                  </div>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                  <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-bold">Année</p>
+                    <p className="font-bold text-slate-900">{bestDeal.annee}</p>
+                  </div>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                  <div className="p-2 bg-green-50 text-green-600 rounded-lg">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-bold">Confiance</p>
+                    <p className="font-bold text-slate-900">{Math.round(stats.score)}/100</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3 print:hidden">
+              <Button
+                className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-lg"
+                onClick={() => {
+                  // CORRECTION ICI : On gère le cas où le lien n'existe pas ou le type est incomplet
+                  const target = bestDeal as any;
+                  const url = target.link || target.url || target.annonce_link;
+
+                  if (url) {
+                    window.open(url, "_blank");
+                  } else {
+                    toast({
+                      title: "Lien non disponible",
+                      description: "L'URL de cette annonce n'a pas été fournie dans les données.",
+                      variant: "destructive", // Affiche une erreur rouge
+                    });
+                  }
+                }}
+              >
+                Voir l'annonce originale
+              </Button>
+              <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300">
+                <Share2 className="w-5 h-5 text-slate-600" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* --- VERDICT TRUFFE --- */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8 page-break-inside-avoid">
+          {/* Carte Score Circulaire */}
+          <Card className="md:col-span-1 border-slate-200 shadow-md bg-white overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 to-emerald-600" />
+            <CardContent className="p-6 text-center">
+              <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider mb-4">Score La Truffe</h3>
+              <div className="relative inline-flex items-center justify-center">
+                <svg className="w-32 h-32 transform -rotate-90">
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="transparent"
+                    className="text-slate-100"
+                  />
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray={351}
+                    strokeDashoffset={351 - (351 * stats.score) / 100}
+                    className={`${stats.isGoodDeal ? "text-green-500" : "text-orange-500"} transition-all duration-1000 ease-out`}
+                  />
+                </svg>
+                <span className="absolute text-4xl font-extrabold text-slate-900">{Math.round(stats.score)}</span>
+              </div>
+              <p
+                className={`mt-4 font-bold text-lg flex items-center justify-center gap-2 ${stats.isGoodDeal ? "text-green-600" : "text-orange-600"}`}
+              >
+                {stats.isGoodDeal ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" /> Très bonne affaire
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-5 h-5" /> Prix standard
+                  </>
+                )}
+              </p>
+              <p className="text-slate-500 text-sm mt-1">
+                Ce véhicule est mieux placé que {Math.round(stats.score)}% du marché.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Carte Analyse Financière */}
+          <Card className="md:col-span-2 border-slate-200 shadow-md bg-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Euro className="w-5 h-5 text-blue-600" /> Analyse Financière
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 pt-2">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">Prix du marché estimé</p>
+                  <p className="text-2xl font-bold text-slate-900">{Math.round(stats.avgPrice).toLocaleString()} €</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-500 mb-1">Économie potentielle</p>
+                  <p className={`text-2xl font-bold ${stats.economy > 0 ? "text-green-600" : "text-slate-400"}`}>
+                    {stats.economy > 0 ? "-" : ""}
+                    {Math.round(stats.economy).toLocaleString()} €
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1 font-medium">
+                    <span>Positionnement Prix</span>
+                    <span className={stats.isGoodDeal ? "text-green-600" : "text-orange-600"}>
+                      {stats.isGoodDeal ? "Sous la cote" : "Dans la moyenne"}
+                    </span>
+                  </div>
+                  <Progress
+                    value={Math.min(100, Math.max(0, 100 - (bestDeal.prix / stats.avgPrice) * 50))}
+                    className="h-2.5 bg-slate-100"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 mt-1">
+                    <span>Trop cher</span>
+                    <span>Prix Juste</span>
+                    <span>Excellente affaire</span>
+                  </div>
+                </div>
+
+                {stats.percentEconomy > 15 && (
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 flex gap-3 items-start">
+                    <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" />
+                    <p>
+                      <strong>Attention :</strong> Le prix est très attractif (-{stats.percentEconomy}%), vérifiez bien
+                      l'historique d'entretien.
+                    </p>
+                  </div>
                 )}
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground print:text-2xl">
-                {report.marque} {report.modele}
-              </h1>
-              <p className="text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Rapport généré le {new Date(report.updated_at).toLocaleDateString('fr-FR', { 
-                  day: 'numeric', 
-                  month: 'long', 
-                  year: 'numeric' 
-                })}
-              </p>
-            </div>
-            <div className="text-right hidden md:block">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Référence</p>
-              <p className="font-mono text-sm text-foreground">{report.id.slice(0, 8)}</p>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      {/* Main Content */}
-      {!isCompleted || vehicles.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center space-y-6 max-w-md">
-            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-              <FileText className="w-10 h-10 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Analyse en cours</h2>
-              <p className="text-muted-foreground">
-                Notre équipe analyse actuellement le marché pour trouver les meilleures opportunités. 
-                Vous recevrez une notification dès que le rapport sera prêt.
-              </p>
-            </div>
-            {report.notes && (
-              <div className="p-4 rounded-xl bg-muted/50 border border-border text-left">
-                <p className="text-sm font-medium text-foreground mb-1">Vos notes :</p>
-                <p className="text-sm text-muted-foreground">{report.notes}</p>
-              </div>
-            )}
-          </div>
+        {/* --- GRAPHIQUE SNIPER --- */}
+        <div className="mb-8 page-break-inside-avoid">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <TrendingDown className="w-6 h-6 text-blue-600" /> Analyse du Marché
+          </h2>
+          <Card className="shadow-lg border-slate-200 overflow-hidden bg-white">
+            <CardContent className="p-4 h-[400px]">
+              <SniperChart
+                data={vehicles}
+                trendLine={trendLine}
+                onVehicleClick={() => {}} // Désactivé pour la vue client simple
+              />
+            </CardContent>
+          </Card>
         </div>
-      ) : (
-        <div className="flex-1 overflow-auto">
-          {/* KPIs Bar - Same as Admin */}
-          <SniperKPIs
-            avgPrice={kpis.avgPrice}
-            decotePer10k={kpis.decotePer10k}
-            bestOffer={kpis.bestOffer}
-            totalVehicles={kpis.totalVehicles}
-            opportunitiesCount={kpis.opportunitiesCount}
-          />
 
-          <div className="p-6 space-y-8">
-            {/* Vehicle Info Header */}
-            <div>
-              <h2 className="text-xl font-bold text-foreground">
-                Analyse du marché : {report.marque} {report.modele}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {vehicles.length} véhicules analysés sur le marché
-              </p>
-            </div>
-
-            {/* Sniper Chart - Interactive */}
-            <div className="rounded-xl border border-border bg-card overflow-hidden print:hidden">
-              <div className="p-4 border-b border-border">
-                <h3 className="font-semibold text-foreground">Graphique Prix vs Kilométrage</h3>
-                <p className="text-xs text-muted-foreground">
-                  Cliquez sur un point <span className="text-success font-medium">vert</span> pour voir les détails de l'opportunité
+        {/* --- EXPERTISE & ARGUMENTS --- */}
+        <div className="grid md:grid-cols-2 gap-8 mb-12 page-break-inside-avoid">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 mb-4">L'avis de l'expert</h2>
+            <Card className="border-l-4 border-l-blue-600 shadow-sm bg-white">
+              <CardContent className="p-6">
+                <p className="text-slate-700 leading-relaxed mb-4 italic">
+                  "
+                  {report.admin_notes ||
+                    "Analyse automatique : Ce véhicule présente un positionnement prix très agressif par rapport à la concurrence directe. Le ratio kilométrage/prix est favorable, ce qui en fait une opportunité à saisir rapidement."}
+                  "
                 </p>
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-6 mb-4 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-success" />
-                    <span className="text-muted-foreground">Opportunité (sous la tendance)</span>
+
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
+                    LT
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-destructive/50" />
-                    <span className="text-muted-foreground">Au-dessus de la tendance</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-0.5 bg-destructive" />
-                    <span className="text-muted-foreground">Ligne de tendance</span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Expert La Truffe</p>
+                    <p className="text-xs text-slate-500">Analyste Automobile</p>
                   </div>
                 </div>
-                <div className="h-[400px]">
-                  <SniperChart
-                    data={vehicles}
-                    onVehicleClick={handleVehicleClick}
-                    trendLine={trendLine}
-                  />
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            {/* Top Opportunities - Using DealCard */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground">🎯 TOP {topDeals.length} OPPORTUNITÉS</h2>
-                <span className="text-sm text-success font-medium">Meilleures affaires détectées</span>
-              </div>
-              
-              {topDeals.length > 0 ? (
-                // MODIFICATION : Forcé à 2 colonnes (grid-cols-1 -> md:grid-cols-2 lg:grid-cols-2)
-                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 print:grid-cols-1">
-                  {topDeals.map((vehicle, index) => (
-                    <DealCard
-                      key={vehicle.id || index}
-                      vehicle={vehicle}
-                      rank={index + 1}
-                      onClick={() => handleVehicleClick(vehicle)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 rounded-xl border border-border bg-muted/30">
-                  <p className="text-muted-foreground">Aucune opportunité détectée dans ce dataset</p>
-                </div>
-              )}
-            </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Arguments de négociation</h2>
+            <Card className="shadow-sm bg-white">
+              <CardContent className="p-6">
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">
+                      1
+                    </div>
+                    <p className="text-sm text-slate-700">
+                      <strong>Contexte Marché :</strong> {vehicles.length} véhicules similaires sont en vente. La
+                      concurrence est présente.
+                    </p>
+                  </li>
 
-            {/* Admin Notes */}
-            {report.admin_notes && (
-              <div className="p-6 rounded-xl bg-primary/5 border border-primary/20">
-                <h3 className="text-lg font-semibold text-foreground mb-2">💡 Recommandation de l'équipe La Truffe</h3>
-                <p className="text-foreground">{report.admin_notes}</p>
-              </div>
-            )}
+                  {bestDeal.kilometrage > 90000 && (
+                    <li className="flex gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">
+                        2
+                      </div>
+                      <p className="text-sm text-slate-700">
+                        <strong>Kilométrage :</strong> Le véhicule dépasse les 90 000 km. Vérifiez si la grosse révision
+                        a été effectuée. Sinon, demandez une baisse.
+                      </p>
+                    </li>
+                  )}
 
-            {/* CTA for Demo */}
-            {isDemo && (
-              <div className="p-6 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 text-center">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Convaincu par notre analyse ?</h3>
-                <p className="text-muted-foreground mb-4">
-                  Créez votre compte pour obtenir un rapport personnalisé sur le véhicule de votre choix.
-                </p>
-                <Button onClick={() => navigate('/auth')} size="lg">
-                  Créer mon compte gratuitement
-                </Button>
-              </div>
-            )}
+                  <li className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">
+                      3
+                    </div>
+                    <p className="text-sm text-slate-700">
+                      <strong>Décote :</strong> Ce modèle perd environ {Math.round(report.decote_par_10k || 1000)}€ tous
+                      les 10 000km. Utilisez cet argument pour la revente future.
+                    </p>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      )}
+      </main>
 
-      {/* Print Footer */}
-      <div className="hidden print:block fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-card">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>La Truffe - Audit de Prix Automobile</span>
-          <span>{new Date().toLocaleDateString('fr-FR')}</span>
-        </div>
+      {/* Footer Impression */}
+      <div className="hidden print:block fixed bottom-0 left-0 right-0 p-4 border-t border-slate-200 bg-white text-center">
+        <p className="text-xs text-slate-400">Rapport généré par La Truffe - {new Date().toLocaleDateString()}</p>
       </div>
-
-      {/* Opportunity Modal */}
-      {selectedVehicle && (
-        <OpportunityModal
-          vehicle={selectedVehicle}
-          onClose={() => setSelectedVehicle(null)}
-        />
-      )}
     </div>
   );
 };
