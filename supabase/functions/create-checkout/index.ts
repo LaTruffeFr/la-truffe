@@ -14,6 +14,13 @@ const PRICE_IDS: Record<string, string> = {
   "3": "price_1SqKoHPpNQZ47toNQ3RduPl3", // Pack Chasseur - 24.90€
 };
 
+// Crédits par plan
+const CREDITS_PER_PLAN: Record<string, number> = {
+  "1": 1,  // Audit Unitaire - 1 crédit
+  "2": 2,  // Pack Duo - 2 crédits
+  "3": 3,  // Pack Chasseur - 3 crédits
+};
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -90,6 +97,8 @@ serve(async (req) => {
       metadata: {
         planId,
         userId: user?.id || "guest",
+        credits: String(CREDITS_PER_PLAN[planId]),
+        customerEmail,
       },
       // Apple Pay et Google Pay sont automatiquement activés avec "card"
       // si configurés dans le dashboard Stripe
