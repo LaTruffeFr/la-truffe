@@ -19,3 +19,7 @@ verify_jwt = false
 [functions.send-report-email]
 # Admin-only function with manual JWT verification
 verify_jwt = false
+
+[functions.verify-payment]
+# Public endpoint called after Stripe redirect
+verify_jwt = false
