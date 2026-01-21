@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,16 +11,38 @@ import { Loader2 } from 'lucide-react';
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isAdmin, isRoleLoading } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect based on role when user is logged in and role is resolved
+  useEffect(() => {
+    if (user && !isRoleLoading) {
+      if (isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/client-dashboard', { replace: true });
+      }
+    }
+  }, [user, isAdmin, isRoleLoading, navigate]);
+
+  // Show loading while checking role
+  if (user && isRoleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Vérification de votre compte...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render form if user is logged in (redirect is pending)
   if (user) {
-    navigate('/client-dashboard');
     return null;
   }
 
@@ -71,7 +93,7 @@ const Auth = () => {
             title: "Bienvenue !",
             description: "Connexion réussie.",
           });
-          navigate('/client-dashboard');
+          // Redirection is handled by useEffect based on role
         }
       }
     } catch (error: any) {
