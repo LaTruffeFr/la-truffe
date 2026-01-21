@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
+import { VehicleDataProvider } from "@/contexts/VehicleDataContext";
 
 // Imports des pages
 import Landing from "./pages/Landing";
@@ -46,7 +47,7 @@ const App = () => (
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/transactions" element={<Transactions />} />
-            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin" element={<AdminRoute><VehicleDataProvider><AdminDashboard /></VehicleDataProvider></AdminRoute>} />
             {/* Routes statiques */}
             <Route path="/enterprise" element={<About />} />
             <Route path="/qui-sommes-nous" element={<About />} />
