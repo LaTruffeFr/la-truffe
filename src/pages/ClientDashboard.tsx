@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,28 +6,96 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
-  Plus, FileText, FolderOpen, User, Search, Shield
+  Plus, FileText, FolderOpen, User, Search, Shield,
+  Loader2, Clock, CheckCircle, Eye, AlertCircle
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Report {
+  id: string;
+  marque: string;
+  modele: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  created_at: string;
+  updated_at: string;
+}
+
+const statusConfig = {
+  pending: { label: 'En attente', icon: Clock, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  in_progress: { label: 'En cours', icon: Loader2, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  completed: { label: 'Terminé', icon: CheckCircle, color: 'bg-green-100 text-green-700 border-green-200' },
+};
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Récupération du contexte auth Supabase
   const { user, signOut, isAdmin, credits, userEmail } = useAuth();
   
-  // Sécurité anti-crash si le user est null
   const displayEmail = userEmail || user?.email || "client@latruffe.com";
   const initials = displayEmail.substring(0, 2).toUpperCase();
 
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
   const [precision, setPrecision] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(true);
+
+  // Charger les rapports de l'utilisateur
+  const fetchReports = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('reports')
+      .select('id, marque, modele, status, created_at, updated_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setReports(data as Report[]);
+    }
+    setIsLoadingReports(false);
+  };
+
+  // Vérifier s'il y a une demande en attente après connexion
+  useEffect(() => {
+    if (!user) return;
+
+    const pendingAudit = sessionStorage.getItem('pendingAudit');
+    if (pendingAudit) {
+      sessionStorage.removeItem('pendingAudit');
+      const { marque, modele } = JSON.parse(pendingAudit);
+      
+      // Créer automatiquement la demande
+      const createPendingReport = async () => {
+        const { error } = await supabase.from('reports').insert({
+          user_id: user.id,
+          marque,
+          modele,
+          status: 'pending',
+        });
+
+        if (!error) {
+          toast({
+            title: "Demande envoyée !",
+            description: `Votre demande d'audit pour ${marque} ${modele} a été soumise.`,
+          });
+          fetchReports();
+        }
+      };
+      
+      createPendingReport();
+    } else {
+      fetchReports();
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -35,21 +103,10 @@ const ClientDashboard = () => {
     navigate('/');
   };
 
-  const handleNavigation = (path: string, featureName: string) => {
-    if (path === '#') {
-      toast({ 
-        title: "Bientôt disponible", 
-        description: `La section ${featureName} arrive prochainement.` 
-      });
-    } else {
-      navigate(path);
-    }
-  };
-
-  const handleGenerateReport = (e: React.FormEvent) => {
+  const handleGenerateReport = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!marque || !modele) {
+    if (!marque.trim() || !modele.trim()) {
       toast({
         variant: "destructive",
         title: "Champs manquants",
@@ -58,19 +115,53 @@ const ClientDashboard = () => {
       return;
     }
 
-    if (credits === 0) {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('reports').insert({
+        user_id: user.id,
+        marque: marque.trim(),
+        modele: modele.trim(),
+        notes: precision.trim() || null,
+        status: 'pending',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Demande envoyée !",
+        description: "Votre demande d'audit a été soumise. Vous recevrez votre rapport sous 24h.",
+      });
+
+      // Réinitialiser le formulaire et recharger les rapports
+      setMarque('');
+      setModele('');
+      setPrecision('');
+      fetchReports();
+    } catch (error) {
+      console.error('Error creating report:', error);
       toast({
         variant: "destructive",
-        title: "Crédits insuffisants",
-        description: "Vous devez recharger vos crédits pour lancer une analyse.",
+        title: "Erreur",
+        description: "Impossible de soumettre votre demande. Réessayez.",
       });
-      navigate('/pricing');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleViewReport = (report: Report) => {
+    if (report.status === 'completed') {
+      navigate(`/report/${report.id}`);
     } else {
       toast({
-        title: "Analyse lancée !",
-        description: "Votre rapport est en cours de génération...",
+        title: "Rapport en cours",
+        description: "Ce rapport n'est pas encore prêt. Revenez plus tard.",
       });
-      navigate('/audit/demo-1');
     }
   };
 
@@ -124,7 +215,6 @@ const ClientDashboard = () => {
               </div>
               
               <nav className="p-2 space-y-1">
-                {/* Admin Button - Only visible for admins */}
                 {isAdmin && (
                   <Button 
                     variant="ghost" 
@@ -166,35 +256,37 @@ const ClientDashboard = () => {
           {/* --- MAIN CONTENT --- */}
           <div className="lg:col-span-9 space-y-8">
             <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">Générer un nouveau rapport</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Demander un audit de prix</h2>
               
               <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                   <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
-                    <Search className="w-4 h-4" /> Critères du véhicule
+                    <Search className="w-4 h-4" /> Quel véhicule recherchez-vous ?
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 md:p-8">
                   <form onSubmit={handleGenerateReport} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="marque" className="text-sm font-semibold text-slate-700">Marque</Label>
+                        <Label htmlFor="marque" className="text-sm font-semibold text-slate-700">Marque *</Label>
                         <Input 
                           id="marque"
                           placeholder="Ex: Audi, BMW..." 
                           className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
                           value={marque}
                           onChange={(e) => setMarque(e.target.value)}
+                          required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="modele" className="text-sm font-semibold text-slate-700">Modèle</Label>
+                        <Label htmlFor="modele" className="text-sm font-semibold text-slate-700">Modèle *</Label>
                         <Input 
                           id="modele"
                           placeholder="Ex: A3, Serie 1..." 
                           className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
                           value={modele}
                           onChange={(e) => setModele(e.target.value)}
+                          required
                         />
                       </div>
                     </div>
@@ -202,18 +294,27 @@ const ClientDashboard = () => {
                       <Label htmlFor="precision" className="text-sm font-semibold text-slate-700">Précision (Année, Finition...)</Label>
                       <Input 
                         id="precision"
-                        placeholder="Ex: 2020, S-Line..." 
+                        placeholder="Ex: 2020, S-Line, Diesel..." 
                         className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
                         value={precision}
                         onChange={(e) => setPrecision(e.target.value)}
                       />
                     </div>
                     <div className="pt-2">
-                      <Button type="submit" size="lg" className="w-full md:w-auto h-12 px-8 font-bold bg-primary hover:bg-primary/90 shadow-md">
-                        Lancer l'analyse de marché
+                      <Button 
+                        type="submit" 
+                        size="lg" 
+                        className="w-full md:w-auto h-12 px-8 font-bold bg-primary hover:bg-primary/90 shadow-md"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Envoi en cours...</>
+                        ) : (
+                          <>Envoyer ma demande</>
+                        )}
                       </Button>
-                      <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                        <FileText className="w-3 h-3" /> Cette action consommera 1 crédit.
+                      <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Notre équipe analysera votre demande et vous enverra le rapport sous 24h.
                       </p>
                     </div>
                   </form>
@@ -222,19 +323,73 @@ const ClientDashboard = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-bold text-slate-900 mb-4">Ma liste de rapports</h2>
-              <Card className="border-slate-200 shadow-sm border-dashed min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-                  <FolderOpen className="w-10 h-10 text-slate-300" />
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Mes demandes d'audit</h2>
+              
+              {isLoadingReports ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">Tu n'as pas encore de rapports</h3>
-                <p className="text-slate-500 max-w-md mx-auto mb-6">
-                  Commencez par lancer une analyse de véhicule ci-dessus. Vos rapports apparaîtront ici une fois le calcul terminé.
-                </p>
-                <Button variant="outline" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                  <Plus className="w-4 h-4 mr-2" /> Créer mon premier rapport
-                </Button>
-              </Card>
+              ) : reports.length === 0 ? (
+                <Card className="border-slate-200 shadow-sm border-dashed min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                    <FolderOpen className="w-10 h-10 text-slate-300" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Aucune demande pour l'instant</h3>
+                  <p className="text-slate-500 max-w-md mx-auto mb-6">
+                    Commencez par envoyer une demande d'audit ci-dessus. Vos rapports apparaîtront ici une fois traités.
+                  </p>
+                  <Button variant="outline" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                    <Plus className="w-4 h-4 mr-2" /> Créer ma première demande
+                  </Button>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {reports.map((report) => {
+                    const status = statusConfig[report.status];
+                    const StatusIcon = status.icon;
+                    
+                    return (
+                      <Card 
+                        key={report.id} 
+                        className="border-slate-200 shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => handleViewReport(report)}
+                      >
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
+                              <FileText className="w-6 h-6 text-slate-500" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-slate-900">
+                                {report.marque} {report.modele}
+                              </h3>
+                              <p className="text-sm text-slate-500">
+                                Demandé le {new Date(report.created_at).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <Badge className={`${status.color} border font-medium`}>
+                              <StatusIcon className={`w-3 h-3 mr-1.5 ${report.status === 'in_progress' ? 'animate-spin' : ''}`} />
+                              {status.label}
+                            </Badge>
+                            {report.status === 'completed' && (
+                              <Button size="sm" variant="outline" className="gap-2">
+                                <Eye className="w-4 h-4" /> Voir
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           </div>
         </div>

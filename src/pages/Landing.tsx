@@ -7,7 +7,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { 
   LogIn, Target, TrendingDown, 
   BarChart3, CheckCircle2, Euro, ChevronDown, Award, 
-  LineChart, Zap, Star, User
+  LineChart, Zap, Star, User, Loader2
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import logoLatruffe from '@/assets/logo-latruffe.png';
@@ -15,16 +15,67 @@ import imgValeur from '@/assets/analyse-valeur.jpg';
 import imgDecote from '@/assets/analyse-decote.jpg';
 
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/audit/demo-1`);
+    
+    // Validation
+    if (!marque.trim() || !modele.trim()) {
+      toast({
+        title: "Champs requis",
+        description: "Veuillez renseigner la marque et le modèle.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Si non connecté, rediriger vers auth avec les paramètres
+    if (!user) {
+      // Stocker les données dans sessionStorage pour les récupérer après connexion
+      sessionStorage.setItem('pendingAudit', JSON.stringify({ marque: marque.trim(), modele: modele.trim() }));
+      navigate('/auth');
+      return;
+    }
+
+    // Si connecté, créer la demande
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('reports').insert({
+        user_id: user.id,
+        marque: marque.trim(),
+        modele: modele.trim(),
+        status: 'pending',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Demande envoyée !",
+        description: "Votre demande d'audit a été soumise. Vous recevrez votre rapport sous 24h.",
+      });
+
+      // Rediriger vers le dashboard client
+      navigate('/client-dashboard');
+    } catch (error) {
+      console.error('Error creating report request:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de soumettre votre demande. Réessayez.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -129,8 +180,17 @@ const Landing = () => {
                     className="h-12 text-lg border-slate-200 focus:border-primary focus:ring-primary bg-slate-50"
                   />
                 </div>
-                <Button type="submit" size="lg" className="h-12 px-8 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-md w-full md:w-auto">
-                  Analyser
+                <Button 
+                  type="submit" 
+                  size="lg" 
+                  className="h-12 px-8 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-md w-full md:w-auto"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Envoi...</>
+                  ) : (
+                    'Demander un audit'
+                  )}
                 </Button>
               </form>
               
