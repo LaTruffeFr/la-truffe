@@ -138,18 +138,25 @@ export type Database = {
       reports: {
         Row: {
           admin_notes: string | null
+          annee: number | null
           annee_max: number | null
           annee_min: number | null
           carburant: string | null
           created_at: string
           decote_par_10k: number | null
           economie_moyenne: number | null
+          expert_opinion: string | null
           id: string
+          kilometrage: number | null
           kilometrage_max: number | null
+          lien_annonce: string | null
+          market_data: Json | null
           marque: string
           modele: string
           notes: string | null
           opportunites_count: number | null
+          prix_affiche: number | null
+          prix_estime: number | null
           prix_max: number | null
           prix_moyen: number | null
           prix_truffe: number | null
@@ -164,18 +171,25 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          annee?: number | null
           annee_max?: number | null
           annee_min?: number | null
           carburant?: string | null
           created_at?: string
           decote_par_10k?: number | null
           economie_moyenne?: number | null
+          expert_opinion?: string | null
           id?: string
+          kilometrage?: number | null
           kilometrage_max?: number | null
+          lien_annonce?: string | null
+          market_data?: Json | null
           marque: string
           modele: string
           notes?: string | null
           opportunites_count?: number | null
+          prix_affiche?: number | null
+          prix_estime?: number | null
           prix_max?: number | null
           prix_moyen?: number | null
           prix_truffe?: number | null
@@ -190,18 +204,25 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          annee?: number | null
           annee_max?: number | null
           annee_min?: number | null
           carburant?: string | null
           created_at?: string
           decote_par_10k?: number | null
           economie_moyenne?: number | null
+          expert_opinion?: string | null
           id?: string
+          kilometrage?: number | null
           kilometrage_max?: number | null
+          lien_annonce?: string | null
+          market_data?: Json | null
           marque?: string
           modele?: string
           notes?: string | null
           opportunites_count?: number | null
+          prix_affiche?: number | null
+          prix_estime?: number | null
           prix_max?: number | null
           prix_moyen?: number | null
           prix_truffe?: number | null
