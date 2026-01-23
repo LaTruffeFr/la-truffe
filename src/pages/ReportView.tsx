@@ -36,19 +36,20 @@ interface Report {
   created_at: string;
   marque: string; 
   modele: string; 
-  annee: number; 
-  year?: number; 
-  kilometrage: number; 
-  mileage?: number; 
-  prix_affiche: number; 
-  price?: number; 
-  prix_estime: number;
-  estimated_price?: number; 
-  lien_annonce?: string;
-  link?: string; 
-  status: 'pending' | 'completed';
+  annee: number | null; 
+  kilometrage: number | null; 
+  prix_affiche: number | null; 
+  prix_moyen: number | null;
+  prix_estime: number | null;
+  lien_annonce: string | null;
+  status: 'pending' | 'in_progress' | 'completed';
   expert_opinion: string | null;
-  market_data: VehicleData[] | null;
+  vehicles_data: VehicleData[] | null;
+  // Champs calculés
+  total_vehicules: number | null;
+  economie_moyenne: number | null;
+  decote_par_10k: number | null;
+  opportunites_count: number | null;
 }
 
 function calculateTrendLine(data: VehicleData[]): { slope: number; intercept: number } {
@@ -115,17 +116,26 @@ const ReportView = () => {
   const stats = useMemo(() => {
     if (!report) return null;
 
-    // Récupération sécurisée des valeurs (Français OU Anglais OU 0)
-    const prixPaye = Number(report.prix_affiche || report.price || 0);
-    const prixMarche = Number(report.prix_estime || report.estimated_price || prixPaye); 
-    const km = Number(report.kilometrage || report.mileage || 0);
-    const annee = Number(report.annee || report.year || 0);
+    // Prix moyen du marché (depuis l'analyse admin)
+    const prixMarche = Number(report.prix_moyen || report.prix_estime || 0);
+    // Prix affiché sur l'annonce (si renseigné par l'admin)
+    const prixPaye = Number(report.prix_affiche || prixMarche);
+    const km = Number(report.kilometrage || 0);
+    const annee = Number(report.annee || 0);
 
-    const economy = prixMarche - prixPaye;
+    // Calcul de l'économie
+    const economy = prixMarche > 0 ? prixMarche - prixPaye : 0;
     const percentEconomy = prixMarche > 0 ? Math.round((economy / prixMarche) * 100) : 0;
     
-    let calculatedScore = 50 + percentEconomy; 
-    calculatedScore = Math.min(98, Math.max(10, calculatedScore));
+    // Score basé sur les données des véhicules ou calcul simple
+    const vehiclesData = report.vehicles_data as any[] | null;
+    let avgScore = 50;
+    if (vehiclesData && vehiclesData.length > 0) {
+      const scores = vehiclesData.map(v => Number(v.dealScore || v.score_confiance || 50));
+      avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    }
+    
+    const calculatedScore = Math.min(98, Math.max(10, avgScore));
 
     return { 
       prixPaye, 
@@ -135,12 +145,14 @@ const ReportView = () => {
       score: calculatedScore, 
       isGoodDeal: economy >= 0,
       km,
-      annee
+      annee,
+      totalVehicules: report.total_vehicules || (vehiclesData?.length || 0),
+      opportunites: report.opportunites_count || 0,
     };
   }, [report]);
 
   const trendLine = useMemo(() => {
-    return report?.market_data ? calculateTrendLine(report.market_data) : { slope: 0, intercept: 0 };
+    return report?.vehicles_data ? calculateTrendLine(report.vehicles_data as VehicleData[]) : { slope: 0, intercept: 0 };
   }, [report]);
 
   const handlePrint = () => window.print();
@@ -250,7 +262,7 @@ const ReportView = () => {
               <Button 
                 className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-lg" 
                 onClick={() => {
-                   const link = report.lien_annonce || report.link;
+                   const link = report.lien_annonce;
                    if (link) window.open(link, '_blank');
                    else toast({description: "Lien non disponible"});
                 }}
@@ -327,15 +339,15 @@ const ReportView = () => {
         </div>
 
         {/* --- GRAPHIQUE --- */}
-        {report.market_data && report.market_data.length > 0 ? (
+        {report.vehicles_data && (report.vehicles_data as any[]).length > 0 ? (
             <div className="mb-8 page-break-inside-avoid">
               <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <TrendingDown className="w-6 h-6 text-blue-600" /> Courbe du Marché
+                <TrendingDown className="w-6 h-6 text-blue-600" /> Courbe du Marché ({stats.totalVehicules} véhicules analysés)
               </h2>
               <Card className="shadow-lg border-slate-200 overflow-hidden bg-white">
                 <CardContent className="p-4 h-[400px]">
                   <SniperChart 
-                     data={report.market_data as any} 
+                     data={report.vehicles_data as any} 
                      trendLine={trendLine}
                      onVehicleClick={() => {}} 
                   />
@@ -376,17 +388,23 @@ const ReportView = () => {
                   <li className="flex gap-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">1</div>
                     <p className="text-sm text-slate-700">
-                      <strong>Comparaison :</strong> {report.market_data ? report.market_data.length : '0'} véhicules analysés.
+                      <strong>Comparaison :</strong> {stats.totalVehicules} véhicules analysés sur le marché.
                     </p>
                   </li>
-                   <li className="flex gap-3">
+                  <li className="flex gap-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">2</div>
                     <p className="text-sm text-slate-700">
-                      <strong>Prix :</strong> {stats.economy > 0 
-                        ? "Prix compétitif." 
-                        : `Le prix est ${safeNum(Math.abs(stats.percentEconomy))}% au-dessus du marché.`}
+                      <strong>Prix moyen :</strong> {safeNum(stats.prixMarche)} € sur ce segment.
                     </p>
                   </li>
+                  {stats.opportunites > 0 && (
+                    <li className="flex gap-3">
+                      <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">3</div>
+                      <p className="text-sm text-slate-700">
+                        <strong>Opportunités :</strong> {stats.opportunites} bonnes affaires identifiées.
+                      </p>
+                    </li>
+                  )}
                 </ul>
               </CardContent>
             </Card>
