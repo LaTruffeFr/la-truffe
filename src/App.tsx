@@ -22,6 +22,9 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AdminRoute } from "./components/AdminRoute";
 
+// 👇 1. IMPORT IMPORTANT : Ta nouvelle page de rapport réel
+import ReportView from "./pages/ReportView"; 
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -36,10 +39,11 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/client-dashboard" element={<ClientDashboard />} />
             
-            {/* C'EST CETTE LIGNE QUI EMPÊCHE LE 404 : */}
+            {/* 👇 2. C'EST ICI QUE TU AJOUTES LA ROUTE DU RAPPORT RÉEL */}
+            <Route path="/report/:id" element={<ReportView />} />
+
+            {/* Anciennes routes de démo (tu peux les garder) */}
             <Route path="/audit/:id" element={<DemoReportPage />} />
-            
-            {/* Routes supplémentaires pour être sûr */}
             <Route path="/demo/:id" element={<DemoReportPage />} />
 
             <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -48,6 +52,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/admin" element={<AdminRoute><VehicleDataProvider><AdminDashboard /></VehicleDataProvider></AdminRoute>} />
+            
             {/* Routes statiques */}
             <Route path="/enterprise" element={<About />} />
             <Route path="/qui-sommes-nous" element={<About />} />
