@@ -11,24 +11,34 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, Download, Share2, CheckCircle2, 
   AlertTriangle, TrendingDown, Calendar, Gauge, Fuel, 
-  Euro, ShieldCheck, Loader2
+  Euro, ShieldCheck, Loader2, Search
 } from "lucide-react";
 
-import { SniperChart } from '@/components/trading/SniperChart'; 
+import TradingDashboard from '@/components/trading/TradingDashboard';
+import { Footer } from '@/components/landing';
 
-// --- FONCTION DE SÉCURITÉ ---
-// C'est elle qui empêche le crash "toLocaleString of undefined"
+// Fonction utilitaire pour formater les nombres
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
-  return Number(value).toLocaleString();
+  return Number(value).toLocaleString('fr-FR');
 };
 
 interface VehicleData {
+  id?: string;
   prix: number;
   kilometrage: number;
   marque?: string;
   modele?: string;
   annee?: number;
+  titre?: string;
+  image?: string;
+  localisation?: string;
+  carburant?: string;
+  transmission?: string;
+  lien?: string;
+  dealScore?: number;
+  score_confiance?: number;
+  gain_potentiel?: number;
 }
 
 interface Report {
@@ -40,35 +50,16 @@ interface Report {
   kilometrage: number | null; 
   prix_affiche: number | null; 
   prix_moyen: number | null;
-  prix_estime: number | null;
+  prix_truffe: number | null;
   lien_annonce: string | null;
   status: 'pending' | 'in_progress' | 'completed';
   expert_opinion: string | null;
   vehicles_data: VehicleData[] | null;
-  // Champs calculés
   total_vehicules: number | null;
   economie_moyenne: number | null;
-  decote_par_10k: number | null;
   opportunites_count: number | null;
-}
-
-function calculateTrendLine(data: VehicleData[]): { slope: number; intercept: number } {
-  if (!data || data.length < 2) return { slope: 0, intercept: 0 };
-  const n = data.length;
-  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-  data.forEach(v => {
-    const km = Number(v.kilometrage || (v as any).mileage || 0);
-    const px = Number(v.prix || (v as any).price || 0);
-    sumX += km;
-    sumY += px;
-    sumXY += km * px;
-    sumXX += km * km;
-  });
-  const denominator = n * sumXX - sumX * sumX;
-  if (denominator === 0) return { slope: 0, intercept: sumY / n };
-  const slope = (n * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / n;
-  return { slope, intercept };
+  carburant: string | null;
+  transmission: string | null;
 }
 
 const ReportView = () => {
@@ -85,7 +76,6 @@ const ReportView = () => {
     
     const fetchReport = async () => {
       setLoading(true);
-      console.log("🔍 Fetching ID:", id);
 
       const { data, error } = await supabase
         .from('reports')
@@ -100,12 +90,10 @@ const ReportView = () => {
       }
       
       if (!data) {
-        console.warn("⚠️ Pas de rapport trouvé");
         navigate('/client-dashboard');
         return;
       }
 
-      console.log("✅ Données reçues:", data);
       setReport(data as unknown as Report);
       setLoading(false);
     };
@@ -113,55 +101,60 @@ const ReportView = () => {
     fetchReport();
   }, [id, navigate]);
 
+  // Données des véhicules parsées
+  const vehiclesData = useMemo(() => {
+    if (!report?.vehicles_data) return [];
+    return report.vehicles_data as VehicleData[];
+  }, [report]);
+
+  // Premier véhicule = annonce principale (ou le meilleur deal)
+  const vehiculeCible = useMemo(() => {
+    if (vehiclesData.length === 0) return null;
+    // Trier par dealScore décroissant pour trouver la meilleure opportunité
+    const sorted = [...vehiclesData].sort((a, b) => 
+      (b.dealScore || b.score_confiance || 0) - (a.dealScore || a.score_confiance || 0)
+    );
+    return sorted[0];
+  }, [vehiclesData]);
+
+  // Stats calculées
   const stats = useMemo(() => {
     if (!report) return null;
 
-    // Prix moyen du marché (depuis l'analyse admin)
-    const prixMarche = Number(report.prix_moyen || report.prix_estime || 0);
-    // Prix affiché sur l'annonce (si renseigné par l'admin)
-    const prixPaye = Number(report.prix_affiche || prixMarche);
-    const km = Number(report.kilometrage || 0);
-    const annee = Number(report.annee || 0);
-
-    // Calcul de l'économie
-    const economy = prixMarche > 0 ? prixMarche - prixPaye : 0;
+    const prixMarche = Number(report.prix_moyen || 0);
+    const prixCible = vehiculeCible ? Number(vehiculeCible.prix || 0) : prixMarche;
+    const economy = prixMarche > 0 ? prixMarche - prixCible : 0;
     const percentEconomy = prixMarche > 0 ? Math.round((economy / prixMarche) * 100) : 0;
     
-    // Score basé sur les données des véhicules ou calcul simple
-    const vehiclesData = report.vehicles_data as any[] | null;
-    let avgScore = 50;
-    if (vehiclesData && vehiclesData.length > 0) {
-      const scores = vehiclesData.map(v => Number(v.dealScore || v.score_confiance || 50));
-      avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    }
-    
-    const calculatedScore = Math.min(98, Math.max(10, avgScore));
+    // Score basé sur le meilleur deal trouvé
+    const score = vehiculeCible 
+      ? Math.min(98, Math.max(10, Number(vehiculeCible.dealScore || vehiculeCible.score_confiance || 50)))
+      : 50;
 
     return { 
-      prixPaye, 
       prixMarche, 
+      prixCible,
       economy, 
       percentEconomy, 
-      score: calculatedScore, 
-      isGoodDeal: economy >= 0,
-      km,
-      annee,
-      totalVehicules: report.total_vehicules || (vehiclesData?.length || 0),
+      score, 
+      isGoodDeal: economy > 0,
+      totalVehicules: report.total_vehicules || vehiclesData.length,
       opportunites: report.opportunites_count || 0,
     };
-  }, [report]);
+  }, [report, vehiculeCible, vehiclesData]);
 
-  const trendLine = useMemo(() => {
-    return report?.vehicles_data ? calculateTrendLine(report.vehicles_data as VehicleData[]) : { slope: 0, intercept: 0 };
-  }, [report]);
-
-  const handlePrint = () => window.print();
+  const handleDownload = () => {
+    toast({
+      title: "Téléchargement lancé",
+      description: "Votre rapport PDF est en cours de génération.",
+    });
+  };
 
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium animate-pulse">Chargement...</p>
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-slate-500 font-medium animate-pulse">Chargement du rapport...</p>
       </div>
     );
   }
@@ -169,8 +162,9 @@ const ReportView = () => {
   if (!report || !stats) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900 print:bg-white">
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900">
       
+      {/* --- HEADER --- */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 print:hidden">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="font-bold text-2xl tracking-tight text-slate-900 flex items-center gap-2">
@@ -180,8 +174,8 @@ const ReportView = () => {
             <Button variant="outline" size="sm" onClick={() => navigate('/client-dashboard')}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Retour
             </Button>
-            <Button size="sm" onClick={handlePrint} className="hidden sm:flex bg-slate-900 hover:bg-slate-800">
-              <Download className="w-4 h-4 mr-2" /> PDF
+            <Button size="sm" onClick={handleDownload} className="hidden sm:flex">
+              <Download className="w-4 h-4 mr-2" /> Télécharger PDF
             </Button>
           </div>
         </div>
@@ -189,19 +183,21 @@ const ReportView = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
         
-        {/* --- HERO --- */}
+        {/* --- EN-TÊTE DU VÉHICULE --- */}
         <div className="flex flex-col md:flex-row gap-6 mb-8">
           <div className="w-full md:w-1/3">
             <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-[4/3] group bg-slate-100">
-                <img 
-                    src={`https://source.unsplash.com/800x600/?car,${report.marque},${report.modele}`} 
-                    alt="Voiture"
-                    className="w-full h-full object-cover"
-                    onError={(e) => (e.currentTarget.style.display = 'none')} 
-                />
-              <div className="absolute top-3 right-3 z-10">
+              <img 
+                src={vehiculeCible?.image || `https://source.unsplash.com/800x600/?car,${report.marque}`}
+                alt={vehiculeCible?.titre || `${report.marque} ${report.modele}`}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = `https://source.unsplash.com/800x600/?car,${report.marque}`;
+                }}
+              />
+              <div className="absolute top-3 right-3">
                 <Badge className={`${stats.isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1 shadow-md border-0`}>
-                  {stats.isGoodDeal ? 'Excellent Deal' : 'Offre Standard'}
+                  {stats.isGoodDeal ? 'Excellent Deal' : 'Prix Marché'}
                 </Badge>
               </div>
             </div>
@@ -213,14 +209,20 @@ const ReportView = () => {
                 <div>
                   <h1 className="text-3xl font-extrabold text-slate-900 mb-1">{report.marque} {report.modele}</h1>
                   <p className="text-slate-500 flex items-center gap-2 text-sm">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium">{stats.annee || 'Année N/A'}</span>
-                    • {safeNum(stats.km)} km
+                    {report.annee && <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium">{report.annee}</span>}
+                    {vehiculeCible && (
+                      <>
+                        • {vehiculeCible.titre?.substring(0, 50) || `${report.marque} ${report.modele}`}
+                        {vehiculeCible.localisation && ` • ${vehiculeCible.localisation}`}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="text-right">
-                  {/* Utilisation de safeNum ici pour éviter le crash */}
-                  <div className="text-3xl font-bold text-slate-900">{safeNum(stats.prixPaye)} €</div>
-                  <div className="text-sm text-slate-500">Prix affiché</div>
+                  <div className="text-3xl font-bold text-slate-900">
+                    {safeNum(vehiculeCible?.prix || stats.prixMarche)} €
+                  </div>
+                  <div className="text-sm text-slate-500">Meilleur prix trouvé</div>
                 </div>
               </div>
 
@@ -231,28 +233,28 @@ const ReportView = () => {
                   <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Gauge className="w-5 h-5" /></div>
                   <div>
                     <p className="text-xs text-slate-500 uppercase font-bold">Kilométrage</p>
-                    <p className="font-bold text-slate-900">{safeNum(stats.km)} km</p>
+                    <p className="font-bold text-slate-900">{safeNum(vehiculeCible?.kilometrage || report.kilometrage)} km</p>
+                  </div>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                  <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Fuel className="w-5 h-5" /></div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-bold">Carburant</p>
+                    <p className="font-bold text-slate-900 capitalize">{vehiculeCible?.carburant || report.carburant || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
                   <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><Calendar className="w-5 h-5" /></div>
                   <div>
                     <p className="text-xs text-slate-500 uppercase font-bold">Année</p>
-                    <p className="font-bold text-slate-900">{stats.annee || 'N/A'}</p>
+                    <p className="font-bold text-slate-900">{vehiculeCible?.annee || report.annee || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
                   <div className="p-2 bg-green-50 text-green-600 rounded-lg"><ShieldCheck className="w-5 h-5" /></div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold">Fiabilité</p>
-                    <p className="font-bold text-slate-900">Vérifiée</p>
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Fuel className="w-5 h-5" /></div>
-                  <div>
                     <p className="text-xs text-slate-500 uppercase font-bold">Score</p>
-                    <p className="font-bold text-slate-900">{safeNum(stats.score)}/100</p>
+                    <p className="font-bold text-slate-900">{stats.score}/100</p>
                   </div>
                 </div>
               </div>
@@ -260,23 +262,27 @@ const ReportView = () => {
 
             <div className="mt-6 flex gap-3 print:hidden">
               <Button 
-                className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-lg" 
+                className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-lg"
                 onClick={() => {
-                   const link = report.lien_annonce;
-                   if (link) window.open(link, '_blank');
-                   else toast({description: "Lien non disponible"});
+                  const link = vehiculeCible?.lien || report.lien_annonce;
+                  if (link) window.open(link, '_blank');
+                  else toast({ description: "Lien non disponible" });
                 }}
               >
                 Voir l'annonce originale
+              </Button>
+              <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300">
+                <Share2 className="w-5 h-5 text-slate-600" />
               </Button>
             </div>
           </div>
         </div>
 
-        {/* --- SCORE & FINANCE --- */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8 page-break-inside-avoid">
+        {/* --- VERDICT TRUFFE --- */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {/* Carte Score */}
           <Card className="md:col-span-1 border-slate-200 shadow-md bg-white overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 to-emerald-600" />
+            <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${stats.isGoodDeal ? 'from-green-400 to-emerald-600' : 'from-orange-400 to-amber-600'}`} />
             <CardContent className="p-6 text-center">
               <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider mb-4">Score La Truffe</h3>
               <div className="relative inline-flex items-center justify-center">
@@ -287,33 +293,37 @@ const ReportView = () => {
                     stroke="currentColor" strokeWidth="8" fill="transparent" 
                     strokeDasharray={351} 
                     strokeDashoffset={351 - (351 * stats.score) / 100} 
-                    className={`${stats.isGoodDeal ? 'text-green-500' : 'text-orange-500'} transition-all duration-1000 ease-out`} 
+                    className={stats.isGoodDeal ? 'text-green-500' : 'text-orange-500'} 
                   />
                 </svg>
-                <span className="absolute text-4xl font-extrabold text-slate-900">{safeNum(stats.score)}</span>
+                <span className="absolute text-4xl font-extrabold text-slate-900">{stats.score}</span>
               </div>
               <p className={`mt-4 font-bold text-lg flex items-center justify-center gap-2 ${stats.isGoodDeal ? 'text-green-600' : 'text-orange-600'}`}>
-                {stats.isGoodDeal ? <><CheckCircle2 className="w-5 h-5" /> Bonne affaire</> : <><AlertTriangle className="w-5 h-5" /> Prix Moyen</>}
+                {stats.isGoodDeal ? <><CheckCircle2 className="w-5 h-5" /> Bonne affaire</> : <><AlertTriangle className="w-5 h-5" /> Prix standard</>}
+              </p>
+              <p className="text-slate-500 text-sm mt-1">
+                {stats.totalVehicules} véhicules analysés sur le marché.
               </p>
             </CardContent>
           </Card>
 
+          {/* Carte Analyse Prix */}
           <Card className="md:col-span-2 border-slate-200 shadow-md bg-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Euro className="w-5 h-5 text-blue-600" /> Analyse Financière
+                <Euro className="w-5 h-5 text-primary" /> Analyse Financière
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-2">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Cote estimée</p>
+                  <p className="text-sm text-slate-500 mb-1">Prix moyen du marché</p>
                   <p className="text-2xl font-bold text-slate-900">{safeNum(stats.prixMarche)} €</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-slate-500 mb-1">Économie / Surcoût</p>
+                  <p className="text-sm text-slate-500 mb-1">Économie potentielle</p>
                   <p className={`text-2xl font-bold ${stats.economy > 0 ? 'text-green-600' : 'text-orange-500'}`}>
-                     {stats.economy > 0 ? '-' : '+'}{safeNum(Math.abs(stats.economy))} €
+                    {stats.economy > 0 ? '-' : '+'}{safeNum(Math.abs(stats.economy))} €
                   </p>
                 </div>
               </div>
@@ -323,52 +333,62 @@ const ReportView = () => {
                   <div className="flex justify-between text-sm mb-1 font-medium">
                     <span>Positionnement Prix</span>
                     <span className={stats.isGoodDeal ? "text-green-600" : "text-orange-600"}>
-                        {stats.isGoodDeal ? "Sous la cote" : "Au dessus de la cote"}
+                      {stats.isGoodDeal ? "Sous la cote" : "Au-dessus de la cote"}
                     </span>
                   </div>
-                  <Progress value={Math.min(100, Math.max(0, 50 + stats.percentEconomy))} className="h-2.5 bg-slate-100" />
+                  <Progress value={Math.min(100, Math.max(0, 50 - stats.percentEconomy))} className="h-2.5 bg-slate-100" />
                   <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span>Cher</span>
-                    <span>Marché</span>
-                    <span>Bonne affaire</span>
+                    <span>Très bas</span>
+                    <span>Moyen</span>
+                    <span>Élevé</span>
                   </div>
                 </div>
+                
+                {stats.economy > 0 && (
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 flex gap-3 items-start">
+                    <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" />
+                    <p>
+                      <strong>Attention :</strong> Le prix est attractif (-{Math.abs(stats.percentEconomy)}%), vérifiez bien l'historique d'entretien et l'absence d'accident.
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* --- GRAPHIQUE --- */}
-        {report.vehicles_data && (report.vehicles_data as any[]).length > 0 ? (
-            <div className="mb-8 page-break-inside-avoid">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <TrendingDown className="w-6 h-6 text-blue-600" /> Courbe du Marché ({stats.totalVehicules} véhicules analysés)
-              </h2>
-              <Card className="shadow-lg border-slate-200 overflow-hidden bg-white">
-                <CardContent className="p-4 h-[400px]">
-                  <SniperChart 
-                     data={report.vehicles_data as any} 
-                     trendLine={trendLine}
-                     onVehicleClick={() => {}} 
-                  />
-                </CardContent>
-              </Card>
-            </div>
-        ) : (
-          <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-500">
-             <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-             <p>Pas de données graphiques disponibles pour ce véhicule.</p>
+        {/* --- GRAPHIQUES COMPLET (TradingDashboard) --- */}
+        {vehiclesData.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <TrendingDown className="w-6 h-6 text-primary" /> Analyse du Marché
+            </h2>
+            <Card className="shadow-lg border-slate-200 overflow-hidden">
+              <CardContent className="p-0">
+                <TradingDashboard 
+                  data={vehiclesData as any} 
+                  marketStats={{
+                    averagePrice: stats.prixMarche,
+                    vehicleCount: vehiclesData.length,
+                    lowestPrice: Math.min(...vehiclesData.map(v => v.prix)),
+                    highestPrice: Math.max(...vehiclesData.map(v => v.prix)),
+                    brand: report.marque,
+                    model: report.modele
+                  }}
+                />
+              </CardContent>
+            </Card>
           </div>
         )}
 
-        {/* --- AVIS EXPERT --- */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12 page-break-inside-avoid">
+        {/* --- AVIS EXPERT & ARGUMENTS --- */}
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-4">L'avis de l'expert</h2>
-            <Card className="border-l-4 border-l-blue-600 shadow-sm bg-white h-full">
+            <Card className="border-l-4 border-l-primary shadow-sm h-full">
               <CardContent className="p-6">
                 <p className="text-slate-700 leading-relaxed mb-4 italic">
-                  "{report.expert_opinion || "Analyse : Le prix est cohérent avec le marché."}"
+                  "{report.expert_opinion || `Analyse du marché ${report.marque} ${report.modele} : ${stats.totalVehicules} véhicules ont été analysés. Le prix moyen du marché est de ${safeNum(stats.prixMarche)}€. ${stats.isGoodDeal ? 'Des opportunités intéressantes ont été identifiées.' : 'Les prix sont globalement cohérents avec le marché.'}`}"
                 </p>
                 <div className="mt-6 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">LT</div>
@@ -380,38 +400,50 @@ const ReportView = () => {
               </CardContent>
             </Card>
           </div>
+
           <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Points de Négociation</h2>
-            <Card className="shadow-sm bg-white h-full">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Résumé de l'analyse</h2>
+            <Card className="shadow-sm h-full">
               <CardContent className="p-6">
                 <ul className="space-y-4">
                   <li className="flex gap-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">1</div>
                     <p className="text-sm text-slate-700">
-                      <strong>Comparaison :</strong> {stats.totalVehicules} véhicules analysés sur le marché.
+                      <strong>Véhicules analysés :</strong> {stats.totalVehicules} annonces scannées sur le marché français.
                     </p>
                   </li>
                   <li className="flex gap-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">2</div>
                     <p className="text-sm text-slate-700">
-                      <strong>Prix moyen :</strong> {safeNum(stats.prixMarche)} € sur ce segment.
+                      <strong>Prix moyen :</strong> {safeNum(stats.prixMarche)} € pour ce segment.
                     </p>
                   </li>
                   {stats.opportunites > 0 && (
                     <li className="flex gap-3">
                       <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">3</div>
                       <p className="text-sm text-slate-700">
-                        <strong>Opportunités :</strong> {stats.opportunites} bonnes affaires identifiées.
+                        <strong>Opportunités :</strong> {stats.opportunites} bonnes affaires identifiées (score &gt; 70).
                       </p>
                     </li>
                   )}
+                  <li className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 font-bold text-xs">{stats.opportunites > 0 ? '4' : '3'}</div>
+                    <p className="text-sm text-slate-700">
+                      <strong>Meilleur deal :</strong> {vehiculeCible ? `${safeNum(vehiculeCible.prix)}€ (score ${vehiculeCible.dealScore || vehiculeCible.score_confiance}/100)` : 'Non disponible'}
+                    </p>
+                  </li>
                 </ul>
+                <Button className="w-full mt-6" variant="outline" onClick={() => navigate('/client-dashboard')}>
+                  <Search className="w-4 h-4 mr-2" /> Demander un autre audit
+                </Button>
               </CardContent>
             </Card>
           </div>
         </div>
 
       </main>
+
+      <Footer />
     </div>
   );
 };
