@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Send, CheckCircle, User, Mail } from 'lucide-react';
+import { Loader2, Send, CheckCircle, User, Mail, MessageSquare, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { VehicleWithScore } from '@/lib/csvParser';
@@ -32,6 +33,20 @@ interface PublishReportModalProps {
   vehicleInfo: { marque: string; modele: string } | null;
 }
 
+const DEFAULT_EXPERT_OPINION = `Analyse de ce modèle : les véhicules analysés montrent une bonne diversité en termes de kilométrage et d'équipements. 
+
+Le marché actuel offre plusieurs opportunités intéressantes, notamment sur les véhicules avec un kilométrage raisonnable et un entretien complet.
+
+Points de vigilance : vérifiez systématiquement l'historique d'entretien et l'absence de sinistre déclaré.`;
+
+const DEFAULT_NEGOTIATION_ARGUMENTS = `1. **Entretien :** Vérifiez si les révisions majeures ont été faites. Sinon, demandez une réduction de 500-800€.
+
+2. **Pneumatiques :** Si les pneus sont usés à plus de 50%, négociez 300-500€ pour leur remplacement.
+
+3. **Contrôle technique :** Demandez le dernier CT. Tout défaut mentionné est un levier de négociation.
+
+4. **Garantie :** Si aucune garantie n'est offerte, négociez une extension ou une remise de 5-10%.`;
+
 export function PublishReportModal({
   isOpen,
   onClose,
@@ -43,6 +58,8 @@ export function PublishReportModal({
   const [orders, setOrders] = useState<ReportOrder[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [customEmail, setCustomEmail] = useState<string>('');
+  const [expertOpinion, setExpertOpinion] = useState<string>(DEFAULT_EXPERT_OPINION);
+  const [negotiationArguments, setNegotiationArguments] = useState<string>(DEFAULT_NEGOTIATION_ARGUMENTS);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -55,6 +72,8 @@ export function PublishReportModal({
       setIsSuccess(false);
       setSelectedOrderId('');
       setCustomEmail('');
+      setExpertOpinion(DEFAULT_EXPERT_OPINION);
+      setNegotiationArguments(DEFAULT_NEGOTIATION_ARGUMENTS);
     }
   }, [isOpen]);
 
@@ -70,8 +89,6 @@ export function PublishReportModal({
 
       if (error) throw error;
 
-      // Get unique user IDs and fetch their emails from auth metadata
-      // Note: In production, you'd have a profiles table with emails
       setOrders(reports || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -159,15 +176,15 @@ export function PublishReportModal({
             decote_par_10k: kpis.decotePer10k,
             total_vehicules: vehicles.length,
             opportunites_count: kpis.opportunitiesCount,
-            vehicles_data: allVehiclesData, // All vehicles, not just top 10
+            vehicles_data: allVehiclesData,
+            expert_opinion: expertOpinion,
+            negotiation_arguments: negotiationArguments,
             updated_at: new Date().toISOString(),
           })
           .eq('id', selectedOrderId);
 
         if (error) throw error;
       } else if (customEmail) {
-        // Create new report for the email - need to find or create user first
-        // For now, we'll create a report without user_id validation
         toast({
           title: 'Email non supporté',
           description: 'Veuillez sélectionner une commande existante pour le moment',
@@ -203,14 +220,14 @@ export function PublishReportModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
             Envoyer ce rapport à...
           </DialogTitle>
           <DialogDescription>
-            Sélectionnez un client en attente ou entrez un email
+            Sélectionnez un client en attente et personnalisez le rapport
           </DialogDescription>
         </DialogHeader>
 
@@ -290,13 +307,51 @@ export function PublishReportModal({
               )}
             </div>
 
+            {/* Expert Opinion */}
+            <div className="space-y-2">
+              <Label htmlFor="expertOpinion" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Avis de l'expert
+              </Label>
+              <Textarea
+                id="expertOpinion"
+                placeholder="Rédigez l'avis de l'expert sur ce véhicule..."
+                value={expertOpinion}
+                onChange={(e) => setExpertOpinion(e.target.value)}
+                rows={5}
+                className="resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                Cet avis sera affiché dans la section "Avis de l'expert" du rapport client.
+              </p>
+            </div>
+
+            {/* Negotiation Arguments */}
+            <div className="space-y-2">
+              <Label htmlFor="negotiationArguments" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Arguments de négociation
+              </Label>
+              <Textarea
+                id="negotiationArguments"
+                placeholder="1. Argument 1...&#10;2. Argument 2...&#10;3. Argument 3..."
+                value={negotiationArguments}
+                onChange={(e) => setNegotiationArguments(e.target.value)}
+                rows={6}
+                className="resize-none font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Utilisez le format Markdown. Chaque argument sera affiché dans une liste numérotée.
+              </p>
+            </div>
+
             {/* OR divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">ou</span>
+                <span className="bg-background px-2 text-muted-foreground">ou envoi manuel</span>
               </div>
             </div>
 
@@ -304,7 +359,7 @@ export function PublishReportModal({
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                Email du client
+                Email du client (bientôt disponible)
               </Label>
               <Input
                 id="email"

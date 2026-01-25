@@ -153,6 +153,7 @@ export type Database = {
           market_data: Json | null
           marque: string
           modele: string
+          negotiation_arguments: string | null
           notes: string | null
           opportunites_count: number | null
           prix_affiche: number | null
@@ -186,6 +187,7 @@ export type Database = {
           market_data?: Json | null
           marque: string
           modele: string
+          negotiation_arguments?: string | null
           notes?: string | null
           opportunites_count?: number | null
           prix_affiche?: number | null
@@ -219,6 +221,7 @@ export type Database = {
           market_data?: Json | null
           marque?: string
           modele?: string
+          negotiation_arguments?: string | null
           notes?: string | null
           opportunites_count?: number | null
           prix_affiche?: number | null
