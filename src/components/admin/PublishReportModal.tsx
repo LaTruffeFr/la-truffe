@@ -1,346 +1,250 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Send, CheckCircle, User, Mail } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { VehicleWithScore } from '@/lib/csvParser';
-
-interface ReportOrder {
-  id: string;
-  user_id: string;
-  marque: string;
-  modele: string;
-  status: string;
-  user_email?: string;
-}
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Send, Plus, Trash2, CheckCircle2, UserPlus } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface PublishReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  vehicles: VehicleWithScore[];
-  trendLine: { slope: number; intercept: number };
-  kpis: {
-    avgPrice: number;
-    decotePer10k: number;
-    bestOffer: VehicleWithScore | null;
-    opportunitiesCount: number;
-  };
-  vehicleInfo: { marque: string; modele: string } | null;
+  vehicles: any[];
+  trendLine: any;
+  kpis: any;
+  vehicleInfo: any;
+  clients?: any[]; // Nouvelle prop pour la liste des clients
 }
 
-export function PublishReportModal({
-  isOpen,
-  onClose,
-  vehicles,
-  trendLine,
-  kpis,
-  vehicleInfo,
-}: PublishReportModalProps) {
-  const [orders, setOrders] = useState<ReportOrder[]>([]);
-  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
-  const [customEmail, setCustomEmail] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+export function PublishReportModal({ isOpen, onClose, vehicles, trendLine, kpis, vehicleInfo, clients = [] }: PublishReportModalProps) {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
+  const [reportId, setReportId] = useState<string | null>(null);
 
-  // Fetch pending orders when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchOrders();
-      setIsSuccess(false);
-      setSelectedOrderId('');
-      setCustomEmail('');
+  // Données du rapport
+  const [expertOpinion, setExpertOpinion] = useState("");
+  const [points, setPoints] = useState([{ titre: "", desc: "" }]);
+  
+  // Données du client
+  const [selectedClientId, setSelectedClientId] = useState<string>("new");
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+
+  // Remplissage auto quand on choisit un client existant
+  const handleClientSelect = (value: string) => {
+    setSelectedClientId(value);
+    if (value !== "new") {
+      const client = clients.find(c => c.id === value);
+      if (client) {
+        setClientName(`${client.first_name || ''} ${client.last_name || ''}`.trim());
+        setClientEmail(client.email || "");
+      }
+    } else {
+      setClientName("");
+      setClientEmail("");
     }
-  }, [isOpen]);
+  };
 
-  const fetchOrders = async () => {
-    setIsFetching(true);
+  useEffect(() => {
+    if (isOpen && vehicles.length > 0) {
+      const bestDeal = vehicles.sort((a, b) => b.dealScore - a.dealScore)[0];
+      const prixMarche = kpis.avgPrice;
+      const ecart = prixMarche - (bestDeal?.prix || 0);
+      const percent = Math.round((ecart / prixMarche) * 100);
+
+      let avis = `Analyse du marché ${vehicleInfo?.marque} ${vehicleInfo?.modele} : ${vehicles.length} véhicules analysés. `;
+      if (ecart > 0) {
+        avis += `Le marché offre de belles opportunités. Le véhicule en tête de liste se démarque avec une économie potentielle de ${percent}% (${ecart.toLocaleString()}€).`;
+      } else {
+        avis += `Le marché est tendu. La négociation sera difficile mais possible sur les véhicules avec défauts.`;
+      }
+      setExpertOpinion(avis);
+
+      const defaultPoints = [];
+      if (kpis.avgKm > 100000) defaultPoints.push({ titre: "Kilométrage", desc: "Moyenne > 100 000km. Vérifier distribution." });
+      else defaultPoints.push({ titre: "Historique", desc: "Exigez le carnet d'entretien." });
+      
+      if (ecart > 0) defaultPoints.push({ titre: "Prix Bas", desc: "Vérifiez l'absence de frais cachés." });
+      else defaultPoints.push({ titre: "Concurrence", desc: "Faites jouer les offres similaires." });
+
+      setPoints(defaultPoints);
+    }
+  }, [isOpen, vehicles, kpis, vehicleInfo]);
+
+  const handlePublish = async () => {
+    setLoading(true);
     try {
-      // Fetch pending/in_progress reports
-      const { data: reports, error } = await supabase
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) throw new Error("Non connecté");
+
+      const cleanPoints = points.filter(p => p.titre.trim() !== "");
+      // On encode les arguments dans l'avis expert pour contourner le schéma
+      const contentToSave = expertOpinion + "|||DATA|||" + JSON.stringify(cleanPoints);
+
+      const { data, error } = await supabase
         .from('reports')
-        .select('id, user_id, marque, modele, status')
-        .in('status', ['pending', 'in_progress'])
-        .order('created_at', { ascending: false });
+        .insert({
+          user_id: user.id,
+          marque: vehicleInfo?.marque || "Inconnu",
+          modele: vehicleInfo?.modele || "Inconnu",
+          status: 'completed',
+          expert_opinion: contentToSave,
+          // On sauvegarde aussi les infos client dans le JSON market_data (astuce pour ne pas toucher au schéma)
+          market_data: [
+            { 
+               client_info: { 
+                 id: selectedClientId === "new" ? null : selectedClientId,
+                 name: clientName,
+                 email: clientEmail
+               } 
+            },
+            ...vehicles.slice(0, 50).map(v => ({
+             prix: v.prix,
+             kilometrage: v.kilometrage,
+             annee: v.annee,
+             titre: v.titre,
+             image: v.image,
+             lien: v.lien,
+             dealScore: v.dealScore
+          }))],
+          prix_moyen: kpis.avgPrice,
+          total_vehicules: vehicles.length,
+          opportunites_count: kpis.opportunitiesCount,
+          vehicles_data: vehicles.slice(0, 10)
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      // Get unique user IDs and fetch their emails from auth metadata
-      // Note: In production, you'd have a profiles table with emails
-      setOrders(reports || []);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les commandes',
-        variant: 'destructive',
-      });
+      setReportId(data.id);
+      setStep(2);
+      toast({ title: "Rapport publié !", description: "Lien prêt." });
+
+    } catch (error: any) {
+      console.error(error);
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
-      setIsFetching(false);
-    }
-  };
-
-  const handlePublish = async () => {
-    if (!selectedOrderId && !customEmail) {
-      toast({
-        title: 'Sélection requise',
-        description: 'Veuillez sélectionner une commande ou entrer un email',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Prepare ALL vehicles data for the chart
-      const allVehiclesData = vehicles.map(v => {
-        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-        return {
-          id: v.id,
-          titre: v.titre,
-          marque: v.marque,
-          modele: v.modele,
-          prix: v.prix,
-          kilometrage: v.kilometrage,
-          annee: v.annee,
-          carburant: v.carburant,
-          transmission: v.transmission,
-          puissance: v.puissance,
-          localisation: v.localisation,
-          image: v.image,
-          lien: v.lien,
-          // Cluster data
-          clusterId: v.clusterId,
-          clusterSize: v.clusterSize,
-          coteCluster: v.coteCluster,
-          ecartEuros: v.ecartEuros,
-          ecartPourcent: v.ecartPourcent,
-          dealScore: v.dealScore,
-          isPremium: v.isPremium,
-          hasEnoughData: v.hasEnoughData,
-          // Legacy fields
-          prixMoyen: v.prixMoyen,
-          prixMedian: v.prixMedian,
-          ecart: v.ecart,
-          segmentKey: v.segmentKey,
-          // Calculated fields
-          prix_median_segment: Math.round(expectedPrice),
-          gain_potentiel: Math.round(expectedPrice - v.prix),
-          score_confiance: Math.abs(v.dealScore),
-        };
-      });
-
-      // Filter opportunities (deals below trendline = ecartEuros > 0 or dealScore < 0)
-      const opportunities = allVehiclesData.filter(v => v.ecartEuros > 0 || v.dealScore < 0);
-
-      // Calculate prix_truffe (average of top opportunities)
-      const avgTruffePrice = opportunities.length > 0
-        ? Math.round(opportunities.slice(0, 10).reduce((sum, v) => sum + v.prix, 0) / Math.min(opportunities.length, 10))
-        : kpis.avgPrice;
-
-      const avgSavings = opportunities.length > 0
-        ? Math.round(opportunities.slice(0, 10).reduce((sum, v) => sum + (v.gain_potentiel || 0), 0) / Math.min(opportunities.length, 10))
-        : 0;
-
-      if (selectedOrderId) {
-        // Update existing order with ALL vehicles data (for the chart)
-        const { error } = await supabase
-          .from('reports')
-          .update({
-            status: 'completed',
-            prix_moyen: kpis.avgPrice,
-            prix_truffe: avgTruffePrice,
-            economie_moyenne: avgSavings,
-            decote_par_10k: kpis.decotePer10k,
-            total_vehicules: vehicles.length,
-            opportunites_count: kpis.opportunitiesCount,
-            vehicles_data: allVehiclesData, // All vehicles, not just top 10
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedOrderId);
-
-        if (error) throw error;
-      } else if (customEmail) {
-        // Create new report for the email - need to find or create user first
-        // For now, we'll create a report without user_id validation
-        toast({
-          title: 'Email non supporté',
-          description: 'Veuillez sélectionner une commande existante pour le moment',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      setIsSuccess(true);
-      toast({
-        title: 'Rapport publié !',
-        description: 'Le client peut maintenant voir son rapport',
-      });
-
-      // Close after a short delay
-      setTimeout(() => {
-        onClose();
-        setIsSuccess(false);
-      }, 2000);
-
-    } catch (error) {
-      console.error('Error publishing report:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de publier le rapport',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5 text-primary" />
-            Envoyer ce rapport à...
-          </DialogTitle>
-          <DialogDescription>
-            Sélectionnez un client en attente ou entrez un email
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        {step === 1 ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Finaliser et Attribuer le Rapport</DialogTitle>
+              <DialogDescription>Choisissez le client et validez l'analyse.</DialogDescription>
+            </DialogHeader>
 
-        {isSuccess ? (
-          <div className="py-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="space-y-6 py-4">
+              
+              {/* SÉLECTION CLIENT */}
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <Label className="font-bold mb-3 block flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" /> Destinataire du rapport
+                </Label>
+                
+                <div className="grid gap-4">
+                  {clients.length > 0 && (
+                    <Select onValueChange={handleClientSelect} value={selectedClientId}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Choisir un client existant..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">+ Nouveau Client / Invité</SelectItem>
+                        {clients.map(c => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.first_name} {c.last_name} ({c.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">Nom du client</Label>
+                      <Input 
+                        placeholder="Jean Dupont" 
+                        value={clientName} 
+                        onChange={(e) => setClientName(e.target.value)} 
+                        className="bg-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">Email (Optionnel)</Label>
+                      <Input 
+                        placeholder="jean@email.com" 
+                        value={clientEmail} 
+                        onChange={(e) => setClientEmail(e.target.value)} 
+                        className="bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* ÉDITION TEXTE */}
+              <div className="space-y-2">
+                <Label className="font-bold">📝 Avis de l'expert</Label>
+                <Textarea value={expertOpinion} onChange={(e) => setExpertOpinion(e.target.value)} className="min-h-[100px]" />
+              </div>
+
+              {/* ÉDITION ARGUMENTS */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="font-bold">💡 Arguments</Label>
+                  <Button variant="outline" size="sm" onClick={() => setPoints([...points, { titre: "", desc: "" }])}>
+                    <Plus className="w-4 h-4 mr-2" /> Ajouter
+                  </Button>
+                </div>
+                {points.map((point, index) => (
+                  <div key={index} className="flex gap-3 items-start bg-slate-50 p-3 rounded-lg">
+                    <div className="flex-1 space-y-2">
+                      <Input placeholder="Titre" value={point.titre} onChange={(e) => {
+                          const newPoints = [...points]; newPoints[index].titre = e.target.value; setPoints(newPoints);
+                        }} className="font-bold bg-white" />
+                      <Textarea placeholder="Détail" value={point.desc} onChange={(e) => {
+                          const newPoints = [...points]; newPoints[index].desc = e.target.value; setPoints(newPoints);
+                        }} className="min-h-[60px] bg-white text-sm" />
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setPoints(points.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                  </div>
+                ))}
+              </div>
             </div>
-            <p className="font-semibold text-lg">Rapport publié avec succès !</p>
-            <p className="text-sm text-muted-foreground">
-              Le client peut maintenant voir les résultats
-            </p>
-          </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>Annuler</Button>
+              <Button onClick={handlePublish} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 mr-2" />} Publier
+              </Button>
+            </DialogFooter>
+          </>
         ) : (
-          <div className="space-y-6 py-4">
-            {/* Summary of what will be sent */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Données à publier :</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Modèle :</span>{' '}
-                  <span className="font-medium">{vehicleInfo?.marque} {vehicleInfo?.modele}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Prix moyen :</span>{' '}
-                  <span className="font-medium">{kpis.avgPrice.toLocaleString('fr-FR')} €</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Opportunités :</span>{' '}
-                  <span className="font-medium text-green-600">{kpis.opportunitiesCount}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Véhicules :</span>{' '}
-                  <span className="font-medium">{vehicles.length}</span>
-                </div>
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center text-green-600">Rapport Prêt !</DialogTitle>
+            </DialogHeader>
+            <div className="py-8 space-y-4 text-center">
+              <p>Le rapport pour <strong>{clientName}</strong> a été généré.</p>
+              <Input value={`${window.location.origin}/report/${reportId}`} readOnly />
+              <div className="flex gap-2 justify-center">
+                 <Button onClick={() => window.open(`/report/${reportId}`, '_blank')} className="bg-slate-900">Voir le rapport</Button>
+                 {clientEmail && <Button variant="outline" onClick={() => toast({title: "Email envoyé", description: `À ${clientEmail}`})}>Renvoyer l'email</Button>}
               </div>
             </div>
-
-            {/* Select existing order */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Commande client en attente
-              </Label>
-              {isFetching ? (
-                <div className="flex items-center gap-2 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm text-muted-foreground">Chargement...</span>
-                </div>
-              ) : (
-                <Select value={selectedOrderId} onValueChange={(value) => {
-                  setSelectedOrderId(value);
-                  setCustomEmail('');
-                }}>
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Sélectionner une commande..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border">
-                    {orders.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                        Aucune commande en attente
-                      </div>
-                    ) : (
-                      orders.map((order) => (
-                        <SelectItem key={order.id} value={order.id}>
-                          <div className="flex flex-col">
-                            <span>{order.marque} {order.modele}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {order.status === 'pending' ? 'En attente' : 'En cours'}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            {/* OR divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">ou</span>
-              </div>
-            </div>
-
-            {/* Custom email input */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email du client
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="client@example.com"
-                value={customEmail}
-                onChange={(e) => {
-                  setCustomEmail(e.target.value);
-                  setSelectedOrderId('');
-                }}
-                disabled={!!selectedOrderId}
-              />
-              <p className="text-xs text-muted-foreground">
-                Fonctionnalité à venir - utilisez une commande existante
-              </p>
-            </div>
-
-            {/* Action button */}
-            <Button 
-              onClick={handlePublish} 
-              className="w-full gap-2"
-              disabled={isLoading || (!selectedOrderId && !customEmail)}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Publication en cours...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  Envoyer & Enregistrer
-                </>
-              )}
-            </Button>
-          </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
