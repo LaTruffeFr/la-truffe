@@ -54,6 +54,7 @@ interface Report {
   lien_annonce: string | null;
   status: 'pending' | 'in_progress' | 'completed';
   expert_opinion: string | null;
+  negotiation_arguments: string | null;
   vehicles_data: VehicleData[] | null;
   total_vehicules: number | null;
   economie_moyenne: number | null;
@@ -381,20 +382,36 @@ const ReportView = () => {
           </div>
         )}
 
-        {/* --- AVIS EXPERT & ARGUMENTS --- */}
+        {/* --- AVIS EXPERT & ARGUMENTS DE NÉGOCIATION (comme la démo) --- */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-4">L'avis de l'expert</h2>
-            <Card className="border-l-4 border-l-primary shadow-sm h-full">
+            <Card className="border-l-4 border-l-primary shadow-sm">
               <CardContent className="p-6">
-                <p className="text-slate-700 leading-relaxed mb-4 italic">
-                  "{report.expert_opinion || `Analyse du marché ${report.marque} ${report.modele} : ${stats.totalVehicules} véhicules ont été analysés. Le prix moyen du marché est de ${safeNum(stats.prixMarche)}€. ${stats.isGoodDeal ? 'Des opportunités intéressantes ont été identifiées.' : 'Les prix sont globalement cohérents avec le marché.'}`}"
-                </p>
+                {report.expert_opinion ? (
+                  <div className="text-slate-700 leading-relaxed whitespace-pre-line">
+                    {report.expert_opinion.split('\n').map((paragraph, idx) => (
+                      <p key={idx} className="mb-3 last:mb-0">
+                        {idx === 0 ? `"${paragraph}` : paragraph}
+                        {idx === report.expert_opinion!.split('\n').length - 1 ? '"' : ''}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-700 leading-relaxed italic">
+                    "Analyse du marché {report.marque} {report.modele} : {stats.totalVehicules} véhicules ont été analysés. 
+                    Le prix moyen du marché est de {safeNum(stats.prixMarche)}€. 
+                    {stats.isGoodDeal 
+                      ? ' Des opportunités intéressantes ont été identifiées dans cette recherche.' 
+                      : ' Les prix sont globalement cohérents avec le marché actuel.'}
+                    "
+                  </p>
+                )}
                 <div className="mt-6 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">LT</div>
+                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">JD</div>
                   <div>
-                    <p className="text-sm font-bold text-slate-900">Expert La Truffe</p>
-                    <p className="text-xs text-slate-500">Analyste Automobile</p>
+                    <p className="text-sm font-bold text-slate-900">Julien D.</p>
+                    <p className="text-xs text-slate-500">Analyste Automobile Senior</p>
                   </div>
                 </div>
               </CardContent>
@@ -402,39 +419,57 @@ const ReportView = () => {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Résumé de l'analyse</h2>
-            <Card className="shadow-sm h-full">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Arguments de négociation</h2>
+            <Card className="shadow-sm">
               <CardContent className="p-6">
                 <ul className="space-y-4">
-                  <li className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">1</div>
-                    <p className="text-sm text-slate-700">
-                      <strong>Véhicules analysés :</strong> {stats.totalVehicules} annonces scannées sur le marché français.
-                    </p>
-                  </li>
-                  <li className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">2</div>
-                    <p className="text-sm text-slate-700">
-                      <strong>Prix moyen :</strong> {safeNum(stats.prixMarche)} € pour ce segment.
-                    </p>
-                  </li>
-                  {stats.opportunites > 0 && (
-                    <li className="flex gap-3">
-                      <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">3</div>
-                      <p className="text-sm text-slate-700">
-                        <strong>Opportunités :</strong> {stats.opportunites} bonnes affaires identifiées (score &gt; 70).
-                      </p>
-                    </li>
+                  {report.negotiation_arguments ? (
+                    // Parse les arguments depuis la DB (format: "1. **Titre:** Description")
+                    report.negotiation_arguments.split('\n').filter(line => line.trim()).map((line, idx) => {
+                      // Nettoyer la ligne et extraire le contenu
+                      const cleanLine = line.replace(/^\d+\.\s*/, '').trim();
+                      // Convertir le markdown basique **text** en JSX
+                      const parts = cleanLine.split(/\*\*(.*?)\*\*/g);
+                      
+                      return (
+                        <li key={idx} className="flex gap-3">
+                          <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">
+                            {idx + 1}
+                          </div>
+                          <p className="text-sm text-slate-700">
+                            {parts.map((part, i) => 
+                              i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                            )}
+                          </p>
+                        </li>
+                      );
+                    })
+                  ) : (
+                    // Arguments par défaut
+                    <>
+                      <li className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">1</div>
+                        <p className="text-sm text-slate-700">
+                          <strong>Entretien :</strong> Vérifiez si les révisions majeures ont été faites. Sinon, demandez une réduction de 500-800€.
+                        </p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">2</div>
+                        <p className="text-sm text-slate-700">
+                          <strong>Pneumatiques :</strong> Si les pneus sont usés à plus de 50%, négociez 300-500€ pour leur remplacement.
+                        </p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">3</div>
+                        <p className="text-sm text-slate-700">
+                          <strong>Contrôle technique :</strong> Demandez le dernier CT. Tout défaut est un levier de négociation.
+                        </p>
+                      </li>
+                    </>
                   )}
-                  <li className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 font-bold text-xs">{stats.opportunites > 0 ? '4' : '3'}</div>
-                    <p className="text-sm text-slate-700">
-                      <strong>Meilleur deal :</strong> {vehiculeCible ? `${safeNum(vehiculeCible.prix)}€ (score ${vehiculeCible.dealScore || vehiculeCible.score_confiance}/100)` : 'Non disponible'}
-                    </p>
-                  </li>
                 </ul>
                 <Button className="w-full mt-6" variant="outline" onClick={() => navigate('/client-dashboard')}>
-                  <Search className="w-4 h-4 mr-2" /> Demander un autre audit
+                  <Search className="w-4 h-4 mr-2" /> Voir les annonces concurrentes
                 </Button>
               </CardContent>
             </Card>
