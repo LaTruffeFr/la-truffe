@@ -26,6 +26,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  refreshCredits: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -188,6 +189,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const refreshCredits = useCallback(async () => {
+    if (!user) return;
+    const profile = await fetchProfile(user.id);
+    if (profile) {
+      setCredits(profile.credits);
+    }
+  }, [user, fetchProfile]);
+
   const isAdmin = role === 'admin';
 
   return (
@@ -204,6 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signUp,
         signIn,
         signOut,
+        refreshCredits,
       }}
     >
       {children}
