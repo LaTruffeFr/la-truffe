@@ -36,7 +36,7 @@ const ClientDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const { user, signOut, isAdmin, credits, userEmail } = useAuth();
+  const { user, signOut, isAdmin, credits, userEmail, refreshCredits } = useAuth();
   
   const displayEmail = userEmail || user?.email || "client@latruffe.com";
   const initials = displayEmail.substring(0, 2).toUpperCase();
@@ -75,6 +75,17 @@ const ClientDashboard = () => {
       
       // Créer automatiquement la demande
       const createPendingReport = async () => {
+        // Vérifier les crédits (sauf pour les admins)
+        if (!isAdmin && credits < 1) {
+          toast({
+            variant: "destructive",
+            title: "Crédits insuffisants",
+            description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
+          });
+          navigate('/pricing');
+          return;
+        }
+
         const { error } = await supabase.from('reports').insert({
           user_id: user.id,
           marque,
@@ -83,9 +94,18 @@ const ClientDashboard = () => {
         });
 
         if (!error) {
+          // Déduire 1 crédit (sauf pour les admins)
+          if (!isAdmin) {
+            await supabase
+              .from('profiles')
+              .update({ credits: credits - 1 })
+              .eq('user_id', user.id);
+            await refreshCredits();
+          }
+
           toast({
             title: "Demande envoyée !",
-            description: `Votre demande d'audit pour ${marque} ${modele} a été soumise.`,
+            description: `Votre demande d'audit pour ${marque} ${modele} a été soumise.${!isAdmin ? ' 1 crédit déduit.' : ''}`,
           });
           fetchReports();
         }
@@ -120,8 +140,20 @@ const ClientDashboard = () => {
       return;
     }
 
+    // Vérifier les crédits (sauf pour les admins)
+    if (!isAdmin && credits < 1) {
+      toast({
+        variant: "destructive",
+        title: "Crédits insuffisants",
+        description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
+      });
+      navigate('/pricing');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Créer le rapport
       const { error } = await supabase.from('reports').insert({
         user_id: user.id,
         marque: marque.trim(),
@@ -132,9 +164,21 @@ const ClientDashboard = () => {
 
       if (error) throw error;
 
+      // Déduire 1 crédit (sauf pour les admins)
+      if (!isAdmin) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: credits - 1 })
+          .eq('user_id', user.id);
+
+        if (creditError) {
+          console.error('Error deducting credit:', creditError);
+        }
+      }
+
       toast({
         title: "Demande envoyée !",
-        description: "Votre demande d'audit a été soumise. Vous recevrez votre rapport sous 24h.",
+        description: `Votre demande d'audit a été soumise.${!isAdmin ? ' 1 crédit déduit.' : ''}`,
       });
 
       // Réinitialiser le formulaire et recharger les rapports
@@ -142,6 +186,11 @@ const ClientDashboard = () => {
       setModele('');
       setPrecision('');
       fetchReports();
+      
+      // Rafraîchir les crédits affichés
+      if (!isAdmin) {
+        await refreshCredits();
+      }
     } catch (error) {
       console.error('Error creating report:', error);
       toast({
