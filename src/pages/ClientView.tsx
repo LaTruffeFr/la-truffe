@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useVehicleData } from '@/contexts/VehicleDataContext';
 import { ClientOpportunityCard } from '@/components/trading/ClientOpportunityCard';
 import { ClientPDFExport } from '@/components/trading/ClientPDFExport';
@@ -10,8 +10,32 @@ import { VehicleWithScore } from '@/lib/csvParser';
 
 export default function ClientView() {
   const navigate = useNavigate();
-  const { topOpportunities, filters, chartVehicles, vehicles } = useVehicleData();
+  const { filters, chartVehicles, vehicles, trendLine } = useVehicleData();
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
+
+  // Calculate top opportunities from chartVehicles
+  const topOpportunities = useMemo(() => {
+    if (chartVehicles.length === 0) return [];
+    
+    // Calculate expected price and deviation for each vehicle
+    const withDeviation = chartVehicles.map(v => {
+      const expectedPrice = trendLine.intercept + (trendLine.slope * v.kilometrage);
+      const deviation = expectedPrice - v.prix;
+      const deviationPercent = expectedPrice > 0 ? (deviation / expectedPrice) * 100 : 0;
+      return {
+        ...v,
+        expectedPrice: Math.round(expectedPrice),
+        deviation: Math.round(deviation),
+        deviationPercent
+      };
+    });
+    
+    // Filter vehicles at least 10% below expected price and sort by deviation
+    return withDeviation
+      .filter(v => v.deviationPercent >= 10)
+      .sort((a, b) => b.deviationPercent - a.deviationPercent)
+      .slice(0, 10);
+  }, [chartVehicles, trendLine]);
 
   // Convert VehicleWithScore to the format expected by MarketAnalysisSection
   const convertToMarketVehicle = (v: VehicleWithScore) => ({
@@ -26,8 +50,8 @@ export default function ClientView() {
     localisation: v.localisation,
     lien: v.lien,
     image: v.image,
-    gainPotentiel: v.ecartEuros, // Map from VehicleWithScore
-    prixMedianSegment: v.prixMedian, // Map from VehicleWithScore
+    gainPotentiel: v.ecartEuros,
+    prixMedianSegment: v.coteCluster,
   });
 
   // No data - redirect to main page

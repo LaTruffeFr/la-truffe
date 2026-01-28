@@ -169,9 +169,9 @@ const Checkout = () => {
                   </Button>
 
                   {/* Méthodes de paiement acceptées */}
-                  <div className="flex items-center justify-center gap-4 pt-4 border-t border-slate-100">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 pt-4 border-t border-slate-100">
                     <span className="text-xs text-slate-500">Paiements acceptés :</span>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap justify-center gap-2">
                       <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Visa</div>
                       <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Mastercard</div>
                       <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Apple Pay</div>

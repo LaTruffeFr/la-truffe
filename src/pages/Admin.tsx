@@ -129,13 +129,13 @@ export default function Admin() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Admin Header */}
-      <header className="border-b border-border px-6 py-3 flex items-center justify-between shrink-0 bg-primary/5">
+      <header className="border-b border-border px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between shrink-0 bg-primary/5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0">
             <Shield className="w-4 h-4 text-primary-foreground" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">
+          <div className="min-w-0">
+            <h1 className="text-base md:text-lg font-bold text-foreground truncate">
               Mode Admin
               {vehicleInfo && (
                 <span className="ml-2 text-sm font-normal text-primary">
@@ -143,25 +143,25 @@ export default function Admin() {
                 </span>
               )}
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground truncate">
               {filteredVehicles.length} véhicules analysés
               {outliersCount > 0 && <span className="text-warning"> ({outliersCount} aberrants exclus)</span>}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
           <MarketReportGenerator 
             vehicles={filteredVehicles} 
             trendLine={trendLine} 
             kpis={kpis} 
           />
-          <Button variant="ghost" size="sm" onClick={clearData} className="gap-2 text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={clearData} className="gap-2 text-muted-foreground h-8 px-2 md:px-3">
             <RotateCcw className="w-4 h-4" />
-            Nouveau scan
+            <span className="hidden sm:inline">Nouveau scan</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)} className="gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)} className="gap-2 h-8 px-2 md:px-3">
             <Upload className="w-4 h-4" />
-            Nouveau CSV
+            <span className="hidden sm:inline">Nouveau CSV</span>
           </Button>
         </div>
       </header>
@@ -239,7 +239,7 @@ export default function Admin() {
             
             <CollapsibleContent>
               <div className="px-4 pb-4 border-t border-border pt-4">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Price Filter */}
                   <div className="space-y-4">
                     <Label className="text-sm font-medium flex items-center gap-2">

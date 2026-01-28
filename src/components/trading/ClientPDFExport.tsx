@@ -4,11 +4,19 @@ import { Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
-import { Filters } from '@/contexts/VehicleDataContext';
+
+interface FilterState {
+  minPrice: number;
+  maxPrice: number;
+  minKm: number;
+  maxKm: number;
+  minYear: number;
+  maxYear: number;
+}
 
 interface ClientPDFExportProps {
   opportunities: Array<VehicleWithScore & { expectedPrice: number; deviation: number; deviationPercent: number }>;
-  filters: Filters;
+  filters: FilterState;
   totalAnalyzed: number;
 }
 

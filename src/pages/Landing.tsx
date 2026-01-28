@@ -9,7 +9,7 @@ import {
   BarChart3, CheckCircle2, Euro, ChevronDown, Award, 
   LineChart, Zap, Star, User, Loader2
 } from 'lucide-react';
-import { Footer } from '@/components/landing';
+import { Footer, MobileNav } from '@/components/landing';
 import logoLatruffe from '@/assets/logo-latruffe.png';
 import imgValeur from '@/assets/analyse-valeur.jpg'; 
 import imgDecote from '@/assets/analyse-decote.jpg';
@@ -118,7 +118,7 @@ const Landing = () => {
             </div>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
               <Button 
                 onClick={() => navigate('/client-dashboard')} 
@@ -129,7 +129,7 @@ const Landing = () => {
               </Button>
             ) : (
               <>
-                <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden sm:flex hover:text-primary">
+                <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden md:flex hover:text-primary">
                   Se connecter
                 </Button>
                 <Button onClick={() => navigate('/auth')} className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all hover:scale-105">
@@ -138,6 +138,7 @@ const Landing = () => {
                 </Button>
               </>
             )}
+            <MobileNav />
           </div>
         </div>
       </header>

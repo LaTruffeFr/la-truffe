@@ -7,7 +7,7 @@ import {
   LogIn, ChevronDown, CheckCircle2, Star, ShieldCheck, 
   TrendingDown, Search, Eye, AlertTriangle, History, Euro, HelpCircle
 } from 'lucide-react';
-import { Footer } from '@/components/landing';
+import { Footer, MobileNav } from '@/components/landing';
 import logoTruffe from '@/assets/logo-latruffe.png';
 
 const Pricing = () => {
@@ -54,12 +54,13 @@ const Pricing = () => {
             </div>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden sm:flex hover:text-primary">Se connecter</Button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden md:flex hover:text-primary">Se connecter</Button>
             <Button onClick={() => navigate('/auth')} className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
               <LogIn className="h-4 w-4" />
               <span className="hidden sm:inline">Mon Espace</span>
             </Button>
+            <MobileNav />
           </div>
         </div>
       </header>
