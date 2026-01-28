@@ -220,26 +220,26 @@ const ClientDashboard = () => {
       {/* --- HEADER --- */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+          <Link to="/" className="font-logo font-bold text-xl md:text-2xl tracking-tight text-slate-900">
             La Truffe
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
              <div className="text-sm text-right hidden sm:block">
-                <div className="font-bold text-foreground text-xs sm:text-sm">{displayEmail}</div>
+                <div className="font-bold text-foreground text-xs sm:text-sm truncate max-w-[150px] md:max-w-none">{displayEmail}</div>
                 <div className="text-xs text-muted-foreground">Individuel</div>
              </div>
-             <Avatar className="h-9 w-9 border border-border">
+             <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border">
                <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">{initials}</AvatarFallback>
              </Avatar>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="flex-1 container mx-auto px-4 py-4 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
           
-          {/* --- SIDEBAR --- */}
-          <aside className="lg:col-span-3 space-y-6">
+          {/* --- SIDEBAR (Hidden on mobile, shown as row on tablet, column on desktop) --- */}
+          <aside className="lg:col-span-3 space-y-4 md:space-y-6">
             <Card className="border-border shadow-sm bg-card overflow-hidden">
               <div className="p-6 text-center border-b border-border">
                 <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
@@ -303,9 +303,9 @@ const ClientDashboard = () => {
           </aside>
 
           {/* --- MAIN CONTENT --- */}
-          <div className="lg:col-span-9 space-y-8">
+          <div className="lg:col-span-9 space-y-6 md:space-y-8">
             <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">Demander un audit de prix</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Demander un audit de prix</h2>
               
               <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
@@ -403,33 +403,34 @@ const ClientDashboard = () => {
                         className="border-slate-200 shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => handleViewReport(report)}
                       >
-                        <CardContent className="p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                              <FileText className="w-6 h-6 text-slate-500" />
+                        <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-slate-500" />
                             </div>
-                            <div>
-                              <h3 className="font-bold text-slate-900">
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-slate-900 truncate">
                                 {report.marque} {report.modele}
                               </h3>
-                              <p className="text-sm text-slate-500">
+                              <p className="text-xs sm:text-sm text-slate-500">
                                 Demandé le {new Date(report.created_at).toLocaleDateString('fr-FR', {
                                   day: 'numeric',
-                                  month: 'long',
+                                  month: 'short',
                                   year: 'numeric'
                                 })}
                               </p>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-3">
-                            <Badge className={`${status.color} border font-medium`}>
-                              <StatusIcon className={`w-3 h-3 mr-1.5 ${report.status === 'in_progress' ? 'animate-spin' : ''}`} />
-                              {status.label}
+                          <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pl-12 sm:pl-0">
+                            <Badge className={`${status.color} border font-medium text-xs`}>
+                              <StatusIcon className={`w-3 h-3 mr-1 sm:mr-1.5 ${report.status === 'in_progress' ? 'animate-spin' : ''}`} />
+                              <span className="hidden sm:inline">{status.label}</span>
+                              <span className="sm:hidden">{status.label.split(' ')[0]}</span>
                             </Badge>
                             {report.status === 'completed' && (
-                              <Button size="sm" variant="outline" className="gap-2">
-                                <Eye className="w-4 h-4" /> Voir
+                              <Button size="sm" variant="outline" className="gap-1 sm:gap-2 h-8 px-2 sm:px-3">
+                                <Eye className="w-4 h-4" /> <span className="hidden sm:inline">Voir</span>
                               </Button>
                             )}
                           </div>

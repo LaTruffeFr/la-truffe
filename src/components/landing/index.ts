@@ -10,3 +10,4 @@ export { ReportPreviewSection } from './ReportPreviewSection';
 export { StatisticsSection } from './StatisticsSection';
 export { FAQSection } from './FAQSection';
 export { Footer } from './Footer';
+export { MobileNav } from './MobileNav';
