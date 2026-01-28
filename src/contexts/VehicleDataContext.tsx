@@ -1,225 +1,193 @@
-import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
-import { VehicleWithScore, parseCSVFile, calculateDealScores } from '@/lib/csvParser';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+// CORRECTION ICI : On importe les bons types et la bonne fonction
+import { parseCSVFile, ParsedVehicle, VehicleWithScore } from '@/lib/csvParser';
+import { useToast } from '@/hooks/use-toast';
+import { calculateSmartScore, filterOutliers } from '@/lib/vehicleAnalysis';
 
-// Filter outliers using IQR method
-function filterOutliers(data: VehicleWithScore[]): VehicleWithScore[] {
-  if (data.length < 4) return data;
-
-  const prices = data.map(v => v.prix).sort((a, b) => a - b);
-  const kms = data.map(v => v.kilometrage).sort((a, b) => a - b);
-
-  const q1Price = prices[Math.floor(prices.length * 0.25)];
-  const q3Price = prices[Math.floor(prices.length * 0.75)];
-  const iqrPrice = q3Price - q1Price;
-
-  const q1Km = kms[Math.floor(kms.length * 0.25)];
-  const q3Km = kms[Math.floor(kms.length * 0.75)];
-  const iqrKm = q3Km - q1Km;
-
-  const lowerPriceBound = q1Price - 1.5 * iqrPrice;
-  const upperPriceBound = q3Price + 1.5 * iqrPrice;
-  const lowerKmBound = q1Km - 1.5 * iqrKm;
-  const upperKmBound = q3Km + 1.5 * iqrKm;
-
-  return data.filter(v => 
-    v.prix >= lowerPriceBound && 
-    v.prix <= upperPriceBound &&
-    v.kilometrage >= lowerKmBound &&
-    v.kilometrage <= upperKmBound
-  );
+interface VehicleInfo {
+  marque: string;
+  modele: string;
 }
 
-// Linear regression calculation
-function calculateTrendLine(data: VehicleWithScore[]): { slope: number; intercept: number } {
-  if (data.length < 2) return { slope: 0, intercept: 0 };
-
-  const n = data.length;
-  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
-
-  for (const v of data) {
-    sumX += v.kilometrage;
-    sumY += v.prix;
-    sumXY += v.kilometrage * v.prix;
-    sumX2 += v.kilometrage * v.kilometrage;
-  }
-
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  const intercept = (sumY - slope * sumX) / n;
-
-  return { slope, intercept };
-}
-
-export interface Filters {
+interface FilterState {
   minPrice: number;
   maxPrice: number;
   minKm: number;
   maxKm: number;
+  minYear: number;
+  maxYear: number;
 }
 
-export interface VehicleInfo {
-  marque: string;
-  modele: string;
+interface KPIState {
+  avgPrice: number;
+  decotePer10k: number;
+  bestOffer: VehicleWithScore | null;
+  opportunitiesCount: number;
 }
 
 interface VehicleDataContextType {
   vehicles: VehicleWithScore[];
   filteredVehicles: VehicleWithScore[];
-  chartVehicles: VehicleWithScore[];
-  trendLine: { slope: number; intercept: number };
+  chartVehicles: VehicleWithScore[]; 
   outliersCount: number;
-  filters: Filters;
-  dataRanges: { minPrice: number; maxPrice: number; minKm: number; maxKm: number };
+  trendLine: { slope: number; intercept: number };
+  filters: FilterState;
+  dataRanges: FilterState;
   isLoading: boolean;
   vehicleInfo: VehicleInfo | null;
-  setFilters: (filters: Partial<Filters>) => void;
+  setFilters: (filters: Partial<FilterState>) => void;
   resetFilters: () => void;
-  uploadCSV: (file: File, marque: string, modele: string) => Promise<void>;
+  uploadCSV: (file: File, marque: string, modele: string) => void;
   clearData: () => void;
-  topOpportunities: Array<VehicleWithScore & { expectedPrice: number; deviation: number; deviationPercent: number }>;
-  kpis: { avgPrice: number; decotePer10k: number; bestOffer: VehicleWithScore | null; opportunitiesCount: number };
+  kpis: KPIState;
 }
 
-const VehicleDataContext = createContext<VehicleDataContextType | null>(null);
+const VehicleDataContext = createContext<VehicleDataContextType | undefined>(undefined);
 
-export function VehicleDataProvider({ children }: { children: ReactNode }) {
+export const VehicleDataProvider = ({ children }: { children: React.ReactNode }) => {
+  // CORRECTION ICI : Le type est ParsedVehicle[] ou VehicleWithScore[]
   const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo | null>(null);
-  const [filters, setFiltersState] = useState<Filters>({
-    minPrice: 0,
-    maxPrice: 999999,
-    minKm: 0,
-    maxKm: 999999,
+  const [isLoading, setIsLoading] = useState(false);
+  const [outliersCount, setOutliersCount] = useState(0);
+  const { toast } = useToast();
+
+  const [filters, setFiltersState] = useState<FilterState>({
+    minPrice: 0, maxPrice: 100000,
+    minKm: 0, maxKm: 200000,
+    minYear: 2000, maxYear: new Date().getFullYear()
   });
 
-  // Filter outliers and calculate trend line
-  const filteredVehicles = useMemo(() => filterOutliers(vehicles), [vehicles]);
-  const trendLine = useMemo(() => calculateTrendLine(filteredVehicles), [filteredVehicles]);
-  const outliersCount = vehicles.length - filteredVehicles.length;
-
-  // Compute actual data ranges
   const dataRanges = useMemo(() => {
-    if (filteredVehicles.length === 0) {
-      return { minPrice: 0, maxPrice: 100000, minKm: 0, maxKm: 300000 };
-    }
-    const prices = filteredVehicles.map(v => v.prix);
-    const kms = filteredVehicles.map(v => v.kilometrage);
+    if (vehicles.length === 0) return { minPrice: 0, maxPrice: 100000, minKm: 0, maxKm: 200000, minYear: 2000, maxYear: new Date().getFullYear() };
     return {
-      minPrice: Math.floor(Math.min(...prices) / 1000) * 1000,
-      maxPrice: Math.ceil(Math.max(...prices) / 1000) * 1000,
-      minKm: Math.floor(Math.min(...kms) / 5000) * 5000,
-      maxKm: Math.ceil(Math.max(...kms) / 5000) * 5000,
+      minPrice: Math.min(...vehicles.map(v => v.prix)),
+      maxPrice: Math.max(...vehicles.map(v => v.prix)),
+      minKm: Math.min(...vehicles.map(v => v.kilometrage)),
+      maxKm: Math.max(...vehicles.map(v => v.kilometrage)),
+      minYear: Math.min(...vehicles.map(v => v.annee)),
+      maxYear: Math.max(...vehicles.map(v => v.annee)),
     };
-  }, [filteredVehicles]);
-
-  // Apply user filters
-  const chartVehicles = useMemo(() => {
-    return filteredVehicles.filter(v => 
-      v.prix >= filters.minPrice && v.prix <= filters.maxPrice &&
-      v.kilometrage >= filters.minKm && v.kilometrage <= filters.maxKm
-    );
-  }, [filteredVehicles, filters]);
-
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    if (chartVehicles.length === 0) {
-      return { avgPrice: 0, decotePer10k: 0, bestOffer: null, opportunitiesCount: 0 };
-    }
-
-    const avgPrice = chartVehicles.reduce((sum, v) => sum + v.prix, 0) / chartVehicles.length;
-    const decotePer10k = Math.abs(trendLine.slope * 10000);
-
-    const opportunities = chartVehicles.filter(v => {
-      const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-      return v.prix < expectedPrice;
-    });
-
-    const bestOffer = opportunities.length > 0
-      ? opportunities.reduce((best, v) => {
-          const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-          const savings = expectedPrice - v.prix;
-          const bestSavings = trendLine.slope * best.kilometrage + trendLine.intercept - best.prix;
-          return savings > bestSavings ? v : best;
-        })
-      : null;
-
-    return {
-      avgPrice: Math.round(avgPrice),
-      decotePer10k: Math.round(decotePer10k),
-      bestOffer,
-      opportunitiesCount: opportunities.length,
-    };
-  }, [chartVehicles, trendLine]);
-
-  // Top opportunities for client view (respects filters)
-  const topOpportunities = useMemo(() => {
-    return chartVehicles
-      .map(v => {
-        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-        const deviation = expectedPrice - v.prix;
-        const deviationPercent = Math.round((deviation / expectedPrice) * 100);
-        return {
-          ...v,
-          expectedPrice: Math.round(expectedPrice),
-          deviation: Math.round(deviation),
-          deviationPercent,
-        };
-      })
-      .filter(v => v.deviationPercent >= 10)
-      .sort((a, b) => b.deviationPercent - a.deviationPercent)
-      .slice(0, 5);
-  }, [chartVehicles, trendLine]);
+  }, [vehicles]);
 
   const uploadCSV = useCallback(async (file: File, marque: string, modele: string) => {
     setIsLoading(true);
     try {
-      const parsed = await parseCSVFile(file);
-      // Pass forced brand/model to scoring function
-      const scored = calculateDealScores(parsed, marque, modele);
-      setVehicles(scored);
+      // CORRECTION ICI : Utilisation de parseCSVFile directement
+      const rawVehicles = await parseCSVFile(file);
+      
+      if (rawVehicles.length === 0) throw new Error("Aucun véhicule trouvé dans le CSV");
+
+      // 2. Filtrage intelligent
+      const cleanVehicles = filterOutliers(rawVehicles);
+      const rejectedCount = rawVehicles.length - cleanVehicles.length;
+
+      // 3. Calcul du Score Intelligent (V2)
+      const scoredVehicles = calculateSmartScore(cleanVehicles);
+
+      setVehicles(scoredVehicles);
       setVehicleInfo({ marque, modele });
-      // Reset filters to data range
-      const prices = scored.map(v => v.prix);
-      const kms = scored.map(v => v.kilometrage);
+      setOutliersCount(rejectedCount);
+
+      const maxP = Math.max(...scoredVehicles.map(v => v.prix));
+      const maxK = Math.max(...scoredVehicles.map(v => v.kilometrage));
+      const minY = Math.min(...scoredVehicles.map(v => v.annee));
+      const maxY = Math.max(...scoredVehicles.map(v => v.annee));
+
       setFiltersState({
-        minPrice: 0,
-        maxPrice: Math.ceil(Math.max(...prices) / 1000) * 1000,
-        minKm: 0,
-        maxKm: Math.ceil(Math.max(...kms) / 5000) * 5000,
+        minPrice: 0, maxPrice: maxP,
+        minKm: 0, maxKm: maxK,
+        minYear: minY, maxYear: maxY
       });
-    } catch (error) {
-      console.error('Parse error:', error);
+
+      toast({ 
+        title: "Import réussi", 
+        description: `${scoredVehicles.length} annonces analysées (${rejectedCount} exclues).`,
+        className: "bg-green-600 text-white border-0"
+      });
+
+    } catch (error: any) {
+      console.error(error);
+      toast({ 
+        title: "Erreur d'import", 
+        description: error.message || "Le fichier CSV semble invalide.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
-  const clearData = useCallback(() => {
+  const clearData = () => {
     setVehicles([]);
     setVehicleInfo(null);
-    setFiltersState({ minPrice: 0, maxPrice: 999999, minKm: 0, maxKm: 999999 });
-  }, []);
+    setOutliersCount(0);
+  };
 
-  const setFilters = useCallback((newFilters: Partial<Filters>) => {
+  const setFilters = (newFilters: Partial<FilterState>) => {
     setFiltersState(prev => ({ ...prev, ...newFilters }));
-  }, []);
+  };
 
-  const resetFilters = useCallback(() => {
-    setFiltersState({
-      minPrice: dataRanges.minPrice,
-      maxPrice: dataRanges.maxPrice,
-      minKm: dataRanges.minKm,
-      maxKm: dataRanges.maxKm,
+  const resetFilters = () => {
+    setFiltersState(dataRanges);
+  };
+
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter(v => 
+      v.prix >= filters.minPrice && v.prix <= filters.maxPrice &&
+      v.kilometrage >= filters.minKm && v.kilometrage <= filters.maxKm &&
+      v.annee >= filters.minYear && v.annee <= filters.maxYear
+    );
+  }, [vehicles, filters]);
+
+  const chartVehicles = filteredVehicles;
+
+  const trendLine = useMemo(() => {
+    if (chartVehicles.length < 2) return { slope: 0, intercept: 0 };
+    
+    const n = chartVehicles.length;
+    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    
+    chartVehicles.forEach(v => {
+      const x = v.kilometrage;
+      const y = v.prix;
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumXX += x * x;
     });
-  }, [dataRanges]);
+    
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    
+    return { slope, intercept };
+  }, [chartVehicles]);
+
+  const kpis = useMemo(() => {
+    if (chartVehicles.length === 0) return { avgPrice: 0, decotePer10k: 0, bestOffer: null, opportunitiesCount: 0 };
+    
+    const avgPrice = Math.round(chartVehicles.reduce((acc, v) => acc + v.prix, 0) / chartVehicles.length);
+    const decote = Math.round(trendLine.slope * 10000); 
+    
+    const sortedByScore = [...chartVehicles].sort((a, b) => b.dealScore - a.dealScore);
+    const bestOffer = sortedByScore[0];
+    const opportunitiesCount = chartVehicles.filter(v => v.dealScore > 70).length;
+
+    return { 
+      avgPrice, 
+      decotePer10k: decote, 
+      bestOffer: bestOffer as any, 
+      opportunitiesCount 
+    };
+  }, [chartVehicles, trendLine]);
 
   return (
     <VehicleDataContext.Provider value={{
       vehicles,
       filteredVehicles,
       chartVehicles,
-      trendLine,
       outliersCount,
+      trendLine,
       filters,
       dataRanges,
       isLoading,
@@ -228,18 +196,17 @@ export function VehicleDataProvider({ children }: { children: ReactNode }) {
       resetFilters,
       uploadCSV,
       clearData,
-      topOpportunities,
-      kpis,
+      kpis
     }}>
       {children}
     </VehicleDataContext.Provider>
   );
-}
+};
 
-export function useVehicleData() {
+export const useVehicleData = () => {
   const context = useContext(VehicleDataContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useVehicleData must be used within a VehicleDataProvider');
   }
   return context;
-}
+};
