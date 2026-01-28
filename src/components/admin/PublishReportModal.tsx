@@ -1,51 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Send, CheckCircle, User, Mail, MessageSquare, FileText } from 'lucide-react';
+import { Loader2, Send, CheckCircle, User, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from "@/components/ui/separator";
 import { VehicleWithScore } from '@/lib/csvParser';
 
-interface ReportOrder {
-  id: string;
-  user_id: string;
-  marque: string;
-  modele: string;
-  status: string;
-  user_email?: string;
-}
-
+// On ajoute 'clients' ici pour corriger l'erreur TypeScript
 interface PublishReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   vehicles: VehicleWithScore[];
-  trendLine: { slope: number; intercept: number };
-  kpis: {
-    avgPrice: number;
-    decotePer10k: number;
-    bestOffer: VehicleWithScore | null;
-    opportunitiesCount: number;
-  };
-  vehicleInfo: { marque: string; modele: string } | null;
+  trendLine: any;
+  kpis: any;
+  vehicleInfo: any;
+  clients?: any[]; // <--- La correction est ici
 }
-
-const DEFAULT_EXPERT_OPINION = `Analyse de ce modèle : les véhicules analysés montrent une bonne diversité en termes de kilométrage et d'équipements. 
-
-Le marché actuel offre plusieurs opportunités intéressantes, notamment sur les véhicules avec un kilométrage raisonnable et un entretien complet.
-
-Points de vigilance : vérifiez systématiquement l'historique d'entretien et l'absence de sinistre déclaré.`;
-
-const DEFAULT_NEGOTIATION_ARGUMENTS = `1. **Entretien :** Vérifiez si les révisions majeures ont été faites. Sinon, demandez une réduction de 500-800€.
-
-2. **Pneumatiques :** Si les pneus sont usés à plus de 50%, négociez 300-500€ pour leur remplacement.
-
-3. **Contrôle technique :** Demandez le dernier CT. Tout défaut mentionné est un levier de négociation.
-
-4. **Garantie :** Si aucune garantie n'est offerte, négociez une extension ou une remise de 5-10%.`;
 
 export function PublishReportModal({
   isOpen,
@@ -54,165 +29,126 @@ export function PublishReportModal({
   trendLine,
   kpis,
   vehicleInfo,
+  clients = []
 }: PublishReportModalProps) {
-  const [orders, setOrders] = useState<ReportOrder[]>([]);
-  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
-  const [customEmail, setCustomEmail] = useState<string>('');
-  const [expertOpinion, setExpertOpinion] = useState<string>(DEFAULT_EXPERT_OPINION);
-  const [negotiationArguments, setNegotiationArguments] = useState<string>(DEFAULT_NEGOTIATION_ARGUMENTS);
+  const [step, setStep] = useState(1);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
-  // Fetch pending orders when modal opens
+  // États pour l'édition manuelle
+  const [expertOpinion, setExpertOpinion] = useState('');
+  const [points, setPoints] = useState([{ titre: "", desc: "" }, { titre: "", desc: "" }, { titre: "", desc: "" }]);
+  
+  const [selectedClientId, setSelectedClientId] = useState<string>("new");
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+
+  const [clientsList, setClientsList] = useState<any[]>(clients);
+
+  // Chargement de secours des clients si la prop est vide
   useEffect(() => {
-    if (isOpen) {
-      fetchOrders();
-      setIsSuccess(false);
-      setSelectedOrderId('');
-      setCustomEmail('');
-      setExpertOpinion(DEFAULT_EXPERT_OPINION);
-      setNegotiationArguments(DEFAULT_NEGOTIATION_ARGUMENTS);
+    const loadClients = async () => {
+      if (clients.length === 0) {
+        const { data } = await supabase.from('reports').select('id, marque, modele, status').eq('status', 'pending');
+        if (data) setClientsList(data);
+      } else {
+        setClientsList(clients);
+      }
+    };
+    if (isOpen) loadClients();
+  }, [isOpen, clients]);
+
+  // Pré-remplissage intelligent à l'ouverture
+  useEffect(() => {
+    if (isOpen && vehicles.length > 0) {
+      setStep(1);
+      const bestDeal = vehicles[0];
+      const prixMarche = kpis.avgPrice;
+      const ecart = prixMarche - (bestDeal?.prix || 0);
+      const percent = Math.round((ecart / prixMarche) * 100);
+
+      setExpertOpinion(
+        `Le marché pour la ${vehicleInfo?.marque} ${vehicleInfo?.modele} est dynamique avec ${vehicles.length} annonces analysées. ` +
+        `Le prix moyen se situe autour de ${prixMarche.toLocaleString()}€. ` +
+        (ecart > 0 ? `Nous avons identifié une excellente opportunité à -${percent}% sous le marché.` : `Les prix sont actuellement soutenus.`)
+      );
     }
-  }, [isOpen]);
+  }, [isOpen, vehicles, kpis, vehicleInfo]);
 
-  const fetchOrders = async () => {
-    setIsFetching(true);
-    try {
-      // Fetch pending/in_progress reports
-      const { data: reports, error } = await supabase
-        .from('reports')
-        .select('id, user_id, marque, modele, status')
-        .in('status', ['pending', 'in_progress'])
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setOrders(reports || []);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les commandes',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsFetching(false);
-    }
+  const handleClientSelect = (value: string) => {
+    setSelectedClientId(value);
+    // Si on avait les infos détaillées du client, on pourrait pré-remplir ici
+    // Pour l'instant on laisse les champs vides pour le "Nouveau Client"
   };
 
   const handlePublish = async () => {
-    if (!selectedOrderId && !customEmail) {
-      toast({
-        title: 'Sélection requise',
-        description: 'Veuillez sélectionner une commande ou entrer un email',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
-      // Prepare ALL vehicles data for the chart
-      const allVehiclesData = vehicles.map(v => {
-        const expectedPrice = trendLine.slope * v.kilometrage + trendLine.intercept;
-        return {
-          id: v.id,
-          titre: v.titre,
-          marque: v.marque,
-          modele: v.modele,
-          prix: v.prix,
-          kilometrage: v.kilometrage,
-          annee: v.annee,
-          carburant: v.carburant,
-          transmission: v.transmission,
-          puissance: v.puissance,
-          localisation: v.localisation,
-          image: v.image,
-          lien: v.lien,
-          // Cluster data
-          clusterId: v.clusterId,
-          clusterSize: v.clusterSize,
-          coteCluster: v.coteCluster,
-          ecartEuros: v.ecartEuros,
-          ecartPourcent: v.ecartPourcent,
-          dealScore: v.dealScore,
-          isPremium: v.isPremium,
-          hasEnoughData: v.hasEnoughData,
-          // Legacy fields
-          prixMoyen: v.prixMoyen,
-          prixMedian: v.prixMedian,
-          ecart: v.ecart,
-          segmentKey: v.segmentKey,
-          // Calculated fields
-          prix_median_segment: Math.round(expectedPrice),
-          gain_potentiel: Math.round(expectedPrice - v.prix),
+      // 1. Récupération de l'utilisateur (Optionnel pour ne pas bloquer Lovable Cloud)
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData?.user;
+
+      const cleanPoints = points.filter(p => p.titre.trim() !== "");
+      
+      // 2. Encodage des arguments dans l'avis expert (Hack de compatibilité)
+      const expertOpinionCombined = expertOpinion + "|||DATA|||" + JSON.stringify(cleanPoints);
+
+      // 3. Préparation de toutes les données véhicules
+      const allVehiclesData = vehicles.map(v => ({
+          ...v,
+          prix_median_segment: Math.round(trendLine.slope * v.kilometrage + trendLine.intercept),
+          gain_potentiel: Math.round((trendLine.slope * v.kilometrage + trendLine.intercept) - v.prix),
           score_confiance: Math.abs(v.dealScore),
-        };
-      });
+      }));
 
-      // Filter opportunities (deals below trendline = ecartEuros > 0 or dealScore < 0)
-      const opportunities = allVehiclesData.filter(v => v.ecartEuros > 0 || v.dealScore < 0);
+      // 4. Construction de l'objet à sauvegarder
+      const reportPayload: any = {
+        marque: vehicleInfo?.marque || "Inconnu",
+        modele: vehicleInfo?.modele || "Inconnu",
+        status: 'completed',
+        expert_opinion: expertOpinionCombined,
+        market_data: [
+            { client_info: { id: selectedClientId === "new" ? null : selectedClientId, name: clientName, email: clientEmail } }
+        ],
+        prix_moyen: kpis.avgPrice,
+        total_vehicules: vehicles.length,
+        opportunites_count: kpis.opportunitiesCount,
+        vehicles_data: allVehiclesData
+      };
 
-      // Calculate prix_truffe (average of top opportunities)
-      const avgTruffePrice = opportunities.length > 0
-        ? Math.round(opportunities.slice(0, 10).reduce((sum, v) => sum + v.prix, 0) / Math.min(opportunities.length, 10))
-        : kpis.avgPrice;
+      // Ajout de l'user_id seulement si connecté
+      if (user) reportPayload.user_id = user.id;
 
-      const avgSavings = opportunities.length > 0
-        ? Math.round(opportunities.slice(0, 10).reduce((sum, v) => sum + (v.gain_potentiel || 0), 0) / Math.min(opportunities.length, 10))
-        : 0;
-
-      if (selectedOrderId) {
-        // Update existing order with ALL vehicles data (for the chart)
-        const { error } = await supabase
+      // 5. Envoi à Supabase
+      let result;
+      
+      if (selectedClientId !== "new") {
+        // Mise à jour d'une commande existante
+        result = await supabase
           .from('reports')
-          .update({
-            status: 'completed',
-            prix_moyen: kpis.avgPrice,
-            prix_truffe: avgTruffePrice,
-            economie_moyenne: avgSavings,
-            decote_par_10k: kpis.decotePer10k,
-            total_vehicules: vehicles.length,
-            opportunites_count: kpis.opportunitiesCount,
-            vehicles_data: allVehiclesData,
-            expert_opinion: expertOpinion,
-            negotiation_arguments: negotiationArguments,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedOrderId);
-
-        if (error) throw error;
-      } else if (customEmail) {
-        toast({
-          title: 'Email non supporté',
-          description: 'Veuillez sélectionner une commande existante pour le moment',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
+          .update(reportPayload)
+          .eq('id', selectedClientId)
+          .select()
+          .single();
+      } else {
+        // Création d'un nouveau rapport
+        result = await supabase
+          .from('reports')
+          .insert(reportPayload)
+          .select()
+          .single();
       }
 
-      setIsSuccess(true);
-      toast({
-        title: 'Rapport publié !',
-        description: 'Le client peut maintenant voir son rapport',
-      });
+      if (result.error) throw result.error;
 
-      // Close after a short delay
-      setTimeout(() => {
-        onClose();
-        setIsSuccess(false);
-      }, 2000);
+      setReportId(result.data.id);
+      setStep(2);
+      toast({ title: "Succès", description: "Rapport publié !" });
 
-    } catch (error) {
-      console.error('Error publishing report:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de publier le rapport',
-        variant: 'destructive',
-      });
+    } catch (error: any) {
+      console.error(error);
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -220,182 +156,70 @@ export function PublishReportModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5 text-primary" />
-            Envoyer ce rapport à...
-          </DialogTitle>
-          <DialogDescription>
-            Sélectionnez un client en attente et personnalisez le rapport
-          </DialogDescription>
-        </DialogHeader>
-
-        {isSuccess ? (
-          <div className="py-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <p className="font-semibold text-lg">Rapport publié avec succès !</p>
-            <p className="text-sm text-muted-foreground">
-              Le client peut maintenant voir les résultats
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6 py-4">
-            {/* Summary of what will be sent */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Données à publier :</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Modèle :</span>{' '}
-                  <span className="font-medium">{vehicleInfo?.marque} {vehicleInfo?.modele}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Prix moyen :</span>{' '}
-                  <span className="font-medium">{kpis.avgPrice.toLocaleString('fr-FR')} €</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Opportunités :</span>{' '}
-                  <span className="font-medium text-green-600">{kpis.opportunitiesCount}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Véhicules :</span>{' '}
-                  <span className="font-medium">{vehicles.length}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Select existing order */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Commande client en attente
-              </Label>
-              {isFetching ? (
-                <div className="flex items-center gap-2 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm text-muted-foreground">Chargement...</span>
-                </div>
-              ) : (
-                <Select value={selectedOrderId} onValueChange={(value) => {
-                  setSelectedOrderId(value);
-                  setCustomEmail('');
-                }}>
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Sélectionner une commande..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border">
-                    {orders.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                        Aucune commande en attente
-                      </div>
-                    ) : (
-                      orders.map((order) => (
-                        <SelectItem key={order.id} value={order.id}>
-                          <div className="flex flex-col">
-                            <span>{order.marque} {order.modele}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {order.status === 'pending' ? 'En attente' : 'En cours'}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        {step === 1 ? (
+          <>
+            <DialogHeader><DialogTitle>Finaliser le Rapport</DialogTitle><DialogDescription>Validez le client et l'analyse.</DialogDescription></DialogHeader>
+            <div className="space-y-6 py-4">
+              
+              <div className="bg-slate-50 p-4 rounded-lg border">
+                <Label className="font-bold mb-2 block">Destinataire</Label>
+                <Select onValueChange={handleClientSelect} value={selectedClientId}>
+                  <SelectTrigger className="bg-white mb-2"><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">+ Nouveau Rapport (Sans commande)</SelectItem>
+                    {clientsList.map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.marque} {c.modele} (En attente)
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              )}
-            </div>
-
-            {/* Expert Opinion */}
-            <div className="space-y-2">
-              <Label htmlFor="expertOpinion" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Avis de l'expert
-              </Label>
-              <Textarea
-                id="expertOpinion"
-                placeholder="Rédigez l'avis de l'expert sur ce véhicule..."
-                value={expertOpinion}
-                onChange={(e) => setExpertOpinion(e.target.value)}
-                rows={5}
-                className="resize-none"
-              />
-              <p className="text-xs text-muted-foreground">
-                Cet avis sera affiché dans la section "Avis de l'expert" du rapport client.
-              </p>
-            </div>
-
-            {/* Negotiation Arguments */}
-            <div className="space-y-2">
-              <Label htmlFor="negotiationArguments" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Arguments de négociation
-              </Label>
-              <Textarea
-                id="negotiationArguments"
-                placeholder="1. Argument 1...&#10;2. Argument 2...&#10;3. Argument 3..."
-                value={negotiationArguments}
-                onChange={(e) => setNegotiationArguments(e.target.value)}
-                rows={6}
-                className="resize-none font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Utilisez le format Markdown. Chaque argument sera affiché dans une liste numérotée.
-              </p>
-            </div>
-
-            {/* OR divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                
+                {selectedClientId === "new" && (
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <Input placeholder="Nom du client (Optionnel)" value={clientName} onChange={(e) => setClientName(e.target.value)} className="bg-white" />
+                    <Input placeholder="Email (Optionnel)" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} className="bg-white" />
+                  </div>
+                )}
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">ou envoi manuel</span>
+
+              <Separator />
+
+              <div>
+                <Label className="font-bold block mb-2">Avis de l'Expert</Label>
+                <Textarea value={expertOpinion} onChange={(e) => setExpertOpinion(e.target.value)} className="h-32" placeholder="Votre analyse du marché..." />
               </div>
-            </div>
 
-            {/* Custom email input */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email du client (bientôt disponible)
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="client@example.com"
-                value={customEmail}
-                onChange={(e) => {
-                  setCustomEmail(e.target.value);
-                  setSelectedOrderId('');
-                }}
-                disabled={!!selectedOrderId}
-              />
-              <p className="text-xs text-muted-foreground">
-                Fonctionnalité à venir - utilisez une commande existante
-              </p>
-            </div>
+              <div>
+                <Label className="font-bold block mb-2">Arguments de Négociation</Label>
+                <div className="space-y-3">
+                  {points.map((p, i) => (
+                    <div key={i} className="flex gap-2">
+                      <Input placeholder="Titre (ex: Distribution)" value={p.titre} onChange={(e) => { const n = [...points]; n[i].titre = e.target.value; setPoints(n); }} className="w-1/3 font-bold" />
+                      <Input placeholder="Description" value={p.desc} onChange={(e) => { const n = [...points]; n[i].desc = e.target.value; setPoints(n); }} className="flex-1" />
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-            {/* Action button */}
-            <Button 
-              onClick={handlePublish} 
-              className="w-full gap-2"
-              disabled={isLoading || (!selectedOrderId && !customEmail)}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Publication en cours...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  Envoyer & Enregistrer
-                </>
-              )}
-            </Button>
-          </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>Annuler</Button>
+              <Button onClick={handlePublish} disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white">
+                {isLoading ? <Loader2 className="animate-spin" /> : <Send className="mr-2 h-4 w-4" />} Publier
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader><DialogTitle className="text-center text-green-600 flex flex-col items-center gap-2"><CheckCircle className="h-12 w-12" /> Rapport Prêt !</DialogTitle></DialogHeader>
+            <div className="py-6 text-center space-y-4">
+              <p className="text-muted-foreground">Le rapport a été généré et lié au client.</p>
+              <Input value={`${window.location.origin}/report/${reportId}`} readOnly />
+              <Button onClick={() => window.open(`/report/${reportId}`, '_blank')} className="bg-slate-900 w-full">Voir le rapport</Button>
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
