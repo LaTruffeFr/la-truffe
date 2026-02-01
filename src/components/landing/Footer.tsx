@@ -19,13 +19,13 @@ export function Footer() {
               Contact
             </Link>
             <Link 
-              to="#" 
+              to="/mentions-legales" 
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Mentions Légales
             </Link>
             <Link 
-              to="#" 
+              to="/cgv" 
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               CGV
