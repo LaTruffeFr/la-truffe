@@ -377,7 +377,7 @@ const Landing = () => {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Graphique "Sniper"</li>
               </ul>
 
-              <Button className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800">
+              <Button className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800" onClick={() => navigate('/checkout?pack=audit-unitaire')}>
                 Choisir ce pack
               </Button>
             </div>
@@ -404,7 +404,7 @@ const Landing = () => {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Aide à la négociation</li>
               </ul>
 
-              <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+              <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" onClick={() => navigate('/checkout?pack=chasseur')}>
                 Choisir ce pack
               </Button>
             </div>
@@ -572,7 +572,7 @@ const Landing = () => {
             Ne laissez plus le hasard (ou le vendeur) décider du prix. Prenez le contrôle.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg w-full sm:w-auto shadow-2xl" onClick={() => navigate('/audit/demo-1')}>
+            <Button size="lg" className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg w-full sm:w-auto shadow-2xl" onClick={() => navigate('/demo/demo-1')}>
               Voir un exemple
             </Button>
             <Button size="lg" variant="outline" className="text-slate-900 border-white hover:bg-white/10 hover:text-white h-14 px-8 text-lg w-full sm:w-auto" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>

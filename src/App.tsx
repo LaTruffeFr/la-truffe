@@ -19,6 +19,8 @@ import Checkout from "./pages/Checkout";
 import Settings from "./pages/Settings";
 import Transactions from "./pages/Transactions";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import MentionsLegales from "./pages/MentionsLegales";
+import CGV from "./pages/CGV";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AdminRoute } from "./components/AdminRoute";
 
@@ -57,7 +59,9 @@ const App = () => (
             <Route path="/enterprise" element={<About />} />
             <Route path="/qui-sommes-nous" element={<About />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/why-us" element={<About />} /> 
+            <Route path="/why-us" element={<About />} />
+            <Route path="/mentions-legales" element={<MentionsLegales />} />
+            <Route path="/cgv" element={<CGV />} />
             
             {/* Route 404 (doit être à la fin) */}
             <Route path="*" element={<NotFound />} />
