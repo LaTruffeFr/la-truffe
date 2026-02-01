@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, credits, isAdmin, refreshCredits } = useAuth();
   const { toast } = useToast();
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
@@ -47,21 +47,50 @@ const Landing = () => {
       return;
     }
 
+    // Vérifier les crédits (sauf pour les admins)
+    if (!isAdmin && credits <= 0) {
+      toast({
+        title: "Crédits insuffisants",
+        description: "Vous n'avez plus de crédits. Achetez un pack pour continuer.",
+        variant: "destructive",
+      });
+      navigate('/pricing');
+      return;
+    }
+
     // Si connecté, créer la demande
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('reports').insert({
+      // Créer le rapport
+      const { error: reportError } = await supabase.from('reports').insert({
         user_id: user.id,
         marque: marque.trim(),
         modele: modele.trim(),
         status: 'pending',
       });
 
-      if (error) throw error;
+      if (reportError) throw reportError;
+
+      // Déduire 1 crédit (sauf pour les admins)
+      if (!isAdmin) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: credits - 1 })
+          .eq('user_id', user.id);
+
+        if (creditError) {
+          console.error('Error deducting credit:', creditError);
+        } else {
+          // Rafraîchir les crédits dans le contexte
+          await refreshCredits();
+        }
+      }
 
       toast({
         title: "Demande envoyée !",
-        description: "Votre demande d'audit a été soumise. Vous recevrez votre rapport sous 24h.",
+        description: isAdmin 
+          ? "Votre demande d'audit a été soumise."
+          : `Votre demande d'audit a été soumise. Il vous reste ${credits - 1} crédit(s).`,
       });
 
       // Rediriger vers le dashboard client
