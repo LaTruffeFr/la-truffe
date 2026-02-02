@@ -10,7 +10,6 @@ import {
   LineChart, Zap, Star, User, Loader2
 } from 'lucide-react';
 import { Footer, MobileNav } from '@/components/landing';
-import logoLatruffe from '@/assets/logo-latruffe.png';
 import imgValeur from '@/assets/analyse-valeur.jpg'; 
 import imgDecote from '@/assets/analyse-decote.jpg';
 
@@ -112,9 +111,8 @@ const Landing = () => {
       
       <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50 transition-all duration-200">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src={logoLatruffe} alt="Logo La Truffe" className="h-10 w-10 rounded-lg object-cover shadow-sm" />
-            <span className="text-xl font-bold text-slate-900 tracking-tight">La Truffe</span>
+          <Link to="/" className="font-logo font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
+            La Truffe
           </Link>
           
           <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">

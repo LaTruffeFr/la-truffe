@@ -38,7 +38,7 @@ const ClientDashboard = () => {
   
   const { user, signOut, isAdmin, credits, userEmail, refreshCredits } = useAuth();
   
-  const displayEmail = userEmail || user?.email || "client@latruffe.com";
+  const displayEmail = userEmail || user?.email || "";
   const initials = displayEmail.substring(0, 2).toUpperCase();
 
   const [marque, setMarque] = useState('');
