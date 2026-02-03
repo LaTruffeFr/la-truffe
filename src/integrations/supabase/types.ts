@@ -108,6 +108,30 @@ export type Database = {
         }
         Relationships: []
       }
+      processed_payments: {
+        Row: {
+          credits: number
+          id: string
+          processed_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          credits: number
+          id?: string
+          processed_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          credits?: number
+          id?: string
+          processed_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

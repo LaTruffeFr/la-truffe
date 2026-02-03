@@ -31,6 +31,41 @@ serve(async (req) => {
       throw new Error("Session ID is required");
     }
 
+    // Create Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // SECURITY FIX: Check if this payment was already processed (replay attack prevention)
+    const { data: existingPayment, error: checkError } = await supabaseAdmin
+      .from("processed_payments")
+      .select("session_id, credits, processed_at")
+      .eq("session_id", sessionId)
+      .maybeSingle();
+
+    if (checkError) {
+      logStep("Error checking processed payments", { error: checkError.message });
+      // Continue processing - table might not exist yet in some edge cases
+    }
+
+    if (existingPayment) {
+      logStep("Payment already processed", { 
+        sessionId, 
+        credits: existingPayment.credits,
+        processedAt: existingPayment.processed_at 
+      });
+      return new Response(JSON.stringify({ 
+        success: true, 
+        credits: existingPayment.credits,
+        alreadyProcessed: true,
+        message: "Ce paiement a déjà été traité."
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -57,12 +92,6 @@ serve(async (req) => {
 
     logStep("Payment verified", { credits, userId, customerEmail });
 
-    // Create Supabase admin client to update credits
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
     let updatedCredits = credits;
     let userIdToUpdate = userId;
 
@@ -80,6 +109,16 @@ serve(async (req) => {
         logStep("Found user by email", { userIdToUpdate, currentCredits: users[0].credits });
       } else {
         logStep("No user found for guest email", { customerEmail });
+        
+        // Record the payment even for guests to prevent replay
+        await supabaseAdmin
+          .from("processed_payments")
+          .insert({ 
+            session_id: sessionId, 
+            user_id: "00000000-0000-0000-0000-000000000000", // placeholder for guest
+            credits 
+          });
+        
         return new Response(JSON.stringify({ 
           success: true, 
           credits,
@@ -113,6 +152,21 @@ serve(async (req) => {
       if (updateError) {
         logStep("Error updating credits", { error: updateError.message });
         throw new Error(`Failed to update credits: ${updateError.message}`);
+      }
+
+      // SECURITY FIX: Record this payment as processed to prevent replay attacks
+      const { error: insertError } = await supabaseAdmin
+        .from("processed_payments")
+        .insert({ 
+          session_id: sessionId, 
+          user_id: userIdToUpdate, 
+          credits 
+        });
+
+      if (insertError) {
+        logStep("Error recording processed payment", { error: insertError.message });
+        // Don't fail the request - credits were already added
+        // But log it for monitoring
       }
 
       logStep("Credits updated successfully", { 
