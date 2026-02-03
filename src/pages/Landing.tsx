@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { 
   LogIn, Target, TrendingDown, 
   BarChart3, CheckCircle2, Euro, ChevronDown, Award, 
-  LineChart, Zap, Star, User, Loader2
+  LineChart, Zap, Star, User, Loader2, Search, Shield, Users
 } from 'lucide-react';
 import { Footer, MobileNav } from '@/components/landing';
 import imgValeur from '@/assets/analyse-valeur.jpg'; 
@@ -108,6 +109,15 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans text-slate-900">
+      <Helmet>
+        <title>La Truffe | Cote Auto Gratuite & Analyse d'Annonces Occasion</title>
+        <meta name="description" content="Analysez n'importe quelle annonce auto (LeBonCoin, LaCentrale). La Truffe détecte les arnaques, calcule la vraie cote du marché et vérifie la fiabilité pour tous les véhicules." />
+        <meta name="keywords" content="cote auto gratuite, argus occasion, vérifier annonce voiture, arnaque leboncoin voiture, historique véhicule gratuit, estimation prix voiture" />
+        <meta property="og:title" content="La Truffe | Cote Auto Gratuite & Analyse d'Annonces Occasion" />
+        <meta property="og:description" content="Analysez n'importe quelle annonce auto (LeBonCoin, LaCentrale). La Truffe détecte les arnaques, calcule la vraie cote du marché et vérifie la fiabilité pour tous les véhicules." />
+        <meta name="twitter:title" content="La Truffe | Cote Auto Gratuite & Analyse d'Annonces Occasion" />
+        <meta name="twitter:description" content="Analysez n'importe quelle annonce auto (LeBonCoin, LaCentrale). La Truffe détecte les arnaques, calcule la vraie cote du marché et vérifie la fiabilité pour tous les véhicules." />
+      </Helmet>
       
       <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50 transition-all duration-200">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -605,6 +615,46 @@ const Landing = () => {
             <Button size="lg" variant="outline" className="text-slate-900 border-white hover:bg-white/10 hover:text-white h-14 px-8 text-lg w-full sm:w-auto" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               Lancer une analyse
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* --- SEO CONTENT SECTION --- */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-10">
+            {/* Col 1 */}
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                <Search className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Une Cote Auto plus précise que l'Argus</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Oubliez les grilles théoriques ! La Truffe scanne le marché réel en temps réel : Clio, Golf, 308, SUV premium... Nous analysons des milliers d'annonces actives pour vous donner le prix auquel les voitures se vendent vraiment, pas celui des catalogues.
+              </p>
+            </div>
+
+            {/* Col 2 */}
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center">
+                <Shield className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Détectez les arnaques sur LeBonCoin</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Un prix trop beau pour être vrai ? Notre IA analyse les signaux d'alerte : prix anormalement bas, descriptions suspectes, incohérences kilométrage/année. Protégez-vous des escroqueries avant même de contacter le vendeur.
+              </p>
+            </div>
+
+            {/* Col 3 */}
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Pour l'acheteur et le vendeur</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Acheteur ? Négociez avec des données factuelles. Vendeur ? Prouvez la valeur de votre véhicule avec un rapport de marché professionnel. La Truffe est l'outil indispensable pour toute transaction automobile transparente.
+              </p>
+            </div>
           </div>
         </div>
       </section>
