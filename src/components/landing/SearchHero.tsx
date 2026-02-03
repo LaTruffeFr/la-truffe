@@ -16,14 +16,13 @@ export function SearchHero() {
       <div className="container mx-auto px-4 text-center">
         {/* Main heading */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight text-balance animate-fade-in-up">
-          Ne surpayez plus votre<br />
-          <span className="text-primary">prochaine voiture.</span>
+          Achetez votre voiture d'occasion<br />
+          <span className="text-primary">au vrai prix du marché</span>
         </h1>
         
         {/* Subtitle */}
         <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-fade-in-up animate-delay-100">
-          Le 1<sup>er</sup> rapport d'audit de prix basé sur l'IA.<br className="hidden md:block" />
-          Vérifiez la valeur réelle du marché en 2 secondes.
+          Collez le lien d'une annonce (LeBonCoin, LaCentrale). Notre algorithme analyse 100% du marché pour vous dire si c'est une bonne affaire ou une arnaque.
         </p>
         
         {/* Search bar */}
