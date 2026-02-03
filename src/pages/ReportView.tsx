@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, Download, Share2, CheckCircle2, 
   AlertTriangle, TrendingDown, Calendar, Gauge, Fuel, 
-  Euro, ShieldCheck, Loader2, Search, MapPin, Trophy, ExternalLink, ListFilter
+  Euro, ShieldCheck, Loader2, Search, MapPin, Trophy, ListFilter, ExternalLink
 } from "lucide-react";
 import {
   Table,
@@ -26,29 +26,44 @@ import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 import { Footer } from '@/components/landing';
 import { generatePDF } from '@/lib/pdfGenerator';
+import { ExpertTag } from '@/lib/vehicleAnalysis'; // Assurez-vous d'importer le type si besoin
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
   return Number(value).toLocaleString('fr-FR');
 };
 
-function calculateTrendLine(data: any[]): { slope: number; intercept: number } {
-  if (!data || data.length < 2) return { slope: 0, intercept: 0 };
-  const n = data.length;
+// --- COULEURS DES BADGES EXPERTS ---
+const getTagStyle = (tag: string) => {
+  switch (tag) {
+    case 'FRAUDE': return 'bg-red-600 text-white border-red-600 animate-pulse';
+    case 'FLIP': return 'bg-emerald-500 text-white border-emerald-500';
+    case 'COLLECTION': return 'bg-purple-600 text-white border-purple-600';
+    case 'TUNING': return 'bg-orange-500 text-white border-orange-500';
+    case 'IMPORT': return 'bg-blue-500 text-white border-blue-500';
+    case 'LIMPIDE': return 'bg-teal-500 text-white border-teal-500';
+    case 'DANGER': return 'bg-black text-white border-black';
+    default: return 'bg-slate-200 text-slate-700';
+  }
+};
+
+// --- CALCUL LOGARITHMIQUE POUR LE GRAPHIQUE ---
+function calculateLogTrendLine(data: any[]): { type: string; a: number; b: number } {
+  if (!data || data.length < 2) return { type: 'log', a: 0, b: 0 };
   let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+  let count = 0;
   data.forEach(v => {
-    const km = v.kilometrage || 0;
-    const px = v.prix || 0;
-    sumX += km;
-    sumY += px;
-    sumXY += km * px;
-    sumXX += km * km;
+    if (v.kilometrage > 100 && v.prix > 1000) {
+      const x = Math.log(v.kilometrage);
+      const y = v.prix;
+      sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
+      count++;
+    }
   });
-  const denominator = n * sumXX - sumX * sumX;
-  if (denominator === 0) return { slope: 0, intercept: sumY / n };
-  const slope = (n * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / n;
-  return { slope, intercept };
+  if (count < 2) return { type: 'log', a: 0, b: 0 };
+  const slope = (count * sumXY - sumX * sumY) / (count * sumXX - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / count;
+  return { type: 'log', a: intercept, b: slope };
 }
 
 interface VehicleData {
@@ -67,6 +82,7 @@ interface VehicleData {
   dealScore?: number;
   score_confiance?: number;
   gain_potentiel?: number;
+  tags?: string[]; // Les tags experts sont ici
 }
 
 interface Report {
@@ -86,10 +102,6 @@ interface Report {
   negotiation_points: any[] | null;
   vehicles_data: VehicleData[] | null;
   total_vehicules: number | null;
-  economie_moyenne: number | null;
-  opportunites_count: number | null;
-  carburant: string | null;
-  transmission: string | null;
 }
 
 const ReportView = () => {
@@ -103,7 +115,7 @@ const ReportView = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleData | null>(null);
   
-  // NOUVEAU : État pour afficher la liste complète
+  // État pour afficher la liste complète
   const [showAllVehicles, setShowAllVehicles] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -119,7 +131,6 @@ const ReportView = () => {
     fetchReport();
   }, [id, navigate]);
 
-  // Scroll automatique quand on affiche la liste
   useEffect(() => {
     if (showAllVehicles && tableRef.current) {
       tableRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -127,7 +138,7 @@ const ReportView = () => {
   }, [showAllVehicles]);
 
   const vehiclesData = useMemo(() => report?.vehicles_data as VehicleData[] || [], [report]);
-  const trendLine = useMemo(() => calculateTrendLine(vehiclesData), [vehiclesData]);
+  const trendLine = useMemo(() => calculateLogTrendLine(vehiclesData), [vehiclesData]);
   const vehiculeCible = useMemo(() => vehiclesData.length > 0 ? [...vehiclesData].sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0))[0] : null, [vehiclesData]);
   const topOpportunities = useMemo(() => vehiclesData.length > 0 ? [...vehiclesData].sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0)).slice(0, 5) : [], [vehiclesData]);
 
@@ -157,18 +168,12 @@ const ReportView = () => {
     if (!report) return;
     setIsGeneratingPdf(true);
     toast({ title: "Génération...", description: "Création du rapport optimisé." });
-    
     await new Promise(r => setTimeout(r, 500));
-
     const fileName = `Rapport_LaTruffe_${report.marque}_${report.modele}`.replace(/\s+/g, '_');
     const success = await generatePDF('report-content', fileName);
-
     setIsGeneratingPdf(false);
-    if (success) {
-        toast({ title: "Succès !", description: "Le PDF a été généré.", className: "bg-green-600 text-white border-0" });
-    } else {
-        toast({ title: "Erreur", description: "Échec de la génération.", variant: "destructive" });
-    }
+    if (success) toast({ title: "Succès !", description: "Le PDF a été généré.", className: "bg-green-600 text-white border-0" });
+    else toast({ title: "Erreur", description: "Échec de la génération.", variant: "destructive" });
   };
 
   if (loading || authLoading) return <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="text-slate-500 font-medium">Chargement...</p></div>;
@@ -186,8 +191,7 @@ const ReportView = () => {
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/client-dashboard')} className="h-9 px-3"><ArrowLeft className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Retour</span></Button>
             <Button size="sm" onClick={handleDownload} disabled={isGeneratingPdf} className="hidden sm:flex h-9 bg-slate-900 hover:bg-slate-800 text-white">
-              {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />} 
-              {isGeneratingPdf ? "..." : "Télécharger PDF"}
+              {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />} {isGeneratingPdf ? "..." : "Télécharger PDF"}
             </Button>
           </div>
         </div>
@@ -204,7 +208,6 @@ const ReportView = () => {
               <div className="absolute top-3 right-3"><Badge className={`${stats.isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1 shadow-md border-0`}>{stats.isGoodDeal ? 'Excellent Deal' : 'Prix Marché'}</Badge></div>
             </div>
           </div>
-
           <div className="w-full md:w-2/3 flex flex-col justify-between">
             <div>
               <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2">
@@ -220,9 +223,7 @@ const ReportView = () => {
                   <div className="text-sm text-slate-500">Meilleur prix trouvé</div>
                 </div>
               </div>
-
               <Separator className="my-4 hidden md:block" />
-
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0"><Gauge className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Kilométrage</p><p className="font-bold text-slate-900 truncate">{safeNum(vehiculeCible?.kilometrage)} km</p></div></div>
                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-orange-50 text-orange-600 rounded-lg shrink-0"><Fuel className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Carburant</p><p className="font-bold text-slate-900 capitalize truncate">{vehiculeCible?.carburant || 'N/A'}</p></div></div>
@@ -230,7 +231,6 @@ const ReportView = () => {
                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-green-50 text-green-600 rounded-lg shrink-0"><ShieldCheck className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Score</p><p className="font-bold text-slate-900 truncate">{stats.score}/100</p></div></div>
               </div>
             </div>
-
             <div className="mt-6 flex gap-3 print:hidden">
               <Button className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-base md:text-lg" onClick={() => { const link = vehiculeCible?.lien || report.lien_annonce; if (link) window.open(link, '_blank'); }}>Voir l'annonce</Button>
               <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300"><Share2 className="w-5 h-5 text-slate-600" /></Button>
@@ -275,7 +275,7 @@ const ReportView = () => {
           </Card>
         </div>
 
-        {/* --- SECTION 3 : GRAPHIQUE --- */}
+        {/* --- SECTION 3 : GRAPHIQUE SNIPER (LOG) --- */}
         {vehiclesData.length > 0 && (
           <div className="mb-8 pdf-section">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2"><TrendingDown className="w-6 h-6 text-primary" /> Analyse du Marché</h2>
@@ -304,9 +304,7 @@ const ReportView = () => {
                       onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
                     />
                     <div className="absolute top-2 left-2">
-                      <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">
-                        #{idx + 1}
-                      </Badge>
+                      <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">#{idx + 1}</Badge>
                     </div>
                   </div>
                   <CardContent className="p-4">
@@ -322,43 +320,30 @@ const ReportView = () => {
                         </Badge>
                       </div>
                     </div>
-                    <Button 
-                      variant="default" 
-                      className="w-full bg-slate-900 hover:bg-slate-800"
-                      onClick={() => window.open(deal.lien, '_blank')}
-                    >
-                      Voir l'annonce
-                    </Button>
+                    <Button variant="default" className="w-full bg-slate-900 hover:bg-slate-800" onClick={() => window.open(deal.lien, '_blank')}>Voir l'annonce</Button>
                   </CardContent>
                 </Card>
               ))}
               
-              {/* Carte "Voir plus" - NOUVELLE VERSION : DÉCLENCHEUR LISTE COMPLÈTE */}
+              {/* CARTE DÉCLENCHEUR - VERSION XXL */}
               <Card 
-                className="flex flex-col items-center justify-center p-6 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-lg border-0 h-full min-h-[350px]"
+                className="flex flex-col items-center justify-center p-10 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-2xl border-0 h-full min-h-[450px]"
                 onClick={() => setShowAllVehicles(true)}
               >
-                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform border border-white/10">
-                  <ListFilter className="w-8 h-8 text-white" />
+                <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform border-2 border-white/20 shadow-inner">
+                  <ListFilter className="w-12 h-12 text-white" />
                 </div>
-                
-                <h3 className="font-bold text-2xl text-center mb-2">
-                  Voir tout le marché
-                </h3>
-                
-                <p className="text-slate-300 text-center mb-8 max-w-[240px] leading-relaxed">
-                  Ce rapport contient {stats.totalVehicules} annonces au total. Cliquez ici pour afficher la liste complète.
+                <h3 className="font-extrabold text-4xl text-center mb-4 tracking-tight">Voir tout le marché</h3>
+                <p className="text-slate-300 text-center text-lg mb-10 max-w-xs leading-relaxed font-medium">
+                  Ce rapport contient <span className="text-white font-bold">{stats.totalVehicules} annonces</span> au total. Cliquez pour afficher la liste complète.
                 </p>
-                
-                <Button variant="secondary" className="w-full max-w-[200px] font-bold shadow-lg pointer-events-none">
-                  Afficher la liste complète
-                </Button>
+                <Button variant="secondary" size="lg" className="w-full max-w-[280px] h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform pointer-events-none">Afficher la liste complète</Button>
               </Card>
             </div>
           </div>
         )}
 
-        {/* --- NOUVELLE SECTION : LISTE COMPLÈTE (VERSION LARGE) --- */}
+        {/* --- NOUVELLE SECTION : LISTE COMPLÈTE (VERSION GALERIE + TAGS) --- */}
         {showAllVehicles && (
           <div ref={tableRef} className="mb-12 animate-in fade-in slide-in-from-bottom-10 duration-500 scroll-mt-24">
             <div className="flex items-center justify-between mb-6">
@@ -371,52 +356,97 @@ const ReportView = () => {
             <Card className="overflow-hidden border-slate-200 shadow-xl bg-white">
               <div className="max-h-[800px] overflow-auto">
                 <Table>
+                  <TableHeader className="bg-slate-100 sticky top-0 z-10 h-14">
+                    <TableRow>
+                      <TableHead className="w-[180px] pl-6 font-bold text-slate-700">Photo</TableHead>
+                      <TableHead className="font-bold text-slate-700">Véhicule</TableHead>
+                      <TableHead className="font-bold text-slate-700 text-lg">Prix</TableHead>
+                      <TableHead className="font-bold text-slate-700">Kilométrage</TableHead>
+                      <TableHead className="font-bold text-slate-700">Année</TableHead>
+                      <TableHead className="font-bold text-slate-700">Score</TableHead>
+                      <TableHead className="text-right pr-6 font-bold text-slate-700">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
-                    {vehiclesData.sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0)).map((vehicle, i) => (
-                      <TableRow key={i} className="hover:bg-blue-50/50 transition-colors border-b border-slate-100">
-                        {/* 1. PHOTO XXL (Format 3:2) */}
-                        <TableCell className="pl-6 py-6 w-[220px]">
-                          <div className="w-48 h-32 bg-slate-200 rounded-lg overflow-hidden shadow-md border border-slate-200">
-                            <img 
-                              src={vehicle.image || "/placeholder.svg"} 
-                              className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" 
-                              alt="v" 
-                              onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
-                            />
-                          </div>
-                        </TableCell>
-                        
-                        {/* INFOS */}
-                        <TableCell className="py-6 align-middle">
-                          <div className="font-bold text-xl text-slate-900 line-clamp-1 mb-2">{vehicle.titre}</div>
-                          <div className="flex items-center gap-3 text-sm text-slate-500">
-                            <Badge variant="outline" className="font-normal bg-slate-50">{vehicle.annee}</Badge>
-                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {vehicle.localisation || "France"}</span>
-                          </div>
-                        </TableCell>
-                        
-                        {/* 2. PRIX (Aligné et sans retour à la ligne) */}
-                        <TableCell className="font-extrabold text-2xl text-primary py-6 align-middle whitespace-nowrap">
-                          {safeNum(vehicle.prix)} €
-                        </TableCell>
-                        
-                        <TableCell className="text-lg font-medium text-slate-700 py-6 align-middle whitespace-nowrap">
-                          {safeNum(vehicle.kilometrage)} km
-                        </TableCell>
-                        
-                        <TableCell className="py-6 align-middle">
-                          <Badge className={`text-sm px-3 py-1 ${vehicle.dealScore && vehicle.dealScore > 75 ? "bg-green-600 hover:bg-green-700" : "bg-slate-500 hover:bg-slate-600"}`}>
-                            {vehicle.dealScore || 50}/100
-                          </Badge>
-                        </TableCell>
-                        
-                        <TableCell className="text-right pr-6 py-6 align-middle">
-                          <Button size="lg" className="bg-slate-900 hover:bg-slate-800 font-semibold shadow-sm h-12 px-6" onClick={() => window.open(vehicle.lien, '_blank')}>
-                            Voir l'annonce <ExternalLink className="ml-2 w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {vehiclesData.sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0)).map((vehicle, i) => {
+                      // Récupération des tags existants
+                      const tags = vehicle.tags || []; 
+                      const isSuspicious = tags.includes('FRAUDE') || tags.includes('DANGER') || (vehicle.dealScore || 0) >= 95;
+
+                      return (
+                        <TableRow key={i} className={`transition-colors border-b border-slate-100 ${isSuspicious ? 'bg-red-50/40 hover:bg-red-50/70' : 'hover:bg-blue-50/50'}`}>
+                          {/* 1. PHOTO XXL */}
+                          <TableCell className="pl-6 py-6 w-[220px]">
+                            <div className="w-48 h-32 bg-slate-200 rounded-lg overflow-hidden shadow-md border border-slate-200 relative group">
+                              <img 
+                                src={vehicle.image || "/placeholder.svg"} 
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                alt="v" 
+                                onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
+                              />
+                              {isSuspicious && (
+                                <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10 animate-pulse">
+                                  ⚠️ VÉRIFIER
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          
+                          {/* INFOS + BADGES */}
+                          <TableCell className="py-6 align-middle">
+                            <div className="flex flex-col gap-2">
+                              <div className="font-bold text-xl text-slate-900 line-clamp-1">{vehicle.titre}</div>
+                              <div className="flex items-center gap-3 text-sm text-slate-500 mb-1">
+                                <Badge variant="outline" className="font-normal bg-slate-50 text-slate-600 border-slate-200">{vehicle.annee}</Badge>
+                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {vehicle.localisation || "France"}</span>
+                              </div>
+                              {/* TAGS */}
+                              <div className="flex flex-wrap gap-2">
+                                {tags.map((tag, idx) => (
+                                  <Badge key={idx} className={`text-[10px] px-2 py-0.5 font-bold shadow-sm border ${getTagStyle(tag)}`}>
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
+                          
+                          {/* 3. PRIX */}
+                          <TableCell className="py-6 align-middle">
+                            <div className={`font-extrabold text-2xl whitespace-nowrap ${isSuspicious ? 'text-red-600' : 'text-primary'}`}>
+                              {safeNum(vehicle.prix)} €
+                            </div>
+                            {isSuspicious && <div className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Prix Suspect</div>}
+                            {tags.includes('FLIP') && <div className="text-xs text-emerald-600 font-bold mt-1">Gros potentiel</div>}
+                          </TableCell>
+                          
+                          <TableCell className="text-lg font-medium text-slate-700 py-6 align-middle whitespace-nowrap">
+                            {safeNum(vehicle.kilometrage)} km
+                          </TableCell>
+                          
+                          <TableCell className="text-base font-medium text-slate-700 py-6 align-middle">
+                            {vehicle.annee}
+                          </TableCell>
+                          
+                          <TableCell className="py-6 align-middle">
+                            <div className="flex flex-col items-center">
+                              <Badge className={`text-sm px-3 py-1 mb-1 ${vehicle.dealScore && vehicle.dealScore > 80 ? (isSuspicious ? "bg-red-600" : "bg-green-600") : "bg-slate-500"}`}>
+                                {vehicle.dealScore || 50}/100
+                              </Badge>
+                              {(tags.includes('COLLECTION') || tags.includes('FLIP')) && (
+                                <span className="text-xs font-bold text-yellow-500 flex items-center">⭐ Star</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell className="text-right pr-6 py-6 align-middle">
+                            <Button size="lg" className={`font-semibold shadow-sm h-12 px-6 ${isSuspicious ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-900 hover:bg-slate-800'}`} onClick={() => window.open(vehicle.lien, '_blank')}>
+                              {isSuspicious ? 'Inspecter' : 'Voir l\'annonce'} <ExternalLink className="ml-2 w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -457,9 +487,7 @@ const ReportView = () => {
         </div>
 
       </main>
-
       <Footer />
-
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
     </div>
   );

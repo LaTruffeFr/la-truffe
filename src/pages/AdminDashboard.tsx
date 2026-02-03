@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { VehicleWithScore } from '@/lib/csvParser';
@@ -17,7 +17,7 @@ import {
   Loader2, Crosshair, RotateCcw, Upload, SlidersHorizontal, 
   BarChart3, ShoppingBag, User, Settings, LogOut, Send,
   CheckCircle2, AlertTriangle, Gauge, Fuel, Euro, ShieldCheck, 
-  Calendar, MapPin, Search, Share2, Trophy
+  Calendar, MapPin, Search, Share2, Trophy, ListFilter, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,11 +30,49 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
   return Number(value).toLocaleString('fr-FR');
 };
+
+// --- NOUVELLE FONCTION LOGARITHMIQUE ---
+// Calcule : Prix = a + b * ln(km)
+function calculateLogTrendLine(data: any[]): { type: string; a: number; b: number } {
+  if (!data || data.length < 2) return { type: 'log', a: 0, b: 0 };
+
+  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+  let count = 0;
+
+  data.forEach(v => {
+    // On ignore les données aberrantes pour le calcul de la courbe (log(0) impossible)
+    if (v.kilometrage > 100 && v.prix > 1000) {
+      const x = Math.log(v.kilometrage); // Ln(Km)
+      const y = v.prix;
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumXX += x * x;
+      count++;
+    }
+  });
+
+  if (count < 2) return { type: 'log', a: 0, b: 0 };
+
+  // Régression linéaire sur le Log du kilométrage
+  const slope = (count * sumXY - sumX * sumY) / (count * sumXX - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / count;
+
+  return { type: 'log', a: intercept, b: slope };
+}
 
 export default function AdminDashboard() {
   const { signOut } = useAuth();
@@ -43,8 +81,8 @@ export default function AdminDashboard() {
   const {
     vehicles,
     filteredVehicles,
-    chartVehicles, // Contient les véhicules filtrés + scores
-    trendLine,
+    chartVehicles, 
+    // trendLine, // ON NE L'UTILISE PLUS ICI CAR ELLE EST LINÉAIRE
     filters,
     dataRanges,
     isLoading,
@@ -61,8 +99,12 @@ export default function AdminDashboard() {
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('scanner');
   const [clients, setClients] = useState<any[]>([]);
+  
+  // État pour la liste complète
+  const [showAllVehicles, setShowAllVehicles] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null);
 
-  // Charge les commandes en attente pour la modale de publication
+  // Chargement des commandes clients en attente
   useEffect(() => {
     const fetchClients = async () => {
       const { data, error } = await supabase.from('reports').select('id, marque, modele, status').eq('status', 'pending');
@@ -72,47 +114,43 @@ export default function AdminDashboard() {
     fetchClients();
   }, []);
 
+  // Scroll automatique vers le tableau quand on clique sur "Voir tout"
+  useEffect(() => {
+    if (showAllVehicles && tableRef.current) {
+      tableRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showAllVehicles]);
+
   const handleImport = useCallback((file: File, marque: string, modele: string) => {
     uploadCSV(file, marque, modele);
   }, [uploadCSV]);
 
   const handleSignOut = async () => { await signOut(); navigate('/'); };
 
-  // --- CALCULS (Miroir exact du Client) ---
+  // --- CALCULS & KPI ---
   
-  // 1. Meilleur Deal (Cible)
+  // 1. CALCUL DE LA COURBE LOGARITHMIQUE (CORRECTIF)
+  const trendLine = useMemo(() => calculateLogTrendLine(chartVehicles), [chartVehicles]);
+
   const bestDeal = useMemo(() => {
     if (chartVehicles.length === 0) return null;
     return [...chartVehicles].sort((a, b) => b.dealScore - a.dealScore)[0];
   }, [chartVehicles]);
 
-  // 2. Top 5 Opportunités
   const topOpportunities = useMemo(() => {
     if (chartVehicles.length === 0) return [];
-    return [...chartVehicles]
-      .sort((a, b) => b.dealScore - a.dealScore)
-      .slice(0, 5);
+    return [...chartVehicles].sort((a, b) => b.dealScore - a.dealScore).slice(0, 5);
   }, [chartVehicles]);
 
-  // 3. Stats Globales
   const stats = useMemo(() => {
     const prixMarche = kpis.avgPrice;
     const prixCible = bestDeal ? bestDeal.prix : prixMarche;
     const economy = prixMarche - prixCible;
     const percentEconomy = prixMarche > 0 ? Math.round((economy / prixMarche) * 100) : 0;
     const score = bestDeal ? bestDeal.dealScore : 50;
-    return { 
-      prixMarche, 
-      prixCible, 
-      economy, 
-      percentEconomy, 
-      score, 
-      isGoodDeal: economy > 0, 
-      totalVehicules: chartVehicles.length 
-    };
+    return { prixMarche, prixCible, economy, percentEconomy, score, isGoodDeal: economy > 0, totalVehicules: chartVehicles.length };
   }, [kpis, bestDeal, chartVehicles]);
 
-  // 4. Prévisualisation Avis Expert
   const expertOpinionPreview = useMemo(() => {
     if (!vehicleInfo || !bestDeal) return "En attente de données...";
     let avis = `La ${vehicleInfo.marque} ${vehicleInfo.modele} (${bestDeal.annee}) est un modèle actif sur le marché avec ${stats.totalVehicules} annonces analysées. `;
@@ -158,7 +196,7 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* TABS */}
+      {/* TABS PRINCIPAUX */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <div className="bg-white border-b border-gray-200 px-6 print:hidden">
           <TabsList className="h-14 bg-transparent gap-6">
@@ -185,7 +223,7 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <>
-              {/* --- BARRE D'ACTIONS ADMIN --- */}
+              {/* BARRE D'ACTIONS ADMIN (Filtres, Reset, Publish) */}
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm sticky top-20 z-40 transition-all print:hidden">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
@@ -198,7 +236,6 @@ export default function AdminDashboard() {
                       <SlidersHorizontal className="w-4 h-4 mr-2" /> Filtres
                     </Button>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={clearData} className="text-slate-500 hover:text-red-600">
                       <RotateCcw className="w-4 h-4 mr-2" /> Reset
@@ -206,13 +243,11 @@ export default function AdminDashboard() {
                     <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)}>
                       <Upload className="w-4 h-4 mr-2" /> Nouveau CSV
                     </Button>
-                    {/* BOUTON DE PUBLICATION */}
                     <Button onClick={() => setIsPublishModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-100">
                       <Send className="w-4 h-4 mr-2" /> PUBLIER RAPPORT
                     </Button>
                   </div>
                 </div>
-
                 {isFiltersOpen && (
                   <div className="w-full mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2">
                     <div className="space-y-4">
@@ -384,6 +419,7 @@ export default function AdminDashboard() {
                 </h2>
                 <Card className="shadow-lg border-slate-200 overflow-hidden h-[500px]">
                   <CardContent className="p-4 h-full">
+                    {/* LE VOICI : SniperChart avec la trendLine locale */}
                     <SniperChart 
                       data={chartVehicles as any} 
                       trendLine={trendLine}
@@ -396,61 +432,161 @@ export default function AdminDashboard() {
                 </Card>
               </div>
 
-              {/* 4. TOP 5 OPPORTUNITÉS (Nouvelle version : Cartes) */}
-              {topOpportunities.length > 0 && (
-                <div className="mb-12">
-                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                    <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Alternatives
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {topOpportunities.map((deal, idx) => (
-                      <Card key={idx} className="overflow-hidden hover:shadow-lg transition-shadow border-slate-200 group">
-                        <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-                          <img 
-                            src={deal.image || "/placeholder.svg"} 
-                            alt={deal.titre}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`; }}
-                          />
-                          <div className="absolute top-2 left-2">
-                            <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">
-                              #{idx + 1}
+              {/* 4. TOP 5 OPPORTUNITÉS + CARTE XXL */}
+              <div className="mb-12">
+                <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                  <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Opportunités
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {topOpportunities.map((deal, idx) => (
+                    <Card key={idx} className="overflow-hidden hover:shadow-lg transition-shadow border-slate-200 group">
+                      <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
+                        <img 
+                          src={deal.image || "/placeholder.svg"} 
+                          alt={deal.titre}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`; }}
+                        />
+                        <div className="absolute top-2 left-2">
+                          <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">
+                            #{idx + 1}
+                          </Badge>
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-bold text-slate-900 truncate mb-1">{deal.titre}</h3>
+                        <div className="flex justify-between items-end mb-3">
+                          <div>
+                            <p className="text-2xl font-bold text-primary">{safeNum(deal.prix)} €</p>
+                            <p className="text-xs text-slate-500">{safeNum(deal.kilometrage)} km • {deal.annee}</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
+                              {Math.round(100 - (deal.prix / (stats.prixMarche || 1) * 100))}% sous la cote
                             </Badge>
                           </div>
                         </div>
-                        <CardContent className="p-4">
-                          <h3 className="font-bold text-slate-900 truncate mb-1">{deal.titre}</h3>
-                          <div className="flex justify-between items-end mb-3">
-                            <div>
-                              <p className="text-2xl font-bold text-primary">{safeNum(deal.prix)} €</p>
-                              <p className="text-xs text-slate-500">{safeNum(deal.kilometrage)} km • {deal.annee}</p>
-                            </div>
-                            <div className="text-right">
-                              <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
-                                {Math.round(100 - (deal.prix / (stats.prixMarche || 1) * 100))}% sous la cote
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button 
-                            variant="default" 
-                            className="w-full bg-slate-900 hover:bg-slate-800"
-                            onClick={() => window.open(deal.lien, '_blank')}
-                          >
-                            Voir l'annonce
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    
-                    {/* Carte "Voir plus" */}
-                    <Card className="flex flex-col items-center justify-center p-6 border-dashed border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group" onClick={() => setIsFiltersOpen(true)}>
-                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                        <Search className="w-6 h-6 text-primary" />
-                      </div>
-                      <h3 className="font-bold text-slate-900">Voir les {filteredVehicles.length - 5} autres</h3>
-                      <p className="text-sm text-slate-500 text-center mt-1">Utilisez les filtres pour affiner.</p>
+                        <Button 
+                          variant="default" 
+                          className="w-full bg-slate-900 hover:bg-slate-800"
+                          onClick={() => window.open(deal.lien, '_blank')}
+                        >
+                          Voir l'annonce
+                        </Button>
+                      </CardContent>
                     </Card>
-                  </div>
+                  ))}
+                  
+                  {/* CARTE DÉCLENCHEUR ADMIN - VERSION XXL */}
+                  <Card 
+                    className="flex flex-col items-center justify-center p-10 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-2xl border-0 h-full min-h-[450px]"
+                    onClick={() => setShowAllVehicles(true)}
+                  >
+                    <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform border-2 border-white/20 shadow-inner">
+                      <ListFilter className="w-12 h-12 text-white" />
+                    </div>
+                    
+                    <h3 className="font-extrabold text-4xl text-center mb-4 tracking-tight">
+                      Gérer le stock
+                    </h3>
+                    
+                    <p className="text-slate-300 text-center text-lg mb-10 max-w-xs leading-relaxed font-medium">
+                      Il y a <span className="text-white font-bold">{filteredVehicles.length} annonces</span> analysées. Cliquez pour ouvrir le tableau de gestion.
+                    </p>
+                    
+                    <Button variant="secondary" size="lg" className="w-full max-w-[280px] h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform pointer-events-none">
+                      Afficher tout
+                    </Button>
+                  </Card>
+                </div>
+              </div>
+
+              {/* TABLEAU LISTE COMPLÈTE (ADMIN XL + ALERTE ARNAQUE) */}
+              {showAllVehicles && (
+                <div ref={tableRef} className="mb-12 animate-in fade-in slide-in-from-bottom-10 duration-500 scroll-mt-24">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <Search className="w-8 h-8 text-primary" /> 
+                    Liste complète ({filteredVehicles.length} véhicules)
+                  </h3>
+                  <Card className="overflow-hidden border-slate-200 shadow-xl bg-white">
+                    <div className="max-h-[800px] overflow-auto">
+                      <Table>
+                        <TableHeader className="bg-slate-100 sticky top-0 z-10 h-14">
+                          <TableRow>
+                            <TableHead className="w-[180px] pl-6 font-bold text-slate-700">Photo</TableHead>
+                            <TableHead className="font-bold text-slate-700">Véhicule</TableHead>
+                            <TableHead className="font-bold text-slate-700 text-lg">Prix</TableHead>
+                            <TableHead className="font-bold text-slate-700">Km</TableHead>
+                            <TableHead className="font-bold text-slate-700">Année</TableHead>
+                            <TableHead className="font-bold text-slate-700">Score</TableHead>
+                            <TableHead className="text-right pr-6 font-bold text-slate-700">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {chartVehicles.sort((a, b) => b.dealScore - a.dealScore).map((vehicle, i) => {
+                            // DÉTECTION RISQUE ADMIN (Score trop haut = suspect)
+                            const isSuspicious = vehicle.dealScore >= 95;
+
+                            return (
+                              <TableRow key={i} className={`transition-colors border-b border-slate-100 cursor-pointer ${isSuspicious ? 'bg-red-50/30 hover:bg-red-50/60' : 'hover:bg-blue-50/50'}`} onClick={() => setSelectedVehicle(vehicle as any)}>
+                                {/* 1. PHOTO XXL (Format 3:2) */}
+                                <TableCell className="pl-6 py-6 w-[220px]">
+                                  <div className="w-48 h-32 bg-slate-200 rounded-lg overflow-hidden shadow-md border border-slate-200 relative">
+                                    <img 
+                                      src={vehicle.image || "/placeholder.svg"} 
+                                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" 
+                                      onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`; }} 
+                                    />
+                                    {isSuspicious && (
+                                      <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm animate-pulse">
+                                        RISQUE
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                
+                                <TableCell className="py-6 align-middle">
+                                  <div className="font-bold text-xl text-slate-900 line-clamp-1 mb-2">{vehicle.titre}</div>
+                                  <div className="flex items-center gap-3 text-sm text-slate-500">
+                                    <Badge variant="outline" className="font-normal bg-slate-50">{vehicle.annee}</Badge>
+                                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {vehicle.localisation || "France"}</span>
+                                  </div>
+                                </TableCell>
+                                
+                                {/* 2. PRIX & ALERTE */}
+                                <TableCell className="py-6 align-middle">
+                                  <div className={`font-extrabold text-2xl whitespace-nowrap ${isSuspicious ? 'text-red-600' : 'text-primary'}`}>
+                                    {safeNum(vehicle.prix)} €
+                                  </div>
+                                  {isSuspicious && (
+                                    <div className="flex items-center gap-1 text-xs text-red-600 font-bold mt-1">
+                                      <AlertTriangle className="w-3 h-3" /> Prix Suspect
+                                    </div>
+                                  )}
+                                </TableCell>
+                                
+                                <TableCell className="text-lg font-medium text-slate-700 py-6 align-middle whitespace-nowrap">
+                                  {safeNum(vehicle.kilometrage)} km
+                                </TableCell>
+                                
+                                <TableCell className="py-6 align-middle">
+                                  <Badge className={`text-sm px-3 py-1 ${vehicle.dealScore > 80 ? (isSuspicious ? "bg-red-600" : "bg-green-600") : "bg-slate-500"}`}>
+                                    {vehicle.dealScore}/100
+                                  </Badge>
+                                </TableCell>
+                                
+                                <TableCell className="text-right pr-6 py-6 align-middle">
+                                  <Button size="lg" variant="ghost" className={isSuspicious ? "text-red-600 hover:text-red-700 hover:bg-red-50" : ""} onClick={(e) => { e.stopPropagation(); window.open(vehicle.lien, '_blank'); }}>
+                                    <ExternalLink className="w-5 h-5" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Card>
                 </div>
               )}
 
@@ -508,7 +644,7 @@ export default function AdminDashboard() {
         isOpen={isPublishModalOpen}
         onClose={() => setIsPublishModalOpen(false)}
         vehicles={chartVehicles}
-        trendLine={trendLine}
+        trendLine={trendLine as any}
         kpis={kpis}
         vehicleInfo={vehicleInfo}
         clients={clients}

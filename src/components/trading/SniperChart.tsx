@@ -12,33 +12,31 @@ import {
   ComposedChart,
   Cell,
 } from 'recharts';
+import { AlertTriangle } from 'lucide-react';
 
 interface SniperChartProps {
   data: VehicleWithScore[];
   onVehicleClick: (vehicle: VehicleWithScore) => void;
-  trendLine: { slope: number; intercept: number };
+  trendLine: { type: string; a: number; b: number };
 }
 
 function formatPrice(value: number): string {
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(0)}k€`;
-  }
-  return `${value}€`;
+  return value >= 1000 ? `${(value / 1000).toFixed(0)}k€` : `${value}€`;
 }
 
 function formatKm(value: number): string {
   return `${(value / 1000).toFixed(0)}k`;
 }
 
-// Calculate expected price from trend line
-function getExpectedPrice(km: number, slope: number, intercept: number): number {
-  return slope * km + intercept;
+// Formule Logarithmique : Prix = a + b * ln(km)
+function getExpectedPrice(km: number, a: number, b: number): number {
+  if (km <= 0) return a; 
+  return a + b * Math.log(km);
 }
 
 export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProps) {
-  // Prepare chart data with trend line comparison + dynamic axis domains
   const { chartData, trendLineData, xDomain, yDomain } = useMemo(() => {
-    if (data.length === 0) return { chartData: [], trendLineData: [], xDomain: [0, 100000] as [number, number], yDomain: [0, 50000] as [number, number] };
+    if (data.length === 0) return { chartData: [], trendLineData: [], xDomain: [0, 100], yDomain: [0, 100] };
 
     const kms = data.map(v => v.kilometrage);
     const prices = data.map(v => v.prix);
@@ -48,41 +46,40 @@ export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProp
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
 
-    // Dynamic padding: 5% of range, minimum 2000km / 1000€
-    const kmRange = maxKm - minKm;
-    const priceRange = maxPrice - minPrice;
-    const kmPadding = Math.max(kmRange * 0.05, 2000);
-    const pricePadding = Math.max(priceRange * 0.05, 1000);
+    // Marges dynamiques pour que le graph respire
+    const kmPadding = (maxKm - minKm) * 0.1;
+    const pricePadding = (maxPrice - minPrice) * 0.1;
 
-    // Calculate domains with padding
-    const xDomain: [number, number] = [
-      Math.max(0, Math.floor((minKm - kmPadding) / 1000) * 1000),
-      Math.ceil((maxKm + kmPadding) / 1000) * 1000
-    ];
-    const yDomain: [number, number] = [
-      Math.max(0, Math.floor((minPrice - pricePadding) / 1000) * 1000),
-      Math.ceil((maxPrice + pricePadding) / 1000) * 1000
-    ];
+    const xDomain = [Math.max(0, minKm - kmPadding), maxKm + kmPadding];
+    const yDomain = [Math.max(0, minPrice - pricePadding), maxPrice + pricePadding];
 
-    // Generate trend line points spanning the full X domain
-    const trendLineData = [
-      { km: xDomain[0], trendPrice: getExpectedPrice(xDomain[0], trendLine.slope, trendLine.intercept) },
-      { km: xDomain[1], trendPrice: getExpectedPrice(xDomain[1], trendLine.slope, trendLine.intercept) },
-    ];
+    // --- GÉNÉRATION DE LA COURBE (20 points pour faire un arrondi propre) ---
+    const trendLineData = [];
+    const step = (xDomain[1] - xDomain[0]) / 20;
+    for (let x = xDomain[0]; x <= xDomain[1]; x += step) {
+      if (x > 100) { // On évite log(0)
+        trendLineData.push({ km: x, trendPrice: getExpectedPrice(x, trendLine.a, trendLine.b) });
+      }
+    }
 
-    // Mark each vehicle as good deal (below trend) or expensive (above trend)
+    // --- ANALYSE DES POINTS (Vert vs Noir) ---
     const chartData = data.map(v => {
-      const expectedPrice = getExpectedPrice(v.kilometrage, trendLine.slope, trendLine.intercept);
-      const isBelowTrend = v.prix < expectedPrice;
-      const deviation = expectedPrice - v.prix; // positive = good deal
+      const expected = getExpectedPrice(v.kilometrage, trendLine.a, trendLine.b);
+      const deviation = expected - v.prix;
+      const deviationPercent = (deviation / expected) * 100;
+      
+      // LOGIQUE DE CLASSIFICATION
+      const isGoodDeal = deviationPercent > 0; // Moins cher que la cote
+      const isSuspicious = deviationPercent > 40; // 40% moins cher = SUSPECT (Arnaque ?)
+
       return {
         ...v,
         km: v.kilometrage,
         price: v.prix,
-        expectedPrice,
-        isBelowTrend,
-        deviation,
-        deviationPercent: Math.round((deviation / expectedPrice) * 100),
+        expectedPrice: expected,
+        isGoodDeal,
+        isSuspicious,
+        deviationPercent: Math.round(deviationPercent),
       };
     });
 
@@ -92,128 +89,80 @@ export function SniperChart({ data, onVehicleClick, trendLine }: SniperChartProp
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
     const v = payload[0].payload;
-    if (!v.marque) return null; // It's a trend line point
-
-    const isBelowTrend = v.isBelowTrend;
+    if (!v.marque) return null; // C'est un point de la ligne courbe
 
     return (
-      <div className="bg-white p-5 shadow-lg rounded-2xl border border-gray-100 min-w-[240px]">
-        {/* Header with model info */}
-        <div className="mb-4">
-          <p className="font-bold text-gray-900 text-lg">{v.marque} {v.modele}</p>
-          <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-            <span className="font-medium">{v.annee}</span>
-            <span className="w-1 h-1 rounded-full bg-gray-300" />
-            <span>{v.kilometrage.toLocaleString('fr-FR')} km</span>
-          </div>
+      <div className="bg-white p-4 shadow-xl rounded-xl border border-slate-200 z-50 min-w-[220px]">
+        <p className="font-bold text-slate-900 mb-1">{v.titre}</p>
+        <div className="text-xs text-slate-500 mb-3 flex gap-2">
+          <span>{v.annee}</span> • <span>{v.kilometrage.toLocaleString()} km</span>
         </div>
         
-        {/* Price info */}
-        <div className="space-y-3 mb-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Prix affiché</span>
-            <span className="text-xl font-bold text-gray-900">
-              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v.prix)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Prix estimé</span>
-            <span className="text-sm font-medium text-gray-600">
-              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v.expectedPrice)}
-            </span>
-          </div>
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-slate-600 text-sm">Prix :</span>
+          <span className="font-bold text-lg">{v.prix.toLocaleString()} €</span>
         </div>
-        
-        {/* Deal indicator */}
-        <div className={`flex items-center justify-between p-3 rounded-xl ${isBelowTrend ? 'bg-green-50' : 'bg-red-50'}`}>
-          <span className="text-sm font-medium text-gray-700">{isBelowTrend ? 'Économie' : 'Surcoût'}</span>
-          <span className={`text-lg font-bold ${isBelowTrend ? 'text-green-600' : 'text-red-500'}`}>
-            {isBelowTrend ? '-' : '+'}{Math.abs(v.deviationPercent)}%
-          </span>
+        <div className="flex justify-between items-center text-xs text-slate-400 mb-3">
+          <span>Cote estimée :</span>
+          <span>{Math.round(v.expectedPrice).toLocaleString()} €</span>
         </div>
-        
-        {isBelowTrend && (
-          <p className="mt-3 text-xs text-green-600 font-medium text-center">✓ Cliquez pour voir l'opportunité</p>
+
+        {/* VERDICT DYNAMIQUE */}
+        {v.isSuspicious ? (
+          <div className="bg-black text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-bold text-sm animate-pulse">
+            <AlertTriangle className="w-4 h-4 text-yellow-400" /> DANGER (-{v.deviationPercent}%)
+          </div>
+        ) : v.isGoodDeal ? (
+          <div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg font-bold text-center text-sm">
+            ✅ Bonne Affaire (-{v.deviationPercent}%)
+          </div>
+        ) : (
+          <div className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-center text-sm">
+            Prix Standard (+{Math.abs(v.deviationPercent)}%)
+          </div>
         )}
       </div>
     );
   };
 
   return (
-    <div className="h-full w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart margin={{ top: 20, right: 30, bottom: 40, left: 60 }}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
-            strokeOpacity={0.3}
-          />
-          <XAxis
-            type="number"
-            dataKey="km"
-            domain={xDomain}
-            tickFormatter={formatKm}
-            tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-            axisLine={{ stroke: 'hsl(var(--border))' }}
-            tickLine={{ stroke: 'hsl(var(--border))' }}
-            label={{
-              value: 'Kilométrage',
-              position: 'bottom',
-              offset: 15,
-              style: { fontSize: 13, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }
-            }}
-          />
-          <YAxis
-            type="number"
-            dataKey="price"
-            domain={yDomain}
-            tickFormatter={formatPrice}
-            tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-            axisLine={{ stroke: 'hsl(var(--border))' }}
-            tickLine={{ stroke: 'hsl(var(--border))' }}
-            label={{
-              value: 'Prix',
-              angle: -90,
-              position: 'insideLeft',
-              offset: -10,
-              style: { fontSize: 13, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }
-            }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Line
-            data={trendLineData}
-            type="linear"
-            dataKey="trendPrice"
-            stroke="hsl(0, 85%, 55%)"
-            strokeWidth={3}
-            dot={false}
-            name="Tendance"
-            legendType="none"
-          />
+    <ResponsiveContainer width="100%" height="100%">
+      <ComposedChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+        <XAxis 
+          type="number" dataKey="km" domain={xDomain as any} 
+          tickFormatter={formatKm} stroke="#94a3b8" 
+          label={{ value: 'Kilométrage', position: 'bottom', offset: 0 }}
+        />
+        <YAxis 
+          type="number" dataKey="price" domain={yDomain as any} 
+          tickFormatter={formatPrice} stroke="#94a3b8" 
+          label={{ value: 'Prix', angle: -90, position: 'insideLeft' }}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#64748b', strokeWidth: 1 }} />
+        
+        {/* LA LIGNE DE TENDANCE COURBE */}
+        <Line 
+          data={trendLineData} type="monotone" dataKey="trendPrice" 
+          stroke="#ef4444" strokeWidth={3} dot={false} 
+          activeDot={false} 
+        />
 
-          {/* Scatter points */}
-          <Scatter
-            data={chartData}
-            shape="circle"
-            onClick={(data: any) => {
-              if (data?.payload && data.payload.isBelowTrend) {
-                onVehicleClick(data.payload);
-              }
-            }}
-            cursor="pointer"
-          >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={index}
-                fill={entry.isBelowTrend ? 'hsl(145, 100%, 45%)' : 'hsl(0, 70%, 55%)'}
-                fillOpacity={entry.isBelowTrend ? 1 : 0.5}
-                r={entry.isBelowTrend ? 7 : 4}
-                style={{ cursor: entry.isBelowTrend ? 'pointer' : 'default' }}
-              />
-            ))}
-          </Scatter>
-        </ComposedChart>
-      </ResponsiveContainer>
-    </div>
+        {/* LES POINTS (Logique Couleur : Noir = Danger, Vert = Bon, Gris = Moyen) */}
+        <Scatter data={chartData} onClick={(v) => v.isSuspicious ? null : onVehicleClick(v)}>
+          {chartData.map((entry, index) => (
+            <Cell 
+              key={index} 
+              fill={entry.isSuspicious ? '#000000' : entry.isGoodDeal ? '#22c55e' : '#cbd5e1'} 
+              stroke={entry.isSuspicious ? '#dc2626' : 'none'} // Bordure rouge si danger
+              strokeWidth={entry.isSuspicious ? 2 : 0}
+              fillOpacity={entry.isGoodDeal || entry.isSuspicious ? 1 : 0.6}
+              r={entry.isSuspicious ? 6 : entry.isGoodDeal ? 6 : 4}
+              className="cursor-pointer transition-all duration-300 hover:opacity-80"
+            />
+          ))}
+        </Scatter>
+      </ComposedChart>
+    </ResponsiveContainer>
   );
 }

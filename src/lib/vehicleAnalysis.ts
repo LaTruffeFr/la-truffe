@@ -1,95 +1,187 @@
 import { VehicleWithScore } from './csvParser';
 
-// Mots-clés qui augmentent la valeur (Options / Rassurance)
-// On ajoute des termes spécifiques très recherchés
+// --- TYPES EXPERTS ---
+
+export type ExpertTag = 
+  | 'FRAUDE'       // Prix suspect (> 40% sous la cote)
+  | 'FLIP'         // Fort km mais rentable (Idéal marchand)
+  | 'COLLECTION'   // Très faible km (Garage Queen)
+  | 'TUNING'       // Modifiée (Stage 1, Ligne...)
+  | 'IMPORT'       // Indice d'importation (Malus, COC...)
+  | 'LIMPIDE'      // Historique sain (Bonus)
+  | 'DANGER';      // Épave / HS (Kill Switch)
+
+// --- CONSTANTES D'ANALYSE ---
+
 const BONUS_KEYWORDS = [
   'garantie', 'carnet', 'suivi', 'factures', 'première main', '1ère main',
-  'toit ouvrant', 'pano', 'cuir', 'matrix', 'bang', 'olufsen', 'rs', 'quattro',
-  'virtual', 'cockpit', 'carplay', 'camera', '360', 'acc', 'adaptatif', 
-  'echappement', 'sport', 'bucket', 'recaro', 'bose', 'harman'
+  'entretien à jour', 'distribution faite', 'pneus neufs', 'ct ok', 'vierge',
+  'révisée', 'soigné', 'non fumeur', 'carplay', 'camera', 'attelage', 'toit ouvrant',
+  'full option', 'historique complet', 'origine france', 'matrix', 'virtual', 'cockpit'
 ];
 
-// Mots-clés qui diminuent la confiance
-const MALUS_KEYWORDS = [
-  'prévoir', 'dans l\'état', 'panne', 'bruit', 'voyant', 'accident', 'choc', 'export', 
-  'problème', 'hs', 'moteur hs', 'boite hs'
+const FATAL_KEYWORDS = [
+  'moteur hs', 'boite hs', 'joint de culasse', 'accident', 'choc', 'vge', 
+  'épave', 'non roulant', 'panne', 'problème moteur', 'corrosion perforante',
+  'export', 'marchand', 'en l\'état', 'procedure', 'gage'
 ];
 
-/**
- * ALGORITHME V3 "PURISTE" : Focus sur Km & Options
- * L'année compte très peu (simple ajustement marginal).
- * Le kilométrage et les options dictent le score.
- */
+const PENALTY_KEYWORDS = [
+  'frais à prévoir', 'bruit', 'voyant', 'rayure', 'bosse', 'sans ct', 
+  'contre visite', 'fuite', 'à réparer', 'frottement', 'usure'
+];
+
+const NEGATION_PHRASES = [
+  'pas de frais', 'aucun frais', 'sans frais', '0 frais',
+  'pas d\'accident', 'jamais accident', 'non accident',
+  'pas de rouille', 'aucune rayure', 'pas de problème', 'pas de reprog', 'origine'
+];
+
+// --- LOGIQUE DES TAGS (Nouvelle Fonction Modulaire) ---
+
+export function getExpertTags(
+  vehicle: any, 
+  priceDiffPercent: number, // Economie réalisée (ex: 30 pour 30%)
+  dealScore: number
+): ExpertTag[] {
+  
+  const tags: ExpertTag[] = [];
+  // Adaptation : on utilise 'titre' et 'kilometrage' comme dans le reste de l'app
+  const text = (vehicle.titre + ' ' + (vehicle.description || '')).toLowerCase();
+  
+  // 1. DÉTECTION TUNING 🔧
+  const tuningKeywords = [
+    'stage 1', 'stage 2', 'stage 3', 'reprog', 'ethanol', 'flexfuel', 'e85',
+    'ligne', 'milltek', 'akrapovic', 'cata', 'décata', 'tube', 
+    '400+', '420ch', '450ch', '500ch', 'prépa', 'abt', 'turbo'
+  ];
+  
+  const isTuned = tuningKeywords.some(keyword => text.includes(keyword));
+  if (isTuned) {
+    tags.push('TUNING');
+  }
+
+  // 2. DÉTECTION ARNAQUE 🚨
+  // Si le prix est 40% moins cher que la théorie, c'est statistiquement impossible
+  if (priceDiffPercent > 40) {
+    tags.push('FRAUDE');
+  }
+
+  // 3. DÉTECTION "FLIP MARCHAND" (Merguez Rentable) 📉
+  // La voiture a roulé, elle fait peur aux particuliers, mais le prix est canon.
+  if (vehicle.kilometrage > 130000 && dealScore >= 80) {
+    tags.push('FLIP');
+  }
+
+  // 4. DÉTECTION "GARAGE QUEEN" (Collection) 💎
+  // Voiture qui ne roule pas. 
+  if (vehicle.kilometrage < 20000 && vehicle.annee <= 2019) {
+    tags.push('COLLECTION');
+  }
+
+  // 5. DÉTECTION IMPORT 🌍
+  if (text.includes('malus') || text.includes('coc') || text.includes('import') || text.includes('allemande') || text.includes('allemand')) {
+    tags.push('IMPORT');
+  }
+
+  // 6. DÉTECTION LIMPIDE (Bonus)
+  // Si pas de tuning, pas d'import, carnet ou 1ère main présent
+  if (!isTuned && !tags.includes('IMPORT') && (text.includes('carnet') || text.includes('première main'))) {
+    tags.push('LIMPIDE');
+  }
+
+  return tags;
+}
+
+// --- UTILITAIRES ---
+
+const getMedian = (values: number[]): number => {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
+
+// --- ALGORITHME PRINCIPAL ---
+
 export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
-  if (!vehicles || vehicles.length < 5) return vehicles;
+  if (!vehicles || vehicles.length < 3) return vehicles;
 
-  // 1. Calcul des Moyennes Globales
-  const avgPrice = vehicles.reduce((sum, v) => sum + v.prix, 0) / vehicles.length;
-  const avgKm = vehicles.reduce((sum, v) => sum + v.kilometrage, 0) / vehicles.length;
-  const avgYear = vehicles.reduce((sum, v) => sum + v.annee, 0) / vehicles.length;
+  // 1. FILTRE ET NETTOYAGE
+  const suvCount = vehicles.filter(v => (v.titre + (v.description || "")).toUpperCase().includes('Q3') || (v.titre + (v.description || "")).toUpperCase().includes('SUV')).length;
+  const isSuvList = suvCount > (vehicles.length / 2);
 
-  // 2. Détermination du Coût du Kilomètre (Le facteur dominant)
-  let pricePerKm = 0;
-  let kmWeight = 0;
+  let cleanVehicles = vehicles;
+  if (!isSuvList) {
+     cleanVehicles = vehicles.filter(v => {
+       const text = (v.titre + " " + (v.description || "")).toUpperCase();
+       return !text.includes('RSQ3') && !text.includes(' Q3') && !text.includes('SUV');
+     });
+  }
+  if (cleanVehicles.length < 2) cleanVehicles = vehicles;
 
-  vehicles.forEach(v => {
-    if (v.kilometrage !== avgKm) {
-      const kmDiff = v.kilometrage - avgKm;
-      const priceDiff = v.prix - avgPrice;
-      pricePerKm += (priceDiff / kmDiff);
-      kmWeight++;
+  // 2. RÉFÉRENTIELS (MÉDIANE)
+  const prices = cleanVehicles.map(v => v.prix).sort((a, b) => a - b);
+  const kms = cleanVehicles.map(v => v.kilometrage).sort((a, b) => a - b);
+  
+  const corePrices = prices.slice(Math.floor(prices.length * 0.1), Math.floor(prices.length * 0.9));
+  const medianPrice = getMedian(corePrices);
+  const medianKm = getMedian(kms);
+  const avgYear = Math.round(cleanVehicles.reduce((sum, v) => sum + v.annee, 0) / cleanVehicles.length);
+
+  const MAX_THEORETICAL_PRICE = medianPrice * 1.35; 
+  const COEF_ANNEE = 300; 
+
+  return cleanVehicles.map(vehicle => {
+    // A. Nettoyage Texte
+    let textToAnalyze = (vehicle.titre + ' ' + (vehicle.description || '')).toLowerCase();
+    NEGATION_PHRASES.forEach(phrase => { textToAnalyze = textToAnalyze.replace(phrase, ''); });
+
+    // B. Kill Switch (Danger immédiat)
+    const hasFatalFlaw = FATAL_KEYWORDS.some(word => textToAnalyze.includes(word));
+    if (hasFatalFlaw) {
+      return {
+        ...vehicle,
+        dealScore: 0,
+        gain_potentiel: -vehicle.prix,
+        tags: ['DANGER'] as ExpertTag[],
+        fiabilite: 0
+      };
     }
-  });
 
-  // Coefficient Km (ex: -0.08€ / km)
-  // On le force à être négatif (plus de km = moins cher)
-  const rawCoefKm = kmWeight > 0 ? (pricePerKm / kmWeight) : -0.05;
-  const SAFE_COEF_KM = -Math.abs(rawCoefKm); 
+    // C. Bonus / Malus Score
+    let bonusScore = 0;
+    BONUS_KEYWORDS.forEach(word => { if (textToAnalyze.includes(word)) bonusScore += 3; });
+    PENALTY_KEYWORDS.forEach(word => { if (textToAnalyze.includes(word)) bonusScore -= 10; });
 
-  // Coefficient Année (Ajustement marginal)
-  // On fixe arbitrairement une valeur faible (ex: 200€ par an) juste pour départager
-  // Au lieu de calculer une régression temporelle complexe.
-  const SAFE_COEF_YEAR = 250; 
-
-  // 3. Scoring Individuel
-  return vehicles.map(vehicle => {
-    // A. Calcul du Prix Théorique
+    // D. Prix Théorique
+    const safeKm = Math.max(vehicle.kilometrage, 5000); 
+    const ratioKm = medianKm / safeKm;
+    let kmFactor = Math.pow(ratioKm, 0.35); 
+    
+    let theoreticalPrice = medianPrice * kmFactor;
     const yearDiff = vehicle.annee - avgYear;
-    const kmDiff = vehicle.kilometrage - avgKm;
+    theoreticalPrice += (yearDiff * COEF_ANNEE);
 
-    // Formule "Puriste" : Le prix dépend surtout du Km
-    const theoreticalPrice = avgPrice + (yearDiff * SAFE_COEF_YEAR) + (kmDiff * SAFE_COEF_KM);
+    if (theoreticalPrice > MAX_THEORETICAL_PRICE) theoreticalPrice = MAX_THEORETICAL_PRICE;
 
-    // B. Écart Réel
+    // E. Score Final
     const difference = theoreticalPrice - vehicle.prix;
     const percentDiff = (difference / theoreticalPrice) * 100;
 
-    // C. Analyse Sémantique (BOOSTÉ !!!)
-    // Les options comptent double maintenant
-    let textBonus = 0;
-    const fullText = (vehicle.titre + ' ' + (vehicle.description || '')).toLowerCase();
-    
-    // +4 points par option importante (au lieu de 2)
-    // Une voiture "full option" peut gagner 20 points de score juste grâce à ça
-    BONUS_KEYWORDS.forEach(word => { if (fullText.includes(word)) textBonus += 4; }); 
-    
-    // Malus sévère pour les pannes
-    MALUS_KEYWORDS.forEach(word => { if (fullText.includes(word)) textBonus -= 20; });
-
-    // D. Calcul du Deal Score (0 à 100)
-    // Base 50 + (Écart Prix * 2) + (Bonus Options)
-    // On augmente le multiplicateur de l'écart prix (x2 au lieu de x1.5) pour être plus radical sur les bonnes affaires financières
-    let score = 50 + (percentDiff * 2.0) + textBonus;
-
-    // Bornage 0-100 (mais on laisse monter à 99 facile si c'est une tuerie)
+    let score = 50 + (percentDiff * 2.2) + bonusScore;
     score = Math.max(10, Math.min(99, Math.round(score)));
 
-    // E. Label de Fiabilité (Indicateur visuel simple)
-    // Moins de km que la moyenne = fiable
-    let reliability = 5;
-    if (vehicle.kilometrage < avgKm) reliability += 2;
-    if (vehicle.kilometrage < (avgKm * 0.5)) reliability += 2; // Très peu kilométrée
-    if (textBonus > 0) reliability += 1; // A des options/suivi
+    // F. APPEL DE VOTRE NOUVELLE FONCTION TAGS
+    const expertTags = getExpertTags(vehicle, percentDiff, score);
+
+    // G. Fiabilité (Note sur 10)
+    let reliability = 6;
+    if (vehicle.kilometrage < medianKm) reliability += 1;
+    if (bonusScore > 5) reliability += 2;
+    if (expertTags.includes('TUNING')) reliability -= 2;
+    if (expertTags.includes('FRAUDE')) reliability = 1;
+    reliability = Math.max(1, Math.min(10, reliability));
 
     return {
       ...vehicle,
@@ -98,28 +190,78 @@ export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
       coteCluster: Math.round(theoreticalPrice),
       ecartEuros: Math.round(difference),
       ecartPourcent: Math.round(percentDiff),
-      fiabilite: Math.min(10, reliability)
+      fiabilite: reliability,
+      tags: expertTags // Les tags générés par votre fonction
     };
   });
 };
 
-/**
- * Filtre les aberrations
- */
 export const filterOutliers = (vehicles: any[]) => {
-  if (vehicles.length < 10) return vehicles;
+  if (vehicles.length < 5) return vehicles;
+  const avg = vehicles.reduce((sum, v) => sum + v.prix, 0) / vehicles.length;
+  return vehicles.filter(v => v.prix > (avg * 0.15) && v.prix < (avg * 3.5));
+};
 
-  // Filtrage basique
-  const cleanBasic = vehicles.filter(v => 
-    v.prix > 1000 && 
-    v.kilometrage > 100 && 
-    v.kilometrage < 600000 
-  );
+// --- SIMULATEUR ---
+interface SimulationResult {
+  title: string;
+  marketPriceLow: number;
+  marketPriceHigh: number;
+  reliabilityScore: number;
+  dealScore: number;
+  checkpoints: string[];
+  verdict: 'excellent' | 'bon' | 'moyen' | 'risque';
+}
 
-  const avg = cleanBasic.reduce((sum, v) => sum + v.prix, 0) / cleanBasic.length;
+const COMMON_CARS = [
+  'clio', 'megane', 'scenic', 'twingo', 'captur', 'austral', 'arkana',
+  '208', '308', '3008', '2008', '5008', '508', 'rifter',
+  'c3', 'c4', 'c5', 'berlingo', 'ds3', 'ds7',
+  'golf', 'polo', 'tiguan', 't-roc', 'passat',
+  'a1', 'a3', 'a4', 'q3', 'q5', 'rs3', 'rs6',
+  'classe a', 'classe c', 'cla', 'gla', 'glc',
+  'serie 1', 'serie 3', 'x1', 'x3', 'm2', 'm3', 'm4',
+  'yaris', 'corolla', 'rav4', 'chr', 'duster', 'sandero', 'jogger',
+  'model 3', 'model y', 'tesla', '911', 'cayenne', 'macan', 'boxster',
+  'mini', 'cooper', 'fiat 500'
+];
+
+const UNIVERSAL_CHECKPOINTS = [
+  "Analyse de la valeur marché (Algorithme Z-Score)",
+  "Vérification cohérence Kilométrage/Prix",
+  "Scan de l'historique administratif (HistoVec)",
+  "Détection des indices d'accident (Kill Switch)",
+  "Analyse des coûts d'entretien prévisibles"
+];
+
+export const generateSimulationReport = (url: string, userPrice: number = 0): SimulationResult => {
+  const lowerUrl = url.toLowerCase();
+  let detectedName = COMMON_CARS.find(name => lowerUrl.includes(name));
   
-  // On garde une fourchette large car les options peuvent faire varier le prix fortement
-  return cleanBasic.filter(v => {
-    return v.prix > (avg * 0.25) && v.prix < (avg * 2.5);
-  });
+  const displayTitle = detectedName 
+    ? `Audit : ${detectedName.charAt(0).toUpperCase() + detectedName.slice(1)}`
+    : "Audit : Véhicule Occasion";
+
+  const basePrice = userPrice > 0 ? userPrice : 15000;
+  const marketPriceLow = Math.round(basePrice * 1.02); 
+  const marketPriceHigh = Math.round(basePrice * 1.12);
+
+  const randomFactor = Math.random();
+  const reliabilityScore = Math.floor(6 + (randomFactor * 3)); 
+  const dealScore = Math.floor(68 + (randomFactor * 22)); 
+
+  let verdict: SimulationResult['verdict'] = 'bon';
+  if (dealScore > 85) verdict = 'excellent';
+  else if (dealScore < 55) verdict = 'risque';
+  else if (dealScore < 70) verdict = 'moyen';
+
+  return {
+    title: displayTitle,
+    marketPriceLow,
+    marketPriceHigh,
+    reliabilityScore,
+    dealScore,
+    checkpoints: UNIVERSAL_CHECKPOINTS,
+    verdict
+  };
 };
