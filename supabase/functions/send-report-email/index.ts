@@ -4,6 +4,20 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// HTML escape function to prevent XSS in email templates
+function escapeHtml(text: string | null | undefined): string {
+  if (text == null) return '';
+  const str = String(text);
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return str.replace(/[&<>"']/g, (m) => map[m]);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -147,7 +161,7 @@ serve(async (req) => {
     const emailResponse = await resend.emails.send({
       from: "La Truffe <onboarding@resend.dev>",
       to: [clientEmail],
-      subject: `🚗 Votre audit de prix est prêt : ${report.marque} ${report.modele}`,
+      subject: `🚗 Votre audit de prix est prêt : ${escapeHtml(report.marque)} ${escapeHtml(report.modele)}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -185,9 +199,9 @@ serve(async (req) => {
                           Véhicule recherché
                         </p>
                         <p style="margin: 0; color: #18181b; font-size: 20px; font-weight: 600;">
-                          ${report.marque} ${report.modele}
+                          ${escapeHtml(report.marque)} ${escapeHtml(report.modele)}
                         </p>
-                        ${report.annee_min ? `<p style="margin: 4px 0 0 0; color: #52525b; font-size: 14px;">Année : ${report.annee_min}${report.annee_max ? ` - ${report.annee_max}` : '+'}</p>` : ''}
+                        ${report.annee_min ? `<p style="margin: 4px 0 0 0; color: #52525b; font-size: 14px;">Année : ${escapeHtml(String(report.annee_min))}${report.annee_max ? ` - ${escapeHtml(String(report.annee_max))}` : '+'}</p>` : ''}
                         ${report.prix_max ? `<p style="margin: 4px 0 0 0; color: #52525b; font-size: 14px;">Budget max : ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(report.prix_max)}</p>` : ''}
                       </div>
                       
