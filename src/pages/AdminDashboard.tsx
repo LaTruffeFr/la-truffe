@@ -17,7 +17,7 @@ import {
   Loader2, Crosshair, RotateCcw, Upload, SlidersHorizontal, 
   BarChart3, ShoppingBag, User, Settings, LogOut, Send,
   CheckCircle2, AlertTriangle, Gauge, Fuel, Euro, ShieldCheck, 
-  Calendar, ArrowUpRight, MapPin, ExternalLink, Search, Share2
+  Calendar, MapPin, Search, Share2, Trophy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -396,82 +396,63 @@ export default function AdminDashboard() {
                 </Card>
               </div>
 
-              {/* 4. TOP 5 OPPORTUNITÉS (Design Clean Horizontal - Miroir Client) */}
-              <div className="mb-12">
-                <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                  <ArrowUpRight className="w-6 h-6 text-green-600" />
-                  Top 5 Opportunités identifiées
-                </h3>
-                
-                <div className="flex flex-col gap-4">
-                  {topOpportunities.map((vehicule, index) => {
-                    const ecart = (stats.prixMarche || 0) - vehicule.prix;
-                    return (
-                      <div 
-                        key={index} 
-                        className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col md:flex-row cursor-pointer"
-                        onClick={() => setSelectedVehicle(vehicule as any)}
-                      >
-                        {/* Partie Gauche : Image + Rang + FIX HAUTEUR */}
-                        <div className="relative w-full md:w-72 h-56 md:h-auto md:min-h-[16rem] shrink-0 bg-slate-100 border-r border-slate-100">
+              {/* 4. TOP 5 OPPORTUNITÉS (Nouvelle version : Cartes) */}
+              {topOpportunities.length > 0 && (
+                <div className="mb-12">
+                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Alternatives
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {topOpportunities.map((deal, idx) => (
+                      <Card key={idx} className="overflow-hidden hover:shadow-lg transition-shadow border-slate-200 group">
+                        <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
                           <img 
-                            src={vehicule.image || `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`} 
-                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                            alt={vehicule.titre || "Véhicule"} 
+                            src={deal.image || "/placeholder.svg"} 
+                            alt={deal.titre}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`; }}
                           />
-                          <div className="absolute top-0 left-0 bg-slate-900 text-white text-sm font-bold px-3 py-1 rounded-br-lg shadow-md z-10">
-                            #{index + 1}
+                          <div className="absolute top-2 left-2">
+                            <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">
+                              #{idx + 1}
+                            </Badge>
                           </div>
                         </div>
-
-                        {/* Partie Droite : Infos */}
-                        <div className="flex-1 p-5 flex flex-col justify-between">
-                          <div className="flex justify-between items-start gap-4">
+                        <CardContent className="p-4">
+                          <h3 className="font-bold text-slate-900 truncate mb-1">{deal.titre}</h3>
+                          <div className="flex justify-between items-end mb-3">
                             <div>
-                              <h4 className="font-bold text-slate-900 text-lg group-hover:text-primary transition-colors line-clamp-1">
-                                {vehicule.titre || `${vehicleInfo?.marque} ${vehicleInfo?.modele}`}
-                              </h4>
-                              <div className="flex flex-wrap gap-3 mt-3 text-sm text-slate-500">
-                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Gauge className="w-3 h-3" /> {safeNum(vehicule.kilometrage)} km</span>
-                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Calendar className="w-3 h-3" /> {vehicule.annee}</span>
-                                {vehicule.localisation && (
-                                  <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100"><MapPin className="w-3 h-3" /> {vehicule.localisation}</span>
-                                )}
-                              </div>
+                              <p className="text-2xl font-bold text-primary">{safeNum(deal.prix)} €</p>
+                              <p className="text-xs text-slate-500">{safeNum(deal.kilometrage)} km • {deal.annee}</p>
                             </div>
-                            <div className="text-right shrink-0">
-                              <div className="text-2xl font-bold text-slate-900">{safeNum(vehicule.prix)} €</div>
-                              {ecart > 0 && (
-                                <div className="text-xs font-bold text-green-600 mt-1 bg-green-50 px-2 py-0.5 rounded inline-block">
-                                  -{safeNum(ecart)} € sous la cote
-                                </div>
-                              )}
+                            <div className="text-right">
+                              <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
+                                {Math.round(100 - (deal.prix / (stats.prixMarche || 1) * 100))}% sous la cote
+                              </Badge>
                             </div>
                           </div>
-
-                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50">
-                            <div className="flex gap-2 text-xs text-slate-500">
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-normal">Score {vehicule.dealScore || 50}/100</Badge>
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-normal">Fiabilité</Badge>
-                            </div>
-                            <Button 
-                              size="sm" 
-                              className="gap-2 bg-slate-900 hover:bg-slate-800" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedVehicle(vehicule as any);
-                              }}
-                            >
-                              Voir le détail <ExternalLink className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
+                          <Button 
+                            variant="default" 
+                            className="w-full bg-slate-900 hover:bg-slate-800"
+                            onClick={() => window.open(deal.lien, '_blank')}
+                          >
+                            Voir l'annonce
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    
+                    {/* Carte "Voir plus" */}
+                    <Card className="flex flex-col items-center justify-center p-6 border-dashed border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group" onClick={() => setIsFiltersOpen(true)}>
+                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                        <Search className="w-6 h-6 text-primary" />
                       </div>
-                    );
-                  })}
+                      <h3 className="font-bold text-slate-900">Voir les {filteredVehicles.length - 5} autres</h3>
+                      <p className="text-sm text-slate-500 text-center mt-1">Utilisez les filtres pour affiner.</p>
+                    </Card>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* 5. AVIS EXPERT & ARGUMENTS (Aperçu) */}
               <div className="grid md:grid-cols-2 gap-8 mb-12">

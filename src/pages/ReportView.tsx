@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth'; 
 import { supabase } from '@/integrations/supabase/client';
@@ -11,8 +11,16 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, Download, Share2, CheckCircle2, 
   AlertTriangle, TrendingDown, Calendar, Gauge, Fuel, 
-  Euro, ShieldCheck, Loader2, Search, ArrowUpRight, MapPin, ExternalLink
+  Euro, ShieldCheck, Loader2, Search, MapPin, Trophy, ExternalLink, ListFilter
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
@@ -94,6 +102,10 @@ const ReportView = () => {
   const [loading, setLoading] = useState(true);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleData | null>(null);
+  
+  // NOUVEAU : État pour afficher la liste complète
+  const [showAllVehicles, setShowAllVehicles] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -106,6 +118,13 @@ const ReportView = () => {
     };
     fetchReport();
   }, [id, navigate]);
+
+  // Scroll automatique quand on affiche la liste
+  useEffect(() => {
+    if (showAllVehicles && tableRef.current) {
+      tableRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showAllVehicles]);
 
   const vehiclesData = useMemo(() => report?.vehicles_data as VehicleData[] || [], [report]);
   const trendLine = useMemo(() => calculateTrendLine(vehiclesData), [vehiclesData]);
@@ -268,53 +287,140 @@ const ReportView = () => {
           </div>
         )}
 
-        {/* --- SECTION 4 : TOP 5 (CORRECTION ÉCART) --- */}
+        {/* --- SECTION 4 : TOP 5 DES ALTERNATIVES --- */}
         {topOpportunities.length > 0 && (
           <div className="mb-12">
-            <div className="pdf-section">
-              <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><ArrowUpRight className="w-6 h-6 text-green-600" /> Top 5 des meilleures opportunités</h3>
-            </div>
-            
-            <div className="flex flex-col gap-4">
-              {topOpportunities.map((vehicule, index) => {
-                // CORRECTION ICI : On utilise d'abord le gain_potentiel (calcul intelligent), sinon la moyenne globale
-                const ecart = vehicule.gain_potentiel ?? ((stats.prixMarche || 0) - vehicule.prix);
-                
-                return (
-                  <div key={index} className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col md:flex-row cursor-pointer pdf-section" onClick={() => setSelectedVehicle(vehicule)}>
-                    {/* Image */}
-                    <div className="relative w-full md:w-72 h-48 md:h-auto md:min-h-[16rem] shrink-0 bg-slate-100 border-r border-slate-100">
-                      <img src={vehicule.image || `https://source.unsplash.com/1600x900/?car,${report.marque}`} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" alt={vehicule.titre} onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }} />
-                      <div className="absolute top-0 left-0 bg-slate-900 text-white text-sm font-bold px-3 py-1 rounded-br-lg shadow-md z-10">#{index + 1}</div>
-                    </div>
-                    {/* Infos */}
-                    <div className="flex-1 p-5 flex flex-col justify-between">
-                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <h4 className="font-bold text-slate-900 text-lg line-clamp-1 group-hover:text-primary transition-colors">{vehicule.titre || `${report.marque} ${report.modele}`}</h4>
-                          <div className="flex flex-wrap gap-3 mt-3 text-sm text-slate-500">
-                            <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Gauge className="w-3 h-3" /> {safeNum(vehicule.kilometrage)} km</span>
-                            <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Calendar className="w-3 h-3" /> {vehicule.annee}</span>
-                            {vehicule.localisation && <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100"><MapPin className="w-3 h-3" /> {vehicule.localisation}</span>}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-2xl font-bold text-slate-900">{safeNum(vehicule.prix)} €</div>
-                          {ecart > 0 && <div className="text-xs font-bold text-green-600 mt-1 bg-green-50 px-2 py-0.5 rounded inline-block">-{safeNum(ecart)} € sous la cote</div>}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50">
-                        <div className="flex gap-2">
-                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-normal">Score {vehicule.dealScore || 50}/100</Badge>
-                           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-normal">Fiabilité</Badge>
-                        </div>
-                        <div className="text-sm font-medium text-slate-400 group-hover:text-slate-900 flex items-center gap-1 transition-colors print:hidden">Voir le détail <ExternalLink className="w-4 h-4" /></div>
-                      </div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Alternatives
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {topOpportunities.map((deal, idx) => (
+                <Card key={idx} className="overflow-hidden hover:shadow-lg transition-shadow border-slate-200 group">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
+                    <img 
+                      src={deal.image || "/placeholder.svg"} 
+                      alt={deal.titre}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">
+                        #{idx + 1}
+                      </Badge>
                     </div>
                   </div>
-                );
-              })}
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-slate-900 truncate mb-1">{deal.titre}</h3>
+                    <div className="flex justify-between items-end mb-3">
+                      <div>
+                        <p className="text-2xl font-bold text-primary">{safeNum(deal.prix)} €</p>
+                        <p className="text-xs text-slate-500">{safeNum(deal.kilometrage)} km • {deal.annee}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
+                          {Math.round(100 - (deal.prix / (report.prix_moyen || 1) * 100))}% sous la cote
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="default" 
+                      className="w-full bg-slate-900 hover:bg-slate-800"
+                      onClick={() => window.open(deal.lien, '_blank')}
+                    >
+                      Voir l'annonce
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {/* Carte "Voir plus" - NOUVELLE VERSION : DÉCLENCHEUR LISTE COMPLÈTE */}
+              <Card 
+                className="flex flex-col items-center justify-center p-6 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-lg border-0 h-full min-h-[350px]"
+                onClick={() => setShowAllVehicles(true)}
+              >
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform border border-white/10">
+                  <ListFilter className="w-8 h-8 text-white" />
+                </div>
+                
+                <h3 className="font-bold text-2xl text-center mb-2">
+                  Voir tout le marché
+                </h3>
+                
+                <p className="text-slate-300 text-center mb-8 max-w-[240px] leading-relaxed">
+                  Ce rapport contient {stats.totalVehicules} annonces au total. Cliquez ici pour afficher la liste complète.
+                </p>
+                
+                <Button variant="secondary" className="w-full max-w-[200px] font-bold shadow-lg pointer-events-none">
+                  Afficher la liste complète
+                </Button>
+              </Card>
             </div>
+          </div>
+        )}
+
+        {/* --- NOUVELLE SECTION : LISTE COMPLÈTE (VERSION LARGE) --- */}
+        {showAllVehicles && (
+          <div ref={tableRef} className="mb-12 animate-in fade-in slide-in-from-bottom-10 duration-500 scroll-mt-24">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                <Search className="w-8 h-8 text-primary" /> 
+                Liste complète ({stats.totalVehicules} annonces)
+              </h3>
+            </div>
+
+            <Card className="overflow-hidden border-slate-200 shadow-xl bg-white">
+              <div className="max-h-[800px] overflow-auto">
+                <Table>
+                  <TableBody>
+                    {vehiclesData.sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0)).map((vehicle, i) => (
+                      <TableRow key={i} className="hover:bg-blue-50/50 transition-colors border-b border-slate-100">
+                        {/* 1. PHOTO XXL (Format 3:2) */}
+                        <TableCell className="pl-6 py-6 w-[220px]">
+                          <div className="w-48 h-32 bg-slate-200 rounded-lg overflow-hidden shadow-md border border-slate-200">
+                            <img 
+                              src={vehicle.image || "/placeholder.svg"} 
+                              className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" 
+                              alt="v" 
+                              onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
+                            />
+                          </div>
+                        </TableCell>
+                        
+                        {/* INFOS */}
+                        <TableCell className="py-6 align-middle">
+                          <div className="font-bold text-xl text-slate-900 line-clamp-1 mb-2">{vehicle.titre}</div>
+                          <div className="flex items-center gap-3 text-sm text-slate-500">
+                            <Badge variant="outline" className="font-normal bg-slate-50">{vehicle.annee}</Badge>
+                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {vehicle.localisation || "France"}</span>
+                          </div>
+                        </TableCell>
+                        
+                        {/* 2. PRIX (Aligné et sans retour à la ligne) */}
+                        <TableCell className="font-extrabold text-2xl text-primary py-6 align-middle whitespace-nowrap">
+                          {safeNum(vehicle.prix)} €
+                        </TableCell>
+                        
+                        <TableCell className="text-lg font-medium text-slate-700 py-6 align-middle whitespace-nowrap">
+                          {safeNum(vehicle.kilometrage)} km
+                        </TableCell>
+                        
+                        <TableCell className="py-6 align-middle">
+                          <Badge className={`text-sm px-3 py-1 ${vehicle.dealScore && vehicle.dealScore > 75 ? "bg-green-600 hover:bg-green-700" : "bg-slate-500 hover:bg-slate-600"}`}>
+                            {vehicle.dealScore || 50}/100
+                          </Badge>
+                        </TableCell>
+                        
+                        <TableCell className="text-right pr-6 py-6 align-middle">
+                          <Button size="lg" className="bg-slate-900 hover:bg-slate-800 font-semibold shadow-sm h-12 px-6" onClick={() => window.open(vehicle.lien, '_blank')}>
+                            Voir l'annonce <ExternalLink className="ml-2 w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
           </div>
         )}
 
