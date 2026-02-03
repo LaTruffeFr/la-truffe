@@ -1,8 +1,13 @@
+# La Truffe Auto - Robots.txt
+# https://latruffe.lovable.app
+
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +17,13 @@ Allow: /
 
 User-agent: *
 Allow: /
+Crawl-delay: 2
+
+# Sitemap location
+Sitemap: https://latruffe.lovable.app/sitemap.xml
+
+# Disallow admin and private pages
+Disallow: /admin
+Disallow: /client-dashboard
+Disallow: /settings
+Disallow: /transactions
