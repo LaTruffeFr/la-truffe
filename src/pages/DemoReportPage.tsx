@@ -16,6 +16,19 @@ import { SniperChart } from "@/components/trading/SniperChart";
 import { getDemoReport, DemoReport } from "@/data/demoData";
 import { Footer } from "@/components/landing";
 
+// Définition d'un type pour les données véhicules compatibles avec SniperChart
+// Adaptez ce type si nécessaire selon la définition réelle dans SniperChart.tsx
+interface VehicleData {
+  id: string;
+  prix: number;
+  kilometrage: number;
+  titre: string;
+  annee: number;
+  image?: string;
+  lien?: string;
+  // Ajoutez d'autres propriétés si nécessaire
+}
+
 const DemoReportPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -66,21 +79,27 @@ const DemoReportPage = () => {
   const score = isGoodDeal ? 92 : 45;
   const vehiclesData = report.vehicles_data;
 
-  // Calcul TrendLine
+  // Calcul TrendLine (Logarithmique pour être cohérent avec l'app principale)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const calculateTrendLine = (data: any[]) => {
-    const n = data.length;
-    if (n === 0) return { slope: 0, intercept: 0 };
-    const sumX = data.reduce((acc, val) => acc + val.kilometrage, 0);
-    const sumY = data.reduce((acc, val) => acc + val.prix, 0);
-    const sumXY = data.reduce((acc, val) => acc + (val.kilometrage * val.prix), 0);
-    const sumXX = data.reduce((acc, val) => acc + (val.kilometrage * val.kilometrage), 0);
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-    return { slope, intercept };
-  };
+  const calculateLogTrendLine = (data: any[]) => {
+    if (!data || data.length < 2) return { type: 'log', a: 0, b: 0 };
+    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    let count = 0;
+    data.forEach(v => {
+      if (v.kilometrage > 100 && v.prix > 1000) {
+        const x = Math.log(v.kilometrage);
+        const y = v.prix;
+        sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
+        count++;
+      }
+    });
+    if (count < 2) return { type: 'log', a: 0, b: 0 };
+    const slope = (count * sumXY - sumX * sumY) / (count * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / count;
+    return { type: 'log', a: intercept, b: slope };
+  }
   
-  const trendLine = calculateTrendLine(vehiclesData);
+  const trendLine = calculateLogTrendLine(vehiclesData);
 
   // LOGIQUE TOP 5 : On trie par score (simulé ici par le prix le plus bas pour l'exemple)
   // On exclut le véhicule cible (index 0) pour montrer des alternatives
@@ -260,12 +279,10 @@ const DemoReportPage = () => {
             </h2>
             <Card className="shadow-lg border-slate-200 overflow-hidden h-[350px] md:h-[500px]">
               <CardContent className="p-2 md:p-4 h-full">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <SniperChart 
-                  data={vehiclesData} 
-                  trendLine={{ type: 'linear', a: trendLine.intercept, b: trendLine.slope }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  onVehicleClick={(vehicle: any) => { setSelectedVehicle(vehicle); }} 
+                  data={vehiclesData as any} 
+                  trendLine={trendLine}
+                  onVehicleClick={(vehicle) => { setSelectedVehicle(vehicle); }} 
                 />
               </CardContent>
             </Card>

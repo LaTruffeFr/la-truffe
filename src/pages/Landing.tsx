@@ -111,12 +111,12 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans text-slate-900">
       <Helmet>
-        <title>La Truffe | Cote Auto Gratuite & Analyse d'Annonces Occasion</title>
+        <title>La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques & Analyse d'Annonces Occasion</title>
         <meta name="description" content="Analysez n'importe quelle annonce auto (LeBonCoin, LaCentrale). La Truffe détecte les arnaques, calcule la vraie cote du marché et vérifie la fiabilité pour tous les véhicules." />
-        <meta name="keywords" content="cote auto gratuite, argus occasion, vérifier annonce voiture, arnaque leboncoin voiture, historique véhicule gratuit, estimation prix voiture" />
-        <meta property="og:title" content="La Truffe | Cote Auto Gratuite & Analyse d'Annonces Occasion" />
+        <meta name="keywords" content="La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques, argus occasion, vérifier annonce voiture, arnaque leboncoin voiture, historique véhicule gratuit, estimation prix voiture" />
+        <meta property="og:title" content="La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques & Analyse d'Annonces Occasion" />
         <meta property="og:description" content="Analysez n'importe quelle annonce auto (LeBonCoin, LaCentrale). La Truffe détecte les arnaques, calcule la vraie cote du marché et vérifie la fiabilité pour tous les véhicules." />
-        <meta name="twitter:title" content="La Truffe | Cote Auto Gratuite & Analyse d'Annonces Occasion" />
+        <meta name="twitter:title" content="La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques & Analyse d'Annonces Occasion" />
         <meta name="twitter:description" content="Analysez n'importe quelle annonce auto (LeBonCoin, LaCentrale). La Truffe détecte les arnaques, calcule la vraie cote du marché et vérifie la fiabilité pour tous les véhicules." />
       </Helmet>
       
