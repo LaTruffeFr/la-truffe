@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-foreground">La Truffe</Link>
+            <Logo size="lg" />
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">
             {isSignUp ? "Créer un compte" : "Bienvenue sur La Truffe"}
