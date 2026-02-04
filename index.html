@@ -1,114 +1,24 @@
-<!doctype html>
-<html lang="fr" class="scroll-smooth">
+<!DOCTYPE html>
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="La Truffe" />
+    <link rel="manifest" href="/site.webmanifest" />
     <title>La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques</title>
+    <meta name="description" content="Ne vous faites plus avoir. La Truffe analyse chaque voiture pour détecter les prix suspects, les fraudes et révéler la vraie valeur du marché." />
     
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Primary Meta Tags -->
-    <meta name="title" content="La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques">
-    <meta name="description" content="Ne vous faites plus avoir. La Truffe analyse chaque voiture (LeBonCoin, LaCentrale) pour détecter les prix suspects, les fraudes et révéler la vraie valeur du marché.">
-    <meta name="keywords" content="la truffe, vérifier annonce voiture, arnaque leboncoin voiture, arnaque lacentrale, prix voiture occasion, détection fraude auto, analyse annonce auto, cote voiture gratuite">
-    <meta name="author" content="La Truffe" />
-    <meta name="robots" content="index, follow">
-    <meta name="language" content="French">
-    <meta name="revisit-after" content="3 days">
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://latruffe.lovable.app/">
-    
-    <!-- Open Graph / Facebook -->
+    <meta property="og:title" content="La Truffe | L'Assistant IA pour votre Achat Auto" />
+    <meta property="og:description" content="Analysez n'importe quelle annonce auto en 2 secondes. Détection d'arnaques et calcul du vrai prix." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://latruffe.lovable.app/">
-    <meta property="og:title" content="La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques">
-    <meta property="og:description" content="Analysez n'importe quelle annonce auto en 2 secondes. Détection d'arnaques, calcul du vrai prix et score de fiabilité.">
-    <meta property="og:image" content="/favicon.png">
-    <meta property="og:locale" content="fr_FR">
-    <meta property="og:site_name" content="La Truffe">
+    <meta name="theme-color" content="#0f172a" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@LaTruffe" />
-    <meta name="twitter:url" content="https://latruffe.lovable.app/">
-    <meta name="twitter:title" content="La Truffe | Vérifiez une Annonce Auto & Évitez les Arnaques">
-    <meta name="twitter:description" content="Analysez n'importe quelle annonce auto en 2 secondes. Détection d'arnaques, calcul du vrai prix et score de fiabilité.">
-    <meta name="twitter:image" content="/favicon.png">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="apple-touch-icon" href="/favicon.png">
-    
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "La Truffe",
-      "alternateName": ["La Truffe Auto", "LaTruffe"],
-      "url": "https://latruffe.lovable.app/",
-      "description": "Ne vous faites plus avoir. La Truffe analyse chaque voiture pour détecter les prix suspects, les fraudes et révéler la vraie valeur du marché.",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://latruffe.lovable.app/auth?search={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "La Truffe",
-      "alternateName": "La Truffe Auto",
-      "url": "https://latruffe.lovable.app/",
-      "logo": "https://latruffe.lovable.app/favicon.png",
-      "description": "Vérifiez n'importe quelle annonce auto et évitez les arnaques. Détection de fraudes et calcul du vrai prix du marché.",
-      "sameAs": [],
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "customer service",
-        "url": "https://latruffe.lovable.app/contact"
-      }
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "La Truffe",
-      "applicationCategory": "UtilitiesApplication",
-      "operatingSystem": "Web",
-      "description": "Analysez n'importe quelle annonce auto en 2 secondes. Détection d'arnaques, calcul du vrai prix et score de fiabilité.",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "EUR",
-        "description": "Analyse gratuite disponible"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.8",
-        "ratingCount": "150"
-      }
-    }
-    </script>
-    
-    <style>
-      html, body, #root {
-        height: 100%;
-        overflow-x: hidden;
-      }
-      body {
-        overflow-y: auto;
-      }
-    </style>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
