@@ -263,7 +263,7 @@ const DemoReportPage = () => {
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <SniperChart 
                   data={vehiclesData} 
-                  trendLine={trendLine} 
+                  trendLine={{ type: 'linear', a: trendLine.intercept, b: trendLine.slope }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onVehicleClick={(vehicle: any) => { setSelectedVehicle(vehicle); }} 
                 />

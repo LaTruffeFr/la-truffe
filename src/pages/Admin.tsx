@@ -382,7 +382,7 @@ export default function Admin() {
                   <SniperChart
                     data={chartVehicles}
                     onVehicleClick={handleVehicleClick}
-                    trendLine={trendLine}
+                    trendLine={{ type: 'linear', a: trendLine.intercept, b: trendLine.slope }}
                   />
                 </div>
               </div>
