@@ -289,18 +289,18 @@ const ReportView = () => {
 
         {/* --- SECTION 4 : TOP 5 DES ALTERNATIVES --- */}
         {topOpportunities.length > 0 && (
-          <div className="mb-12">
+           <div className="mb-12 pdf-section">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Alternatives
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {topOpportunities.map((deal, idx) => (
-                <Card key={idx} className="overflow-hidden hover:shadow-lg transition-shadow border-slate-200 group">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
+                 <Card key={idx} className="overflow-hidden border-slate-200 shadow-sm">
+                   <div className="relative aspect-[16/10] overflow-hidden bg-gray-100 print:aspect-auto print:h-32">
                     <img 
                       src={deal.image || "/placeholder.svg"} 
                       alt={deal.titre}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
                     />
                     <div className="absolute top-2 left-2">
@@ -320,14 +320,14 @@ const ReportView = () => {
                         </Badge>
                       </div>
                     </div>
-                    <Button variant="default" className="w-full bg-slate-900 hover:bg-slate-800" onClick={() => window.open(deal.lien, '_blank')}>Voir l'annonce</Button>
+                     <Button variant="default" className="w-full bg-slate-900 hover:bg-slate-800 print:hidden" onClick={() => window.open(deal.lien, '_blank')}>Voir l'annonce</Button>
                   </CardContent>
                 </Card>
               ))}
               
-              {/* CARTE DÉCLENCHEUR - VERSION XXL */}
+               {/* CARTE DÉCLENCHEUR - Masquée dans le PDF */}
               <Card 
-                className="flex flex-col items-center justify-center p-10 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-2xl border-0 h-full min-h-[450px]"
+                 className="flex flex-col items-center justify-center p-10 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-2xl border-0 h-full min-h-[450px] print:hidden"
                 onClick={() => setShowAllVehicles(true)}
               >
                 <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform border-2 border-white/20 shadow-inner">
