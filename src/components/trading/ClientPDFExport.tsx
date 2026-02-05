@@ -266,13 +266,13 @@ export function ClientPDFExport({ opportunities, filters, totalAnalyzed }: Clien
           pdf.text('#', colX, y + 5.5);
           colX += colWidths.rank;
           pdf.text('Modèle', colX, y + 5.5);
-          colX += colWidths.km;
-          pdf.text('Km', colX, y + 5.5);
-          colX += colWidths.marketPrice;
-          pdf.text('Prix Marché', colX, y + 5.5);
-          colX += colWidths.price;
-          pdf.text('Prix Annonce', colX, y + 5.5);
-          colX += colWidths.savings;
+           colX += colWidths.model;
+           pdf.text('Km', colX, y + 5.5);
+           colX += colWidths.km;
+           pdf.text('Prix Marché', colX, y + 5.5);
+           colX += colWidths.marketPrice;
+           pdf.text('Prix Annonce', colX, y + 5.5);
+           colX += colWidths.price;
           pdf.text('Gain', colX, y + 5.5);
           y += 8;
         }
