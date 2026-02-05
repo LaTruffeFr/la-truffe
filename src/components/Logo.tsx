@@ -1,30 +1,28 @@
 import { Link } from "react-router-dom";
-import logoImage from "@/assets/logo-latruffe-main.png";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   linkTo?: string;
   className?: string;
+  showBadge?: boolean;
 }
 
-export const Logo = ({ size = "md", linkTo = "/", className = "" }: LogoProps) => {
+export const Logo = ({ size = "md", linkTo = "/", className = "", showBadge = false }: LogoProps) => {
   const sizeClasses = {
-    sm: "h-8",
-    md: "h-10",
-    lg: "h-12"
+    sm: "text-lg md:text-xl",
+    md: "text-xl md:text-2xl",
+    lg: "text-2xl md:text-3xl"
   };
 
   const logoElement = (
-    <img 
-      src={logoImage} 
-      alt="La Truffe" 
-      className={`${sizeClasses[size]} w-auto object-contain ${className}`}
-    />
+    <span className={`font-bold tracking-tight text-slate-900 ${sizeClasses[size]} ${className}`}>
+      La Truffe
+    </span>
   );
 
   if (linkTo) {
     return (
-      <Link to={linkTo} className="hover:opacity-80 transition-opacity">
+      <Link to={linkTo} className="hover:opacity-80 transition-opacity flex items-center gap-2">
         {logoElement}
       </Link>
     );
