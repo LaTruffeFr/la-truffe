@@ -63,6 +63,85 @@
   }
 }
 
+/* ===== STYLES D'IMPRESSION / PDF ===== */
+@media print {
+  /* Masquer les éléments non imprimables */
+  .no-print,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Forcer fond blanc partout */
+  body,
+  .pdf-content,
+  .corporate-card,
+  .corporate-card-elevated {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Section Arguments - forcer fond blanc */
+  .negotiation-card {
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  /* Enlever les ombres des cartes */
+  .card-shadow,
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+}
+
+/* Styles pour le rendu PDF via html2canvas */
+.pdf-export {
+  /* Forcer fond blanc */
+  background-color: #F8F9FA !important;
+  color: black !important;
+
+  /* Masquer les éléments non imprimables */
+  .no-print,
+  .pdf-hide {
+    display: none !important;
+  }
+
+  /* Forcer texte aligné à gauche (évite les bugs de justification) */
+  .pdf-text-left,
+  .text-justify {
+    text-align: left !important;
+  }
+
+  /* Section Arguments - forcer fond blanc */
+  .negotiation-card {
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  /* Forcer le texte visible sur toutes les cartes */
+  .bg-slate-900,
+  .bg-black,
+  [class*="bg-slate-9"],
+  [class*="bg-black"] {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Enlever les ombres */
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+
+  /* Top 5 grid en 2 colonnes max */
+  .top5-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

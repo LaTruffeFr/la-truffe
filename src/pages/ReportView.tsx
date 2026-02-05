@@ -232,8 +232,8 @@ const ReportView = () => {
               </div>
             </div>
             <div className="mt-6 flex gap-3 print:hidden">
-              <Button className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-base md:text-lg" onClick={() => { const link = vehiculeCible?.lien || report.lien_annonce; if (link) window.open(link, '_blank'); }}>Voir l'annonce</Button>
-              <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300"><Share2 className="w-5 h-5 text-slate-600" /></Button>
+              <Button className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-base md:text-lg no-print pdf-hide" onClick={() => { const link = vehiculeCible?.lien || report.lien_annonce; if (link) window.open(link, '_blank'); }}>Voir l'annonce</Button>
+              <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300 no-print pdf-hide"><Share2 className="w-5 h-5 text-slate-600" /></Button>
             </div>
           </div>
         </div>
@@ -293,7 +293,7 @@ const ReportView = () => {
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Alternatives
             </h2>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 top5-grid">
               {topOpportunities.map((deal, idx) => (
                  <Card key={idx} className="overflow-hidden border-slate-200 shadow-sm">
                    <div className="relative aspect-[16/10] overflow-hidden bg-gray-100 print:aspect-auto print:h-32">
@@ -320,14 +320,14 @@ const ReportView = () => {
                         </Badge>
                       </div>
                     </div>
-                     <Button variant="default" className="w-full bg-slate-900 hover:bg-slate-800 print:hidden" onClick={() => window.open(deal.lien, '_blank')}>Voir l'annonce</Button>
+                     <Button variant="default" className="w-full bg-slate-900 hover:bg-slate-800 print:hidden no-print pdf-hide" onClick={() => window.open(deal.lien, '_blank')}>Voir l'annonce</Button>
                   </CardContent>
                 </Card>
               ))}
               
                {/* CARTE DÉCLENCHEUR - Masquée dans le PDF */}
               <Card 
-                 className="flex flex-col items-center justify-center p-10 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-2xl border-0 h-full min-h-[450px] print:hidden"
+                 className="flex flex-col items-center justify-center p-10 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer group shadow-2xl border-0 h-full min-h-[450px] print:hidden no-print pdf-hide"
                 onClick={() => setShowAllVehicles(true)}
               >
                 <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform border-2 border-white/20 shadow-inner">
@@ -470,17 +470,17 @@ const ReportView = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-4">Arguments de négociation</h2>
-            <Card className="shadow-sm h-full">
-              <CardContent className="p-6">
+            <Card className="shadow-sm h-full negotiation-card bg-white border border-slate-200">
+              <CardContent className="p-6 bg-white">
                 <ul className="space-y-6">
                   {negotiationPoints.map((arg: any, index: number) => (
                     <li key={index} className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-sm border border-green-200">{index + 1}</div>
-                      <div><p className="text-sm text-slate-700 leading-snug"><strong className="text-slate-900 block mb-1">{arg.titre}</strong>{arg.desc}</p></div>
+                      <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 font-bold text-sm border border-green-200">{index + 1}</div>
+                      <div><p className="text-sm text-slate-700 leading-snug pdf-text-left"><strong className="text-slate-900 block mb-1">{arg.titre}</strong>{arg.desc}</p></div>
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full mt-8 bg-slate-900 hover:bg-slate-800 print:hidden" onClick={() => navigate('/client-dashboard')}><Search className="w-4 h-4 mr-2" /> Demander un autre audit</Button>
+                <Button className="w-full mt-8 bg-slate-900 hover:bg-slate-800 print:hidden no-print pdf-hide" onClick={() => navigate('/client-dashboard')}><Search className="w-4 h-4 mr-2" /> Demander un autre audit</Button>
               </CardContent>
             </Card>
           </div>
