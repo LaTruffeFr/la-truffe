@@ -95,72 +95,51 @@
   }
 }
 
-/* Styles pour le rendu PDF via html2canvas (syntaxe CSS pure, pas SCSS) */
+/* Styles pour le rendu PDF via html2canvas */
 .pdf-export {
-  background-color: #FFFFFF !important;
+  /* Forcer fond blanc */
+  background-color: #F8F9FA !important;
   color: black !important;
-}
 
-.pdf-export .no-print,
-.pdf-export .pdf-hide,
-.pdf-export .print\\:hidden {
-  display: none !important;
-}
+  /* Masquer les éléments non imprimables */
+  .no-print,
+  .pdf-hide {
+    display: none !important;
+  }
 
-.pdf-export .pdf-text-left,
-.pdf-export .text-justify {
-  text-align: left !important;
-}
+  /* Forcer texte aligné à gauche (évite les bugs de justification) */
+  .pdf-text-left,
+  .text-justify {
+    text-align: left !important;
+  }
 
-.pdf-export .negotiation-card {
-  background-color: white !important;
-  border: 1px solid #e2e8f0 !important;
-  color: black !important;
-  box-shadow: none !important;
-}
+  /* Section Arguments - forcer fond blanc */
+  .negotiation-card {
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
 
-.pdf-export .bg-slate-900,
-.pdf-export .bg-black,
-.pdf-export [class*="bg-slate-9"],
-.pdf-export [class*="bg-black"] {
-  background-color: white !important;
-  color: black !important;
-}
+  /* Forcer le texte visible sur toutes les cartes */
+  .bg-slate-900,
+  .bg-black,
+  [class*="bg-slate-9"],
+  [class*="bg-black"] {
+    background-color: white !important;
+    color: black !important;
+  }
 
-.pdf-export [class*="shadow"] {
-  box-shadow: none !important;
-  border: 1px solid #ddd !important;
-}
+  /* Enlever les ombres */
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
 
-.pdf-export .top5-grid {
-  grid-template-columns: repeat(2, 1fr) !important;
-  gap: 1rem !important;
-}
-
-.pdf-export img {
-  object-fit: contain !important;
-  max-height: 300px !important;
-  width: auto !important;
-  margin: 0 auto !important;
-  border-radius: 8px;
-  box-shadow: none !important;
-}
-
-/* Forcer la couleur de fond des cartes dans #report-content */
-#report-content .negotiation-card,
-#report-content [class*="bg-white"] {
-  background-color: white !important;
-  color: black !important;
-}
-
-#report-content h1,
-#report-content h2,
-#report-content h3,
-#report-content p,
-#report-content span,
-#report-content div {
-  color: #1e293b !important;
-  text-shadow: none !important;
+  /* Top 5 grid en 2 colonnes max */
+  .top5-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
 }
 
 @layer base {
