@@ -4,7 +4,7 @@ import { Menu, X, LogIn, User, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
-import { Logo } from '@/components/Logo';
+ import { Link } from 'react-router-dom';
 
 export function MobileNav() {
   const navigate = useNavigate();
@@ -28,7 +28,9 @@ export function MobileNav() {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <Logo size="sm" linkTo="/" />
+             <Link to="/" className="font-logo font-bold text-xl tracking-tight text-foreground">
+               La Truffe
+             </Link>
             <SheetClose asChild>
               <Button variant="ghost" size="icon">
                 <X className="h-5 w-5" />

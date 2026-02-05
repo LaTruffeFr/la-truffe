@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Logo } from '@/components/Logo';
 
 export function Footer() {
   return (
@@ -7,7 +6,9 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center gap-6 text-center md:text-left md:flex-row md:justify-between">
           {/* Logo */}
-          <Logo size="md" />
+           <Link to="/" className="font-logo font-bold text-xl tracking-tight text-foreground">
+             La Truffe
+           </Link>
 
           {/* Links */}
           <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
