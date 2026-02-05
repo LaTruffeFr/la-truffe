@@ -1,81 +1,15 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Database, Lightbulb, Globe, LogIn, ChevronDown } from "lucide-react";
+import { Database, Lightbulb, Globe } from "lucide-react";
 import { Footer } from "@/components/landing";
+import { Header } from '@/components/Header';
 
 const About = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans text-slate-900">
-      {/* --- HEADER UNIFIÉ --- */}
-      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50 transition-all duration-200">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
-            La Truffe
-          </Link>
-
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <Link to="/" className="hover:text-primary transition-colors">
-              Accueil
-            </Link>
-
-            <div className="relative group">
-              <button className="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none py-2">
-                Rapports <ChevronDown className="w-4 h-4" />
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-60 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden hidden group-hover:block p-1 animate-in fade-in zoom-in-95 duration-200">
-                <Link to="/demo/demo-1" className="block px-4 py-2.5 hover:bg-slate-50 hover:text-primary rounded-lg">
-                  Exemple de rapport
-                </Link>
-                <Link to="/pricing" className="block px-4 py-2.5 hover:bg-slate-50 hover:text-primary rounded-lg">
-                  Prix & Abonnements
-                </Link>
-                <div className="h-px bg-slate-100 my-1" />
-                <Link
-                  to="/why-us"
-                  className="block px-4 py-2.5 font-medium bg-primary/5 text-primary hover:bg-primary/10 rounded-lg"
-                >
-                  Pourquoi nous choisir ?
-                </Link>
-              </div>
-            </div>
-
-            <div className="relative group">
-              <button className="flex items-center gap-1 text-primary font-semibold transition-colors focus:outline-none py-2">
-                Entreprise <ChevronDown className="w-4 h-4" />
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-56 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden hidden group-hover:block p-1 animate-in fade-in zoom-in-95 duration-200">
-                <Link
-                  to="/qui-sommes-nous"
-                  className="block px-4 py-2.5 text-slate-600 bg-slate-50 font-medium hover:text-primary rounded-lg transition-colors"
-                >
-                  Qui sommes-nous ?
-                </Link>
-                <Link
-                  to="/contact"
-                  className="block px-4 py-2.5 font-medium bg-primary/5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                >
-                  Contact
-                </Link>
-              </div>
-            </div>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/auth")} variant="ghost" className="hidden sm:flex hover:text-primary">
-              Se connecter
-            </Button>
-            <Button
-              onClick={() => navigate("/auth")}
-              className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Mon Espace</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header activeLink="about" />
 
       {/* --- HERO SECTION --- */}
       <section className="relative py-20 bg-slate-900 text-white overflow-hidden">

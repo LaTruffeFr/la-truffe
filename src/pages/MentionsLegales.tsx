@@ -14,7 +14,7 @@ const MentionsLegales = () => {
               Retour
             </Button>
           </Link>
-          <Link to="/" className="font-logo font-bold text-xl text-foreground hover:opacity-80 transition-opacity">
+          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
             La Truffe
           </Link>
         </div>

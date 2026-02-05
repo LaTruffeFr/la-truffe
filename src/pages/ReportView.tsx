@@ -185,8 +185,8 @@ const ReportView = () => {
       {/* HEADER */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 print:hidden">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 flex items-center gap-2">
-            La Truffe <Badge variant="secondary" className="hidden sm:inline-flex text-xs font-normal">Audit Certifié</Badge>
+          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity flex items-center gap-2">
+            La Truffe <Badge variant="secondary" className="hidden sm:inline-flex text-xs font-normal no-print pdf-hide">Audit Certifié</Badge>
           </Link>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/client-dashboard')} className="h-9 px-3"><ArrowLeft className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Retour</span></Button>

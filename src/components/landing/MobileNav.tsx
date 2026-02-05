@@ -28,9 +28,9 @@ export function MobileNav() {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-             <Link to="/" className="font-logo font-bold text-xl tracking-tight text-foreground">
-               La Truffe
-             </Link>
+            <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
+              La Truffe
+            </Link>
             <SheetClose asChild>
               <Button variant="ghost" size="icon">
                 <X className="h-5 w-5" />

@@ -86,7 +86,7 @@ export default function ClientView() {
             Retour
           </Button>
           
-          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
             La Truffe
           </Link>
 
