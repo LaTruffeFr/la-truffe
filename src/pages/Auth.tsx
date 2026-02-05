@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
-import { Logo } from '@/components/Logo';
+ import { Link } from 'react-router-dom';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -113,7 +113,9 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <Logo size="lg" />
+             <Link to="/" className="font-logo font-bold text-3xl tracking-tight text-foreground">
+               La Truffe
+             </Link>
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">
             {isSignUp ? "Créer un compte" : "Bienvenue sur La Truffe"}
