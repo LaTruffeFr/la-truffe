@@ -82,7 +82,7 @@ const Checkout = () => {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-logo font-bold text-2xl tracking-tight text-slate-900">
+          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
             La Truffe
           </Link>
           <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
