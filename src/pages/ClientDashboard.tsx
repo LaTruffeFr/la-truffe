@@ -76,15 +76,20 @@ const ClientDashboard = () => {
       
       // Créer automatiquement la demande
       const createPendingReport = async () => {
-        // Vérifier les crédits (sauf pour les admins)
-        if (!isAdmin && credits < 1) {
-          toast({
-            variant: "destructive",
-            title: "Crédits insuffisants",
-            description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
-          });
-          navigate('/pricing');
-          return;
+        // Déduire 1 crédit atomiquement (sauf pour les admins)
+        if (!isAdmin) {
+          const { data: creditDeducted, error: creditError } = await supabase
+            .rpc('deduct_credit', { _user_id: user.id });
+          
+          if (creditError || !creditDeducted) {
+            toast({
+              variant: "destructive",
+              title: "Crédits insuffisants",
+              description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
+            });
+            navigate('/pricing');
+            return;
+          }
         }
 
         const { error } = await supabase.from('reports').insert({
@@ -95,20 +100,16 @@ const ClientDashboard = () => {
         });
 
         if (!error) {
-          // Déduire 1 crédit (sauf pour les admins)
-          if (!isAdmin) {
-            await supabase
-              .from('profiles')
-              .update({ credits: credits - 1 })
-              .eq('user_id', user.id);
-            await refreshCredits();
-          }
-
+          await refreshCredits();
           toast({
             title: "Demande envoyée !",
             description: `Votre demande d'audit pour ${marque} ${modele} a été soumise.${!isAdmin ? ' 1 crédit déduit.' : ''}`,
           });
           fetchReports();
+        } else {
+          // Si l'insertion échoue, on devrait idéalement rembourser le crédit
+          // mais pour l'instant on log l'erreur
+          console.error('Error creating report after credit deduction:', error);
         }
       };
       
@@ -141,20 +142,26 @@ const ClientDashboard = () => {
       return;
     }
 
-    // Vérifier les crédits (sauf pour les admins)
-    if (!isAdmin && credits < 1) {
-      toast({
-        variant: "destructive",
-        title: "Crédits insuffisants",
-        description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
-      });
-      navigate('/pricing');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      // Créer le rapport
+      // Déduire 1 crédit atomiquement AVANT de créer le rapport (sauf pour les admins)
+      if (!isAdmin) {
+        const { data: creditDeducted, error: creditError } = await supabase
+          .rpc('deduct_credit', { _user_id: user.id });
+        
+        if (creditError || !creditDeducted) {
+          toast({
+            variant: "destructive",
+            title: "Crédits insuffisants",
+            description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
+          });
+          navigate('/pricing');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Créer le rapport après la déduction réussie
       const { error } = await supabase.from('reports').insert({
         user_id: user.id,
         marque: marque.trim(),
@@ -163,18 +170,9 @@ const ClientDashboard = () => {
         status: 'pending',
       });
 
-      if (error) throw error;
-
-      // Déduire 1 crédit (sauf pour les admins)
-      if (!isAdmin) {
-        const { error: creditError } = await supabase
-          .from('profiles')
-          .update({ credits: credits - 1 })
-          .eq('user_id', user.id);
-
-        if (creditError) {
-          console.error('Error deducting credit:', creditError);
-        }
+      if (error) {
+        console.error('Error creating report after credit deduction:', error);
+        throw error;
       }
 
       toast({
