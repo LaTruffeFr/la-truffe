@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      beta_waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       garage_billing: {
         Row: {
           created_at: string

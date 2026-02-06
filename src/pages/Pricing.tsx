@@ -5,14 +5,18 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { Badge } from '@/components/ui/badge';
 import { 
   CheckCircle2, Star, ShieldCheck, 
-  TrendingDown, Search, Eye, AlertTriangle, History, Euro, HelpCircle
+  TrendingDown, Search, Eye, AlertTriangle, History, Euro, HelpCircle, Sparkles
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { Header } from '@/components/Header';
+import { useVipAccess } from '@/hooks/useVipAccess';
+import { BetaWaitlistModal } from '@/components/BetaWaitlistModal';
 
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { isVip } = useVipAccess();
+  const [showBetaModal, setShowBetaModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans text-slate-900">
@@ -55,10 +59,17 @@ const Pricing = () => {
                 </div>
                 <p className="text-xs text-slate-400 mb-6">Prix total 53,97 € <span className="line-through">89,97 €</span></p>
 
-                <Button className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mb-4"
-                onClick={() => navigate('/checkout?plan=3')}>
-                  Acheter 3 rapports
-                </Button>
+                {isVip ? (
+                  <Button className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mb-4"
+                  onClick={() => navigate('/checkout?plan=3')}>
+                    Acheter 3 rapports
+                  </Button>
+                ) : (
+                  <Button className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mb-4"
+                  onClick={() => setShowBetaModal(true)}>
+                    <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
+                  </Button>
+                )}
                 
                 <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 3 crédits valables 1 an</p>
 
@@ -88,10 +99,17 @@ const Pricing = () => {
                 </div>
                 <p className="text-xs text-slate-400 mb-6">Prix total 39,98 € <span className="line-through">59,98 €</span></p>
 
-                <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
-                onClick={() => navigate('/checkout?plan=2')}>
-                  Acheter 2 rapports
-                </Button>
+                {isVip ? (
+                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
+                  onClick={() => navigate('/checkout?plan=2')}>
+                    Acheter 2 rapports
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
+                  onClick={() => setShowBetaModal(true)}>
+                    <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
+                  </Button>
+                )}
                 
                 <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 2 crédits</p>
 
@@ -119,10 +137,17 @@ const Pricing = () => {
                 </div>
                 <p className="text-xs text-slate-400 mb-6">Plein tarif</p>
 
-                <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
-                onClick={() => navigate('/checkout?plan=1')}>
-                  Acheter 1 rapport
-                </Button>
+                {isVip ? (
+                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
+                  onClick={() => navigate('/checkout?plan=1')}>
+                    Acheter 1 rapport
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
+                  onClick={() => setShowBetaModal(true)}>
+                    <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
+                  </Button>
+                )}
                 
                 <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 1 crédit</p>
 
@@ -312,6 +337,9 @@ const Pricing = () => {
       </section>
 
       <Footer />
+
+      {/* Modale Bêta */}
+      <BetaWaitlistModal open={showBetaModal} onOpenChange={setShowBetaModal} />
     </div>
   );
 };
