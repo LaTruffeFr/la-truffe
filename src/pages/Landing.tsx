@@ -8,7 +8,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { 
   Target, TrendingDown, 
   BarChart3, CheckCircle2, Euro, Award, 
-  LineChart, Zap, Star, Loader2, Search, Shield, Users
+  LineChart, Zap, Star, Loader2, Search, Shield, Users, Sparkles
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { Header } from '@/components/Header';
@@ -16,16 +16,20 @@ import imgValeur from '@/assets/analyse-valeur.jpg';
 import imgDecote from '@/assets/analyse-decote.jpg';
 
 import { useAuth } from '@/hooks/useAuth';
+import { useVipAccess } from '@/hooks/useVipAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { BetaWaitlistModal } from '@/components/BetaWaitlistModal';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user, credits, isAdmin, refreshCredits } = useAuth();
+  const { isVip } = useVipAccess();
   const { toast } = useToast();
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBetaModal, setShowBetaModal] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,24 +44,20 @@ const Landing = () => {
       return;
     }
 
-    // Si non connecté, rediriger vers auth avec les paramètres
+    // Si non VIP, afficher la modale Bêta
+    if (!isVip) {
+      setShowBetaModal(true);
+      return;
+    }
+
+    // Si non connecté (mais VIP via URL), rediriger vers auth
     if (!user) {
-      // Stocker les données dans sessionStorage pour les récupérer après connexion
       sessionStorage.setItem('pendingAudit', JSON.stringify({ marque: marque.trim(), modele: modele.trim() }));
       navigate('/auth');
       return;
     }
 
-    // Vérifier les crédits (sauf pour les admins)
-    if (!isAdmin && credits <= 0) {
-      toast({
-        title: "Crédits insuffisants",
-        description: "Vous n'avez plus de crédits. Achetez un pack pour continuer.",
-        variant: "destructive",
-      });
-      navigate('/pricing');
-      return;
-    }
+    // Pour les VIP, pas besoin de vérifier les crédits
 
     // Si connecté, créer la demande
     setIsSubmitting(true);
@@ -72,26 +72,11 @@ const Landing = () => {
 
       if (reportError) throw reportError;
 
-      // Déduire 1 crédit (sauf pour les admins)
-      if (!isAdmin) {
-        const { error: creditError } = await supabase
-          .from('profiles')
-          .update({ credits: credits - 1 })
-          .eq('user_id', user.id);
-
-        if (creditError) {
-          console.error('Error deducting credit:', creditError);
-        } else {
-          // Rafraîchir les crédits dans le contexte
-          await refreshCredits();
-        }
-      }
-
+      // Pour les VIP, pas de déduction de crédit
+      // Les admins et VIP ne paient pas
       toast({
         title: "Demande envoyée !",
-        description: isAdmin 
-          ? "Votre demande d'audit a été soumise."
-          : `Votre demande d'audit a été soumise. Il vous reste ${credits - 1} crédit(s).`,
+        description: "Votre demande d'audit VIP a été soumise. Traitement prioritaire.",
       });
 
       // Rediriger vers le dashboard client
@@ -356,9 +341,15 @@ const Landing = () => {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Graphique "Sniper"</li>
               </ul>
 
-              <Button className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800" onClick={() => navigate('/checkout?pack=audit-unitaire')}>
-                Choisir ce pack
-              </Button>
+              {isVip ? (
+                <Button className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800" onClick={() => navigate('/checkout?pack=audit-unitaire')}>
+                  Choisir ce pack
+                </Button>
+              ) : (
+                <Button className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800" onClick={() => setShowBetaModal(true)}>
+                  <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
+                </Button>
+              )}
             </div>
 
             {/* Pack Chasseur (Populaire) */}
@@ -383,9 +374,15 @@ const Landing = () => {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Aide à la négociation</li>
               </ul>
 
-              <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" onClick={() => navigate('/checkout?pack=chasseur')}>
-                Choisir ce pack
-              </Button>
+              {isVip ? (
+                <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" onClick={() => navigate('/checkout?pack=chasseur')}>
+                  Choisir ce pack
+                </Button>
+              ) : (
+                <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" onClick={() => setShowBetaModal(true)}>
+                  <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -554,9 +551,15 @@ const Landing = () => {
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg w-full sm:w-auto shadow-2xl" onClick={() => navigate('/demo/demo-1')}>
               Voir un exemple
             </Button>
-            <Button size="lg" variant="outline" className="text-slate-900 border-white hover:bg-white/10 hover:text-white h-14 px-8 text-lg w-full sm:w-auto" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              Lancer une analyse
-            </Button>
+            {isVip ? (
+              <Button size="lg" variant="outline" className="text-slate-900 border-white hover:bg-white/10 hover:text-white h-14 px-8 text-lg w-full sm:w-auto" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                Lancer une analyse
+              </Button>
+            ) : (
+              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10 hover:text-white h-14 px-8 text-lg w-full sm:w-auto" onClick={() => setShowBetaModal(true)}>
+                <Sparkles className="w-5 h-5 mr-2" /> Rejoindre la Bêta
+              </Button>
+            )}
           </div>
         </div>
       </section>
@@ -602,6 +605,9 @@ const Landing = () => {
       </section>
 
       <Footer />
+
+      {/* Modale Bêta */}
+      <BetaWaitlistModal open={showBetaModal} onOpenChange={setShowBetaModal} />
     </div>
   );
 };

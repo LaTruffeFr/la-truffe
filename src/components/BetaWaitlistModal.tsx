@@ -33,8 +33,9 @@ export function BetaWaitlistModal({ open, onOpenChange }: BetaWaitlistModalProps
     setIsSubmitting(true);
 
     try {
-      // Insérer dans la table beta_waitlist (à créer via migration)
-      const { error } = await supabase.from('beta_waitlist').insert({
+      // Insérer dans la table beta_waitlist
+      // Use type assertion as table is new and types not yet regenerated
+      const { error } = await (supabase as any).from('beta_waitlist').insert({
         email: email.trim().toLowerCase(),
       });
 
@@ -92,11 +93,11 @@ export function BetaWaitlistModal({ open, onOpenChange }: BetaWaitlistModalProps
 
         {isSuccess ? (
           <div className="py-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Vous êtes sur la liste !</h3>
-            <p className="text-slate-600 text-sm mb-6">
+            <h3 className="text-lg font-bold text-foreground mb-2">Vous êtes sur la liste !</h3>
+            <p className="text-muted-foreground text-sm mb-6">
               Nous vous enverrons un email dès que vous pourrez accéder à La Truffe.
             </p>
             <Button onClick={handleClose} variant="outline">
