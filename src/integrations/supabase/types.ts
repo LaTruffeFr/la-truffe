@@ -382,6 +382,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_credit: { Args: { _user_id: string }; Returns: boolean }
       garage_has_subscription: {
         Args: { _garage_id: string }
         Returns: boolean
