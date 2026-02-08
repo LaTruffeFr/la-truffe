@@ -2,33 +2,27 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
-// Email admin qui a accès VIP
-const VIP_ADMIN_EMAIL = 'latruffe.consulting@gmail.com';
-
 export function useVipAccess() {
-  const { user, userEmail, isAdmin } = useAuth();
+  const { user, isAdmin, isVip: isVipRole } = useAuth();
   const [searchParams] = useSearchParams();
 
   const isVip = useMemo(() => {
-    // Check URL parameter ?vip=true
+    // Check URL parameter ?vip=true (for demo/testing)
     const vipParam = searchParams.get('vip');
     if (vipParam === 'true') {
       return true;
     }
 
-    // Check if user is admin or has VIP email
-    if (isAdmin) {
-      return true;
-    }
-
-    // Check specific VIP email
-    const email = userEmail || user?.email;
-    if (email === VIP_ADMIN_EMAIL) {
+    // Check if user has VIP or admin role from database
+    if (isVipRole || isAdmin) {
       return true;
     }
 
     return false;
-  }, [searchParams, isAdmin, userEmail, user?.email]);
+  }, [searchParams, isAdmin, isVipRole]);
 
-  return { isVip };
+  // VIP users have unlimited credits
+  const hasUnlimitedCredits = isVip;
+
+  return { isVip, hasUnlimitedCredits };
 }

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CSVImportModal } from '@/components/trading/CSVImportModal';
 import { ClientOrdersPanel } from '@/components/admin/ClientOrdersPanel';
 import { PublishReportModal } from '@/components/admin/PublishReportModal';
+import { VipManagementPanel } from '@/components/admin/VipManagementPanel';
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 
@@ -17,7 +18,8 @@ import {
   Loader2, Crosshair, RotateCcw, Upload, SlidersHorizontal, 
   BarChart3, ShoppingBag, User, Settings, LogOut, Send,
   CheckCircle2, AlertTriangle, Gauge, Fuel, Euro, ShieldCheck, 
-  Calendar, MapPin, Search, Share2, Trophy, ListFilter, ExternalLink
+  Calendar, MapPin, Search, Share2, Trophy, ListFilter, ExternalLink,
+  Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -205,6 +207,9 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="orders" className="rounded-none h-full px-0 font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <ShoppingBag className="w-4 h-4 mr-2" /> Commandes Clients
+            </TabsTrigger>
+            <TabsTrigger value="vip" className="rounded-none h-full px-0 font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <Crown className="w-4 h-4 mr-2" /> Gestion VIP
             </TabsTrigger>
           </TabsList>
         </div>
@@ -634,6 +639,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="orders" className="flex-1 m-0 p-6 max-w-7xl mx-auto w-full">
           <ClientOrdersPanel />
+        </TabsContent>
+
+        <TabsContent value="vip" className="flex-1 m-0 p-6 max-w-3xl mx-auto w-full">
+          <VipManagementPanel />
         </TabsContent>
       </Tabs>
 
