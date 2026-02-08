@@ -348,46 +348,95 @@ const DemoReportPage = () => {
         )}
 
         {/* --- AVIS EXPERT & NÉGO --- */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">L'avis de l'expert</h2>
-            <Card className="border-l-4 border-l-primary shadow-sm">
-              <CardContent className="p-6">
-                <p className="text-slate-700 leading-relaxed mb-4">
-                  "Ce modèle reste une valeur sûre. Le véhicule analysé est particulièrement intéressant car il se situe dans la fourchette basse du marché tout en affichant un kilométrage cohérent."
-                </p>
-                <div className="mt-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">JD</div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">Julien D.</p>
-                    <p className="text-xs text-slate-500">Analyste Automobile Senior</p>
+        <div className="grid md:grid-cols-1 gap-8 mb-12">
+          {/* Avis de l'expert */}
+          {report.expert_opinion && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                🧐 L'avis de l'expert
+              </h2>
+              <Card className="border-l-4 border-l-primary shadow-sm">
+                <CardContent className="p-6">
+                  <div className="prose prose-slate max-w-none">
+                    {report.expert_opinion.split('\n\n').map((paragraph, idx) => {
+                      // Gère le formatage markdown basique
+                      const formattedText = paragraph
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                      
+                      return (
+                        <p 
+                          key={idx} 
+                          className="text-slate-700 leading-relaxed mb-4"
+                          dangerouslySetInnerHTML={{ __html: formattedText }}
+                        />
+                      );
+                    })}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  <div className="mt-6 flex items-center gap-3 pt-4 border-t border-slate-100">
+                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">JD</div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">Julien D.</p>
+                      <p className="text-xs text-slate-500">Analyste Automobile Senior</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Arguments de négociation</h2>
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <ul className="space-y-4">
-                  <li className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">1</div>
-                    <p className="text-sm text-slate-700"><strong>Entretien :</strong> Vérifiez si la grosse révision a été faite récemment.</p>
-                  </li>
-                  <li className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">2</div>
-                    <p className="text-sm text-slate-700"><strong>Consommables :</strong> Négociez 400€ si les pneus sont à plus de 50% d'usure.</p>
-                  </li>
-                  <li className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-xs">3</div>
-                    <p className="text-sm text-slate-700"><strong>Marché :</strong> Montrez au vendeur que 5 véhicules similaires sont vendus moins cher (voir Top 5).</p>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Arguments de négociation */}
+          {report.negotiation_arguments && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                🥊 Arguments de négociation
+              </h2>
+              <Card className="shadow-sm">
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    {report.negotiation_arguments.split(/\n\n(?=\d\.)/).map((section, idx) => {
+                      const lines = section.split('\n').filter(line => line.trim());
+                      const title = lines[0] || '';
+                      const content = lines.slice(1).join('\n');
+                      
+                      // Parse le titre pour extraire le numéro
+                      const numberMatch = title.match(/^(\d)\./);
+                      const number = numberMatch ? numberMatch[1] : String(idx + 1);
+                      const titleText = title.replace(/^\d\.?\s*/, '');
+                      
+                      // Formatte le contenu avec le markdown basique
+                      const formattedContent = content
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/\n/g, '<br/>');
+                      
+                      return (
+                        <div key={idx} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
+                          <div className="flex gap-3 items-start">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm">
+                              {number}
+                            </div>
+                            <div className="flex-1">
+                              <h3 
+                                className="font-bold text-slate-900 mb-2"
+                                dangerouslySetInnerHTML={{ 
+                                  __html: titleText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                                }}
+                              />
+                              <div 
+                                className="text-sm text-slate-600 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: formattedContent }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
       </main>
