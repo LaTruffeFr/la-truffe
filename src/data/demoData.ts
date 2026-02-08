@@ -31,6 +31,8 @@ export interface DemoReport {
   decote_par_10k: number;
   opportunites_count: number;
   admin_notes: string;
+  expert_opinion?: string;
+  negotiation_arguments?: string;
   vehicles_data: VehicleWithScore[];
 }
 
@@ -41,14 +43,46 @@ export const demoReports: Record<string, DemoReport> = {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     marque: "Audi",
-    modele: "RS3 Sportback (8V2 / 8Y)",
-    annee_min: 2016,
-    annee_max: 2024,
+    modele: "RS3 Sportback (8V1 / 8V2)",
+    annee_min: 2015,
+    annee_max: 2020,
     status: "completed",
     prix_moyen: 48500,
     decote_par_10k: 1100,
     opportunites_count: 12,
     admin_notes: "Marché très actif sur la RS3. Les modèles 2017-2019 (8V2) représentent le meilleur rapport qualité/prix. Attention aux imports allemands mal équipés.",
+    expert_opinion: `"Le Chant du Cygne à 5 Cylindres."
+
+L'Audi RS3 est une légende pour une seule raison : son moteur 5 cylindres 2.5L. C'est le bruit d'une demi-Lamborghini Huracan. Mais attention, toutes les RS3 ne se valent pas.
+
+**La Phase 1 (8V1 - 2015/2016 - 367ch)** : C'est l'entrée de gamme. Bloc moteur en fonte (lourd), elle a tendance à "sous-virer" (tirer tout droit) dans les virages serrés. C'est du solide, mais la boîte peut être capricieuse.
+
+**La Phase 2 (8V2 - 2017/2020 - 400ch)** : Le Graal. Nouveau bloc en aluminium (DAZA), plus léger (-26kg), plus puissant, et surtout beaucoup plus dynamique. C'est celle qu'il faut acheter pour la collection.
+
+**Le Piège (2019+)** : Attention aux modèles après mi-2018 équipés du FAP (Filtre à Particules). Le moteur passe du code DAZA au code DNWA. Le bruit est étouffé, la voiture perd de son âme. Une "Sans FAP" de 2017 vaut plus cher qu'une "FAP" de 2020.
+
+**Verdict** : Visez une Phase 2 (2017-2018) moteur DAZA. C'est la cote la plus stable. Si vous prenez une Phase 1, le prix doit être "plancher" (<35k€) pour compenser la technologie vieillissante.`,
+    negotiation_arguments: `1. **L'Argument "Maladie" : Les Disques de Frein Voilés (1 500 € - 2 000 €)**
+
+C'est LA maladie chronique des RS3 8V. Les disques avant d'origine (en forme de vague) ne supportent pas la chauffe et se voilent très vite.
+
+*L'Attaque :* Lors de l'essai, freine fort à 110-130 km/h. Si le volant tremble, même un tout petit peu, les disques sont morts.
+
+*La Phrase :* "Le volant vibre au freinage. C'est la maladie des disques 'Wave'. Audi ne prend plus ça en charge. Il faut passer sur un kit Brembo ou Girodisc pour régler le problème. Ça me coûte 2000€ de billets dès demain."
+
+2. **L'Argument "Maintenance" : La Pompe Haldex (500 €)**
+
+Le système Quattro (Haldex) nécessite une vidange tous les 3 ans / 45 000 km. Mais le piège, c'est que Audi ne nettoie pas le tamis (filtre) lors de la vidange standard. Résultat : la pompe s'encrasse et le 4x4 tombe en panne (tu te retrouves en traction avant).
+
+*L'Attaque :* Regarde la facture de la dernière vidange Haldex. Si la mention "Nettoyage tamis/crépine" n'y est pas...
+
+*La Phrase :* "La vidange Haldex a été faite, mais pas le nettoyage de la crépine. Sur ces modèles, ça ne sert à rien sans nettoyer le filtre. La pompe force peut-être déjà. Je prends un risque sur le pont arrière."
+
+3. **L'Argument "Nuance" : Le FAP (Phase 2 uniquement) ou Le Transfert (Phase 1)**
+
+*Cas Phase 2 (2019+) :* "C'est un modèle FAP (DNWA). Désolé mais sur le marché passion, elle vaut 3000€ de moins qu'une DAZA de 2018 car elle ne fait pas le 'vrai' bruit du 5 cylindres. Je ne pourrai pas la revendre aussi bien."
+
+*Cas Phase 1 (2015-16) :* "Avez-vous changé le renvoi d'angle (Boîte de transfert) ? C'est le point faible des 367ch. Si ça siffle ou qu'il y a du jeu, la facture est salée."`,
     vehicles_data: [
       { 
         id: "rs3-01", 
