@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback,
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-type AppRole = 'admin' | 'client';
+type AppRole = 'admin' | 'vip' | 'client';
 
 interface UserProfile {
   credits: number;
@@ -20,6 +20,7 @@ interface AuthContextType {
 
   role: AppRole | null;
   isAdmin: boolean;
+  isVip: boolean;
   credits: number;
   userEmail: string | null;
 
@@ -52,20 +53,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const initialCheckDone = useRef(false);
 
-  const fetchIsAdmin = useCallback(async (userId: string): Promise<boolean> => {
+  const fetchUserRole = useCallback(async (userId: string): Promise<'admin' | 'vip' | null> => {
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+      .in('role', ['admin', 'vip']);
 
     if (error) {
-      console.error('Error checking admin role:', error);
-      return false;
+      console.error('Error checking user role:', error);
+      return null;
     }
 
-    return !!data;
+    // Priority: admin > vip
+    const roles = data?.map(r => r.role) || [];
+    if (roles.includes('admin')) return 'admin';
+    if (roles.includes('vip')) return 'vip';
+    return null;
   }, []);
 
   const fetchProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
@@ -97,18 +101,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsRoleLoading(true);
       setRole(null);
 
-      // Fetch admin status and profile in parallel
-      const [isAdmin, profile] = await Promise.all([
-        withTimeout(fetchIsAdmin(u.id), 4000, false),
+      // Fetch user role and profile in parallel
+      const [userRole, profile] = await Promise.all([
+        withTimeout(fetchUserRole(u.id), 4000, null),
         withTimeout(fetchProfile(u.id), 4000, null)
       ]);
 
-      setRole(isAdmin ? 'admin' : 'client');
+      setRole(userRole || 'client');
       setCredits(profile?.credits ?? 0);
       setUserEmail(profile?.email ?? u.email ?? null);
       setIsRoleLoading(false);
     },
-    [fetchIsAdmin, fetchProfile]
+    [fetchUserRole, fetchProfile]
   );
 
   useEffect(() => {
@@ -198,6 +202,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, fetchProfile]);
 
   const isAdmin = role === 'admin';
+  const isVip = role === 'vip' || role === 'admin'; // Admins are also VIP
 
   return (
     <AuthContext.Provider
@@ -208,6 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isRoleLoading,
         role,
         isAdmin,
+        isVip,
         credits,
         userEmail,
         signUp,

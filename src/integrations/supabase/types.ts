@@ -405,6 +405,7 @@ export type Database = {
         Args: { _garage_id: string; _user_id: string }
         Returns: boolean
       }
+      is_vip: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user" | "vip"
