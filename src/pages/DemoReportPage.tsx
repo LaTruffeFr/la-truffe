@@ -348,7 +348,7 @@ const DemoReportPage = () => {
         )}
 
         {/* --- AVIS EXPERT & NÉGO --- */}
-        <div className="grid md:grid-cols-1 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 gap-8 mb-12 items-start">
           {/* Avis de l'expert */}
           {report.expert_opinion && (
             <div>
