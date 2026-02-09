@@ -92,13 +92,18 @@ export const Header = ({ variant = 'default', activeLink = 'none' }: HeaderProps
                 </Button>
               </>
             ) : (
-              <Button 
-                onClick={() => setShowBetaModal(true)} 
-                className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
-              >
-                <Sparkles className="h-4 w-4" />
-                <span className="hidden sm:inline">Rejoindre la Bêta</span>
-              </Button>
+              <>
+                <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden md:flex hover:text-primary">
+                  Se connecter
+                </Button>
+                <Button 
+                  onClick={() => setShowBetaModal(true)} 
+                  className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">Rejoindre la Bêta</span>
+                </Button>
+              </>
             )}
             {variant === 'default' && <MobileNav />}
           </div>
