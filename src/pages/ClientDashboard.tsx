@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { useAuth } from '@/hooks/useAuth';
+import { useVipAccess } from '@/hooks/useVipAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 
@@ -38,6 +39,7 @@ const ClientDashboard = () => {
   const { toast } = useToast();
   
   const { user, signOut, isAdmin, credits, userEmail, refreshCredits } = useAuth();
+  const { isVip, hasUnlimitedCredits } = useVipAccess();
   
   const displayEmail = userEmail || user?.email || "";
   const initials = displayEmail.substring(0, 2).toUpperCase();
@@ -76,8 +78,8 @@ const ClientDashboard = () => {
       
       // Créer automatiquement la demande
       const createPendingReport = async () => {
-        // Déduire 1 crédit atomiquement (sauf pour les admins)
-        if (!isAdmin) {
+        // Déduire 1 crédit atomiquement (sauf pour les admins et VIP)
+        if (!isAdmin && !hasUnlimitedCredits) {
           const { data: creditDeducted, error: creditError } = await supabase
             .rpc('deduct_credit', { _user_id: user.id });
           
@@ -103,7 +105,7 @@ const ClientDashboard = () => {
           await refreshCredits();
           toast({
             title: "Demande envoyée !",
-            description: `Votre demande d'audit pour ${marque} ${modele} a été soumise.${!isAdmin ? ' 1 crédit déduit.' : ''}`,
+            description: `Votre demande d'audit pour ${marque} ${modele} a été soumise.${(!isAdmin && !hasUnlimitedCredits) ? ' 1 crédit déduit.' : ''}`,
           });
           fetchReports();
         } else {
@@ -144,8 +146,8 @@ const ClientDashboard = () => {
 
     setIsSubmitting(true);
     try {
-      // Déduire 1 crédit atomiquement AVANT de créer le rapport (sauf pour les admins)
-      if (!isAdmin) {
+      // Déduire 1 crédit atomiquement AVANT de créer le rapport (sauf pour les admins et VIP)
+      if (!isAdmin && !hasUnlimitedCredits) {
         const { data: creditDeducted, error: creditError } = await supabase
           .rpc('deduct_credit', { _user_id: user.id });
         
@@ -177,7 +179,7 @@ const ClientDashboard = () => {
 
       toast({
         title: "Demande envoyée !",
-        description: `Votre demande d'audit a été soumise.${!isAdmin ? ' 1 crédit déduit.' : ''}`,
+        description: `Votre demande d'audit a été soumise.${(!isAdmin && !hasUnlimitedCredits) ? ' 1 crédit déduit.' : ''}`,
       });
 
       // Réinitialiser le formulaire et recharger les rapports
@@ -187,7 +189,7 @@ const ClientDashboard = () => {
       fetchReports();
       
       // Rafraîchir les crédits affichés
-      if (!isAdmin) {
+      if (!isAdmin && !hasUnlimitedCredits) {
         await refreshCredits();
       }
     } catch (error) {
@@ -248,9 +250,9 @@ const ClientDashboard = () => {
                 <div className="text-xs text-muted-foreground mb-6">Individuel</div>
                 
                 <div className="bg-muted rounded-xl p-4 border border-border">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Crédits restants</div>
-                  <div className={`text-3xl font-bold mb-3 ${credits === 0 ? 'text-destructive' : 'text-primary'}`}>
-                    {credits}
+                   <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Crédits restants</div>
+                   <div className={`text-3xl font-bold mb-3 ${hasUnlimitedCredits ? 'text-primary' : credits === 0 ? 'text-destructive' : 'text-primary'}`}>
+                     {hasUnlimitedCredits ? '∞' : credits}
                   </div>
                   <Button 
                     size="sm" 
