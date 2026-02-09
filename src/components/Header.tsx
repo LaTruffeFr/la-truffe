@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogIn, ChevronDown, User, Sparkles } from 'lucide-react';
+import { LogIn, ChevronDown, User, Sparkles, Crown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { MobileNav } from '@/components/landing';
 import { useAuth } from '@/hooks/useAuth';
 import { useVipAccess } from '@/hooks/useVipAccess';
@@ -65,13 +66,21 @@ export const Header = ({ variant = 'default', activeLink = 'none' }: HeaderProps
 
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <Button 
-                onClick={() => navigate('/client-dashboard')} 
-                className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-lg transition-all"
-              >
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">Mon Espace</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                {isVip && (
+                  <Badge variant="outline" className="hidden sm:flex items-center gap-1 border-amber-400 bg-amber-50 text-amber-700 font-semibold text-xs px-2 py-0.5">
+                    <Crown className="h-3 w-3" />
+                    VIP
+                  </Badge>
+                )}
+                <Button 
+                  onClick={() => navigate('/client-dashboard')} 
+                  className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-lg transition-all"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mon Espace</span>
+                </Button>
+              </div>
             ) : isVip ? (
               <>
                 <Button onClick={() => navigate('/auth')} variant="ghost" className="hidden md:flex hover:text-primary">
