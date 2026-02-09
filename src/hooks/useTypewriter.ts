@@ -1,93 +1,119 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface TypewriterScenario {
-  marque: string;
-  modele: string;
-  precision: string;
-}
-
-interface TypewriterState {
-  marque: string;
-  modele: string;
+  make: string;
+  model: string;
   precision: string;
 }
 
 const SCENARIOS: TypewriterScenario[] = [
-  { marque: 'Renault', modele: 'Clio 4', precision: 'RS Trophy' },
-  { marque: 'Porsche', modele: '911', precision: 'Carrera S' },
-  { marque: 'Volkswagen', modele: 'Golf 7', precision: 'GTI Performance' },
-  { marque: 'Audi', modele: 'RS3', precision: 'Sportback' },
+  { make: 'Renault', model: 'Clio 4', precision: 'RS Trophy' },
+  { make: 'Porsche', model: '911', precision: 'Carrera S' },
+  { make: 'Volkswagen', model: 'Golf 7', precision: 'GTI Performance' },
+  { make: 'Audi', model: 'RS3', precision: 'Sportback' },
 ];
 
-type Phase = 'typing' | 'pausing' | 'deleting';
+interface TypewriterState {
+  make: string;
+  model: string;
+  precision: string;
+}
 
-export function useTypewriter(isPaused: boolean = false) {
-  const [displayText, setDisplayText] = useState<TypewriterState>({
-    marque: '',
-    modele: '',
+interface UseTypewriterOptions {
+  typingSpeed?: number;
+  deletingSpeed?: number;
+  pauseDuration?: number;
+}
+
+export function useTypewriter(
+  isPaused: boolean = false,
+  options: UseTypewriterOptions = {}
+) {
+  const {
+    typingSpeed = 100,
+    deletingSpeed = 50,
+    pauseDuration = 2000,
+  } = options;
+
+  const [currentText, setCurrentText] = useState<TypewriterState>({
+    make: '',
+    model: '',
     precision: '',
   });
   const [scenarioIndex, setScenarioIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [charIndex, setCharIndex] = useState(0);
-  const [phase, setPhase] = useState<Phase>('typing');
+  const [isPausedInternal, setIsPausedInternal] = useState(false);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentScenario = SCENARIOS[scenarioIndex];
-  
-  // Get the maximum length among all fields in current scenario
   const maxLength = Math.max(
-    currentScenario.marque.length,
-    currentScenario.modele.length,
+    currentScenario.make.length,
+    currentScenario.model.length,
     currentScenario.precision.length
   );
 
-  useEffect(() => {
-    if (isPaused) return;
+  const tick = useCallback(() => {
+    if (isPaused || isPausedInternal) return;
 
-    let timeout: NodeJS.Timeout;
-
-    if (phase === 'typing') {
+    if (!isDeleting) {
+      // TYPING
       if (charIndex < maxLength) {
-        timeout = setTimeout(() => {
-          setDisplayText({
-            marque: currentScenario.marque.slice(0, charIndex + 1),
-            modele: currentScenario.modele.slice(0, charIndex + 1),
-            precision: currentScenario.precision.slice(0, charIndex + 1),
-          });
-          setCharIndex((prev) => prev + 1);
-        }, 80); // Typing speed
+        setCurrentText({
+          make: currentScenario.make.slice(0, charIndex + 1),
+          model: currentScenario.model.slice(0, charIndex + 1),
+          precision: currentScenario.precision.slice(0, charIndex + 1),
+        });
+        setCharIndex((prev) => prev + 1);
       } else {
-        // Finished typing, pause
-        timeout = setTimeout(() => {
-          setPhase('pausing');
-        }, 100);
+        // Finished typing - pause before deleting
+        setIsPausedInternal(true);
+        timeoutRef.current = setTimeout(() => {
+          setIsPausedInternal(false);
+          setIsDeleting(true);
+        }, pauseDuration);
+        return;
       }
-    } else if (phase === 'pausing') {
-      // Wait 2 seconds before deleting
-      timeout = setTimeout(() => {
-        setPhase('deleting');
-      }, 2000);
-    } else if (phase === 'deleting') {
+    } else {
+      // DELETING
       if (charIndex > 0) {
-        timeout = setTimeout(() => {
-          const newIndex = charIndex - 1;
-          setDisplayText({
-            marque: currentScenario.marque.slice(0, newIndex),
-            modele: currentScenario.modele.slice(0, newIndex),
-            precision: currentScenario.precision.slice(0, newIndex),
-          });
-          setCharIndex(newIndex);
-        }, 40); // Deleting speed (faster)
+        const newIndex = charIndex - 1;
+        setCurrentText({
+          make: currentScenario.make.slice(0, newIndex),
+          model: currentScenario.model.slice(0, newIndex),
+          precision: currentScenario.precision.slice(0, newIndex),
+        });
+        setCharIndex(newIndex);
       } else {
-        // Move to next scenario
-        timeout = setTimeout(() => {
-          setScenarioIndex((prev) => (prev + 1) % SCENARIOS.length);
-          setPhase('typing');
-        }, 300);
+        // Finished deleting - move to next scenario
+        setIsDeleting(false);
+        setScenarioIndex((prev) => (prev + 1) % SCENARIOS.length);
       }
     }
+  }, [isPaused, isPausedInternal, isDeleting, charIndex, maxLength, currentScenario, pauseDuration]);
 
-    return () => clearTimeout(timeout);
-  }, [charIndex, phase, isPaused, currentScenario, maxLength]);
+  useEffect(() => {
+    if (isPaused || isPausedInternal) return;
 
-  return displayText;
+    const speed = isDeleting ? deletingSpeed : typingSpeed;
+    timeoutRef.current = setTimeout(tick, speed);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [tick, isDeleting, typingSpeed, deletingSpeed, isPaused, isPausedInternal]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return currentText;
 }
