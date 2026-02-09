@@ -117,8 +117,8 @@ export function PublishReportModal({
         vehicles_data: allVehiclesData
       };
 
-      // Ajout de l'user_id seulement si connecté
-      if (user) reportPayload.user_id = user.id;
+      // Ajout de l'user_id seulement pour les nouveaux rapports (pas les mises à jour de commandes existantes)
+      if (user && selectedClientId === "new") reportPayload.user_id = user.id;
 
       // 5. Envoi à Supabase
       let result;
