@@ -20,6 +20,7 @@ import { useVipAccess } from '@/hooks/useVipAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BetaWaitlistModal } from '@/components/BetaWaitlistModal';
+import { useTypewriter } from '@/hooks/useTypewriter';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -28,8 +29,14 @@ const Landing = () => {
   const { toast } = useToast();
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
+  const [precision, setPrecision] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBetaModal, setShowBetaModal] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  // Typewriter animation - pause when any field is focused or has content
+  const shouldPauseTypewriter = focusedField !== null || marque !== '' || modele !== '' || precision !== '';
+  const typewriterText = useTypewriter(shouldPauseTypewriter);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,26 +130,34 @@ const Landing = () => {
                 <div className="flex-1 w-full text-left">
                   <label className="text-xs font-semibold text-slate-500 uppercase mb-1.5 block ml-1">Marque</label>
                   <Input 
-                    placeholder="Ex: Audi, BMW..." 
+                    placeholder={typewriterText.make || 'Ex: Audi...'}
                     className="h-12 text-lg border-slate-200 focus:border-primary focus:ring-primary bg-slate-50"
                     value={marque}
                     onChange={(e) => setMarque(e.target.value)}
+                    onFocus={() => setFocusedField('marque')}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </div>
                 <div className="flex-1 w-full text-left">
                   <label className="text-xs font-semibold text-slate-500 uppercase mb-1.5 block ml-1">Modèle</label>
                   <Input 
-                    placeholder="Ex: RS3, Golf 7..." 
+                    placeholder={typewriterText.model || 'Ex: RS3...'}
                     className="h-12 text-lg border-slate-200 focus:border-primary focus:ring-primary bg-slate-50"
                     value={modele}
                     onChange={(e) => setModele(e.target.value)}
+                    onFocus={() => setFocusedField('modele')}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </div>
                 <div className="flex-1 w-full text-left">
                   <label className="text-xs font-semibold text-slate-500 uppercase mb-1.5 block ml-1">Précision (Optionnel)</label>
                   <Input 
-                    placeholder="Ex: 2020, Pack M..." 
+                    placeholder={typewriterText.precision || 'Ex: Pack M...'}
                     className="h-12 text-lg border-slate-200 focus:border-primary focus:ring-primary bg-slate-50"
+                    value={precision}
+                    onChange={(e) => setPrecision(e.target.value)}
+                    onFocus={() => setFocusedField('precision')}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </div>
                 <Button 
