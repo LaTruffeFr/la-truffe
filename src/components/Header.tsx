@@ -15,7 +15,7 @@ interface HeaderProps {
 export const Header = ({ variant = 'default', activeLink = 'none' }: HeaderProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isVip = useVipAccess();
+  const { isVip } = useVipAccess();
   const [showBetaModal, setShowBetaModal] = useState(false);
 
   return (
