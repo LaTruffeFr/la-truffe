@@ -70,16 +70,24 @@ export function SearchHero() {
         {/* Search bar */}
         <div className="max-w-2xl mx-auto animate-fade-in-up animate-delay-200">
           <div className="search-bar">
-            <div className="flex-1 flex items-center px-5 py-4">
+            <div className="flex-1 flex items-center px-5 py-4 relative">
               <Search className="h-5 w-5 text-muted-foreground mr-3 flex-shrink-0" />
-              <input
-                type="text"
-                placeholder={placeholder + '|'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-lg"
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="w-full bg-transparent border-none outline-none text-foreground text-lg relative z-10"
+                />
+                {/* Animated placeholder overlay */}
+                {!searchQuery && (
+                  <span className="absolute inset-0 flex items-center text-muted-foreground text-lg pointer-events-none">
+                    {placeholder}
+                    <span className="animate-pulse ml-0.5">|</span>
+                  </span>
+                )}
+              </div>
             </div>
             <Button 
               onClick={handleSearch}
