@@ -1,53 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-
-const EXAMPLE_SEARCHES = [
-  'Audi RS3',
-  'BMW M3',
-  'Peugeot 308 GT',
-  'Golf 7 GTI',
-  'Mercedes Classe A',
-  'Renault Mégane RS',
-  'Porsche 911',
-];
+import { useTypewriter } from '@/hooks/useTypewriter';
 
 export function SearchHero() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [placeholder, setPlaceholder] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [marque, setMarque] = useState('');
+  const [modele, setModele] = useState('');
+  const [precision, setPrecision] = useState('');
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const currentText = EXAMPLE_SEARCHES[currentIndex];
-    const typingSpeed = isDeleting ? 50 : 100;
-    const pauseTime = isDeleting ? 500 : 2000;
-
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        // Typing
-        if (placeholder.length < currentText.length) {
-          setPlaceholder(currentText.slice(0, placeholder.length + 1));
-        } else {
-          // Finished typing, pause then start deleting
-          setTimeout(() => setIsDeleting(true), pauseTime);
-        }
-      } else {
-        // Deleting
-        if (placeholder.length > 0) {
-          setPlaceholder(placeholder.slice(0, -1));
-        } else {
-          // Finished deleting, move to next word
-          setIsDeleting(false);
-          setCurrentIndex((prev) => (prev + 1) % EXAMPLE_SEARCHES.length);
-        }
-      }
-    }, typingSpeed);
-
-    return () => clearTimeout(timeout);
-  }, [placeholder, isDeleting, currentIndex]);
+  // Pause animation when any field is focused
+  const isPaused = focusedField !== null;
+  const typewriterText = useTypewriter(isPaused);
 
   const handleSearch = () => {
     navigate('/auth');
@@ -67,49 +33,117 @@ export function SearchHero() {
           Collez le lien d'une annonce (LeBonCoin, LaCentrale). Notre algorithme analyse 100% du marché pour vous dire si c'est une bonne affaire ou une arnaque.
         </p>
         
-        {/* Search bar */}
-        <div className="max-w-2xl mx-auto animate-fade-in-up animate-delay-200">
-          <div className="search-bar">
-            <div className="flex-1 flex items-center px-5 py-4 relative">
-              <Search className="h-5 w-5 text-muted-foreground mr-3 flex-shrink-0" />
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full bg-transparent border-none outline-none text-foreground text-lg relative z-10"
-                />
-                {/* Animated placeholder overlay */}
-                {!searchQuery && (
-                  <span className="absolute inset-0 flex items-center text-muted-foreground text-lg pointer-events-none">
-                    {placeholder}
-                    <span className="animate-pulse ml-0.5">|</span>
-                  </span>
-                )}
+        {/* Search bar with 3 fields */}
+        <div className="max-w-4xl mx-auto animate-fade-in-up animate-delay-200">
+          <div className="search-bar flex-col sm:flex-row gap-0">
+            <div className="flex-1 flex flex-col sm:flex-row items-stretch">
+              {/* Marque field */}
+              <div className="flex-1 flex items-center px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-border/50 relative">
+                <Search className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0 sm:hidden" />
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={marque}
+                    onChange={(e) => setMarque(e.target.value)}
+                    onFocus={() => setFocusedField('marque')}
+                    onBlur={() => setFocusedField(null)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="w-full bg-transparent border-none outline-none text-foreground text-base relative z-10"
+                  />
+                  {!marque && focusedField !== 'marque' && (
+                    <span className="absolute inset-0 flex items-center text-muted-foreground text-base pointer-events-none">
+                      {typewriterText.marque || 'Marque'}
+                      <span className="animate-pulse ml-0.5 opacity-60">|</span>
+                    </span>
+                  )}
+                  {!marque && focusedField === 'marque' && (
+                    <span className="absolute inset-0 flex items-center text-muted-foreground/50 text-base pointer-events-none">
+                      Marque
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Modèle field */}
+              <div className="flex-1 flex items-center px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-border/50 relative">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={modele}
+                    onChange={(e) => setModele(e.target.value)}
+                    onFocus={() => setFocusedField('modele')}
+                    onBlur={() => setFocusedField(null)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="w-full bg-transparent border-none outline-none text-foreground text-base relative z-10"
+                  />
+                  {!modele && focusedField !== 'modele' && (
+                    <span className="absolute inset-0 flex items-center text-muted-foreground text-base pointer-events-none">
+                      {typewriterText.modele || 'Modèle'}
+                      <span className="animate-pulse ml-0.5 opacity-60">|</span>
+                    </span>
+                  )}
+                  {!modele && focusedField === 'modele' && (
+                    <span className="absolute inset-0 flex items-center text-muted-foreground/50 text-base pointer-events-none">
+                      Modèle
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Précision field */}
+              <div className="flex-1 flex items-center px-4 py-3 sm:py-4 relative">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={precision}
+                    onChange={(e) => setPrecision(e.target.value)}
+                    onFocus={() => setFocusedField('precision')}
+                    onBlur={() => setFocusedField(null)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="w-full bg-transparent border-none outline-none text-foreground text-base relative z-10"
+                  />
+                  {!precision && focusedField !== 'precision' && (
+                    <span className="absolute inset-0 flex items-center text-muted-foreground text-base pointer-events-none">
+                      {typewriterText.precision || 'Précision'}
+                      <span className="animate-pulse ml-0.5 opacity-60">|</span>
+                    </span>
+                  )}
+                  {!precision && focusedField === 'precision' && (
+                    <span className="absolute inset-0 flex items-center text-muted-foreground/50 text-base pointer-events-none">
+                      Précision (optionnel)
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
+
             <Button 
               onClick={handleSearch}
               size="lg"
-              className="m-2 px-6 md:px-8 font-bold text-sm md:text-base whitespace-nowrap animate-pulse-subtle"
+              className="m-2 px-6 md:px-8 font-bold text-sm md:text-base whitespace-nowrap"
             >
-              LANCER L'AUDIT DE PRIX
+              LANCER L'AUDIT
             </Button>
           </div>
           
           {/* Quick suggestions */}
           <div className="flex items-center justify-center gap-2 mt-4 flex-wrap animate-fade-in-up animate-delay-300">
             <span className="text-sm text-muted-foreground">Populaire :</span>
-            {['Golf 7', 'Peugeot 308', 'BMW Série 3', 'Clio 5'].map((model) => (
+            {[
+              { marque: 'Golf 7', modele: 'GTI' },
+              { marque: 'Peugeot', modele: '308' },
+              { marque: 'BMW', modele: 'Série 3' },
+              { marque: 'Clio', modele: '5' },
+            ].map((item) => (
               <button
-                key={model}
+                key={`${item.marque}-${item.modele}`}
                 onClick={() => {
-                  setSearchQuery(model);
+                  setMarque(item.marque);
+                  setModele(item.modele);
                 }}
                 className="text-sm text-primary hover:text-primary/80 underline-offset-2 hover:underline transition-colors"
               >
-                {model}
+                {item.marque} {item.modele}
               </button>
             ))}
           </div>
