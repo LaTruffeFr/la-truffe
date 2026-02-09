@@ -391,6 +391,7 @@ export type Database = {
         Returns: boolean
       }
       generate_share_token: { Args: never; Returns: string }
+      get_beta_spots_remaining: { Args: never; Returns: number }
       get_user_garage_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
