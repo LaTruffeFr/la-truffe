@@ -1,11 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
+const EXAMPLE_SEARCHES = [
+  'Audi RS3',
+  'BMW M3',
+  'Peugeot 308 GT',
+  'Golf 7 GTI',
+  'Mercedes Classe A',
+  'Renault Mégane RS',
+  'Porsche 911',
+];
+
 export function SearchHero() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [placeholder, setPlaceholder] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const currentText = EXAMPLE_SEARCHES[currentIndex];
+    const typingSpeed = isDeleting ? 50 : 100;
+    const pauseTime = isDeleting ? 500 : 2000;
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing
+        if (placeholder.length < currentText.length) {
+          setPlaceholder(currentText.slice(0, placeholder.length + 1));
+        } else {
+          // Finished typing, pause then start deleting
+          setTimeout(() => setIsDeleting(true), pauseTime);
+        }
+      } else {
+        // Deleting
+        if (placeholder.length > 0) {
+          setPlaceholder(placeholder.slice(0, -1));
+        } else {
+          // Finished deleting, move to next word
+          setIsDeleting(false);
+          setCurrentIndex((prev) => (prev + 1) % EXAMPLE_SEARCHES.length);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [placeholder, isDeleting, currentIndex]);
 
   const handleSearch = () => {
     navigate('/auth');
@@ -32,7 +74,7 @@ export function SearchHero() {
               <Search className="h-5 w-5 text-muted-foreground mr-3 flex-shrink-0" />
               <input
                 type="text"
-                placeholder="Entrez le modèle (ex: Audi RS3)"
+                placeholder={placeholder + '|'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
