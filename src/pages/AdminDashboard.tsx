@@ -10,6 +10,7 @@ import { CSVImportModal } from '@/components/trading/CSVImportModal';
 import { ClientOrdersPanel } from '@/components/admin/ClientOrdersPanel';
 import { PublishReportModal } from '@/components/admin/PublishReportModal';
 import { VipManagementPanel } from '@/components/admin/VipManagementPanel';
+import { WaitlistPanel } from '@/components/admin/WaitlistPanel';
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 
@@ -641,7 +642,8 @@ export default function AdminDashboard() {
           <ClientOrdersPanel />
         </TabsContent>
 
-        <TabsContent value="vip" className="flex-1 m-0 p-6 max-w-3xl mx-auto w-full">
+        <TabsContent value="vip" className="flex-1 m-0 p-6 max-w-3xl mx-auto w-full space-y-6">
+          <WaitlistPanel />
           <VipManagementPanel />
         </TabsContent>
       </Tabs>

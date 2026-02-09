@@ -19,16 +19,19 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          vip_approved: boolean
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          vip_approved?: boolean
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          vip_approved?: boolean
         }
         Relationships: []
       }
