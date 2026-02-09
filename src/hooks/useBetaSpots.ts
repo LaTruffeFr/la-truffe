@@ -18,14 +18,13 @@ export function useBetaSpots() {
 
     fetchSpots();
 
-    // Realtime: listen for new profiles to update counter
+    // Realtime: listen for new beta_waitlist entries to update counter
     const channel = supabase
       .channel('beta-spots')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'profiles' },
+        { event: 'INSERT', schema: 'public', table: 'beta_waitlist' },
         () => {
-          // Refetch on new signup
           fetchSpots();
         }
       )
