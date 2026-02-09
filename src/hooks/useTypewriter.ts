@@ -1,119 +1,96 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-interface TypewriterScenario {
-  make: string;
-  model: string;
-  precision: string;
-}
-
-const SCENARIOS: TypewriterScenario[] = [
+// Scénarios synchronisés (Marque / Modèle / Précision)
+const scenarios = [
   { make: 'Renault', model: 'Clio 4', precision: 'RS Trophy' },
   { make: 'Porsche', model: '911', precision: 'Carrera S' },
   { make: 'Volkswagen', model: 'Golf 7', precision: 'GTI Performance' },
   { make: 'Audi', model: 'RS3', precision: 'Sportback' },
-];
+] as const;
 
-interface TypewriterState {
+type Scenario = (typeof scenarios)[number];
+
+type TypewriterState = {
   make: string;
   model: string;
   precision: string;
-}
+};
 
-interface UseTypewriterOptions {
-  typingSpeed?: number;
-  deletingSpeed?: number;
-  pauseDuration?: number;
-}
+/**
+ * Hook Typewriter synchronisé.
+ * - 100ms pour écrire
+ * - 50ms pour effacer
+ * - 2000ms de pause quand le scénario est entièrement écrit
+ */
+export function useTypewriter(isPaused: boolean = false) {
+  const [scenarioIndex, setScenarioIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [charIndex, setCharIndex] = useState(0);
 
-export function useTypewriter(
-  isPaused: boolean = false,
-  options: UseTypewriterOptions = {}
-) {
-  const {
-    typingSpeed = 100,
-    deletingSpeed = 50,
-    pauseDuration = 2000,
-  } = options;
+  const scenario: Scenario = scenarios[scenarioIndex];
 
-  const [currentText, setCurrentText] = useState<TypewriterState>({
+  const maxLen = useMemo(() => {
+    return Math.max(scenario.make.length, scenario.model.length, scenario.precision.length);
+  }, [scenario]);
+
+  const [currentPlaceholder, setCurrentPlaceholder] = useState<TypewriterState>({
     make: '',
     model: '',
     precision: '',
   });
-  const [scenarioIndex, setScenarioIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [charIndex, setCharIndex] = useState(0);
-  const [isPausedInternal, setIsPausedInternal] = useState(false);
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (isPaused) return;
 
-  const currentScenario = SCENARIOS[scenarioIndex];
-  const maxLength = Math.max(
-    currentScenario.make.length,
-    currentScenario.model.length,
-    currentScenario.precision.length
-  );
+    const typingSpeed = 100;
+    const deletingSpeed = 50;
+    const pauseDuration = 2000;
 
-  const tick = useCallback(() => {
-    if (isPaused || isPausedInternal) return;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
+    // 1) ÉCRITURE
     if (!isDeleting) {
-      // TYPING
-      if (charIndex < maxLength) {
-        setCurrentText({
-          make: currentScenario.make.slice(0, charIndex + 1),
-          model: currentScenario.model.slice(0, charIndex + 1),
-          precision: currentScenario.precision.slice(0, charIndex + 1),
-        });
-        setCharIndex((prev) => prev + 1);
+      if (charIndex < maxLen) {
+        timeoutId = setTimeout(() => {
+          const nextIndex = charIndex + 1;
+          setCurrentPlaceholder({
+            make: scenario.make.slice(0, nextIndex),
+            model: scenario.model.slice(0, nextIndex),
+            precision: scenario.precision.slice(0, nextIndex),
+          });
+          setCharIndex(nextIndex);
+        }, typingSpeed);
       } else {
-        // Finished typing - pause before deleting
-        setIsPausedInternal(true);
-        timeoutRef.current = setTimeout(() => {
-          setIsPausedInternal(false);
+        // Fin de l'écriture: pause 2 secondes puis suppression
+        timeoutId = setTimeout(() => {
           setIsDeleting(true);
         }, pauseDuration);
-        return;
       }
-    } else {
-      // DELETING
-      if (charIndex > 0) {
-        const newIndex = charIndex - 1;
-        setCurrentText({
-          make: currentScenario.make.slice(0, newIndex),
-          model: currentScenario.model.slice(0, newIndex),
-          precision: currentScenario.precision.slice(0, newIndex),
-        });
-        setCharIndex(newIndex);
-      } else {
-        // Finished deleting - move to next scenario
-        setIsDeleting(false);
-        setScenarioIndex((prev) => (prev + 1) % SCENARIOS.length);
-      }
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [isPaused, isPausedInternal, isDeleting, charIndex, maxLength, currentScenario, pauseDuration]);
 
-  useEffect(() => {
-    if (isPaused || isPausedInternal) return;
+    // 2) SUPPRESSION
+    if (charIndex > 0) {
+      timeoutId = setTimeout(() => {
+        const nextIndex = charIndex - 1;
+        setCurrentPlaceholder({
+          make: scenario.make.slice(0, nextIndex),
+          model: scenario.model.slice(0, nextIndex),
+          precision: scenario.precision.slice(0, nextIndex),
+        });
+        setCharIndex(nextIndex);
+      }, deletingSpeed);
 
-    const speed = isDeleting ? deletingSpeed : typingSpeed;
-    timeoutRef.current = setTimeout(tick, speed);
+      return () => clearTimeout(timeoutId);
+    }
 
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [tick, isDeleting, typingSpeed, deletingSpeed, isPaused, isPausedInternal]);
+    // 3) FIN DE SUPPRESSION -> scénario suivant
+    setIsDeleting(false);
+    setScenarioIndex((prev) => (prev + 1) % scenarios.length);
+    // charIndex est déjà à 0
+  }, [isPaused, scenario, scenarioIndex, charIndex, isDeleting, maxLen]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return currentText;
+  return currentPlaceholder;
 }
+
