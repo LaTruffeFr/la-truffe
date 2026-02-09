@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BetaWaitlistModal } from '@/components/BetaWaitlistModal';
 import { useTypewriter } from '@/hooks/useTypewriter';
+import { BetaCounter } from '@/components/landing/BetaCounter';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -182,8 +183,13 @@ const Landing = () => {
             </CardContent>
           </Card>
 
+          {/* Beta Counter */}
+          <div className="mt-10">
+            <BetaCounter />
+          </div>
+
           {/* Trust Indicators */}
-          <div className="mt-16 pt-8 border-t border-slate-200/60">
+          <div className="mt-10 pt-8 border-t border-slate-200/60">
             <p className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider">Ce que nos algorithmes analysent :</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-slate-700 font-medium text-sm">
               <div className="flex items-center justify-center gap-2"><Target className="w-5 h-5 text-blue-500" /> Prix du marché</div>
