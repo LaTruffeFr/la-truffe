@@ -23,3 +23,7 @@ verify_jwt = false
 [functions.verify-payment]
 # Public endpoint called after Stripe redirect
 verify_jwt = false
+
+[functions.analyze-vehicles]
+# AI analysis requires auth
+verify_jwt = false

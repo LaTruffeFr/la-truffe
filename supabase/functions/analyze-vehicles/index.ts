@@ -1,0 +1,157 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+interface VehicleInput {
+  id: string;
+  titre: string;
+  marque: string;
+  modele: string;
+  prix: number;
+  kilometrage: number;
+  annee: number;
+  description: string;
+}
+
+interface VehicleAnalysis {
+  id: string;
+  options: string[];
+  etat: string;
+  pointsForts: string[];
+  pointsFaibles: string[];
+  resumeClient: string;
+  bonusScore: number; // -20 to +20
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { vehicles } = await req.json() as { vehicles: VehicleInput[] };
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    if (!vehicles || vehicles.length === 0) {
+      return new Response(JSON.stringify({ analyses: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Filter vehicles that actually have descriptions
+    const withDesc = vehicles.filter(v => v.description && v.description.trim().length > 20);
+    const withoutDesc = vehicles.filter(v => !v.description || v.description.trim().length <= 20);
+
+    if (withDesc.length === 0) {
+      return new Response(JSON.stringify({ analyses: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Process in batches of 10 to stay within token limits
+    const BATCH_SIZE = 10;
+    const allAnalyses: VehicleAnalysis[] = [];
+
+    for (let i = 0; i < withDesc.length; i += BATCH_SIZE) {
+      const batch = withDesc.slice(i, i + BATCH_SIZE);
+      
+      const vehicleList = batch.map((v, idx) => 
+        `[${idx + 1}] ID: ${v.id}
+Titre: ${v.titre}
+Marque: ${v.marque} | Modèle: ${v.modele} | Année: ${v.annee} | KM: ${v.kilometrage} | Prix: ${v.prix}€
+Description: ${v.description.slice(0, 500)}`
+      ).join('\n\n---\n\n');
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: `Tu es un expert automobile français spécialisé dans l'analyse de véhicules d'occasion. 
+Pour chaque véhicule, analyse la description et extrais les informations clés.
+Tu dois retourner un JSON structuré.`
+            },
+            {
+              role: "user",
+              content: `Analyse ces ${batch.length} véhicules et retourne un JSON avec exactement ce format:
+
+${vehicleList}
+
+Retourne UNIQUEMENT un JSON valide (pas de markdown, pas de \`\`\`):
+{
+  "analyses": [
+    {
+      "id": "l'ID du véhicule",
+      "options": ["liste des options/équipements détectés, max 6"],
+      "etat": "Excellent|Très bon|Bon|Moyen|À vérifier",
+      "pointsForts": ["max 3 points positifs concis"],
+      "pointsFaibles": ["max 3 points négatifs ou alertes"],
+      "resumeClient": "Résumé en 1-2 phrases pour un acheteur. Direct et factuel.",
+      "bonusScore": "nombre entre -20 et +20 (positif = bonne affaire confirmée, négatif = risques détectés)"
+    }
+  ]
+}
+
+Règles de scoring bonusScore:
+- Carnet d'entretien complet, 1ère main, historique clair → +10 à +20
+- Options premium (cuir, toit, caméra, etc.) → +5 à +10
+- Signes d'usure, frais à prévoir, fumeur → -5 à -10
+- Accident, moteur HS, problème grave → -15 à -20
+- Description vague ou trop courte → 0`
+            }
+          ],
+          temperature: 0.3,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          console.error("Rate limited, skipping batch");
+          continue;
+        }
+        if (response.status === 402) {
+          console.error("Payment required");
+          return new Response(JSON.stringify({ error: "Crédit IA insuffisant" }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        console.error("AI error:", response.status);
+        continue;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      
+      try {
+        // Clean potential markdown wrapping
+        const cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+        if (parsed.analyses && Array.isArray(parsed.analyses)) {
+          allAnalyses.push(...parsed.analyses);
+        }
+      } catch (parseError) {
+        console.error("Failed to parse AI response:", parseError, content.slice(0, 200));
+      }
+    }
+
+    return new Response(JSON.stringify({ analyses: allAnalyses }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (e) {
+    console.error("analyze-vehicles error:", e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

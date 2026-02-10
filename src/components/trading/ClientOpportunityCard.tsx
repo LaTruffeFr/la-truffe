@@ -1,5 +1,5 @@
 import { VehicleWithScore } from '@/lib/csvParser';
-import { Car, ExternalLink, Award, BarChart3 } from 'lucide-react';
+import { Car, ExternalLink, Award, BarChart3, Sparkles, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -31,17 +31,26 @@ function cleanModelName(model: string): string {
   return corrections[upper] || model;
 }
 
-// Calculate a deal score out of 10 based on deviation percentage
 function calculateDealScore(deviationPercent: number): number {
-  // deviationPercent is how much below trend (e.g., 20 = 20% below)
-  // Score: 15%+ = 10/10, 10% = 8/10, 5% = 6/10, etc.
   const score = Math.min(10, 5 + (deviationPercent / 3));
-  return Math.round(score * 10) / 10; // One decimal
+  return Math.round(score * 10) / 10;
+}
+
+function getEtatColor(etat: string): string {
+  switch (etat) {
+    case 'Excellent': return 'text-green-600 bg-green-50 border-green-200';
+    case 'Très bon': return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+    case 'Bon': return 'text-blue-600 bg-blue-50 border-blue-200';
+    case 'Moyen': return 'text-amber-600 bg-amber-50 border-amber-200';
+    case 'À vérifier': return 'text-red-600 bg-red-50 border-red-200';
+    default: return 'text-muted-foreground bg-muted border-border';
+  }
 }
 
 export function ClientOpportunityCard({ vehicle, rank, onAnalyze }: ClientOpportunityCardProps) {
   const dealScore = calculateDealScore(vehicle.deviationPercent);
   const hasImage = vehicle.image && vehicle.image.length > 10;
+  const ai = vehicle.aiAnalysis;
 
   return (
     <div className="relative glass-card overflow-hidden group hover:border-success/50 transition-all duration-300">
@@ -117,6 +126,61 @@ export function ClientOpportunityCard({ vehicle, rank, onAnalyze }: ClientOpport
           </Badge>
         </div>
       </div>
+
+      {/* AI Analysis Section */}
+      {ai && (
+        <div className="mx-4 mb-3 p-3 rounded-lg bg-muted/50 border border-border/50 space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-blue-500" />
+            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Analyse IA</span>
+            {ai.etat && (
+              <Badge variant="outline" className={`text-xs ${getEtatColor(ai.etat)}`}>
+                {ai.etat}
+              </Badge>
+            )}
+          </div>
+          
+          {/* Resume */}
+          {ai.resumeClient && (
+            <p className="text-sm text-foreground/80 leading-relaxed">{ai.resumeClient}</p>
+          )}
+
+          {/* Points forts / faibles */}
+          <div className="flex flex-wrap gap-3 mt-2">
+            {ai.pointsForts.length > 0 && (
+              <div className="flex-1 min-w-[140px]">
+                {ai.pointsForts.map((p, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-green-700 mb-0.5">
+                    <CheckCircle2 className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                    <span>{p}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {ai.pointsFaibles.length > 0 && (
+              <div className="flex-1 min-w-[140px]">
+                {ai.pointsFaibles.map((p, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-amber-700 mb-0.5">
+                    <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                    <span>{p}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Options */}
+          {ai.options.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ai.options.map((opt, i) => (
+                <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-background border border-border text-muted-foreground">
+                  {opt}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="px-4 pb-4 flex gap-2">

@@ -14,6 +14,16 @@ export interface ParsedVehicle {
   image: string;
   lien: string;
   localisation: string;
+  description: string;
+}
+
+export interface AIAnalysis {
+  options: string[];
+  etat: string;
+  pointsForts: string[];
+  pointsFaibles: string[];
+  resumeClient: string;
+  bonusScore: number;
 }
 
 export interface VehicleWithScore extends ParsedVehicle {
@@ -25,6 +35,7 @@ export interface VehicleWithScore extends ParsedVehicle {
   dealScore: number;          // 0-100, higher = better deal
   isPremium: boolean;         // Version premium détectée (S-Line, AMG, etc.)
   hasEnoughData: boolean;     // True si cluster >= 3 véhicules
+  aiAnalysis?: AIAnalysis;    // AI-generated analysis from description
   // Legacy compatibility
   prixMoyen: number;
   prixMedian: number;
@@ -45,6 +56,7 @@ export interface ColumnMapping {
   image: number;
   lien: number;
   localisation: number;
+  description: number;
 }
 
 // ============================================
@@ -64,6 +76,7 @@ const COLUMN_PATTERNS: Record<keyof ColumnMapping, RegExp[]> = {
   image: [/image/i, /img/i, /photo/i, /picture/i, /src/i, /thumbnail/i],
   lien: [/link/i, /url/i, /href/i, /lien/i],
   localisation: [/location/i, /city/i, /ville/i, /localisation/i, /region/i, /département/i],
+  description: [/description/i, /detail/i, /détail/i, /annonce/i, /texte/i, /body/i, /contenu/i],
 };
 
 const BRANDS = [
@@ -672,6 +685,12 @@ function parseRow(
     localisation = row[mapping.localisation]?.trim() || '';
   }
   
+  // Extract description
+  let description = '';
+  if (mapping.description !== undefined) {
+    description = row[mapping.description]?.trim() || '';
+  }
+  
   return {
     id: `v-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
     titre: titre.slice(0, 200),
@@ -686,6 +705,7 @@ function parseRow(
     image: image || '',
     lien: lien || '#',
     localisation,
+    description,
   };
 }
 
