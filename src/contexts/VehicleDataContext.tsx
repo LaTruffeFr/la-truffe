@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-// CORRECTION ICI : On importe les bons types et la bonne fonction
-import { parseCSVFile, ParsedVehicle, VehicleWithScore } from '@/lib/csvParser';
+import { parseCSVFile, ParsedVehicle, VehicleWithScore, AIAnalysis } from '@/lib/csvParser';
 import { useToast } from '@/hooks/use-toast';
 import { calculateSmartScore, filterOutliers } from '@/lib/vehicleAnalysis';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VehicleInfo {
   marque: string;
@@ -34,6 +34,7 @@ interface VehicleDataContextType {
   filters: FilterState;
   dataRanges: FilterState;
   isLoading: boolean;
+  isAnalyzingAI: boolean;
   vehicleInfo: VehicleInfo | null;
   setFilters: (filters: Partial<FilterState>) => void;
   resetFilters: () => void;
@@ -45,10 +46,10 @@ interface VehicleDataContextType {
 const VehicleDataContext = createContext<VehicleDataContextType | undefined>(undefined);
 
 export const VehicleDataProvider = ({ children }: { children: React.ReactNode }) => {
-  // CORRECTION ICI : Le type est ParsedVehicle[] ou VehicleWithScore[]
   const [vehicles, setVehicles] = useState<VehicleWithScore[]>([]);
   const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzingAI, setIsAnalyzingAI] = useState(false);
   const [outliersCount, setOutliersCount] = useState(0);
   const { toast } = useToast();
 
@@ -70,19 +71,76 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
     };
   }, [vehicles]);
 
+  const runAIAnalysis = useCallback(async (scoredVehicles: VehicleWithScore[]) => {
+    const withDesc = scoredVehicles.filter(v => v.description && v.description.trim().length > 20);
+    if (withDesc.length === 0) return;
+
+    setIsAnalyzingAI(true);
+    try {
+      const vehicleInputs = withDesc.map(v => ({
+        id: v.id,
+        titre: v.titre,
+        marque: v.marque,
+        modele: v.modele,
+        prix: v.prix,
+        kilometrage: v.kilometrage,
+        annee: v.annee,
+        description: v.description,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('analyze-vehicles', {
+        body: { vehicles: vehicleInputs },
+      });
+
+      if (error) {
+        console.error('AI analysis error:', error);
+        return;
+      }
+
+      if (data?.analyses && Array.isArray(data.analyses)) {
+        const analysisMap = new Map<string, AIAnalysis>();
+        for (const a of data.analyses) {
+          analysisMap.set(a.id, {
+            options: a.options || [],
+            etat: a.etat || '',
+            pointsForts: a.pointsForts || [],
+            pointsFaibles: a.pointsFaibles || [],
+            resumeClient: a.resumeClient || '',
+            bonusScore: a.bonusScore || 0,
+          });
+        }
+
+        setVehicles(prev => prev.map(v => {
+          const ai = analysisMap.get(v.id);
+          if (!ai) return v;
+          // Apply AI bonus to deal score
+          const adjustedScore = Math.max(10, Math.min(99, v.dealScore + ai.bonusScore));
+          return { ...v, aiAnalysis: ai, dealScore: adjustedScore };
+        }));
+
+        toast({
+          title: "Analyse IA terminée",
+          description: `${data.analyses.length} annonces enrichies par l'IA.`,
+          className: "bg-blue-600 text-white border-0"
+        });
+      }
+    } catch (err) {
+      console.error('AI analysis failed:', err);
+    } finally {
+      setIsAnalyzingAI(false);
+    }
+  }, [toast]);
+
   const uploadCSV = useCallback(async (file: File, marque: string, modele: string) => {
     setIsLoading(true);
     try {
-      // CORRECTION ICI : Utilisation de parseCSVFile directement
       const rawVehicles = await parseCSVFile(file);
       
       if (rawVehicles.length === 0) throw new Error("Aucun véhicule trouvé dans le CSV");
 
-      // 2. Filtrage intelligent
       const cleanVehicles = filterOutliers(rawVehicles);
       const rejectedCount = rawVehicles.length - cleanVehicles.length;
 
-      // 3. Calcul du Score Intelligent (V2)
       const scoredVehicles = calculateSmartScore(cleanVehicles);
 
       setVehicles(scoredVehicles);
@@ -106,6 +164,9 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
         className: "bg-green-600 text-white border-0"
       });
 
+      // Launch AI analysis in background
+      runAIAnalysis(scoredVehicles);
+
     } catch (error: any) {
       console.error(error);
       toast({ 
@@ -116,7 +177,7 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, runAIAnalysis]);
 
   const clearData = () => {
     setVehicles([]);
@@ -191,6 +252,7 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
       filters,
       dataRanges,
       isLoading,
+      isAnalyzingAI,
       vehicleInfo,
       setFilters,
       resetFilters,

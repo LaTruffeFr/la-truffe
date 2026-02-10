@@ -10,7 +10,7 @@ import { VehicleWithScore } from '@/lib/csvParser';
 
 export default function ClientView() {
   const navigate = useNavigate();
-  const { filters, chartVehicles, vehicles, trendLine } = useVehicleData();
+  const { filters, chartVehicles, vehicles, trendLine, isAnalyzingAI } = useVehicleData();
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithScore | null>(null);
 
   // Calculate top opportunities from chartVehicles
@@ -111,6 +111,12 @@ export default function ClientView() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Voici les meilleures affaires du marché, sélectionnées par notre algorithme d'analyse.
           </p>
+          {isAnalyzingAI && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20">
+              <Sparkles className="w-4 h-4 text-blue-500 animate-pulse" />
+              <span className="text-sm text-blue-600 font-medium">Analyse IA en cours...</span>
+            </div>
+          )}
         </div>
 
         {/* Active Filters Summary */}
