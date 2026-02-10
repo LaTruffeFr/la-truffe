@@ -991,9 +991,100 @@ function preprocessBrokenCSV(rawText: string): string {
 }
 
 // ============================================
-// MAIN PARSER
+// FLATTENED LBC JSON-AS-CSV PARSER
+// ============================================
+
+/**
+ * Parses CSV where columns are flattened JSON paths from LeBonCoin API export.
+ * Headers like: list_id, subject, body, price/0, url, images/urls/0,
+ * attributes/0/key, attributes/0/value, etc.
+ */
+function parseFlattenedLBCCsv(headers: string[], rows: string[][]): ParsedVehicle[] | null {
+  // Detect this format by checking for characteristic flattened headers
+  const hasListId = headers.includes('list_id');
+  const hasSubject = headers.includes('subject');
+  const hasPriceSlash = headers.includes('price/0') || headers.includes('price_cents');
+  if (!hasListId || !hasSubject || !hasPriceSlash) return null;
+
+  console.log('Detected flattened LBC JSON-as-CSV format');
+
+  const colIdx = (name: string) => headers.indexOf(name);
+  const listIdIdx = colIdx('list_id');
+  const subjectIdx = colIdx('subject');
+  const bodyIdx = colIdx('body');
+  const urlIdx = colIdx('url');
+  const priceIdx = colIdx('price/0') !== -1 ? colIdx('price/0') : colIdx('price_cents');
+  const isPriceCents = colIdx('price/0') === -1;
+  const imageIdx = colIdx('images/urls/0') !== -1 ? colIdx('images/urls/0') : colIdx('images/thumb_url');
+  const brandIdx = colIdx('brand');
+  const cityIdx = colIdx('location/city_label');
+
+  // Find attribute columns: build a map of attribute index → { keyCol, valueCol }
+  const attrPairs: { keyIdx: number; valIdx: number }[] = [];
+  for (let i = 0; i < headers.length; i++) {
+    const m = headers[i].match(/^attributes\/(\d+)\/key$/);
+    if (m) {
+      const valCol = headers.indexOf(`attributes/${m[1]}/value`);
+      if (valCol !== -1) attrPairs.push({ keyIdx: i, valIdx: valCol });
+    }
+  }
+
+  const vehicles: ParsedVehicle[] = [];
+
+  for (const row of rows) {
+    if (row.length < 10) continue;
+
+    const get = (idx: number) => (idx >= 0 && idx < row.length ? (row[idx] || '').trim() : '');
+
+    let price = 0;
+    const rawPrice = get(priceIdx);
+    if (rawPrice) {
+      price = parseInt(rawPrice.replace(/[^\d]/g, ''), 10) || 0;
+      if (isPriceCents && price > 0) price = Math.round(price / 100);
+    }
+    if (price <= 0) continue;
+
+    // Extract attributes
+    const attrs: Record<string, string> = {};
+    for (const { keyIdx, valIdx } of attrPairs) {
+      const key = get(keyIdx);
+      const val = get(valIdx);
+      if (key && val) attrs[key] = val;
+    }
+
+    const year = parseInt(attrs['regdate'] || '', 10) || 0;
+    const mileage = parseInt((attrs['mileage'] || '').replace(/[^\d]/g, ''), 10) || 0;
+    if (!year && !mileage) continue;
+
+    const fuelMap: Record<string, string> = { '1': 'essence', '2': 'diesel', '3': 'gpl', '4': 'electrique', '5': 'hybride' };
+    const gearboxMap: Record<string, string> = { '1': 'manuelle', '2': 'automatique' };
+
+    vehicles.push({
+      id: get(listIdIdx) || `flat-${vehicles.length}`,
+      titre: get(subjectIdx),
+      marque: get(brandIdx) || '',
+      modele: '',
+      prix: price,
+      kilometrage: mileage,
+      annee: year,
+      carburant: fuelMap[attrs['fuel']] || attrs['fuel'] || '',
+      transmission: gearboxMap[attrs['gearbox']] || attrs['gearbox'] || '',
+      puissance: parseInt(attrs['horse_power_din'] || '', 10) || 0,
+      image: get(imageIdx),
+      lien: get(urlIdx),
+      localisation: get(cityIdx),
+      description: get(bodyIdx),
+    });
+  }
+
+  console.log(`Parsed ${vehicles.length} vehicles from flattened LBC CSV`);
+  return vehicles.length > 0 ? vehicles : null;
+}
+
 // ============================================
 // MANGLED JSON-AS-CSV RECONSTRUCTOR
+// ============================================
+// MAIN PARSER
 // ============================================
 
 /**
@@ -1059,6 +1150,24 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
           if (jsonVehicles && jsonVehicles.length > 0) {
             resolve(jsonVehicles);
             return;
+          }
+        }
+
+        // Try flattened LBC JSON-as-CSV (columns are flattened JSON paths)
+        {
+          const quickParse = Papa.parse(rawText, { preview: 2, skipEmptyLines: true });
+          if (quickParse.data && (quickParse.data as string[][]).length >= 2) {
+            const flatHeaders = (quickParse.data as string[][])[0].map(h => String(h || '').trim());
+            // Full parse only if format detected
+            if (flatHeaders.includes('list_id') && flatHeaders.includes('subject')) {
+              const fullParse = Papa.parse(rawText, { skipEmptyLines: true });
+              const allRows = (fullParse.data as string[][]);
+              const flatVehicles = parseFlattenedLBCCsv(allRows[0].map(h => String(h || '').trim()), allRows.slice(1));
+              if (flatVehicles && flatVehicles.length > 0) {
+                resolve(flatVehicles);
+                return;
+              }
+            }
           }
         }
 
