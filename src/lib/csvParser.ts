@@ -710,6 +710,150 @@ function parseRow(
 }
 
 // ============================================
+// LEBONCOIN JSON PARSER
+// ============================================
+
+interface LBCAdAttribute {
+  key: string;
+  value: string;
+  value_label?: string;
+}
+
+interface LBCAd {
+  list_id: number;
+  subject: string;
+  body?: string;
+  url: string;
+  price?: number[];
+  price_cents?: number;
+  images?: {
+    urls?: string[];
+    thumb_url?: string;
+  };
+  attributes?: LBCAdAttribute[];
+  location?: {
+    city_label?: string;
+    city?: string;
+    department_name?: string;
+    region_name?: string;
+  };
+}
+
+function getAttr(attrs: LBCAdAttribute[] | undefined, key: string): string {
+  if (!attrs) return '';
+  const attr = attrs.find(a => a.key === key);
+  return attr?.value_label || attr?.value || '';
+}
+
+function parseLeBonCoinJSON(jsonText: string): ParsedVehicle[] | null {
+  try {
+    const data = JSON.parse(jsonText);
+    // Detect LeBonCoin API format: must have "ads" array
+    const ads: LBCAd[] = data.ads || data;
+    if (!Array.isArray(ads) || ads.length === 0) return null;
+    // Verify first item looks like an LBC ad
+    if (!ads[0].list_id && !ads[0].subject) return null;
+
+    console.log(`Detected LeBonCoin JSON format with ${ads.length} ads`);
+
+    const vehicles: ParsedVehicle[] = [];
+
+    for (let i = 0; i < ads.length; i++) {
+      const ad = ads[i];
+      if (!ad.subject) continue;
+
+      const attrs = ad.attributes;
+      const titre = ad.subject || '';
+
+      // Price: from price array (euros) or price_cents
+      let prix = 0;
+      if (ad.price && ad.price.length > 0) {
+        prix = ad.price[0];
+      } else if (ad.price_cents) {
+        prix = Math.round(ad.price_cents / 100);
+      }
+      if (prix <= 0) continue;
+
+      // Year from regdate attribute
+      const regdate = getAttr(attrs, 'regdate');
+      let annee = 0;
+      const yearMatch = regdate.match(/\b(19[89]\d|20[0-2]\d)\b/);
+      if (yearMatch) annee = parseInt(yearMatch[1]);
+
+      // Mileage
+      const mileageStr = getAttr(attrs, 'mileage');
+      const kilometrage = parseInt(mileageStr.replace(/[^0-9]/g, '')) || 0;
+
+      // Brand & model from attributes or title
+      let marque = getAttr(attrs, 'u_car_brand') || getAttr(attrs, 'brand');
+      let modele = getAttr(attrs, 'u_car_model');
+      // Clean model value like "BMW_M4" → "M4"
+      if (modele.includes('_')) {
+        const parts = modele.split('_');
+        modele = parts.slice(1).join(' ');
+      }
+      if (!marque) marque = extractBrand(titre);
+      if (!modele || modele === 'Autres' || modele === 'model_all') {
+        modele = extractModel(titre, marque);
+      }
+
+      // Fuel
+      const fuelLabel = getAttr(attrs, 'fuel').toLowerCase();
+      let carburant = 'autre';
+      if (/essence/i.test(fuelLabel)) carburant = 'essence';
+      else if (/diesel/i.test(fuelLabel)) carburant = 'diesel';
+      else if (/[ée]lectrique/i.test(fuelLabel)) carburant = 'electrique';
+      else if (/hybride/i.test(fuelLabel)) carburant = 'hybride';
+      else carburant = extractCarburant(titre);
+
+      // Transmission
+      const gearboxLabel = getAttr(attrs, 'gearbox').toLowerCase();
+      let transmission = 'autre';
+      if (/automatique|auto/i.test(gearboxLabel)) transmission = 'automatique';
+      else if (/manu/i.test(gearboxLabel)) transmission = 'manuelle';
+      else transmission = extractTransmission(titre);
+
+      // Power DIN
+      const powerDin = parseInt(getAttr(attrs, 'horse_power_din')) || cleanPuissance(titre);
+
+      // Image
+      const image = ad.images?.urls?.[0] || ad.images?.thumb_url || '';
+
+      // Location
+      const loc = ad.location;
+      const localisation = loc?.city_label || loc?.city || 
+        [loc?.department_name, loc?.region_name].filter(Boolean).join(', ') || '';
+
+      // Description (body)
+      const description = (ad.body || '').replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+      vehicles.push({
+        id: `v-${ad.list_id || Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
+        titre: titre.slice(0, 200),
+        marque: marque || 'Autre',
+        modele: modele || 'Inconnu',
+        prix,
+        kilometrage,
+        annee: annee || new Date().getFullYear(),
+        carburant,
+        transmission,
+        puissance: powerDin,
+        image,
+        lien: ad.url || '#',
+        localisation,
+        description: description.slice(0, 2000),
+      });
+    }
+
+    console.log(`Parsed ${vehicles.length} vehicles from LeBonCoin JSON`);
+    return vehicles;
+  } catch (e) {
+    // Not valid JSON or not LBC format
+    return null;
+  }
+}
+
+// ============================================
 // BROKEN CSV PRE-PROCESSOR
 // ============================================
 
@@ -860,6 +1004,16 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
         if (!rawText) {
           reject(new Error('Impossible de lire le fichier'));
           return;
+        }
+
+        // Try LeBonCoin JSON format first
+        const trimmed = rawText.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          const jsonVehicles = parseLeBonCoinJSON(trimmed);
+          if (jsonVehicles && jsonVehicles.length > 0) {
+            resolve(jsonVehicles);
+            return;
+          }
         }
 
         // Preprocess broken CSVs (LeBonCoin export format)
