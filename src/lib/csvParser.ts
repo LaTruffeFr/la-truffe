@@ -710,52 +710,205 @@ function parseRow(
 }
 
 // ============================================
+// BROKEN CSV PRE-PROCESSOR
+// ============================================
+
+/**
+ * Detects and fixes CSVs where titles/descriptions contain commas
+ * but were not properly quoted, resulting in too many columns per row.
+ * 
+ * Pattern: external_id, title..., PRICE, YEAR, MILEAGE, image_url, listing_url, description...
+ */
+function preprocessBrokenCSV(rawText: string): string {
+  const lines = rawText.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return rawText;
+
+  const header = lines[0].trim();
+  // Check if this looks like the broken format (header has expected columns)
+  const headerLower = header.toLowerCase();
+  const hasExpectedHeaders = 
+    headerLower.includes('title') && 
+    headerLower.includes('price') && 
+    headerLower.includes('description');
+  
+  if (!hasExpectedHeaders) return rawText;
+
+  // Check if data rows have way too many columns (sign of broken quoting)
+  const firstDataLine = lines[1];
+  const roughColCount = firstDataLine.split(',').length;
+  if (roughColCount < 15) return rawText; // Properly formatted, no fix needed
+
+  console.log('Detected broken CSV format, preprocessing...');
+
+  const fixedLines = ['external_id,title,price,year,mileage,image_url,url,description'];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    try {
+      // Strategy: find the two URLs (image + listing) as anchors
+      const imgUrlMatch = line.match(/(https?:\/\/img\.[^\s,]+)/);
+      const listingUrlMatch = line.match(/(https?:\/\/www\.leboncoin\.fr\/[^\s,]+)/);
+      
+      if (!imgUrlMatch || !listingUrlMatch) {
+        // Fallback: try generic URL detection
+        const urls = line.match(/(https?:\/\/[^\s,]+)/g) || [];
+        if (urls.length < 2) continue;
+      }
+
+      const imgUrl = imgUrlMatch?.[1] || '';
+      const listingUrl = listingUrlMatch?.[1] || '';
+
+      // Split the line around the image URL
+      const imgIdx = line.indexOf(imgUrl);
+      const listingIdx = line.indexOf(listingUrl);
+
+      // Part before image URL: contains external_id, title, price, year, mileage
+      const beforeUrls = line.substring(0, imgIdx).replace(/,\s*$/, '');
+      // Part after listing URL: contains description
+      const afterListingUrl = line.substring(listingIdx + listingUrl.length).replace(/^,\s*/, '');
+
+      // Clean description: remove wrapping quotes and join
+      const description = afterListingUrl
+        .replace(/^"/, '').replace(/"$/, '')
+        .replace(/""/g, '"')
+        .split(',')
+        .map(s => s.trim().replace(/^"/, '').replace(/"$/, ''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // From beforeUrls, extract external_id, title, price, year, mileage
+      // Work backwards: the last 3 numbers before the URL are mileage, year, price (in reverse)
+      const parts = beforeUrls.split(',').map(s => s.trim().replace(/^"/, '').replace(/"$/, ''));
+      
+      // Find numbers working backwards
+      let mileage = '', year = '', price = '';
+      let titleEndIdx = parts.length;
+
+      // Scan backwards for 3 consecutive number-like values
+      for (let j = parts.length - 1; j >= 2; j--) {
+        const v1 = parts[j]?.replace(/[^0-9]/g, '');
+        const v2 = parts[j - 1]?.replace(/[^0-9]/g, '');
+        const v3 = parts[j - 2]?.replace(/[^0-9]/g, '');
+
+        const n1 = parseInt(v1);
+        const n2 = parseInt(v2);
+        const n3 = parseInt(v3);
+
+        // Pattern: price (>500), year (2000-2026), mileage (>0)
+        if (n3 >= 500 && n2 >= 2000 && n2 <= 2026 && n1 >= 0) {
+          price = v3;
+          year = v2;
+          mileage = v1;
+          titleEndIdx = j - 2;
+          break;
+        }
+      }
+
+      if (!price || !year) continue;
+
+      // External ID is the first part (may be merged with title start)
+      let externalId = '';
+      let titleParts: string[] = [];
+
+      // First part often starts with the external_id number
+      const firstPart = parts[0];
+      const idMatch = firstPart.match(/^(\d{8,12})/);
+      if (idMatch) {
+        externalId = idMatch[1];
+        const remainder = firstPart.substring(idMatch[1].length).trim();
+        if (remainder) titleParts.push(remainder);
+        titleParts.push(...parts.slice(1, titleEndIdx));
+      } else {
+        externalId = firstPart;
+        titleParts = parts.slice(1, titleEndIdx);
+      }
+
+      const title = titleParts
+        .map(s => s.trim())
+        .filter(s => s.length > 0)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // Escape for CSV
+      const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+      fixedLines.push(`${externalId},${esc(title)},${price},${year},${mileage},${esc(imgUrl)},${esc(listingUrl)},${esc(description)}`);
+
+    } catch (e) {
+      console.warn('Failed to preprocess line', i, e);
+    }
+  }
+
+  console.log(`Preprocessed ${fixedLines.length - 1} rows from broken CSV`);
+  return fixedLines.join('\n');
+}
+
+// ============================================
 // MAIN PARSER
 // ============================================
 
 export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
-      complete: (results) => {
-        try {
-          const data = results.data as string[][];
-          if (data.length < 2) {
-            reject(new Error('CSV vide ou invalide'));
-            return;
-          }
-          
-          // Detect columns from first row (headers)
-          const headers = data[0].map(h => String(h || ''));
-          let mapping = detectColumns(headers);
-
-          // Refine mapping by inspecting real sample rows (fixes swapped/missed KM/Price columns)
-          const sampleRows = data.slice(1, 51).map(r => r.map(cell => String(cell || '')));
-          mapping = refineMapping(headers, sampleRows, mapping);
-
-          console.log('Detected columns:', mapping);
-          console.log('Headers:', headers.slice(0, 10));
-          
-          // Parse all rows
-          const vehicles: ParsedVehicle[] = [];
-          for (let i = 1; i < data.length; i++) {
-            const row = data[i].map(cell => String(cell || ''));
-            if (row.length < 3) continue;
-            
-            const vehicle = parseRow(row, mapping, i);
-            if (vehicle) {
-              vehicles.push(vehicle);
-            }
-          }
-          
-          console.log(`Parsed ${vehicles.length} vehicles from ${data.length - 1} rows`);
-          resolve(vehicles);
-        } catch (error) {
-          reject(error);
+    // First read as text to check if preprocessing is needed
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        let rawText = e.target?.result as string;
+        if (!rawText) {
+          reject(new Error('Impossible de lire le fichier'));
+          return;
         }
-      },
-      error: (error) => reject(error),
-      skipEmptyLines: true,
-    });
+
+        // Preprocess broken CSVs (LeBonCoin export format)
+        rawText = preprocessBrokenCSV(rawText);
+
+        Papa.parse(rawText, {
+          complete: (results) => {
+            try {
+              const data = results.data as string[][];
+              if (data.length < 2) {
+                reject(new Error('CSV vide ou invalide'));
+                return;
+              }
+              
+              const headers = data[0].map(h => String(h || ''));
+              let mapping = detectColumns(headers);
+
+              const sampleRows = data.slice(1, 51).map(r => r.map(cell => String(cell || '')));
+              mapping = refineMapping(headers, sampleRows, mapping);
+
+              console.log('Detected columns:', mapping);
+              console.log('Headers:', headers.slice(0, 10));
+              
+              const vehicles: ParsedVehicle[] = [];
+              for (let i = 1; i < data.length; i++) {
+                const row = data[i].map(cell => String(cell || ''));
+                if (row.length < 3) continue;
+                
+                const vehicle = parseRow(row, mapping, i);
+                if (vehicle) {
+                  vehicles.push(vehicle);
+                }
+              }
+              
+              console.log(`Parsed ${vehicles.length} vehicles from ${data.length - 1} rows`);
+              resolve(vehicles);
+            } catch (error) {
+              reject(error);
+            }
+          },
+          error: (error: any) => reject(error),
+          skipEmptyLines: true,
+        });
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
+    reader.readAsText(file);
   });
 }
 
