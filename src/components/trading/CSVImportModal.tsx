@@ -28,7 +28,7 @@ export function CSVImportModal({ open, onOpenChange, onImport }: CSVImportModalP
     e.preventDefault();
     setDragActive(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && (droppedFile.name.endsWith('.csv') || droppedFile.name.endsWith('.xlsx') || droppedFile.name.endsWith('.xls'))) {
+    if (droppedFile && (droppedFile.name.endsWith('.csv') || droppedFile.name.endsWith('.xlsx') || droppedFile.name.endsWith('.xls') || droppedFile.name.endsWith('.json') || droppedFile.name.endsWith('.txt'))) {
       handleFileChange(droppedFile);
     }
   };
@@ -82,7 +82,7 @@ export function CSVImportModal({ open, onOpenChange, onImport }: CSVImportModalP
             <input
               ref={inputRef}
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,.xlsx,.xls,.json,.txt"
               className="hidden"
               onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
             />
@@ -102,7 +102,7 @@ export function CSVImportModal({ open, onOpenChange, onImport }: CSVImportModalP
                   <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <p className="font-medium text-foreground">Glissez votre fichier ici</p>
                   <p className="text-sm text-muted-foreground mt-1">ou cliquez pour sélectionner</p>
-                  <p className="text-xs text-muted-foreground mt-2">CSV, XLSX, XLS</p>
+                  <p className="text-xs text-muted-foreground mt-2">CSV, XLSX, XLS, JSON, TXT</p>
                 </>
               )}
             </div>
