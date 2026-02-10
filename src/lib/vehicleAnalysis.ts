@@ -1,100 +1,105 @@
 import { VehicleWithScore } from './csvParser';
 
-// --- TYPES EXPERTS ---
+// ══════════════════════════════════════════════════════════════
+// A. BASE DE CONNAISSANCE (KNOWLEDGE_DB)
+// ══════════════════════════════════════════════════════════════
 
-export type ExpertTag = 
-  | 'FRAUDE'       // Prix suspect (> 40% sous la cote)
-  | 'FLIP'         // Fort km mais rentable (Idéal marchand)
-  | 'COLLECTION'   // Très faible km (Garage Queen)
-  | 'TUNING'       // Modifiée (Stage 1, Ligne...)
-  | 'IMPORT'       // Indice d'importation (Malus, COC...)
-  | 'LIMPIDE'      // Historique sain (Bonus)
-  | 'DANGER';      // Épave / HS (Kill Switch)
+export type ExpertTag = string; // Now emoji-based tags like "💎 1ÈRE MAIN"
 
-// --- CONSTANTES D'ANALYSE ---
+type ContextMode = 'BMW_M' | 'AUDI_RS' | 'YOUNGTIMER' | 'GENERIC';
 
-const BONUS_KEYWORDS = [
-  'garantie', 'carnet', 'suivi', 'factures', 'première main', '1ère main',
-  'entretien à jour', 'distribution faite', 'pneus neufs', 'ct ok', 'vierge',
-  'révisée', 'soigné', 'non fumeur', 'carplay', 'camera', 'attelage', 'toit ouvrant',
-  'full option', 'historique complet', 'origine france', 'matrix', 'virtual', 'cockpit'
-];
-
-const FATAL_KEYWORDS = [
-  'moteur hs', 'boite hs', 'joint de culasse', 'accident', 'choc', 'vge', 
-  'épave', 'non roulant', 'panne', 'problème moteur', 'corrosion perforante',
-  'export', 'marchand', 'en l\'état', 'procedure', 'gage'
-];
-
-const PENALTY_KEYWORDS = [
-  'frais à prévoir', 'bruit', 'voyant', 'rayure', 'bosse', 'sans ct', 
-  'contre visite', 'fuite', 'à réparer', 'frottement', 'usure'
-];
-
-const NEGATION_PHRASES = [
-  'pas de frais', 'aucun frais', 'sans frais', '0 frais',
-  'pas d\'accident', 'jamais accident', 'non accident',
-  'pas de rouille', 'aucune rayure', 'pas de problème', 'pas de reprog', 'origine'
-];
-
-// --- LOGIQUE DES TAGS (Nouvelle Fonction Modulaire) ---
-
-export function getExpertTags(
-  vehicle: any, 
-  priceDiffPercent: number, // Economie réalisée (ex: 30 pour 30%)
-  dealScore: number
-): ExpertTag[] {
-  
-  const tags: ExpertTag[] = [];
-  // Adaptation : on utilise 'titre' et 'kilometrage' comme dans le reste de l'app
-  const text = (vehicle.titre + ' ' + (vehicle.description || '')).toLowerCase();
-  
-  // 1. DÉTECTION TUNING 🔧
-  const tuningKeywords = [
-    'stage 1', 'stage 2', 'stage 3', 'reprog', 'ethanol', 'flexfuel', 'e85',
-    'ligne', 'milltek', 'akrapovic', 'cata', 'décata', 'tube', 
-    '400+', '420ch', '450ch', '500ch', 'prépa', 'abt', 'turbo'
-  ];
-  
-  const isTuned = tuningKeywords.some(keyword => text.includes(keyword));
-  if (isTuned) {
-    tags.push('TUNING');
-  }
-
-  // 2. DÉTECTION ARNAQUE 🚨
-  // Si le prix est 40% moins cher que la théorie, c'est statistiquement impossible
-  if (priceDiffPercent > 40) {
-    tags.push('FRAUDE');
-  }
-
-  // 3. DÉTECTION "FLIP MARCHAND" (Merguez Rentable) 📉
-  // La voiture a roulé, elle fait peur aux particuliers, mais le prix est canon.
-  if (vehicle.kilometrage > 130000 && dealScore >= 80) {
-    tags.push('FLIP');
-  }
-
-  // 4. DÉTECTION "GARAGE QUEEN" (Collection) 💎
-  // Voiture qui ne roule pas. 
-  if (vehicle.kilometrage < 20000 && vehicle.annee <= 2019) {
-    tags.push('COLLECTION');
-  }
-
-  // 5. DÉTECTION IMPORT 🌍
-  if (text.includes('malus') || text.includes('coc') || text.includes('import') || text.includes('allemande') || text.includes('allemand')) {
-    tags.push('IMPORT');
-  }
-
-  // 6. DÉTECTION LIMPIDE (Bonus)
-  // Si pas de tuning, pas d'import, carnet ou 1ère main présent
-  if (!isTuned && !tags.includes('IMPORT') && (text.includes('carnet') || text.includes('première main'))) {
-    tags.push('LIMPIDE');
-  }
-
-  return tags;
+interface KnowledgeRule {
+  keywords: string[];
+  score: number;
+  tag: string;
 }
 
-// --- UTILITAIRES ---
+interface NegationRule {
+  phrases: string[];
+}
 
+// --- UNIVERSAL BOOSTERS (toutes voitures) ---
+const UNIVERSAL_BOOSTERS: KnowledgeRule[] = [
+  { keywords: ['première main', '1ère main', '1ere main', 'premiere main'], score: 5, tag: '💎 1ÈRE MAIN' },
+  { keywords: ['carnet', 'historique limpide', 'historique complet', 'factures', 'suivi'], score: 4, tag: '📘 HISTORIQUE' },
+  { keywords: ['origine france', 'achat concession', 'concession'], score: 5, tag: '🇫🇷 ORIGINE FR' },
+  { keywords: ['malus payé', 'écotaxe payée', 'ecotaxe payee', 'malus paye'], score: 8, tag: '💶 TAXE OK' },
+  { keywords: ['traitement céramique', 'ceramique', 'dort garage', 'temps de chauffe', 'garage'], score: 2, tag: '✨ SOIGNÉE' },
+  { keywords: ['garantie', 'entretien à jour', 'entretien a jour', 'distribution faite'], score: 3, tag: '🔧 ENTRETENUE' },
+  { keywords: ['pneus neufs', 'freins neufs', 'ct ok', 'controle technique ok'], score: 2, tag: '✅ CT OK' },
+  { keywords: ['non fumeur', 'soigné', 'soignee', 'impeccable'], score: 2, tag: '✨ SOIGNÉE' },
+  { keywords: ['carplay', 'camera', 'toit ouvrant', 'full option', 'matrix', 'virtual cockpit', 'cuir'], score: 3, tag: '🎯 FULL OPTIONS' },
+];
+
+// --- UNIVERSAL KILLERS (malus mortels) ---
+const UNIVERSAL_KILLERS: KnowledgeRule[] = [
+  { keywords: ['moteur hs', 'bruit moteur', 'claquement', 'joint de culasse'], score: -100, tag: '💀 MOTEUR HS' },
+  { keywords: ['vge', 'accident', 'marbre', 'choc'], score: -50, tag: '💥 ACCIDENTÉE' },
+  { keywords: ['dans l\'état', 'en l\'état', 'sans ct', 'refusé', 'contre visite'], score: -25, tag: '⚠️ SANS CT' },
+  { keywords: ['parcours toutes distances', 'marchand', 'export', 'gage', 'procedure'], score: -15, tag: '🚩 LOUCHE' },
+  { keywords: ['épave', 'non roulant', 'panne', 'corrosion perforante'], score: -50, tag: '💀 ÉPAVE' },
+  { keywords: ['boite hs', 'embrayage hs'], score: -80, tag: '💀 BOITE HS' },
+];
+
+// --- SPECIFIC RULES (Intelligence Contextuelle) ---
+const SPECIFIC_RULES: Record<ContextMode, KnowledgeRule[]> = {
+  BMW_M: [
+    { keywords: ['crankhub', 'renfort distribution', 'crank hub'], score: 20, tag: '🛡️ CRANKHUB FAIT' },
+    { keywords: ['coussinets', 'coussinet'], score: 8, tag: '⚙️ COUSSINETS FAITS' },
+    { keywords: ['ligne titane', 'm performance', 'm perf'], score: 3, tag: '💨 M PERF' },
+    { keywords: ['stage 1', 'stage 2', 'stage 3', 'reprog'], score: -5, tag: '🔧 REPROG' },
+    { keywords: ['drexler', 'différentiel', 'lsd'], score: 5, tag: '⚙️ DIFF UPGRADÉ' },
+  ],
+  AUDI_RS: [
+    { keywords: ['disques voilés', 'vibration freinage', 'disque voilé'], score: -10, tag: '⚠️ DISQUES HS' },
+    { keywords: ['daza'], score: 10, tag: '🚀 MOTEUR DAZA' },
+    { keywords: ['magnetic ride', 'magnetique'], score: 3, tag: '🎯 MAGNETIC RIDE' },
+    { keywords: ['stage 1', 'stage 2', 'reprog', 'ethanol', 'e85'], score: -5, tag: '🔧 REPROG' },
+  ],
+  YOUNGTIMER: [
+    { keywords: ['rouille', 'corrosion', 'points de levage', 'point de levage'], score: -30, tag: '🦀 ROUILLE' },
+    { keywords: ['vanos', 'vanos révisé', 'vanos revisé'], score: 5, tag: '⚙️ VANOS RÉVISÉ' },
+    { keywords: ['soudure', 'refait', 'restauration'], score: -10, tag: '🔧 RESTO PARTIELLE' },
+    { keywords: ['matching number', 'matching'], score: 8, tag: '💎 MATCHING' },
+  ],
+  GENERIC: [],
+};
+
+// --- NEGATION PHRASES (neutralisent les faux positifs) ---
+const NEGATION_PHRASES: string[] = [
+  'pas de frais', 'aucun frais', 'sans frais', '0 frais',
+  'pas d\'accident', 'jamais accident', 'non accident', 'jamais accidenté',
+  'pas de rouille', 'aucune rayure', 'pas de problème', 'pas de reprog', 'origine',
+  'aucun bruit', 'pas de bruit', 'pas de fuite', 'jamais de panne',
+];
+
+// ══════════════════════════════════════════════════════════════
+// B. MOTEUR DE CALCUL
+// ══════════════════════════════════════════════════════════════
+
+// --- Détection du Contexte ---
+function detectContext(titre: string, description: string): ContextMode {
+  const text = (titre + ' ' + description).toUpperCase();
+
+  // BMW M
+  if (/\bM[234]\b/.test(text) || /\bM ?COMPETITION\b/.test(text) || /\bM ?SPORT\b/.test(text) && /\bBMW\b/.test(text)) {
+    return 'BMW_M';
+  }
+
+  // Audi RS
+  if (/\bRS ?[34567]\b/.test(text) || /\bRSQ\d\b/.test(text)) {
+    return 'AUDI_RS';
+  }
+
+  // Youngtimer
+  if (/\bE3[06]\b/.test(text) || /\bE46\b/.test(text) || /\bE39\b/.test(text) || /\bE34\b/.test(text)) {
+    return 'YOUNGTIMER';
+  }
+
+  return 'GENERIC';
+}
+
+// --- Utilitaires ---
 const getMedian = (values: number[]): number => {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
@@ -102,85 +107,129 @@ const getMedian = (values: number[]): number => {
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 };
 
-// --- ALGORITHME PRINCIPAL ---
+// --- Analyse Sémantique ---
+function analyzeSemantics(
+  text: string,
+  context: ContextMode
+): { scoreMod: number; tags: ExpertTag[] } {
+  // 1. Neutraliser les négations
+  let cleanText = text.toLowerCase();
+  NEGATION_PHRASES.forEach(phrase => {
+    cleanText = cleanText.replace(phrase, '');
+  });
+
+  let scoreMod = 0;
+  const tags: ExpertTag[] = [];
+  const addedTags = new Set<string>();
+
+  const applyRules = (rules: KnowledgeRule[]) => {
+    for (const rule of rules) {
+      const matched = rule.keywords.some(kw => cleanText.includes(kw));
+      if (matched && !addedTags.has(rule.tag)) {
+        scoreMod += rule.score;
+        tags.push(rule.tag);
+        addedTags.add(rule.tag);
+      }
+    }
+  };
+
+  // 2. Appliquer les règles universelles
+  applyRules(UNIVERSAL_BOOSTERS);
+  applyRules(UNIVERSAL_KILLERS);
+
+  // 3. Appliquer les règles contextuelles
+  applyRules(SPECIFIC_RULES[context]);
+
+  // 4. Frais cachés : Import sans malus payé
+  const isImport = cleanText.includes('import') || cleanText.includes('allemande') || cleanText.includes('allemand');
+  const malusPaid = cleanText.includes('malus payé') || cleanText.includes('malus paye') || cleanText.includes('écotaxe payée') || cleanText.includes('ecotaxe payee');
+  if (isImport && !malusPaid && !addedTags.has('⚠️ MALUS ?')) {
+    scoreMod -= 15;
+    tags.push('⚠️ MALUS ?');
+    addedTags.add('⚠️ MALUS ?');
+  }
+
+  return { scoreMod, tags };
+}
+
+// ══════════════════════════════════════════════════════════════
+// ALGORITHME PRINCIPAL : calculateSmartScore
+// ══════════════════════════════════════════════════════════════
 
 export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
   if (!vehicles || vehicles.length < 3) return vehicles;
 
-  // 1. FILTRE ET NETTOYAGE
-  const suvCount = vehicles.filter(v => (v.titre + (v.description || "")).toUpperCase().includes('Q3') || (v.titre + (v.description || "")).toUpperCase().includes('SUV')).length;
-  const isSuvList = suvCount > (vehicles.length / 2);
+  // 1. Références globales (médiane trimée)
+  const prices = vehicles.map(v => v.prix).sort((a, b) => a - b);
+  const kms = vehicles.map(v => v.kilometrage).sort((a, b) => a - b);
 
-  let cleanVehicles = vehicles;
-  if (!isSuvList) {
-     cleanVehicles = vehicles.filter(v => {
-       const text = (v.titre + " " + (v.description || "")).toUpperCase();
-       return !text.includes('RSQ3') && !text.includes(' Q3') && !text.includes('SUV');
-     });
-  }
-  if (cleanVehicles.length < 2) cleanVehicles = vehicles;
-
-  // 2. RÉFÉRENTIELS (MÉDIANE)
-  const prices = cleanVehicles.map(v => v.prix).sort((a, b) => a - b);
-  const kms = cleanVehicles.map(v => v.kilometrage).sort((a, b) => a - b);
-  
   const corePrices = prices.slice(Math.floor(prices.length * 0.1), Math.floor(prices.length * 0.9));
   const medianPrice = getMedian(corePrices);
   const medianKm = getMedian(kms);
-  const avgYear = Math.round(cleanVehicles.reduce((sum, v) => sum + v.annee, 0) / cleanVehicles.length);
+  const avgYear = Math.round(vehicles.reduce((sum, v) => sum + v.annee, 0) / vehicles.length);
 
-  const MAX_THEORETICAL_PRICE = medianPrice * 1.35; 
-  const COEF_ANNEE = 300; 
+  const MAX_THEORETICAL_PRICE = medianPrice * 1.35;
+  const COEF_ANNEE = 300;
 
-  return cleanVehicles.map(vehicle => {
-    // A. Nettoyage Texte
-    let textToAnalyze = (vehicle.titre + ' ' + (vehicle.description || '')).toLowerCase();
-    NEGATION_PHRASES.forEach(phrase => { textToAnalyze = textToAnalyze.replace(phrase, ''); });
+  return vehicles.map(vehicle => {
+    const titre = vehicle.titre || '';
+    const description = vehicle.description || '';
+    const fullText = titre + ' ' + description;
 
-    // B. Kill Switch (Danger immédiat)
-    const hasFatalFlaw = FATAL_KEYWORDS.some(word => textToAnalyze.includes(word));
-    if (hasFatalFlaw) {
+    // A. Détection du contexte
+    const context = detectContext(titre, description);
+
+    // B. Kill Switch immédiat (moteur HS, épave)
+    const textLower = fullText.toLowerCase();
+    let neutralizedText = textLower;
+    NEGATION_PHRASES.forEach(p => { neutralizedText = neutralizedText.replace(p, ''); });
+
+    const isFatal = UNIVERSAL_KILLERS
+      .filter(r => r.score <= -50)
+      .some(r => r.keywords.some(kw => neutralizedText.includes(kw)));
+
+    if (isFatal) {
+      const { tags } = analyzeSemantics(fullText, context);
       return {
         ...vehicle,
         dealScore: 0,
         gain_potentiel: -vehicle.prix,
-        tags: ['DANGER'] as ExpertTag[],
-        fiabilite: 0
+        tags,
+        fiabilite: 0,
       };
     }
 
-    // C. Bonus / Malus Score
-    let bonusScore = 0;
-    BONUS_KEYWORDS.forEach(word => { if (textToAnalyze.includes(word)) bonusScore += 3; });
-    PENALTY_KEYWORDS.forEach(word => { if (textToAnalyze.includes(word)) bonusScore -= 10; });
-
-    // D. Prix Théorique
-    const safeKm = Math.max(vehicle.kilometrage, 5000); 
+    // C. Prix théorique (maths)
+    const safeKm = Math.max(vehicle.kilometrage, 5000);
     const ratioKm = medianKm / safeKm;
-    let kmFactor = Math.pow(ratioKm, 0.35); 
-    
+
+    // Youngtimer : décote km beaucoup plus faible
+    const kmExponent = context === 'YOUNGTIMER' ? 0.15 : 0.35;
+    let kmFactor = Math.pow(ratioKm, kmExponent);
+
     let theoreticalPrice = medianPrice * kmFactor;
     const yearDiff = vehicle.annee - avgYear;
     theoreticalPrice += (yearDiff * COEF_ANNEE);
 
     if (theoreticalPrice > MAX_THEORETICAL_PRICE) theoreticalPrice = MAX_THEORETICAL_PRICE;
 
-    // E. Score Final
+    // D. Analyse sémantique
+    const { scoreMod, tags } = analyzeSemantics(fullText, context);
+
+    // E. Score final
     const difference = theoreticalPrice - vehicle.prix;
     const percentDiff = (difference / theoreticalPrice) * 100;
 
-    let score = 50 + (percentDiff * 2.2) + bonusScore;
-    score = Math.max(10, Math.min(99, Math.round(score)));
+    let score = 50 + (percentDiff * 2.2) + scoreMod;
+    score = Math.max(0, Math.min(100, Math.round(score)));
 
-    // F. APPEL DE VOTRE NOUVELLE FONCTION TAGS
-    const expertTags = getExpertTags(vehicle, percentDiff, score);
-
-    // G. Fiabilité (Note sur 10)
+    // F. Fiabilité (note sur 10)
     let reliability = 6;
     if (vehicle.kilometrage < medianKm) reliability += 1;
-    if (bonusScore > 5) reliability += 2;
-    if (expertTags.includes('TUNING')) reliability -= 2;
-    if (expertTags.includes('FRAUDE')) reliability = 1;
+    if (scoreMod > 5) reliability += 2;
+    if (scoreMod < -10) reliability -= 2;
+    if (tags.some(t => t.includes('ROUILLE') || t.includes('REPROG'))) reliability -= 1;
+    if (tags.some(t => t.includes('ACCIDENTÉE') || t.includes('LOUCHE'))) reliability = 2;
     reliability = Math.max(1, Math.min(10, reliability));
 
     return {
@@ -191,10 +240,14 @@ export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
       ecartEuros: Math.round(difference),
       ecartPourcent: Math.round(percentDiff),
       fiabilite: reliability,
-      tags: expertTags // Les tags générés par votre fonction
+      tags,
     };
   });
 };
+
+// ══════════════════════════════════════════════════════════════
+// FILTRE OUTLIERS
+// ══════════════════════════════════════════════════════════════
 
 export const filterOutliers = (vehicles: any[]) => {
   if (vehicles.length < 5) return vehicles;
@@ -202,7 +255,10 @@ export const filterOutliers = (vehicles: any[]) => {
   return vehicles.filter(v => v.prix > (avg * 0.15) && v.prix < (avg * 3.5));
 };
 
-// --- SIMULATEUR ---
+// ══════════════════════════════════════════════════════════════
+// SIMULATEUR (Page Publique)
+// ══════════════════════════════════════════════════════════════
+
 interface SimulationResult {
   title: string;
   marketPriceLow: number;
@@ -237,18 +293,18 @@ const UNIVERSAL_CHECKPOINTS = [
 export const generateSimulationReport = (url: string, userPrice: number = 0): SimulationResult => {
   const lowerUrl = url.toLowerCase();
   let detectedName = COMMON_CARS.find(name => lowerUrl.includes(name));
-  
-  const displayTitle = detectedName 
+
+  const displayTitle = detectedName
     ? `Audit : ${detectedName.charAt(0).toUpperCase() + detectedName.slice(1)}`
     : "Audit : Véhicule Occasion";
 
   const basePrice = userPrice > 0 ? userPrice : 15000;
-  const marketPriceLow = Math.round(basePrice * 1.02); 
+  const marketPriceLow = Math.round(basePrice * 1.02);
   const marketPriceHigh = Math.round(basePrice * 1.12);
 
   const randomFactor = Math.random();
-  const reliabilityScore = Math.floor(6 + (randomFactor * 3)); 
-  const dealScore = Math.floor(68 + (randomFactor * 22)); 
+  const reliabilityScore = Math.floor(6 + (randomFactor * 3));
+  const dealScore = Math.floor(68 + (randomFactor * 22));
 
   let verdict: SimulationResult['verdict'] = 'bon';
   if (dealScore > 85) verdict = 'excellent';
@@ -265,3 +321,13 @@ export const generateSimulationReport = (url: string, userPrice: number = 0): Si
     verdict
   };
 };
+
+// Re-export for backward compatibility
+export { getExpertTags };
+function getExpertTags(vehicle: any, priceDiffPercent: number, dealScore: number): ExpertTag[] {
+  const titre = vehicle.titre || '';
+  const description = vehicle.description || '';
+  const context = detectContext(titre, description);
+  const { tags } = analyzeSemantics(titre + ' ' + description, context);
+  return tags;
+}
