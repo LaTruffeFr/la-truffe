@@ -993,6 +993,42 @@ function preprocessBrokenCSV(rawText: string): string {
 // ============================================
 // MAIN PARSER
 // ============================================
+// MANGLED JSON-AS-CSV RECONSTRUCTOR
+// ============================================
+
+/**
+ * Detects and reconstructs JSON that was mangled by being saved/exported as CSV.
+ * The JSON commas were treated as CSV delimiters, splitting the data into cells.
+ * Strategy: Papa.parse to properly unescape doubled quotes, then rejoin cells with commas.
+ */
+function reconstructJSONFromCSV(rawText: string): string | null {
+  const trimmed = rawText.trim();
+  // Must contain doubled-quote patterns and LBC-specific keys
+  if (!trimmed.includes('""') || (!trimmed.includes('list_id') && !trimmed.includes('ads'))) {
+    return null;
+  }
+
+  console.log('Attempting to reconstruct JSON from mangled CSV...');
+
+  try {
+    // Papa.parse handles CSV unescaping (doubled quotes → single quotes)
+    const parsed = Papa.parse(trimmed, { skipEmptyLines: true });
+    if (!parsed.data || (parsed.data as string[][]).length === 0) return null;
+
+    // Join each row's cells back with commas, then join rows with newlines
+    const lines = (parsed.data as string[][]).map(row => row.join(','));
+    const reconstructed = lines.join('\n');
+
+    // Verify it's valid JSON
+    JSON.parse(reconstructed);
+    console.log('Successfully reconstructed JSON from mangled CSV');
+    return reconstructed;
+  } catch {
+    return null;
+  }
+}
+
+// ============================================
 
 export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
   return new Promise((resolve, reject) => {
@@ -1006,10 +1042,20 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
           return;
         }
 
-        // Try LeBonCoin JSON format first
+        // Try LeBonCoin JSON format first (pure JSON file)
         const trimmed = rawText.trim();
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
           const jsonVehicles = parseLeBonCoinJSON(trimmed);
+          if (jsonVehicles && jsonVehicles.length > 0) {
+            resolve(jsonVehicles);
+            return;
+          }
+        }
+
+        // Try reconstructing JSON from mangled CSV (JSON saved as CSV)
+        const reconstructed = reconstructJSONFromCSV(rawText);
+        if (reconstructed) {
+          const jsonVehicles = parseLeBonCoinJSON(reconstructed);
           if (jsonVehicles && jsonVehicles.length > 0) {
             resolve(jsonVehicles);
             return;
