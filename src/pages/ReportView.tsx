@@ -309,18 +309,26 @@ const ReportView = () => {
                     </div>
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-bold text-slate-900 truncate mb-1">{deal.titre}</h3>
-                    <div className="flex justify-between items-end mb-3">
-                      <div>
-                        <p className="text-2xl font-bold text-primary">{safeNum(deal.prix)} €</p>
-                        <p className="text-xs text-slate-500">{safeNum(deal.kilometrage)} km • {deal.annee}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
-                          {Math.round(100 - (deal.prix / (report.prix_moyen || 1) * 100))}% sous la cote
-                        </Badge>
-                      </div>
-                    </div>
+                     <h3 className="font-bold text-slate-900 truncate mb-1">{deal.titre}</h3>
+                     {/* Tags emoji */}
+                     {deal.tags && deal.tags.length > 0 && (
+                       <div className="flex flex-wrap gap-1 mb-2">
+                         {deal.tags.map((tag, tidx) => (
+                           <span key={tidx} className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold">{tag}</span>
+                         ))}
+                       </div>
+                     )}
+                     <div className="flex justify-between items-end mb-3">
+                       <div>
+                         <p className="text-2xl font-bold text-primary">{safeNum(deal.prix)} €</p>
+                         <p className="text-xs text-slate-500">{safeNum(deal.kilometrage)} km • {deal.annee}</p>
+                       </div>
+                       <div className="text-right">
+                         <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
+                           {Math.round(100 - (deal.prix / (report.prix_moyen || 1) * 100))}% sous la cote
+                         </Badge>
+                       </div>
+                     </div>
                      <Button variant="default" className="w-full bg-slate-900 hover:bg-slate-800 print:hidden no-print pdf-hide" onClick={() => window.open(deal.lien, '_blank')}>Voir l'annonce</Button>
                   </CardContent>
                 </Card>
