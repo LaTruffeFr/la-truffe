@@ -114,6 +114,7 @@ const ReportView = () => {
   const [loading, setLoading] = useState(true);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleData | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // État pour afficher la liste complète
   const [showAllVehicles, setShowAllVehicles] = useState(false);
@@ -346,11 +347,21 @@ const ReportView = () => {
         {/* --- NOUVELLE SECTION : LISTE COMPLÈTE (VERSION GALERIE + TAGS) --- */}
         {showAllVehicles && (
           <div ref={tableRef} className="mb-12 animate-in fade-in slide-in-from-bottom-10 duration-500 scroll-mt-24">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
               <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <Search className="w-8 h-8 text-primary" /> 
                 Liste complète ({stats.totalVehicules} annonces)
               </h3>
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher (titre, année, prix...)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                />
+              </div>
             </div>
 
             <Card className="overflow-hidden border-slate-200 shadow-xl bg-white">
@@ -368,7 +379,22 @@ const ReportView = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {vehiclesData.sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0)).map((vehicle, i) => {
+                    {vehiclesData
+                      .filter(vehicle => {
+                        if (!searchQuery.trim()) return true;
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          (vehicle.titre || '').toLowerCase().includes(q) ||
+                          String(vehicle.prix).includes(q) ||
+                          String(vehicle.annee).includes(q) ||
+                          String(vehicle.kilometrage).includes(q) ||
+                          (vehicle.localisation || '').toLowerCase().includes(q) ||
+                          (vehicle.carburant || '').toLowerCase().includes(q) ||
+                          (vehicle.tags || []).some(t => t.toLowerCase().includes(q))
+                        );
+                      })
+                      .sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0))
+                      .map((vehicle, i) => {
                       // Récupération des tags existants
                       const tags = vehicle.tags || []; 
                       const isSuspicious = tags.includes('FRAUDE') || tags.includes('DANGER') || (vehicle.dealScore || 0) >= 95;
