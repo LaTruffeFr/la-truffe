@@ -19,16 +19,17 @@ interface NegationRule {
 }
 
 // --- UNIVERSAL BOOSTERS (toutes voitures) ---
+// Scores augmentés : la description est le facteur DOMINANT du classement
 const UNIVERSAL_BOOSTERS: KnowledgeRule[] = [
-  { keywords: ['première main', '1ère main', '1ere main', 'premiere main'], score: 5, tag: '💎 1ÈRE MAIN' },
-  { keywords: ['carnet', 'historique limpide', 'historique complet', 'factures', 'suivi'], score: 4, tag: '📘 HISTORIQUE' },
-  { keywords: ['origine france', 'achat concession', 'concession'], score: 5, tag: '🇫🇷 ORIGINE FR' },
-  { keywords: ['malus payé', 'écotaxe payée', 'ecotaxe payee', 'malus paye'], score: 8, tag: '💶 TAXE OK' },
-  { keywords: ['traitement céramique', 'ceramique', 'dort garage', 'temps de chauffe', 'garage'], score: 2, tag: '✨ SOIGNÉE' },
-  { keywords: ['garantie', 'entretien à jour', 'entretien a jour', 'distribution faite'], score: 3, tag: '🔧 ENTRETENUE' },
-  { keywords: ['pneus neufs', 'freins neufs', 'ct ok', 'controle technique ok'], score: 2, tag: '✅ CT OK' },
-  { keywords: ['non fumeur', 'soigné', 'soignee', 'impeccable'], score: 2, tag: '✨ SOIGNÉE' },
-  { keywords: ['carplay', 'camera', 'toit ouvrant', 'full option', 'matrix', 'virtual cockpit', 'cuir'], score: 3, tag: '🎯 FULL OPTIONS' },
+  { keywords: ['première main', '1ère main', '1ere main', 'premiere main'], score: 12, tag: '💎 1ÈRE MAIN' },
+  { keywords: ['carnet', 'historique limpide', 'historique complet', 'factures', 'suivi'], score: 10, tag: '📘 HISTORIQUE' },
+  { keywords: ['origine france', 'achat concession', 'concession'], score: 10, tag: '🇫🇷 ORIGINE FR' },
+  { keywords: ['malus payé', 'écotaxe payée', 'ecotaxe payee', 'malus paye'], score: 14, tag: '💶 TAXE OK' },
+  { keywords: ['traitement céramique', 'ceramique', 'dort garage', 'temps de chauffe', 'garage'], score: 6, tag: '✨ SOIGNÉE' },
+  { keywords: ['garantie', 'entretien à jour', 'entretien a jour', 'distribution faite'], score: 8, tag: '🔧 ENTRETENUE' },
+  { keywords: ['pneus neufs', 'freins neufs', 'ct ok', 'controle technique ok'], score: 5, tag: '✅ CT OK' },
+  { keywords: ['non fumeur', 'soigné', 'soignee', 'impeccable'], score: 6, tag: '✨ SOIGNÉE' },
+  { keywords: ['carplay', 'camera', 'toit ouvrant', 'full option', 'matrix', 'virtual cockpit', 'cuir'], score: 7, tag: '🎯 FULL OPTIONS' },
 ];
 
 // --- UNIVERSAL KILLERS (malus mortels) ---
@@ -45,23 +46,23 @@ const UNIVERSAL_KILLERS: KnowledgeRule[] = [
 // --- SPECIFIC RULES (Intelligence Contextuelle) ---
 const SPECIFIC_RULES: Record<ContextMode, KnowledgeRule[]> = {
   BMW_M: [
-    { keywords: ['crankhub', 'renfort distribution', 'crank hub'], score: 20, tag: '🛡️ CRANKHUB FAIT' },
-    { keywords: ['coussinets', 'coussinet'], score: 8, tag: '⚙️ COUSSINETS FAITS' },
-    { keywords: ['ligne titane', 'm performance', 'm perf'], score: 3, tag: '💨 M PERF' },
-    { keywords: ['stage 1', 'stage 2', 'stage 3', 'reprog'], score: -5, tag: '🔧 REPROG' },
-    { keywords: ['drexler', 'différentiel', 'lsd'], score: 5, tag: '⚙️ DIFF UPGRADÉ' },
+    { keywords: ['crankhub', 'renfort distribution', 'crank hub'], score: 25, tag: '🛡️ CRANKHUB FAIT' },
+    { keywords: ['coussinets', 'coussinet'], score: 12, tag: '⚙️ COUSSINETS FAITS' },
+    { keywords: ['ligne titane', 'm performance', 'm perf'], score: 6, tag: '💨 M PERF' },
+    { keywords: ['stage 1', 'stage 2', 'stage 3', 'reprog'], score: -10, tag: '🔧 REPROG' },
+    { keywords: ['drexler', 'différentiel', 'lsd'], score: 8, tag: '⚙️ DIFF UPGRADÉ' },
   ],
   AUDI_RS: [
-    { keywords: ['disques voilés', 'vibration freinage', 'disque voilé'], score: -10, tag: '⚠️ DISQUES HS' },
-    { keywords: ['daza'], score: 10, tag: '🚀 MOTEUR DAZA' },
-    { keywords: ['magnetic ride', 'magnetique'], score: 3, tag: '🎯 MAGNETIC RIDE' },
-    { keywords: ['stage 1', 'stage 2', 'reprog', 'ethanol', 'e85'], score: -5, tag: '🔧 REPROG' },
+    { keywords: ['disques voilés', 'vibration freinage', 'disque voilé'], score: -15, tag: '⚠️ DISQUES HS' },
+    { keywords: ['daza'], score: 15, tag: '🚀 MOTEUR DAZA' },
+    { keywords: ['magnetic ride', 'magnetique'], score: 6, tag: '🎯 MAGNETIC RIDE' },
+    { keywords: ['stage 1', 'stage 2', 'reprog', 'ethanol', 'e85'], score: -10, tag: '🔧 REPROG' },
   ],
   YOUNGTIMER: [
-    { keywords: ['rouille', 'corrosion', 'points de levage', 'point de levage'], score: -30, tag: '🦀 ROUILLE' },
-    { keywords: ['vanos', 'vanos révisé', 'vanos revisé'], score: 5, tag: '⚙️ VANOS RÉVISÉ' },
-    { keywords: ['soudure', 'refait', 'restauration'], score: -10, tag: '🔧 RESTO PARTIELLE' },
-    { keywords: ['matching number', 'matching'], score: 8, tag: '💎 MATCHING' },
+    { keywords: ['rouille', 'corrosion', 'points de levage', 'point de levage'], score: -35, tag: '🦀 ROUILLE' },
+    { keywords: ['vanos', 'vanos révisé', 'vanos revisé'], score: 10, tag: '⚙️ VANOS RÉVISÉ' },
+    { keywords: ['soudure', 'refait', 'restauration'], score: -15, tag: '🔧 RESTO PARTIELLE' },
+    { keywords: ['matching number', 'matching'], score: 12, tag: '💎 MATCHING' },
   ],
   GENERIC: [],
 };
@@ -217,21 +218,37 @@ export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
     // D. Analyse sémantique
     const { scoreMod, tags } = analyzeSemantics(fullText, context);
 
+    // D2. Bonus qualité de description
+    // Une annonce détaillée = vendeur sérieux = meilleure affaire potentielle
+    const descLength = (description || '').length;
+    let descQualityBonus = 0;
+    if (descLength > 500) descQualityBonus += 5;
+    if (descLength > 1000) descQualityBonus += 5;
+    if (descLength < 50) descQualityBonus -= 8; // Annonce vide = suspect
+    
+    // Compter le nombre de tags positifs trouvés (richesse de l'annonce)
+    const positiveTagCount = tags.filter(t => !t.includes('💀') && !t.includes('⚠️') && !t.includes('🚩') && !t.includes('🚫') && !t.includes('🦀')).length;
+    const tagRichnessBonus = positiveTagCount * 3; // Chaque tag positif = +3 pts
+
     // E. Score final
+    // La description (scoreMod + descQuality + tagRichness) pèse ~60-70% du score
+    // Le prix (percentDiff) pèse ~30-40% du score
     const difference = theoreticalPrice - vehicle.prix;
     const percentDiff = (difference / theoreticalPrice) * 100;
 
-    // Coefficient réduit de 2.2 → 1.5 pour éviter le plafonnement à 100
-    // Un véhicule 15% sous la cote = score ~73 (au lieu de 83)
-    // Un véhicule 30% sous la cote = score ~95 (au lieu de 100+)
-    let score = 50 + (percentDiff * 1.5) + scoreMod;
-    score = Math.max(0, Math.min(98, Math.round(score))); // Cap à 98, pas 100
+    // Coefficient prix réduit à 0.8 (était 1.5)
+    // La sémantique (scoreMod + descQuality + tagRichness) domine
+    let score = 45 + (percentDiff * 0.8) + scoreMod + descQualityBonus + tagRichnessBonus;
+    score = Math.max(0, Math.min(98, Math.round(score)));
 
-    // F. Fiabilité (note sur 10)
-    let reliability = 6;
+    // F. Fiabilité (note sur 10) — également basée sur la description
+    let reliability = 5; // Base réduite à 5
     if (vehicle.kilometrage < medianKm) reliability += 1;
-    if (scoreMod > 5) reliability += 2;
+    if (scoreMod > 10) reliability += 2;
+    else if (scoreMod > 5) reliability += 1;
     if (scoreMod < -10) reliability -= 2;
+    if (positiveTagCount >= 3) reliability += 1; // Annonce riche
+    if (descLength < 50) reliability -= 1; // Annonce vide
     if (tags.some(t => t.includes('ROUILLE') || t.includes('REPROG'))) reliability -= 1;
     if (tags.some(t => t.includes('ACCIDENTÉE') || t.includes('LOUCHE'))) reliability = 2;
     reliability = Math.max(1, Math.min(10, reliability));
