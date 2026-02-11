@@ -39,6 +39,7 @@ const UNIVERSAL_KILLERS: KnowledgeRule[] = [
   { keywords: ['parcours toutes distances', 'marchand', 'export', 'gage', 'procedure'], score: -15, tag: '🚩 LOUCHE' },
   { keywords: ['épave', 'non roulant', 'panne', 'corrosion perforante'], score: -50, tag: '💀 ÉPAVE' },
   { keywords: ['boite hs', 'embrayage hs'], score: -80, tag: '💀 BOITE HS' },
+  { keywords: ['rhd', 'volant à droite', 'volant a droite', 'right hand drive', 'conduite à droite', 'conduite a droite', 'uk spec', 'anglaise'], score: -100, tag: '🚫 RHD (VOLANT DROIT)' },
 ];
 
 // --- SPECIFIC RULES (Intelligence Contextuelle) ---
@@ -220,8 +221,11 @@ export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
     const difference = theoreticalPrice - vehicle.prix;
     const percentDiff = (difference / theoreticalPrice) * 100;
 
-    let score = 50 + (percentDiff * 2.2) + scoreMod;
-    score = Math.max(0, Math.min(100, Math.round(score)));
+    // Coefficient réduit de 2.2 → 1.5 pour éviter le plafonnement à 100
+    // Un véhicule 15% sous la cote = score ~73 (au lieu de 83)
+    // Un véhicule 30% sous la cote = score ~95 (au lieu de 100+)
+    let score = 50 + (percentDiff * 1.5) + scoreMod;
+    score = Math.max(0, Math.min(98, Math.round(score))); // Cap à 98, pas 100
 
     // F. Fiabilité (note sur 10)
     let reliability = 6;
@@ -251,8 +255,22 @@ export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
 
 export const filterOutliers = (vehicles: any[]) => {
   if (vehicles.length < 5) return vehicles;
-  const avg = vehicles.reduce((sum, v) => sum + v.prix, 0) / vehicles.length;
-  return vehicles.filter(v => v.prix > (avg * 0.15) && v.prix < (avg * 3.5));
+  
+  // 1. Exclure les RHD (volant à droite) — prix non comparables
+  const RHD_KEYWORDS = ['rhd', 'volant à droite', 'volant a droite', 'right hand', 'conduite à droite', 'conduite a droite', 'uk spec'];
+  const withoutRHD = vehicles.filter(v => {
+    const text = ((v.titre || '') + ' ' + (v.description || '')).toLowerCase();
+    return !RHD_KEYWORDS.some(kw => text.includes(kw));
+  });
+  
+  const rhdCount = vehicles.length - withoutRHD.length;
+  if (rhdCount > 0) {
+    console.log(`Excluded ${rhdCount} RHD vehicles (volant à droite)`);
+  }
+  
+  // 2. Exclure les outliers de prix (IQR)
+  const avg = withoutRHD.reduce((sum, v) => sum + v.prix, 0) / withoutRHD.length;
+  return withoutRHD.filter(v => v.prix > (avg * 0.15) && v.prix < (avg * 3.5));
 };
 
 // ══════════════════════════════════════════════════════════════
