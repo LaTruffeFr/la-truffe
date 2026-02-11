@@ -1082,6 +1082,173 @@ function parseFlattenedLBCCsv(headers: string[], rows: string[][]): ParsedVehicl
 }
 
 // ============================================
+// WEBSCRAPER.IO CSV PARSER
+// ============================================
+
+/**
+ * Parses CSV exported from WebScraper.io for LeBonCoin.
+ * Headers: web_scraper_order, web_scraper_start_url, pagination, annonces, image, titre, info, description, prix
+ * The `info` column is a concatenated string of key-value pairs from LeBonCoin listing details.
+ */
+function parseWebScraperCsv(headers: string[], rows: string[][]): ParsedVehicle[] | null {
+  const lowerHeaders = headers.map(h => h.toLowerCase().trim());
+
+  // Detect format: must have "titre" (or "annonces") AND "info" columns
+  const hasInfo = lowerHeaders.includes('info');
+  const hasTitre = lowerHeaders.includes('titre');
+  const hasAnnonces = lowerHeaders.includes('annonces');
+  const hasWebScraper = lowerHeaders.some(h => h.includes('web_scraper'));
+
+  if (!hasInfo || (!hasTitre && !hasAnnonces)) return null;
+
+  console.log('Detected WebScraper.io CSV format');
+
+  const idx = (name: string) => lowerHeaders.indexOf(name);
+  const titreIdx = idx('titre');
+  const infoIdx = idx('info');
+  const descIdx = idx('description');
+  const prixIdx = idx('prix');
+  const imageIdx = idx('image');
+  const annoncesIdx = idx('annonces'); // this is the listing URL
+
+  const vehicles: ParsedVehicle[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (row.length < 4) continue;
+
+    const get = (colIdx: number) => (colIdx >= 0 && colIdx < row.length ? (row[colIdx] || '').trim() : '');
+
+    const titre = get(titreIdx);
+    const info = get(infoIdx);
+    const description = get(descIdx);
+    const rawPrix = get(prixIdx);
+    const image = get(imageIdx);
+    const lien = get(annoncesIdx);
+
+    // Parse price: "48 500 €" or "47 990 €"
+    let prix = 0;
+    if (rawPrix) {
+      const digits = rawPrix.replace(/[^0-9]/g, '');
+      prix = parseInt(digits, 10) || 0;
+      if (prix < 500 || prix > 2000000) prix = 0;
+    }
+    if (prix <= 0) continue;
+
+    // Parse the concatenated `info` field for structured data
+    const parsed = parseWebScraperInfoField(info);
+
+    // Extract brand/model from info or title
+    let marque = parsed.marque || extractBrand(titre);
+    let modele = parsed.modele || extractModel(titre, marque);
+
+    // Year, km, fuel, transmission from info field
+    const annee = parsed.annee || cleanYear(titre) || new Date().getFullYear();
+    const kilometrage = parsed.kilometrage || 0;
+    const carburant = parsed.carburant || extractCarburant(titre + ' ' + info);
+    const transmission = parsed.transmission || extractTransmission(titre + ' ' + info);
+    const puissance = parsed.puissance || cleanPuissance(titre + ' ' + info);
+
+    if (!titre && marque === 'Autre') continue;
+
+    vehicles.push({
+      id: `ws-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
+      titre: (titre || `${marque} ${modele}`).slice(0, 200),
+      marque,
+      modele: modele || 'Inconnu',
+      prix,
+      kilometrage,
+      annee,
+      carburant,
+      transmission,
+      puissance,
+      image: image || '',
+      lien: lien || '#',
+      localisation: parsed.localisation || '',
+      description: (description || '').slice(0, 2000),
+    });
+  }
+
+  console.log(`Parsed ${vehicles.length} vehicles from WebScraper CSV`);
+  return vehicles.length > 0 ? vehicles : null;
+}
+
+/**
+ * Parse the concatenated `info` field from WebScraper LeBonCoin scrape.
+ * Example: "Les informations clésMarqueBMWModèleM4Année modèle2014Kilométrage88638 kmÉnergieEssenceBoîte de vitesseAutomatique..."
+ */
+function parseWebScraperInfoField(info: string): {
+  marque: string;
+  modele: string;
+  annee: number;
+  kilometrage: number;
+  carburant: string;
+  transmission: string;
+  puissance: number;
+  localisation: string;
+} {
+  const result = { marque: '', modele: '', annee: 0, kilometrage: 0, carburant: 'autre', transmission: 'autre', puissance: 0, localisation: '' };
+  if (!info) return result;
+
+  // Extract Marque
+  const marqueMatch = info.match(/Marque\s*([A-Za-zÀ-ÿ\s-]+?)(?=Modèle|Année|$)/i);
+  if (marqueMatch) result.marque = marqueMatch[1].trim();
+
+  // Extract Modèle
+  const modeleMatch = info.match(/Modèle\s*([A-Za-zÀ-ÿ0-9\s-]+?)(?=Année|Kilom|Énergie|Version|$)/i);
+  if (modeleMatch) result.modele = modeleMatch[1].trim();
+
+  // Extract Année modèle
+  const anneeMatch = info.match(/Année\s*(?:modèle)?\s*(\d{4})/i);
+  if (anneeMatch) {
+    const y = parseInt(anneeMatch[1], 10);
+    if (y >= 1980 && y <= 2026) result.annee = y;
+  }
+
+  // Extract Kilométrage: "88638 km" or "88 638 km"
+  const kmMatch = info.match(/Kilom[ée]trage\s*([0-9\s]+)\s*km/i);
+  if (kmMatch) {
+    const km = parseInt(kmMatch[1].replace(/\s/g, ''), 10);
+    if (km >= 0 && km <= 500000) result.kilometrage = km;
+  }
+
+  // Extract Énergie/Carburant
+  const fuelMatch = info.match(/[ÉE]nergie\s*([A-Za-zÀ-ÿ]+)/i);
+  if (fuelMatch) {
+    const fuel = fuelMatch[1].toLowerCase();
+    if (/essence/i.test(fuel)) result.carburant = 'essence';
+    else if (/diesel/i.test(fuel)) result.carburant = 'diesel';
+    else if (/[ée]lectrique/i.test(fuel)) result.carburant = 'electrique';
+    else if (/hybride/i.test(fuel)) result.carburant = 'hybride';
+  }
+
+  // Extract Boîte de vitesse
+  const transMatch = info.match(/Bo[îi]te\s*de\s*vitesse\s*([A-Za-zÀ-ÿ]+)/i);
+  if (transMatch) {
+    const trans = transMatch[1].toLowerCase();
+    if (/automatique|auto/i.test(trans)) result.transmission = 'automatique';
+    else if (/manu/i.test(trans)) result.transmission = 'manuelle';
+  }
+
+  // Extract Puissance DIN
+  const puissanceMatch = info.match(/Puissance\s*DIN\s*(\d+)\s*Ch/i);
+  if (puissanceMatch) {
+    const p = parseInt(puissanceMatch[1], 10);
+    if (p >= 50 && p <= 2000) result.puissance = p;
+  }
+
+  // Extract Puissance fiscale as fallback
+  if (result.puissance === 0) {
+    const cvMatch = info.match(/Puissance\s*fiscale\s*(\d+)\s*Cv/i);
+    if (cvMatch) {
+      result.puissance = parseInt(cvMatch[1], 10) || 0;
+    }
+  }
+
+  return result;
+}
+
+// ============================================
 // MANGLED JSON-AS-CSV RECONSTRUCTOR
 // ============================================
 // MAIN PARSER
@@ -1165,6 +1332,24 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
               const flatVehicles = parseFlattenedLBCCsv(allRows[0].map(h => String(h || '').trim()), allRows.slice(1));
               if (flatVehicles && flatVehicles.length > 0) {
                 resolve(flatVehicles);
+                return;
+              }
+            }
+          }
+        }
+
+        // Try WebScraper.io CSV format (has "info" column with concatenated LBC data)
+        {
+          const quickParse2 = Papa.parse(rawText, { preview: 2, skipEmptyLines: true });
+          if (quickParse2.data && (quickParse2.data as string[][]).length >= 2) {
+            const wsHeaders = (quickParse2.data as string[][])[0].map(h => String(h || '').trim());
+            const lowerWsHeaders = wsHeaders.map(h => h.toLowerCase());
+            if (lowerWsHeaders.includes('info') && (lowerWsHeaders.includes('titre') || lowerWsHeaders.includes('annonces'))) {
+              const fullParse2 = Papa.parse(rawText, { skipEmptyLines: true });
+              const allRows2 = (fullParse2.data as string[][]);
+              const wsVehicles = parseWebScraperCsv(allRows2[0].map(h => String(h || '').trim()), allRows2.slice(1));
+              if (wsVehicles && wsVehicles.length > 0) {
+                resolve(wsVehicles);
                 return;
               }
             }
