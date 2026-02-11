@@ -238,8 +238,9 @@ export const calculateSmartScore = (vehicles: any[]): VehicleWithScore[] => {
 
     // Coefficient prix réduit à 0.8 (était 1.5)
     // La sémantique (scoreMod + descQuality + tagRichness) domine
+    // Floor à 35 pour les véhicules non-fatals (les kill-switch restent à 0)
     let score = 45 + (percentDiff * 0.8) + scoreMod + descQualityBonus + tagRichnessBonus;
-    score = Math.max(0, Math.min(98, Math.round(score)));
+    score = Math.max(35, Math.min(98, Math.round(score)));
 
     // F. Fiabilité (note sur 10) — également basée sur la description
     let reliability = 5; // Base réduite à 5
