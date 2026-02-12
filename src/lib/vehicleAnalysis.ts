@@ -343,12 +343,16 @@ export const filterOutliers = (vehicles: ParsedVehicle[], forcedModele?: string)
     const isRhd = /rhd|volant à droite|volant a droite|uk spec|anglaise|import.*angleterre|british/i.test(text);
     if (isRhd) return false; // ⛔ HOP, POUBELLE DIRECTE
 
-    // 🟠 2. EXCLUSION GTS / DTM (Si recherche M4 simple)
-    // Si l'utilisateur demande "M4", on ne veut pas des collectors à 130k€ qui faussent tout
-    const isSpecialCollector = /\bGTS\b|\bDTM\b|\bCSL\b/i.test(title);
-
-    // Si c'est une GTS et que le client a demandé "M4" -> On vire.
-    if (isSpecialCollector && forcedModele?.toUpperCase() === "M4") return false;
+    // 🟠 2. EXCLUSION COLLECTORS (GTS, DTM, CSL, CS, Heritage...)
+    // Si le modèle recherché ne mentionne PAS explicitement la version collector, on l'exclut
+    const collectorVariants = ['GTS', 'DTM', 'CSL', 'CS', 'HERITAGE', 'MAGNY COURS', 'TOUR AUTO'];
+    const titleUpper = title.toUpperCase();
+    const modeleUpper = (forcedModele || '').toUpperCase();
+    const isSpecialCollector = collectorVariants.some(v => new RegExp(`\\b${v}\\b`).test(titleUpper));
+    const userWantsCollector = collectorVariants.some(v => modeleUpper.includes(v));
+    
+    // Si c'est un collector et que l'utilisateur n'a PAS demandé cette version -> On vire
+    if (isSpecialCollector && !userWantsCollector) return false;
 
     // 🟢 3. FILTRE GÉNÉRATION (Universel)
     const yearDiff = Math.abs(v.annee - mostFrequentYear);
@@ -395,7 +399,7 @@ export const calculateSmartScore = (
   customRules?: MissionRules,
 ): VehicleWithScore[] => {
   if (!vehicles || vehicles.length === 0) return [];
-  const filteredVehicles = filterOutliers(vehicles);
+  const filteredVehicles = filterOutliers(vehicles, forcedModele);
 
   // CLUSTERING DYNAMIQUE
   const clusters: Record<string, ParsedVehicle[]> = {};

@@ -40,7 +40,8 @@ serve(async (req) => {
         "Cache-Control": "public, max-age=86400",
       },
     });
-  } catch (error) {
-    return new Response("Error: " + error.message, { status: 500, headers: corsHeaders });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return new Response("Error: " + message, { status: 500, headers: corsHeaders });
   }
 });
