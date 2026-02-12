@@ -21,56 +21,72 @@ interface ModelRules {
 const KNOWLEDGE_DB: Record<string, any> = {
   // 🟢 BOOSTERS UNIVERSELS
   BOOSTERS: [
-    { regex: /première main|1ère main|1ere main/i, score: 5, tag: "💎 1ÈRE MAIN" },
-    { regex: /origine france|achat concession fran|française/i, score: 5, tag: "🇫🇷 ORIGINE FR" },
-    { regex: /carnet.*jour|suivi.*limpide|full suivi|factures/i, score: 4, tag: "📘 HISTORIQUE" },
-    { regex: /carnet.*tamponné|suivi.*exclusif|entretien.*réseau/i, score: 5, tag: "📘 HISTORIQUE PREMIUM" }, // Ajout
-    { regex: /malus payé|écotaxe payée|pas de malus/i, score: 8, tag: "💶 TAXE OK" },
-    { regex: /garantie.*(12|24).*mois/i, score: 3, tag: "🛡️ GARANTIE" },
-    { regex: /tva récup|tva récuperable/i, score: 2, tag: "🏢 TVA DÉDUCTIBLE" },
-    { regex: /distri.*neuve|chaine.*neuve|vidange.*boite/i, score: 3, tag: "🔧 ENTRETENUE" },
-    { regex: /embrayage.*neuf|volant moteur.*neuf/i, score: 4, tag: "⚙️ EMBRAYAGE NEUF" }, // Ajout
-    { regex: /disques.*plaquettes.*neufs|freins.*neufs/i, score: 2, tag: "🛑 FREINS NEUFS" }, // Ajout
-    { regex: /full option|toutes options/i, score: 3, tag: "🎯 FULL OPTIONS" },
-    { regex: /céramique|ceramique|ppf|film protection/i, score: 2, tag: "✨ SOIGNÉE" },
-    { regex: /temps de chauffe|jamais circuit|usage promenade/i, score: 3, tag: "✨ CONDUITE SOIGNÉE" }, // Ajout
-    { regex: /ct ok|pneus neufs/i, score: 2, tag: "✅ CT OK" },
-    { regex: /coussinets/i, score: 5, tag: "⚙️ COUSSINETS FAITS" },
-    { regex: /flexfuel.*homologué|boitier.*homologué|carte grise.*gratuite/i, score: 3, tag: "⛽ ÉTHANOL HOMOLOGUÉ" }, // Ajout Bonus
+    { regex: /première main|1ère main|1ere main/i, score: 5, tag: '💎 1ÈRE MAIN' },
+    { regex: /origine france|achat concession fran|française/i, score: 5, tag: '🇫🇷 ORIGINE FR' },
+    { regex: /carnet.*jour|suivi.*limpide|full suivi|factures/i, score: 4, tag: '📘 HISTORIQUE' },
+    { regex: /carnet.*tamponné|suivi.*exclusif|entretien.*réseau/i, score: 5, tag: '📘 HISTORIQUE PREMIUM' },
+    { regex: /malus payé|écotaxe payée|pas de malus/i, score: 8, tag: '💶 TAXE OK' },
+    { regex: /garantie.*(12|24).*mois/i, score: 3, tag: '🛡️ GARANTIE' },
+    { regex: /tva récup|tva récuperable/i, score: 2, tag: '🏢 TVA DÉDUCTIBLE' },
+    { regex: /distri.*neuve|chaine.*neuve|vidange.*boite/i, score: 3, tag: '🔧 ENTRETENUE' },
+    { regex: /embrayage.*neuf|volant moteur.*neuf/i, score: 4, tag: '⚙️ EMBRAYAGE NEUF' },
+    { regex: /disques.*plaquettes.*neufs|freins.*neufs/i, score: 2, tag: '🛑 FREINS NEUFS' },
+    { regex: /full option|toutes options/i, score: 3, tag: '🎯 FULL OPTIONS' },
+    { regex: /céramique|ceramique|ppf|film protection/i, score: 2, tag: '✨ SOIGNÉE' },
+    { regex: /temps de chauffe|jamais circuit|usage promenade/i, score: 3, tag: '✨ CONDUITE SOIGNÉE' },
+    { regex: /ct ok|pneus neufs/i, score: 2, tag: '✅ CT OK' },
+    { regex: /coussinets/i, score: 5, tag: '⚙️ COUSSINETS FAITS' },
+    { regex: /flexfuel.*homologué|boitier.*homologué|carte grise.*gratuite/i, score: 3, tag: '⛽ ÉTHANOL HOMOLOGUÉ' },
+    { regex: /rien à prévoir|aucun frais|état irréprochable|état concours/i, score: 5, tag: '✨ RIEN À PRÉVOIR' },
+    { regex: /alarme|anti[- ]vol|tracker|geolocalisation/i, score: 2, tag: '🛡️ SÉCURITÉ VOL' }, // Pour la TCR
+    { regex: /dort.*garage|stockée.*sec|sous housse/i, score: 3, tag: '🏠 DORT GARAGE' }, // Pour la Clubsport
+  ],
+
+  // 🔵 TUNING PRO & PIÈCES DE MARQUE (V4.5 - Liste Complète)
+  TUNING_PRO: [
+    // LÉGALITÉ
+    { regex: /homologu|certificat|tüv/i, score: 5, tag: '✅ PIÈCES HOMOLOGUÉES' },
+    
+    // ÉCHAPPEMENT
+    { regex: /milltek|akrapovic|remus|bullx|arp|supersprint|scorpion/i, score: 3, tag: '💨 LIGNE DE MARQUE' },
+    
+    // PRÉPARATEURS RECONNUS
+    { regex: /br[- ]performance|shiftech|o2|digiservices|mrc|ksf|jd ingineering/i, score: 2, tag: '🔧 PRÉPA CONNUE' },
+    
+    // CHÂSSIS & ESTHÉTIQUE
+    { regex: /kw|bilstein|ohlins|fox|h&r|eibach|st sus|vwr|volkswagen racing/i, score: 3, tag: '🏁 CHÂSSIS SPORT' },
+    { regex: /maxton|zaero|rieger|oettinger/i, score: 2, tag: '✨ KIT CARROSSERIE' }, // Maxton valorisé
+    { regex: /covering|ppf|film protection/i, score: 2, tag: '🎨 PROTECT CARROSSERIE' },
+    
+    // MOTEUR & FREINAGE (PERFORMANCE)
+    { regex: /r600|racingline|apr|wagner|forge|eventuri|cts|airtek|airtec/i, score: 3, tag: '🌬️ ADMISSION PERF' },
+    { regex: /loba|tte|is38|the turbo/i, score: 2, tag: '🐌 TURBO/POMPE PERF' }, // Loba/IS38 reconnus
+    { regex: /brembo|ap racing|alcon|étriers?.*(rs|macan|porsche)/i, score: 4, tag: '🛑 GROS FREINS' } // Brembo valorisé
   ],
 
   // 🔴 TUEURS UNIVERSELS
   KILLERS: [
-    // Moteur HS : On sécurise pour ne pas flaguer les prépas/maintenances
-    {
-      regex: /moteur hs|bruit moteur|claquement|joint de culasse|bielle.*coulée|bruit.*bielle/i,
-      score: -100,
-      tag: "💀 MOTEUR HS",
-    },
-    // On a supprimé la ligne "bielle" seule qui était trop risquée
-
+    { regex: /moteur hs|bruit moteur|claquement|joint de culasse|bielle.*coulée|bruit.*bielle/i, score: -100, tag: '💀 MOTEUR HS' },
     // Anti Faux-Positifs
-    { regex: /(?<!jamais |non |pas d'|pas de |aucun )accident(?!é)/i, score: -50, tag: "💥 ACCIDENTÉE" },
-    { regex: /(?<!par[-e\s]?)choc(?!\s*absorb)/i, score: -30, tag: "💥 TRACE DE CHOC" },
-    { regex: /vge|marbre|procédure|épave/i, score: -50, tag: "💥 ACCIDENTÉE" },
-
-    // États dégradés
-    { regex: /dans l'état(?!.*irréprochable)/i, score: -25, tag: "⚠️ VENTE EN L'ÉTAT" },
-    { regex: /sans ct|contrôle technique.*(refusé|contre)/i, score: -25, tag: "⚠️ SANS CT" },
-    { regex: /frais à prévoir|prévoir.*pneus|prévoir.*révision/i, score: -10, tag: "🔧 FRAIS À PRÉVOIR" }, // Ajout
-
-    // Arnaques potentielles
-    { regex: /parcours.*toutes distances|idéal export|marchand/i, score: -15, tag: "🚩 LOUCHE" },
-    { regex: /vente urgente|premier arrivé/i, score: -5, tag: "⚠️ VENTE PRESSÉE" }, // Ajout
-    { regex: /boite hs/i, score: -80, tag: "💀 BOITE HS" },
+    { regex: /(?<!jamais |non |pas d'|pas de |aucun )accident(?!é)/i, score: -50, tag: '💥 ACCIDENTÉE' },
+    { regex: /(?<!par[-e\s]?)choc(?!\s*absorb)/i, score: -30, tag: '💥 TRACE DE CHOC' },
+    { regex: /vge|marbre|procédure|épave/i, score: -50, tag: '💥 ACCIDENTÉE' },
+    { regex: /dans l'état(?!.*irréprochable)/i, score: -25, tag: '⚠️ VENTE EN L\'ÉTAT' }, 
+    { regex: /sans ct|contrôle technique.*(refusé|contre)/i, score: -25, tag: '⚠️ SANS CT' },
+    { regex: /frais à prévoir|prévoir.*pneus|prévoir.*révision/i, score: -10, tag: '🔧 FRAIS À PRÉVOIR' }, 
+    { regex: /parcours.*toutes distances|idéal export|marchand/i, score: -15, tag: '🚩 LOUCHE' },
+    { regex: /vente urgente|premier arrivé/i, score: -5, tag: '⚠️ VENTE PRESSÉE' }, 
+    { regex: /boite hs/i, score: -80, tag: '💀 BOITE HS' }
   ],
 
-  // 🟠 TUNING
+  // 🟠 TUNING (Les malus restent, mais sont compensés par TUNING_PRO si applicable)
   TUNING: [
-    { regex: /stage 1|stage 2|reprog|carto|éthanol(?!.*homologué)|e85(?!.*homologué)/i, score: -5, tag: "🔧 REPROG" }, // Nuance
-    { regex: /forgé|forger/i, score: 0, tag: "🔧 MOTEUR FORGÉ" },
-    { regex: /stage 3|gros turbo|hybride/i, score: -5, tag: "🚀 STAGE 3" },
-    { regex: /pop.*bang|rupture|ligne directe/i, score: -10, tag: "🚩 TUNING DOUTEUX" }, // Ajout
+    { regex: /stage 1|stage 2|reprog|carto|éthanol(?!.*homologué)|e85(?!.*homologué)/i, score: -5, tag: '🔧 REPROG' },
+    { regex: /forgé|forger/i, score: 0, tag: '🔧 MOTEUR FORGÉ' },
+    { regex: /stage 3|gros turbo|hybride/i, score: -5, tag: '🚀 STAGE 3' },
+    { regex: /pop.*bang|rupture/i, score: -5, tag: '💥 POP & BANG' }, // Score moins sévère (-5 au lieu de -10)
+    { regex: /ligne directe|tube/i, score: -5, tag: '💨 LIGNE MODIFIÉE' }, // "Tube" déclenche ça
+    { regex: /suppression.*(fap|cata|interm|silencieux|egr|adblue)|décata|defap|downpipe/i, score: -5, tag: '⚠️ DÉFAP (ILLÉGAL)' },
   ],
 
   // =========================================================
@@ -108,14 +124,13 @@ const KNOWLEDGE_DB: Record<string, any> = {
       { start: 2019, end: 2021, tag: "🚀 M2 COMP (S55)" },
     ],
     rules: [
-      { regex: /crankhub|poulie|renfort distribution|capture plate/i, score: 20, tag: "🛡️ CRANKHUB FAIT" },
-      { regex: /coussinets/i, score: 8, tag: "⚙️ COUSSINETS FAITS" },
-      { regex: /actuateur/i, score: 5, tag: "⚙️ ACTUATEURS FAITS" },
-      { regex: /m perf|m-perf|performance|ligne titane/i, score: 3, tag: "💨 M PERF" },
-      { regex: /harman/i, score: 2, tag: "🎵 HARMAN KARDON" },
-      { regex: /hud|tête haute/i, score: 2, tag: "👁️ HUD" },
-      { regex: /carbone/i, score: 2, tag: "⚫ CARBONE" },
-      { regex: /magny[- ]cours|gts|cs|dtm|héritage|heritage|csl/i, score: 30, tag: "🏆 COLLECTOR" },
+      { regex: /crankhub|poulie|renfort distribution|capture plate/i, score: 20, tag: '🛡️ CRANKHUB FAIT' },
+      { regex: /coussinets/i, score: 8, tag: '⚙️ COUSSINETS FAITS' },
+      { regex: /\bCOMPETITION\b/i, score: 10, tag: '🏁 PACK COMP' }, // Bonus pour les 450ch
+      { regex: /m perf|m-perf|performance/i, score: 2, tag: '💨 M PERF' }, // Score réduit à +2
+      { regex: /harman|hk\b/i, score: 2, tag: '🎵 HARMAN KARDON' },
+      { regex: /hud|tête haute/i, score: 2, tag: '👁️ HUD' },
+      { regex: /carbone/i, score: 2, tag: '⚫ CARBONE' },
     ],
   },
 
@@ -144,6 +159,7 @@ const KNOWLEDGE_DB: Record<string, any> = {
       { regex: /dsg|vidange boite/i, score: 3, tag: "⚙️ DSG VIDANGÉE" },
       { regex: /pompe à eau/i, score: 2, tag: "🔧 POMPE EAU FAITE" },
       { regex: /performance/i, score: 3, tag: "🏁 PACK PERF" },
+      { regex: /sans fap|no fap/i, score: 8, tag: '🔊 SANS FAP (RECHERCHÉ)' },
     ],
   },
 
@@ -184,32 +200,23 @@ const KNOWLEDGE_DB: Record<string, any> = {
 // ============================================
 
 function detectContext(vehicle: ParsedVehicle): string {
-  const fullText = (vehicle.titre + " " + vehicle.description).toUpperCase();
-
-  if (
-    fullText.includes("RS3") ||
-    fullText.includes("RS4") ||
-    fullText.includes("RS5") ||
-    fullText.includes("RS6") ||
-    fullText.includes("TTRS")
-  )
-    return "AUDI_RS";
-  if (fullText.includes("M2") || fullText.includes("M3") || fullText.includes("M4") || fullText.includes("M5"))
-    return "BMW_M";
-  if (
-    fullText.includes("911") ||
-    fullText.includes("CAYMAN") ||
-    fullText.includes("BOXSTER") ||
-    fullText.includes("PORSCHE")
-  )
-    return "PORSCHE";
-  if (fullText.includes("AMG")) return "MERCEDES_AMG";
-  if (fullText.includes("GOLF") && (fullText.includes("GTI") || fullText.includes(" R "))) return "VW_GOLF";
-  if (fullText.includes("MEGANE RS") || fullText.includes("CLIO RS") || fullText.includes("ALPINE"))
-    return "FRENCH_SPORT";
-  if (vehicle.annee < 2005) return "YOUNGTIMER";
-
-  return "GENERIC";
+  // On priorise le TITRE pour ne pas être pollué par les comparaisons dans la description
+  const title = vehicle.titre.toUpperCase();
+  const fullText = (vehicle.titre + ' ' + vehicle.description).toUpperCase();
+  
+  // Utilisation de \b pour matcher le mot exact (ex: "M4" et pas "AM4")
+  if (/RS3|RS4|RS5|RS6|TTRS/i.test(title)) return 'AUDI_RS';
+  if (/\bM2\b|\bM3\b|\bM4\b|\bM5\b/i.test(title)) return 'BMW_M';
+  if (/GOLF/i.test(title) && (/GTI| R |TCR|CLUBSPORT/i.test(title))) return 'VW_GOLF';
+  
+  // Fallback sur le texte complet si le titre est trop court
+  if (/RS3|RS4|RS5|RS6/i.test(fullText)) return 'AUDI_RS';
+  if (/\bM2\b|\bM3\b|\bM4\b|\bM5\b/i.test(fullText)) return 'BMW_M';
+  if (/AMG/i.test(fullText)) return 'MERCEDES_AMG';
+  if (/GOLF/i.test(fullText)) return 'VW_GOLF';
+  
+  if (vehicle.annee < 2005) return 'YOUNGTIMER';
+  return 'GENERIC';
 }
 
 function analyzeDescription(text: string, context: string, vehicle: ParsedVehicle, customRules?: MissionRules) {
@@ -225,6 +232,9 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
     .replace(/aucun frais/gi, "")
     .replace(/pas de frais/gi, "")
     .replace(/non fumeur/gi, "non_fumeur")
+    .replace(/maladie connue/gi, "detail_connu") // Neutralise
+    .replace(/frais de mise à la route/gi, "frais_pro") // Neutralise
+    .replace(/sans fap/gi, "version_recherchee") // Valorise
     .replace(/par[- ]choc/gi, "parechoc");
 
   // B. RÈGLES DE GÉNÉRATION AUTOMATIQUES
@@ -239,25 +249,31 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
     }
   }
 
-  // C. DÉTECTION COLLECTOR
-  const isCollector = /gts|dtm|cs|magny[- ]cours|trophy r|r26r|csl/i.test(vehicle.titre);
-  if (isCollector) {
-    cleanText = cleanText.replace(/piste|circuit/gi, "usage_track");
-    scoreMod += 10;
+  // C. DÉTECTION COLLECTOR (Uniquement si c'est le vrai nom dans le titre)
+  const isRealSpecial = /\bGTS\b|\bDTM\b|\bCS\b|\bCSL\b|\bHERITAGE\b/i.test(vehicle.titre.toUpperCase());
+  if (isRealSpecial) {
+    scoreMod += 40; 
     tags.add("🏆 COLLECTOR USINE");
   }
+  // C-bis. DÉTECTION DOM-TOM (Prix marché décorrélé)
+  const isDomTom = /réunion|reunion|guadeloupe|martinique|guyane|mayotte/i.test(text);
+  if (isDomTom) {
+    scoreMod += 5; // Petit bonus pour l'exotisme
+    tags.add('🏝️ DOM-TOM');
+  }
 
-  // D. SCAN UNIVERSEL
-  [...KNOWLEDGE_DB.BOOSTERS, ...KNOWLEDGE_DB.KILLERS].forEach((rule: any) => {
+  // D. SCAN UNIVERSEL (CORRECTION ICI : Ajout de TUNING_PRO)
+  // On scanne : Boosters + Tuning Pro + Killers
+  [...KNOWLEDGE_DB.BOOSTERS, ...KNOWLEDGE_DB.TUNING_PRO, ...KNOWLEDGE_DB.KILLERS].forEach((rule: any) => {
     if (rule.regex.test(cleanText)) {
       scoreMod += rule.score;
       tags.add(rule.tag);
     }
   });
 
-  // E. SCAN TUNING
+  // E. SCAN TUNING (Classique)
   KNOWLEDGE_DB.TUNING.forEach((rule: any) => {
-    if (isCollector && rule.tag === "🏁 PISTE") return;
+    if (isRealSpecial && rule.tag === "🏁 PISTE") return;
     if (rule.regex.test(cleanText)) {
       scoreMod += rule.score;
       tags.add(rule.tag);
@@ -274,13 +290,18 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
     });
   }
 
-  // G. SCAN IMPORT
+  // G. SCAN IMPORT (AMÉLIORÉ)
   const isImport = !cleanText.includes("france") && (cleanText.includes("import") || cleanText.includes("allemagne"));
+  
+  // Liste élargie des preuves de paiement pour éviter le faux positif "MALUS ?"
   const isMalusPaid =
     cleanText.includes("malus payé") ||
     cleanText.includes("écotaxe payée") ||
     cleanText.includes("française") ||
-    cleanText.includes("origine france");
+    cleanText.includes("origine france") ||
+    cleanText.includes("carte grise fran") || // Ajout
+    cleanText.includes("plaque fran") ||      // Ajout
+    cleanText.includes("immatricul");         // Ajout (souvent "déjà immatriculé")
 
   if (isImport && !isMalusPaid) {
     scoreMod -= 15;
@@ -296,7 +317,7 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
       }
     });
   }
-
+  
   return { scoreMod, tags };
 }
 
@@ -304,19 +325,55 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
 // 3. UTILITAIRES CLUSTERING
 // ============================================
 
-export const filterOutliers = (vehicles: ParsedVehicle[]) => {
+export const filterOutliers = (vehicles: ParsedVehicle[], forcedModele?: string) => {
   if (vehicles.length < 5) return vehicles;
-  const cleanList = vehicles.filter((v) => {
+
+  // Calcul de l'année pivot (pour rester sur la bonne génération)
+  const years = vehicles.map(v => v.annee);
+  const yearCounts: Record<number, number> = {};
+  years.forEach(y => yearCounts[y] = (yearCounts[y] || 0) + 1);
+  const mostFrequentYear = parseInt(Object.keys(yearCounts).reduce((a, b) => yearCounts[parseInt(a)] > yearCounts[parseInt(b)] ? a : b));
+
+  return vehicles.filter(v => {
     const text = (v.titre + " " + v.description).toLowerCase();
-    return !/rhd|volant à droite|uk spec|anglaise/.test(text);
+    const title = v.titre.toUpperCase();
+
+    // 🔴 1. EXCLUSION RHD (SÉCURITÉ MAXIMALE)
+    // On vire tout ce qui a le volant à droite ou vient d'Angleterre
+    const isRhd = /rhd|volant à droite|volant a droite|uk spec|anglaise|import.*angleterre|british/i.test(text);
+    if (isRhd) return false; // ⛔ HOP, POUBELLE DIRECTE
+
+    // 🟠 2. EXCLUSION GTS / DTM (Si recherche M4 simple)
+    // Si l'utilisateur demande "M4", on ne veut pas des collectors à 130k€ qui faussent tout
+    const isSpecialCollector = /\bGTS\b|\bDTM\b|\bCSL\b/i.test(title);
+
+    // Si c'est une GTS et que le client a demandé "M4" -> On vire.
+    if (isSpecialCollector && forcedModele?.toUpperCase() === "M4") return false;
+
+    // 🟢 3. FILTRE GÉNÉRATION (Universel)
+    const yearDiff = Math.abs(v.annee - mostFrequentYear);
+    if (yearDiff > 4) return false;
+
+    return true;
   });
-  const avg = cleanList.reduce((sum, v) => sum + v.prix, 0) / cleanList.length;
-  return cleanList.filter((v) => v.prix > avg * 0.15 && v.prix < avg * 3.5);
 };
 
 function createClusterFingerprint(vehicle: ParsedVehicle, context: string) {
-  if (/gts|dtm|cs|trophy r/i.test(vehicle.titre)) return "COLLECTOR_SPECIAL";
-  return `${vehicle.marque}_${vehicle.modele}_${vehicle.annee}`.toUpperCase().replace(/[^A-Z0-9_]/g, "");
+    const title = vehicle.titre.toUpperCase();
+    
+    // Si c'est une version radicale, on l'isole totalement du marché standard
+    const isSpecial = /GTS|DTM|CSL|TOUR AUTO|MAGNY|HERITAGE|CS\b/i.test(title);
+    if (isSpecial) return 'ULTRA_COLLECTOR_SPECIAL';
+
+    // Pour les BMW M, on sépare juste Standard et Compétition
+    let version = 'STANDARD';
+    if (context === 'BMW_M') {
+        if (title.includes('COMPETITION') || title.includes('COMPÉTITON')) version = 'COMP';
+    }
+
+    return `${vehicle.marque}_${vehicle.modele}_${version}_${vehicle.annee}`
+           .toUpperCase()
+           .replace(/[^A-Z0-9_]/g, '');
 }
 
 function calculateClusterStats(vehicles: ParsedVehicle[]) {
@@ -384,10 +441,11 @@ export const calculateSmartScore = (
 
     // Score Final
     let mathScore = 50;
-    if (clusterId === "COLLECTOR_SPECIAL") {
-      mathScore = 70;
+    // Si Collector OU DOM-TOM, on neutralise la note de prix (car marché spécifique)
+    if (clusterId === 'COLLECTOR_SPECIAL' || analysis.tags.has('🏝️ DOM-TOM')) {
+        mathScore = 70; // Note de base fixe "Bonne affaire"
     } else if (stats && stats.count > 1) {
-      mathScore = 50 + ecartPourcent * 1.5;
+        mathScore = 50 + (ecartPourcent * 1.5);
     }
 
     // Protection Arnaque
@@ -403,12 +461,21 @@ export const calculateSmartScore = (
 
     let finalScore = mathScore + analysis.scoreMod;
 
-    // Tags Spéciaux Logiques
-    if (vehicle.kilometrage > 140000 && finalScore > 75 && !analysis.tags.has("💀 MOTEUR HS")) {
-      analysis.tags.add("📉 FLIP MARCHAND");
-    }
-    if (vehicle.kilometrage < 30000 && vehicle.annee <= 2018) {
-      analysis.tags.add("💎 COLLECTION");
+    /// 4. Ajustement Km (Version Boostée pour Pépites)
+    if (vehicle.kilometrage > 0 && clusterId !== 'COLLECTOR_SPECIAL') {
+        const currentYear = new Date().getFullYear();
+        const age = Math.max(1, currentYear - vehicle.annee);
+        let kmRefAnnuel = 15000;
+        
+        const kmTheorique = kmRefAnnuel * age;
+        
+        // BOOST PÉPITE : Si la voiture a moins de 8000km/an de moyenne
+        if (vehicle.kilometrage < (age * 8000)) {
+            coteCluster *= 1.30; // On accepte un prix 30% plus cher pour une pépite
+            analysis.tags.add('💎 PÉPITE KM');
+        } else if (vehicle.kilometrage < kmTheorique * 0.7) {
+            coteCluster *= 1.15;
+        }
     }
 
     // Kill Switch
