@@ -19,33 +19,54 @@ interface ModelRules {
 }
 
 const KNOWLEDGE_DB: Record<string, any> = {
-  // 🟢 BOOSTERS UNIVERSELS
+// 🟢 BOOSTERS UNIVERSELS
   BOOSTERS: [
     { regex: /première main|1ère main|1ere main/i, score: 5, tag: '💎 1ÈRE MAIN' },
     { regex: /origine france|achat concession fran|française/i, score: 5, tag: '🇫🇷 ORIGINE FR' },
     { regex: /carnet.*jour|suivi.*limpide|full suivi|factures/i, score: 4, tag: '📘 HISTORIQUE' },
+    { regex: /carnet.*tamponné|suivi.*exclusif|entretien.*réseau/i, score: 5, tag: '📘 HISTORIQUE PREMIUM' }, // Ajout
     { regex: /malus payé|écotaxe payée|pas de malus/i, score: 8, tag: '💶 TAXE OK' },
     { regex: /garantie.*(12|24).*mois/i, score: 3, tag: '🛡️ GARANTIE' },
     { regex: /tva récup|tva récuperable/i, score: 2, tag: '🏢 TVA DÉDUCTIBLE' },
     { regex: /distri.*neuve|chaine.*neuve|vidange.*boite/i, score: 3, tag: '🔧 ENTRETENUE' },
+    { regex: /embrayage.*neuf|volant moteur.*neuf/i, score: 4, tag: '⚙️ EMBRAYAGE NEUF' }, // Ajout
+    { regex: /disques.*plaquettes.*neufs|freins.*neufs/i, score: 2, tag: '🛑 FREINS NEUFS' }, // Ajout
     { regex: /full option|toutes options/i, score: 3, tag: '🎯 FULL OPTIONS' },
     { regex: /céramique|ceramique|ppf|film protection/i, score: 2, tag: '✨ SOIGNÉE' },
+    { regex: /temps de chauffe|jamais circuit|usage promenade/i, score: 3, tag: '✨ CONDUITE SOIGNÉE' }, // Ajout
     { regex: /ct ok|pneus neufs/i, score: 2, tag: '✅ CT OK' },
+    { regex: /coussinets/i, score: 5, tag: '⚙️ COUSSINETS FAITS' },
+    { regex: /flexfuel.*homologué|boitier.*homologué|carte grise.*gratuite/i, score: 3, tag: '⛽ ÉTHANOL HOMOLOGUÉ' }, // Ajout Bonus
   ],
+
   // 🔴 TUEURS UNIVERSELS
   KILLERS: [
-    { regex: /moteur hs|bruit moteur|claquement|bielle|joint de culasse/i, score: -100, tag: '💀 MOTEUR HS' },
+    // Moteur HS : On sécurise pour ne pas flaguer les prépas/maintenances
+    { regex: /moteur hs|bruit moteur|claquement|bielle (?!forg|renf|neuv|chang|rempl)/i, score: -100, tag: '💀 MOTEUR HS' },
+    // On a supprimé la ligne "bielle" seule qui était trop risquée
+    
+    // Anti Faux-Positifs
     { regex: /(?<!jamais |non |pas d'|pas de |aucun )accident(?!é)/i, score: -50, tag: '💥 ACCIDENTÉE' },
     { regex: /(?<!par[-e\s]?)choc(?!\s*absorb)/i, score: -30, tag: '💥 TRACE DE CHOC' },
     { regex: /vge|marbre|procédure|épave/i, score: -50, tag: '💥 ACCIDENTÉE' },
-    { regex: /dans l'état(?!.*irréprochable)/i, score: -25, tag: '⚠️ VENTE EN L\'ÉTAT' },
+    
+    // États dégradés
+    { regex: /dans l'état(?!.*irréprochable)/i, score: -25, tag: '⚠️ VENTE EN L\'ÉTAT' }, 
     { regex: /sans ct|contrôle technique.*(refusé|contre)/i, score: -25, tag: '⚠️ SANS CT' },
+    { regex: /frais à prévoir|prévoir.*pneus|prévoir.*révision/i, score: -10, tag: '🔧 FRAIS À PRÉVOIR' }, // Ajout
+    
+    // Arnaques potentielles
     { regex: /parcours.*toutes distances|idéal export|marchand/i, score: -15, tag: '🚩 LOUCHE' },
-    { regex: /boite hs/i, score: -80, tag: '💀 BOITE HS' },
+    { regex: /vente urgente|premier arrivé/i, score: -5, tag: '⚠️ VENTE PRESSÉE' }, // Ajout
+    { regex: /boite hs/i, score: -80, tag: '💀 BOITE HS' }
   ],
+
   // 🟠 TUNING
   TUNING: [
-    { regex: /stage 1|stage 2|reprog|carto|éthanol|e85|flexfuel/i, score: -5, tag: '🔧 REPROG' },
+    { regex: /stage 1|stage 2|reprog|carto|éthanol(?!.*homologué)|e85(?!.*homologué)/i, score: -5, tag: '🔧 REPROG' }, // Nuance
+    { regex: /forgé|forger/i, score: 0, tag: '🔧 MOTEUR FORGÉ' },
+    { regex: /stage 3|gros turbo|hybride/i, score: -5, tag: '🚀 STAGE 3' },
+    { regex: /pop.*bang|rupture|ligne directe/i, score: -10, tag: '🚩 TUNING DOUTEUX' } // Ajout
   ],
 
   // =========================================================
