@@ -26,7 +26,8 @@ import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 import { Footer } from '@/components/landing';
 import { generatePDF } from '@/lib/pdfGenerator';
-import { ExpertTag } from '@/lib/vehicleAnalysis'; // Assurez-vous d'importer le type si besoin
+import { ExpertTag } from '@/lib/vehicleAnalysis';
+import { ProxiedImage, getBrandPlaceholder } from '@/components/ProxiedImage';
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
@@ -205,7 +206,7 @@ const ReportView = () => {
         <div className="flex flex-col md:flex-row gap-6 mb-8 pdf-section">
           <div className="w-full md:w-1/3">
             <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-[4/3] group bg-slate-100">
-              <img src={vehiculeCible?.image || `https://source.unsplash.com/1600x900/?car,${report.marque}`} alt={vehiculeCible?.titre} className="w-full h-full object-cover object-center" onError={(e) => { e.currentTarget.src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }} />
+              <ProxiedImage src={vehiculeCible?.image} brand={report.marque} alt={vehiculeCible?.titre} className="w-full h-full object-cover object-center" />
               <div className="absolute top-3 right-3"><Badge className={`${stats.isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1 shadow-md border-0`}>{stats.isGoodDeal ? 'Excellent Deal' : 'Prix Marché'}</Badge></div>
             </div>
           </div>
@@ -298,11 +299,11 @@ const ReportView = () => {
               {topOpportunities.map((deal, idx) => (
                  <Card key={idx} className="overflow-hidden border-slate-200 shadow-sm">
                    <div className="relative aspect-[16/10] overflow-hidden bg-gray-100 print:aspect-auto print:h-32">
-                    <img 
-                      src={deal.image || "/placeholder.svg"} 
+                    <ProxiedImage 
+                      src={deal.image} 
+                      brand={report.marque}
                       alt={deal.titre}
                        className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
                     />
                     <div className="absolute top-2 left-2">
                       <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">#{idx + 1}</Badge>
@@ -412,11 +413,11 @@ const ReportView = () => {
                           {/* 1. PHOTO XXL */}
                           <TableCell className="pl-6 py-6 w-[220px]">
                             <div className="w-48 h-32 bg-slate-200 rounded-lg overflow-hidden shadow-md border border-slate-200 relative group">
-                              <img 
-                                src={vehicle.image || "/placeholder.svg"} 
+                              <ProxiedImage 
+                                src={vehicle.image} 
+                                brand={report.marque}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                 alt="v" 
-                                onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${report.marque}`; }}
                               />
                               {isSuspicious && (
                                 <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10 animate-pulse">
