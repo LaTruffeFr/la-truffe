@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { parseCSVFile, ParsedVehicle, VehicleWithScore, AIAnalysis } from '@/lib/csvParser';
 import { useToast } from '@/hooks/use-toast';
-import { calculateSmartScore, filterOutliers } from '@/lib/vehicleAnalysis';
+import { calculateSmartScoreAsync, filterOutliers } from '@/lib/vehicleAnalysis';
 import { supabase } from '@/integrations/supabase/client';
 
 interface VehicleInfo {
@@ -143,16 +143,23 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
     setIsLoading(true);
     setLoadingProgress(0);
     try {
-      const rawVehicles = await parseCSVFile(file, (p) => setLoadingProgress(Math.round(p * 0.6)));
+      const rawVehicles = await parseCSVFile(file, (p) => setLoadingProgress(Math.round(p * 0.4)));
       
       if (rawVehicles.length === 0) throw new Error("Aucun véhicule trouvé dans le CSV");
 
-      setLoadingProgress(65);
+      setLoadingProgress(45);
       const cleanVehicles = filterOutliers(rawVehicles);
       const rejectedCount = rawVehicles.length - cleanVehicles.length;
 
-      setLoadingProgress(75);
-      const scoredVehicles = calculateSmartScore(cleanVehicles);
+      setLoadingProgress(50);
+      
+      // Use async scoring to avoid UI freeze on large datasets
+      const scoredVehicles = await calculateSmartScoreAsync(
+        cleanVehicles,
+        (p) => setLoadingProgress(50 + Math.round(p * 0.4)), // 50-90%
+      );
+
+      setLoadingProgress(92);
 
       // Merge with existing vehicles, deduplicating by title+price+km
       setVehicles(prev => {

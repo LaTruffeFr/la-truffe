@@ -36,6 +36,8 @@ export interface VehicleWithScore extends ParsedVehicle {
   isPremium: boolean;         // Version premium détectée (S-Line, AMG, etc.)
   hasEnoughData: boolean;     // True si cluster >= 3 véhicules
   aiAnalysis?: AIAnalysis;    // AI-generated analysis from description
+  tags?: string[];            // Expert analysis tags
+  fiabilite?: number;         // Reliability score 1-10
   // Legacy compatibility
   prixMoyen: number;
   prixMedian: number;
