@@ -131,6 +131,11 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
     }
   }, [toast]);
 
+  // Dedup key: normalize title + price + km to detect identical listings
+  const getDeduplicationKey = useCallback((v: ParsedVehicle) => {
+    return `${v.titre.trim().toLowerCase()}_${v.prix}_${v.kilometrage}`;
+  }, []);
+
   const uploadCSV = useCallback(async (file: File, marque: string, modele: string) => {
     setIsLoading(true);
     try {
@@ -143,29 +148,43 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
 
       const scoredVehicles = calculateSmartScore(cleanVehicles);
 
-      setVehicles(scoredVehicles);
+      // Merge with existing vehicles, deduplicating by title+price+km
+      setVehicles(prev => {
+        const existingKeys = new Set(prev.map(v => getDeduplicationKey(v)));
+        const newUnique = scoredVehicles.filter(v => !existingKeys.has(getDeduplicationKey(v)));
+        const merged = [...prev, ...newUnique];
+        const duplicatesRemoved = scoredVehicles.length - newUnique.length;
+
+        // Update filters based on merged dataset
+        const maxP = Math.max(...merged.map(v => v.prix));
+        const maxK = Math.max(...merged.map(v => v.kilometrage));
+        const minY = Math.min(...merged.map(v => v.annee));
+        const maxY = Math.max(...merged.map(v => v.annee));
+
+        setFiltersState({
+          minPrice: 0, maxPrice: maxP,
+          minKm: 0, maxKm: maxK,
+          minYear: minY, maxYear: maxY
+        });
+
+        const desc = duplicatesRemoved > 0
+          ? `${newUnique.length} nouvelles annonces ajoutées (${rejectedCount} exclues, ${duplicatesRemoved} doublons ignorés).`
+          : `${scoredVehicles.length} annonces analysées (${rejectedCount} exclues).`;
+
+        toast({ 
+          title: "Import réussi", 
+          description: desc,
+          className: "bg-green-600 text-white border-0"
+        });
+
+        // Launch AI analysis only on new vehicles
+        if (newUnique.length > 0) runAIAnalysis(newUnique);
+
+        return merged;
+      });
+
       setVehicleInfo({ marque, modele });
-      setOutliersCount(rejectedCount);
-
-      const maxP = Math.max(...scoredVehicles.map(v => v.prix));
-      const maxK = Math.max(...scoredVehicles.map(v => v.kilometrage));
-      const minY = Math.min(...scoredVehicles.map(v => v.annee));
-      const maxY = Math.max(...scoredVehicles.map(v => v.annee));
-
-      setFiltersState({
-        minPrice: 0, maxPrice: maxP,
-        minKm: 0, maxKm: maxK,
-        minYear: minY, maxYear: maxY
-      });
-
-      toast({ 
-        title: "Import réussi", 
-        description: `${scoredVehicles.length} annonces analysées (${rejectedCount} exclues).`,
-        className: "bg-green-600 text-white border-0"
-      });
-
-      // Launch AI analysis in background
-      runAIAnalysis(scoredVehicles);
+      setOutliersCount(prev => prev + rejectedCount);
 
     } catch (error: any) {
       console.error(error);
@@ -177,7 +196,7 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
     } finally {
       setIsLoading(false);
     }
-  }, [toast, runAIAnalysis]);
+  }, [toast, runAIAnalysis, getDeduplicationKey]);
 
   const clearData = () => {
     setVehicles([]);
