@@ -1288,9 +1288,11 @@ function reconstructJSONFromCSV(rawText: string): string | null {
 
 // ============================================
 
-export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
+export function parseCSVFile(
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<ParsedVehicle[]> {
   return new Promise((resolve, reject) => {
-    // First read as text to check if preprocessing is needed
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -1300,11 +1302,14 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
           return;
         }
 
+        onProgress?.(5);
+
         // Try LeBonCoin JSON format first (pure JSON file)
         const trimmed = rawText.trim();
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
           const jsonVehicles = parseLeBonCoinJSON(trimmed);
           if (jsonVehicles && jsonVehicles.length > 0) {
+            onProgress?.(100);
             resolve(jsonVehicles);
             return;
           }
@@ -1315,22 +1320,25 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
         if (reconstructed) {
           const jsonVehicles = parseLeBonCoinJSON(reconstructed);
           if (jsonVehicles && jsonVehicles.length > 0) {
+            onProgress?.(100);
             resolve(jsonVehicles);
             return;
           }
         }
+
+        onProgress?.(10);
 
         // Try flattened LBC JSON-as-CSV (columns are flattened JSON paths)
         {
           const quickParse = Papa.parse(rawText, { preview: 2, skipEmptyLines: true });
           if (quickParse.data && (quickParse.data as string[][]).length >= 2) {
             const flatHeaders = (quickParse.data as string[][])[0].map(h => String(h || '').trim());
-            // Full parse only if format detected
             if (flatHeaders.includes('list_id') && flatHeaders.includes('subject')) {
               const fullParse = Papa.parse(rawText, { skipEmptyLines: true });
               const allRows = (fullParse.data as string[][]);
               const flatVehicles = parseFlattenedLBCCsv(allRows[0].map(h => String(h || '').trim()), allRows.slice(1));
               if (flatVehicles && flatVehicles.length > 0) {
+                onProgress?.(100);
                 resolve(flatVehicles);
                 return;
               }
@@ -1338,7 +1346,7 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
           }
         }
 
-        // Try WebScraper.io CSV format (has "info" column with concatenated LBC data)
+        // Try WebScraper.io CSV format
         {
           const quickParse2 = Papa.parse(rawText, { preview: 2, skipEmptyLines: true });
           if (quickParse2.data && (quickParse2.data as string[][]).length >= 2) {
@@ -1349,6 +1357,7 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
               const allRows2 = (fullParse2.data as string[][]);
               const wsVehicles = parseWebScraperCsv(allRows2[0].map(h => String(h || '').trim()), allRows2.slice(1));
               if (wsVehicles && wsVehicles.length > 0) {
+                onProgress?.(100);
                 resolve(wsVehicles);
                 return;
               }
@@ -1358,6 +1367,7 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
 
         // Preprocess broken CSVs (LeBonCoin export format)
         rawText = preprocessBrokenCSV(rawText);
+        onProgress?.(15);
 
         Papa.parse(rawText, {
           complete: (results) => {
@@ -1370,26 +1380,39 @@ export function parseCSVFile(file: File): Promise<ParsedVehicle[]> {
               
               const headers = data[0].map(h => String(h || ''));
               let mapping = detectColumns(headers);
-
               const sampleRows = data.slice(1, 51).map(r => r.map(cell => String(cell || '')));
               mapping = refineMapping(headers, sampleRows, mapping);
 
               console.log('Detected columns:', mapping);
               console.log('Headers:', headers.slice(0, 10));
               
+              const totalRows = data.length - 1;
+              const CHUNK_SIZE = 500;
               const vehicles: ParsedVehicle[] = [];
-              for (let i = 1; i < data.length; i++) {
-                const row = data[i].map(cell => String(cell || ''));
-                if (row.length < 3) continue;
-                
-                const vehicle = parseRow(row, mapping, i);
-                if (vehicle) {
-                  vehicles.push(vehicle);
+              let currentIndex = 1;
+
+              function processChunk() {
+                const end = Math.min(currentIndex + CHUNK_SIZE, data.length);
+                for (let i = currentIndex; i < end; i++) {
+                  const row = data[i].map(cell => String(cell || ''));
+                  if (row.length < 3) continue;
+                  const vehicle = parseRow(row, mapping, i);
+                  if (vehicle) vehicles.push(vehicle);
+                }
+                currentIndex = end;
+                const progress = 15 + Math.round(((currentIndex - 1) / totalRows) * 85);
+                onProgress?.(Math.min(progress, 99));
+
+                if (currentIndex < data.length) {
+                  setTimeout(processChunk, 0);
+                } else {
+                  console.log(`Parsed ${vehicles.length} vehicles from ${totalRows} rows`);
+                  onProgress?.(100);
+                  resolve(vehicles);
                 }
               }
-              
-              console.log(`Parsed ${vehicles.length} vehicles from ${data.length - 1} rows`);
-              resolve(vehicles);
+
+              processChunk();
             } catch (error) {
               reject(error);
             }
