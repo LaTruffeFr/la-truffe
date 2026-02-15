@@ -11,7 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, Download, Share2, CheckCircle2, 
   AlertTriangle, TrendingDown, Calendar, Gauge, Fuel, 
-  Euro, ShieldCheck, Loader2, Search, MapPin, Trophy, ListFilter, ExternalLink
+  Euro, ShieldCheck, Loader2, Search, MapPin, Trophy, ListFilter, ExternalLink,
+  ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 import {
   Table,
@@ -116,6 +117,17 @@ const ReportView = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<'score' | 'prix' | 'kilometrage'>('score');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const toggleSort = (field: 'prix' | 'kilometrage') => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
   
   // État pour afficher la liste complète
   const [showAllVehicles, setShowAllVehicles] = useState(false);
@@ -356,20 +368,27 @@ const ReportView = () => {
         {/* --- NOUVELLE SECTION : LISTE COMPLÈTE (VERSION GALERIE + TAGS) --- */}
         {showAllVehicles && (
           <div ref={tableRef} className="mb-12 animate-in fade-in slide-in-from-bottom-10 duration-500 scroll-mt-24">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
               <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <Search className="w-8 h-8 text-primary" /> 
                 Liste complète ({stats.totalVehicules} annonces)
               </h3>
-              <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher (titre, année, prix...)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                {sortField !== 'score' && (
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground shrink-0" onClick={() => { setSortField('score'); setSortDirection('desc'); }}>
+                    ✕ Réinitialiser tri
+                  </Button>
+                )}
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher (titre, année, prix...)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                </div>
               </div>
             </div>
 
@@ -380,8 +399,16 @@ const ReportView = () => {
                     <TableRow>
                       <TableHead className="w-[180px] pl-6 font-bold text-slate-700">Photo</TableHead>
                       <TableHead className="font-bold text-slate-700">Véhicule</TableHead>
-                      <TableHead className="font-bold text-slate-700 text-lg">Prix</TableHead>
-                      <TableHead className="font-bold text-slate-700">Kilométrage</TableHead>
+                      <TableHead className="font-bold text-slate-700 cursor-pointer select-none hover:text-primary transition-colors" onClick={() => toggleSort('prix')}>
+                        <span className="flex items-center gap-1.5 text-lg">
+                          Prix {sortField === 'prix' ? (sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />) : <ArrowUpDown className="w-4 h-4 text-slate-400" />}
+                        </span>
+                      </TableHead>
+                      <TableHead className="font-bold text-slate-700 cursor-pointer select-none hover:text-primary transition-colors" onClick={() => toggleSort('kilometrage')}>
+                        <span className="flex items-center gap-1.5">
+                          Kilométrage {sortField === 'kilometrage' ? (sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />) : <ArrowUpDown className="w-4 h-4 text-slate-400" />}
+                        </span>
+                      </TableHead>
                       <TableHead className="font-bold text-slate-700">Année</TableHead>
                       <TableHead className="font-bold text-slate-700">Score</TableHead>
                       <TableHead className="text-right pr-6 font-bold text-slate-700">Action</TableHead>
@@ -402,7 +429,12 @@ const ReportView = () => {
                           (vehicle.tags || []).some(t => t.toLowerCase().includes(q))
                         );
                       })
-                      .sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0))
+                      .sort((a, b) => {
+                        if (sortField === 'score') return (b.dealScore || 0) - (a.dealScore || 0);
+                        const valA = sortField === 'prix' ? a.prix : a.kilometrage;
+                        const valB = sortField === 'prix' ? b.prix : b.kilometrage;
+                        return sortDirection === 'asc' ? valA - valB : valB - valA;
+                      })
                       .map((vehicle, i) => {
                       // Récupération des tags existants
                       const tags = vehicle.tags || []; 
