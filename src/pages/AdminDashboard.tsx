@@ -89,6 +89,7 @@ export default function AdminDashboard() {
     filters,
     dataRanges,
     isLoading,
+    loadingProgress,
     vehicleInfo,
     setFilters,
     uploadCSV,
@@ -168,7 +169,17 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <div className="text-center space-y-4 w-72">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="text-lg text-muted-foreground">Analyse en cours...</p>
+          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">{loadingProgress}%</p>
+        </div>
       </div>
     );
   }

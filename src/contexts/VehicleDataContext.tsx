@@ -35,6 +35,7 @@ interface VehicleDataContextType {
   dataRanges: FilterState;
   isLoading: boolean;
   isAnalyzingAI: boolean;
+  loadingProgress: number;
   vehicleInfo: VehicleInfo | null;
   setFilters: (filters: Partial<FilterState>) => void;
   resetFilters: () => void;
@@ -50,6 +51,7 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
   const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzingAI, setIsAnalyzingAI] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [outliersCount, setOutliersCount] = useState(0);
   const { toast } = useToast();
 
@@ -139,14 +141,17 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
 
   const uploadCSV = useCallback(async (file: File, marque: string, modele: string) => {
     setIsLoading(true);
+    setLoadingProgress(0);
     try {
-      const rawVehicles = await parseCSVFile(file);
+      const rawVehicles = await parseCSVFile(file, (p) => setLoadingProgress(Math.round(p * 0.6)));
       
       if (rawVehicles.length === 0) throw new Error("Aucun véhicule trouvé dans le CSV");
 
+      setLoadingProgress(65);
       const cleanVehicles = filterOutliers(rawVehicles);
       const rejectedCount = rawVehicles.length - cleanVehicles.length;
 
+      setLoadingProgress(75);
       const scoredVehicles = calculateSmartScore(cleanVehicles);
 
       // Merge with existing vehicles, deduplicating by title+price+km
@@ -196,6 +201,7 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
       });
     } finally {
       setIsLoading(false);
+      setLoadingProgress(100);
     }
   }, [toast, runAIAnalysis, getDeduplicationKey]);
 
@@ -273,6 +279,7 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
       dataRanges,
       isLoading,
       isAnalyzingAI,
+      loadingProgress,
       vehicleInfo,
       setFilters,
       resetFilters,
