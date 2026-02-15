@@ -458,6 +458,15 @@ export const calculateSmartScore = (
   forcedModele?: string,
   customRules?: MissionRules,
 ): VehicleWithScore[] => {
+  return calculateSmartScoreSync(vehicles, forcedMarque, forcedModele, customRules);
+};
+
+function calculateSmartScoreSync(
+  vehicles: ParsedVehicle[],
+  forcedMarque?: string,
+  forcedModele?: string,
+  customRules?: MissionRules,
+): VehicleWithScore[] {
   if (!vehicles || vehicles.length === 0) return [];
   const filteredVehicles = filterOutliers(vehicles, forcedModele);
 
@@ -475,7 +484,14 @@ export const calculateSmartScore = (
     if (stats) clusterStats[k] = stats;
   });
 
-  return filteredVehicles.map((vehicle) => {
+  return filteredVehicles.map((vehicle) => scoreOneVehicle(vehicle, clusterStats, customRules));
+}
+
+function scoreOneVehicle(
+  vehicle: ParsedVehicle,
+  clusterStats: Record<string, { median: number; count: number }>,
+  customRules?: MissionRules,
+): VehicleWithScore {
     const context = detectContext(vehicle);
     const clusterId = createClusterFingerprint(vehicle, context);
     const stats = clusterStats[clusterId];
@@ -586,6 +602,62 @@ export const calculateSmartScore = (
       tags: Array.from(analysis.tags),
       fiabilite: reliability,
     };
+}
+
+/**
+ * Async version of calculateSmartScore that processes vehicles in chunks
+ * to avoid blocking the main thread on large datasets.
+ */
+export const calculateSmartScoreAsync = (
+  vehicles: ParsedVehicle[],
+  onProgress?: (progress: number) => void,
+  forcedMarque?: string,
+  forcedModele?: string,
+  customRules?: MissionRules,
+): Promise<VehicleWithScore[]> => {
+  return new Promise((resolve) => {
+    if (!vehicles || vehicles.length === 0) {
+      resolve([]);
+      return;
+    }
+
+    const filteredVehicles = filterOutliers(vehicles, forcedModele);
+
+    const clusters: Record<string, ParsedVehicle[]> = {};
+    filteredVehicles.forEach((v) => {
+      const context = detectContext(v);
+      const id = createClusterFingerprint(v, context);
+      if (!clusters[id]) clusters[id] = [];
+      clusters[id].push(v);
+    });
+
+    const clusterStats: Record<string, { median: number; count: number }> = {};
+    Object.keys(clusters).forEach((k) => {
+      const stats = calculateClusterStats(clusters[k]);
+      if (stats) clusterStats[k] = stats;
+    });
+
+    const CHUNK_SIZE = 100;
+    const results: VehicleWithScore[] = [];
+    let idx = 0;
+    const total = filteredVehicles.length;
+
+    function processChunk() {
+      const end = Math.min(idx + CHUNK_SIZE, total);
+      for (let i = idx; i < end; i++) {
+        results.push(scoreOneVehicle(filteredVehicles[i], clusterStats, customRules));
+      }
+      idx = end;
+      onProgress?.(Math.round((idx / total) * 100));
+
+      if (idx < total) {
+        setTimeout(processChunk, 0);
+      } else {
+        resolve(results);
+      }
+    }
+
+    processChunk();
   });
 };
 
