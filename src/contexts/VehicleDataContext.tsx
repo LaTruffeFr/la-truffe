@@ -131,8 +131,9 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
     }
   }, [toast]);
 
-  // Dedup key: normalize title + price + km to detect identical listings
+  // Dedup key: use the listing URL when available, fallback to title+price+km
   const getDeduplicationKey = useCallback((v: ParsedVehicle) => {
+    if (v.lien && v.lien.trim().length > 0) return v.lien.trim().toLowerCase();
     return `${v.titre.trim().toLowerCase()}_${v.prix}_${v.kilometrage}`;
   }, []);
 
