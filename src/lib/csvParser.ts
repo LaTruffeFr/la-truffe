@@ -1346,80 +1346,112 @@ export function parseCSVFile(
           }
         }
 
-        // Try WebScraper.io CSV format
+        // Try WebScraper.io CSV format (async chunked)
         {
           const quickParse2 = Papa.parse(rawText, { preview: 2, skipEmptyLines: true });
           if (quickParse2.data && (quickParse2.data as string[][]).length >= 2) {
             const wsHeaders = (quickParse2.data as string[][])[0].map(h => String(h || '').trim());
             const lowerWsHeaders = wsHeaders.map(h => h.toLowerCase());
             if (lowerWsHeaders.includes('info') && (lowerWsHeaders.includes('titre') || lowerWsHeaders.includes('annonces'))) {
+              onProgress?.(15);
               const fullParse2 = Papa.parse(rawText, { skipEmptyLines: true });
               const allRows2 = (fullParse2.data as string[][]);
-              const wsVehicles = parseWebScraperCsv(allRows2[0].map(h => String(h || '').trim()), allRows2.slice(1));
-              if (wsVehicles && wsVehicles.length > 0) {
-                onProgress?.(100);
-                resolve(wsVehicles);
-                return;
+              const headers2 = allRows2[0].map(h => String(h || '').trim());
+              const dataRows = allRows2.slice(1);
+              
+              // Process WebScraper rows in chunks to avoid UI freeze
+              const totalRows = dataRows.length;
+              const CHUNK_SIZE = 200;
+              const vehicles: ParsedVehicle[] = [];
+              let currentIdx = 0;
+
+              function processWsChunk() {
+                const end = Math.min(currentIdx + CHUNK_SIZE, totalRows);
+                const chunkResult = parseWebScraperCsv(headers2, dataRows.slice(currentIdx, end));
+                if (chunkResult) vehicles.push(...chunkResult);
+                currentIdx = end;
+                const progress = 15 + Math.round((currentIdx / totalRows) * 85);
+                onProgress?.(Math.min(progress, 99));
+
+                if (currentIdx < totalRows) {
+                  setTimeout(processWsChunk, 0);
+                } else {
+                  console.log(`Parsed ${vehicles.length} vehicles from WebScraper CSV (${totalRows} rows)`);
+                  onProgress?.(100);
+                  if (vehicles.length > 0) {
+                    resolve(vehicles);
+                  } else {
+                    // Fall through to generic CSV parsing
+                    parseGenericCSV();
+                  }
+                }
               }
+
+              processWsChunk();
+              return;
             }
           }
         }
 
-        // Preprocess broken CSVs (LeBonCoin export format)
-        rawText = preprocessBrokenCSV(rawText);
-        onProgress?.(15);
+        function parseGenericCSV() {
+          // Preprocess broken CSVs (LeBonCoin export format)
+          rawText = preprocessBrokenCSV(rawText);
+          onProgress?.(15);
 
-        Papa.parse(rawText, {
-          complete: (results) => {
-            try {
-              const data = results.data as string[][];
-              if (data.length < 2) {
-                reject(new Error('CSV vide ou invalide'));
-                return;
-              }
-              
-              const headers = data[0].map(h => String(h || ''));
-              let mapping = detectColumns(headers);
-              const sampleRows = data.slice(1, 51).map(r => r.map(cell => String(cell || '')));
-              mapping = refineMapping(headers, sampleRows, mapping);
-
-              console.log('Detected columns:', mapping);
-              console.log('Headers:', headers.slice(0, 10));
-              
-              const totalRows = data.length - 1;
-              const CHUNK_SIZE = 500;
-              const vehicles: ParsedVehicle[] = [];
-              let currentIndex = 1;
-
-              function processChunk() {
-                const end = Math.min(currentIndex + CHUNK_SIZE, data.length);
-                for (let i = currentIndex; i < end; i++) {
-                  const row = data[i].map(cell => String(cell || ''));
-                  if (row.length < 3) continue;
-                  const vehicle = parseRow(row, mapping, i);
-                  if (vehicle) vehicles.push(vehicle);
+          Papa.parse(rawText, {
+            complete: (results) => {
+              try {
+                const data = results.data as string[][];
+                if (data.length < 2) {
+                  reject(new Error('CSV vide ou invalide'));
+                  return;
                 }
-                currentIndex = end;
-                const progress = 15 + Math.round(((currentIndex - 1) / totalRows) * 85);
-                onProgress?.(Math.min(progress, 99));
+                
+                const headers = data[0].map(h => String(h || ''));
+                let mapping = detectColumns(headers);
+                const sampleRows = data.slice(1, 51).map(r => r.map(cell => String(cell || '')));
+                mapping = refineMapping(headers, sampleRows, mapping);
 
-                if (currentIndex < data.length) {
-                  setTimeout(processChunk, 0);
-                } else {
-                  console.log(`Parsed ${vehicles.length} vehicles from ${totalRows} rows`);
-                  onProgress?.(100);
-                  resolve(vehicles);
+                console.log('Detected columns:', mapping);
+                console.log('Headers:', headers.slice(0, 10));
+                
+                const totalRows = data.length - 1;
+                const CHUNK_SIZE = 500;
+                const vehicles: ParsedVehicle[] = [];
+                let currentIndex = 1;
+
+                function processChunk() {
+                  const end = Math.min(currentIndex + CHUNK_SIZE, data.length);
+                  for (let i = currentIndex; i < end; i++) {
+                    const row = data[i].map(cell => String(cell || ''));
+                    if (row.length < 3) continue;
+                    const vehicle = parseRow(row, mapping, i);
+                    if (vehicle) vehicles.push(vehicle);
+                  }
+                  currentIndex = end;
+                  const progress = 15 + Math.round(((currentIndex - 1) / totalRows) * 85);
+                  onProgress?.(Math.min(progress, 99));
+
+                  if (currentIndex < data.length) {
+                    setTimeout(processChunk, 0);
+                  } else {
+                    console.log(`Parsed ${vehicles.length} vehicles from ${totalRows} rows`);
+                    onProgress?.(100);
+                    resolve(vehicles);
+                  }
                 }
-              }
 
-              processChunk();
-            } catch (error) {
-              reject(error);
-            }
-          },
-          error: (error: any) => reject(error),
-          skipEmptyLines: true,
-        });
+                processChunk();
+              } catch (error) {
+                reject(error);
+              }
+            },
+            error: (error: any) => reject(error),
+            skipEmptyLines: true,
+          });
+        }
+
+        parseGenericCSV();
       } catch (error) {
         reject(error);
       }
