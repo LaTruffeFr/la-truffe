@@ -1,7 +1,7 @@
 import { ParsedVehicle, VehicleWithScore } from "./csvParser";
 
 // ============================================
-// 1. BASE DE CONNAISSANCE UNIVERSELLE (V9.0)
+// 1. BASE DE CONNAISSANCE ULTIME (V11.0)
 // ============================================
 
 export type ExpertTag = string;
@@ -16,11 +16,13 @@ export interface MissionRules {
 const KNOWLEDGE_DB: Record<string, any> = {
   // 🟢 BOOSTERS UNIVERSELS
   BOOSTERS: [
-    // HISTORIQUE & PROPRIÉTAIRE
     { regex: /première main|1ère main|1ere main/i, score: 5, tag: '💎 1ÈRE MAIN' },
     { regex: /origine france|achat concession fran|française|livrée.*france/i, score: 5, tag: '🇫🇷 ORIGINE FR' },
     { regex: /carnet.*jour|suivi.*limpide|full suivi|factures/i, score: 4, tag: '📘 HISTORIQUE' },
-    { regex: /carnet.*tamponné|suivi.*exclusif|entretien.*réseau|entretien.*(chez|à|par).*(bmw|audi|porsche|vw|volkswagen|mercedes|renault|peugeot)/i, score: 5, tag: '📘 HISTORIQUE PREMIUM' },
+    
+    // Détection "Suivi Constructeur" souple
+    { regex: /carnet.*tamponné|suivi.*exclusif|entretien.*réseau|((entretien|suivi).*(chez|à|par).*|suivi\s+)(bmw|audi|porsche|vw|volkswagen|mercedes|renault|peugeot)/i, score: 5, tag: '📘 HISTORIQUE PREMIUM' },
+    
     { regex: /propriétaire depuis.*(ans|année)|possède depuis/i, score: 4, tag: '💎 PROPRIO LONGUE DURÉE' },
     { regex: /double des cl[ée]fs?|2 cl[ée]fs?|deux cl[ée]fs?/i, score: 3, tag: '🔑 DOUBLE CLÉS' },
     { regex: /non fumeur|non-fumeur|véhicule non-fumeur/i, score: 2, tag: '🚭 NON FUMEUR' },
@@ -28,28 +30,22 @@ const KNOWLEDGE_DB: Record<string, any> = {
     { regex: /temps de chauffe|jamais circuit|usage promenade|autoroute uniquement/i, score: 4, tag: '🩸 ENTRETIEN MANIAQUE' },
     { regex: /passionné|maniaque/i, score: 2, tag: '💖 PROPRIO PASSIONNÉ' },
 
-    // ADMINISTRATIF & GARANTIE
     { regex: /malus payé|écotaxe payée|pas de malus/i, score: 8, tag: '💶 TAXE OK' },
     { regex: /garantie.*(12|24).*mois|sous garantie/i, score: 4, tag: '🛡️ GARANTIE' },
     { regex: /tva récup|tva récuperable/i, score: 2, tag: '🏢 TVA DÉDUCTIBLE' },
     { regex: /ct ok|contrôle technique ok|vierge/i, score: 3, tag: '✅ CT OK' },
-    { regex: /carte grise.*règle|cg.*ok/i, score: 1, tag: '📄 CG OK' },
-
-    // ÉTAT MÉCANIQUE & ENTRETIEN
+    
     { regex: /distri.*neuve|chaine.*neuve|vidange.*boite|dsg.*vidang/i, score: 3, tag: '🔧 GROS ENTRETIEN FAIT' },
     { regex: /embrayage.*neuf|volant moteur.*neuf/i, score: 4, tag: '⚙️ EMBRAYAGE NEUF' },
     { regex: /disques.*plaquettes.*neufs|freins.*neufs/i, score: 2, tag: '🛑 FREINS NEUFS' },
     { regex: /pneus.*neufs|4 pneus neufs/i, score: 2, tag: '🛞 PNEUS NEUFS' },
-    { regex: /révision.*récente|vidange.*faite/i, score: 2, tag: '🛢️ RÉVISION OK' },
-    { regex: /rien à prévoir|aucun frais|état irréprochable|état concours/i, score: 5, tag: '✨ RIEN À PRÉVOIR' },
+    { regex: /rien à prévoir|aucun frais|état irréprochable/i, score: 5, tag: '✨ RIEN À PRÉVOIR' },
     { regex: /full option|toutes options/i, score: 2, tag: '🎯 FULL OPTIONS' },
     
-    // ESTHÉTIQUE
     { regex: /céramique|ceramique|ppf|film protection/i, score: 3, tag: '✨ PROTECTION CARROSSERIE' },
     { regex: /état neuf|proche du neuf/i, score: 3, tag: '✨ ÉTAT NEUF' },
-    
-    // PROJET UNIQUE
     { regex: /unique|config.*unique|show car|projet.*abouti/i, score: 3, tag: '✨ CONFIG UNIQUE' },
+    { regex: /edition one|edition 1/i, score: 8, tag: '✨ ÉDITION ONE' },
   ],
 
   // 🔵 TUNING PRO & PIÈCES DE MARQUE
@@ -57,10 +53,8 @@ const KNOWLEDGE_DB: Record<string, any> = {
     { regex: /homologu|certificat|tüv/i, score: 5, tag: '✅ PIÈCES HOMOLOGUÉES' },
     { regex: /mhd|xhp|bootmod|jb4|multi[- ]map|flexfuel|e85/i, score: 3, tag: '💻 GESTION AVANCÉE' },
     { regex: /milltek|akrapovic|remus|bullx|arp|supersprint|scorpion|vrsf|eisenmann|inoxcar/i, score: 3, tag: '💨 LIGNE DE MARQUE' },
-    
-    // TUNERS D'ÉLITE (Immunité Prix Totale)
+    // TUNERS D'ÉLITE
     { regex: /schirmer|g[- ]power|manhart|ac schnitzer|alpina|dinan|dm performance|abt/i, score: 10, tag: '🦄 PRÉPA D\'ÉLITE' },
-    
     { regex: /br[- ]performance|shiftech|o2|digiservices|mrc|ksf|jd ingineering|mk6|autoworks/i, score: 2, tag: '🔧 PRÉPA CONNUE' },
     { regex: /kw|bilstein|ohlins|fox|h&r|eibach|st sus|vwr|volkswagen racing|b14|b16|v3|clubsport|intrax|nitron/i, score: 4, tag: '🏁 CHÂSSIS PRO' },
     { regex: /maxton|zaero|rieger|oettinger/i, score: 2, tag: '✨ KIT CARROSSERIE' },
@@ -78,7 +72,6 @@ const KNOWLEDGE_DB: Record<string, any> = {
     { regex: /moteur hs|bruit moteur|claquement|joint de culasse|bielle.*coulée|bruit.*bielle/i, score: -100, tag: '💀 MOTEUR HS' },
     { regex: /subi.*accident|véhicule accidenté|sinistre|vge|marbre|épave/i, score: -100, tag: '💀 ACCIDENT GRAVE' },
     { regex: /vandalisme|volé.*retrouvé/i, score: -50, tag: '🏚️ VANDALISME' },
-    // Regex "SANS ACCIDENT" safe
     { regex: /(?<!jamais |non |pas d'|pas de |aucun |sans )accident(?!é)/i, score: -50, tag: '💥 ACCIDENTÉE' },
     { regex: /(?<!par[-e\s]?)choc(?!\s*absorb)/i, score: -30, tag: '💥 TRACE DE CHOC' },
     { regex: /dans l'état(?!.*irréprochable)/i, score: -25, tag: '⚠️ VENTE EN L\'ÉTAT' }, 
@@ -90,6 +83,7 @@ const KNOWLEDGE_DB: Record<string, any> = {
     { regex: /voyant.*allumé|témoin.*allumé/i, score: -40, tag: '⚠️ VOYANT MOTEUR' },
     { regex: /fumée|fume/i, score: -30, tag: '⚠️ FUMÉE SUSPECTE' },
     { regex: /projet.*(termin|finir)|reste à installer/i, score: -15, tag: '🔧 PROJET À FINIR' },
+    { regex: /kilométrage non garanti|compteur non garanti|km non garanti|kilométrage évolutif non garanti/i, score: -100, tag: '⚠️ KM NON GARANTI' },
   ],
 
   // 🟠 TUNING
@@ -141,7 +135,7 @@ const KNOWLEDGE_DB: Record<string, any> = {
     ],
     rules: [
       { regex: /tcr|clubsport/i, score: 20, tag: "🏆 COLLECTOR USINE" },
-      { regex: /golf 8|golf viii/i, score: 10, tag: "🆕 GÉNÉRATION 8" },
+      { regex: /golf 8|golf viii/i, score: 10, tag: "🆕 NEW GEN" },
       { regex: /akrapovic/i, score: 5, tag: "💨 AKRAPOVIC" },
       { regex: /dynaudio/i, score: 2, tag: "🎵 DYNAUDIO" },
       { regex: /dsg|vidange boite/i, score: 3, tag: "⚙️ DSG VIDANGÉE" },
@@ -153,23 +147,66 @@ const KNOWLEDGE_DB: Record<string, any> = {
     ],
   },
 
+  MERCEDES: {
+    rules: [
+      // 1. LES VRAIS AMG (MOTEURS NOBLES)
+      { regex: /a45s|cla45s|gla45s/i, score: 10, tag: "🚀 45 S AMG" },
+      { regex: /a45|cla45|gla45/i, score: 8, tag: "🏁 45 AMG" },
+      { regex: /c63s|e63s|glc63s|gt63s/i, score: 10, tag: "🚀 63 S AMG" },
+      { regex: /c63|c 63/i, score: 8, tag: "🏁 63 AMG" },
+      { regex: /g63|g 63 amg/i, score: 10, tag: "🏰 G63 AMG" },
+      { regex: /v8 biturbo|v8 bi-turbo/i, score: 5, tag: "🔥 V8 BITURBO" },
+      // Regex sécurisée pour éviter les faux positifs "6.3 L/100km"
+      { regex: /(?<!consommation.*)6\.2\s?l(?!.*100)|6\.2\s?v8/i, score: 10, tag: "🦖 V8 ATMO (LÉGENDE)" },
+      { regex: /gts|gt s|gt c|gt r/i, score: 8, tag: "🏎️ AMG GT" },
+
+      // 2. LES "PACK AMG" (LOOK & FINITION SUR MODÈLES STANDARDS)
+      { regex: /amg line|pack amg|finition amg|fascination/i, score: 3, tag: "✨ PACK AMG / FASCINATION" },
+      
+      // 3. ÉDITIONS COLLECTOR & GÉNÉRATIONS
+      { regex: /black series/i, score: 50, tag: "🏆 COLLECTOR USINE" },
+      { regex: /edition 1|edition one|final edition|street style|petronas/i, score: 15, tag: "🏆 ÉDITION LIMITÉE" },
+      { regex: /facelift|2023|2024|2025/i, score: 10, tag: "🆕 NEW GEN (FACELIFT)" },
+
+      // 4. PERFORMANCE & CHÂSSIS
+      { regex: /céramique|ceramique/i, score: 10, tag: "🛑 FREINS CÉRAMIQUES" },
+      { regex: /aero|pack aéro|aileron/i, score: 5, tag: "✈️ PACK AÉRO" },
+      { regex: /ride control|suspension pilotée|amortissement adaptatif/i, score: 4, tag: "🧲 SUSPENSION PILOTÉE" },
+      { regex: /échappement performance|switchable exhaust|echappement sport/i, score: 3, tag: "🔊 ÉCHAPPEMENT PERF" },
+      { regex: /drift mode/i, score: 3, tag: "🏎️ DRIFT MODE" },
+      { regex: /track pace/i, score: 2, tag: "🏁 TRACK PACE" },
+      { regex: /4matic/i, score: 2, tag: "🧗 4MATIC" },
+
+      // 5. INTÉRIEUR, TECH & LUXE
+      { regex: /baquets|performance seats|sièges amg|recaro/i, score: 5, tag: "💺 SIÈGES PERF" },
+      { regex: /burmester high|3d surround|sonorisation 3d/i, score: 5, tag: "🎵 BURMESTER 3D" },
+      { regex: /burmester/i, score: 2, tag: "🎵 BURMESTER" },
+      { regex: /toit ouvrant|toit pano/i, score: 3, tag: "☀️ TOIT OUVRANT" },
+      { regex: /affichage tête haute|head-up|hud/i, score: 3, tag: "👁️ HUD" },
+      { regex: /widescreen|dalle numérique/i, score: 3, tag: "🖥️ WIDESCREEN" },
+      { regex: /mbux/i, score: 2, tag: "🗣️ MBUX" },
+      { regex: /sièges massants|multicontours/i, score: 3, tag: "💆 SIÈGES MASSANTS" },
+      { regex: /chauffage de nuque|airscarf/i, score: 3, tag: "🧣 AIRSCARF" },
+      
+      // 6. ESTHÉTIQUE
+      { regex: /multibeam|digital light/i, score: 2, tag: "👀 MULTIBEAM LED" },
+      { regex: /magno|mat|designo|manufaktur/i, score: 5, tag: "🎨 PEINTURE MANUFAKTUR" },
+      { regex: /night|pack noir|black pack/i, score: 1, tag: "⚫ PACK NIGHT" },
+      { regex: /panamericana/i, score: 1, tag: "🦷 CALANDRE PANA" },
+      { regex: /carbone|carbon/i, score: 3, tag: "⚫ CARBONE" },
+      { regex: /éclairage d'ambiance|64 couleurs/i, score: 1, tag: "🌈 AMBIANCE 64" },
+    ],
+  },
+
   PORSCHE: {
     rules: [
       { regex: /ims|roulement ims/i, score: 10, tag: "🛡️ IMS FIABILISÉ" },
       { regex: /test piwis/i, score: 5, tag: "📊 PIWIS OK" },
+      { regex: /surrégime|plage/i, score: -10, tag: "⚠️ SURRÉGIMES ?" },
       { regex: /chrono|sport plus/i, score: 4, tag: "⏱️ PACK CHRONO" },
       { regex: /pse|échappement sport/i, score: 4, tag: "💨 PSE (ÉCHAPPEMENT)" },
       { regex: /pasm|suspension/i, score: 3, tag: "🧲 PASM" },
       { regex: /baquets|sièges sport/i, score: 3, tag: "💺 BAQUETS" },
-    ],
-  },
-
-  MERCEDES_AMG: {
-    rules: [
-      { regex: /a45s|a45 s/i, score: 5, tag: "🚀 A45 S" },
-      { regex: /aero|pack aéro/i, score: 3, tag: "✈️ PACK AÉRO" },
-      { regex: /baquets|performance seats/i, score: 3, tag: "💺 SIÈGES PERF" },
-      { regex: /burmester/i, score: 2, tag: "🎵 BURMESTER" },
     ],
   },
 
@@ -194,7 +231,8 @@ function detectContext(vehicle: ParsedVehicle): string {
   
   if (/\bRS3\b|\bRS4\b|\bRS5\b|\bTTRS\b/i.test(fullText)) return 'AUDI_RS';
   if (/\bM2\b|\bM3\b|\bM4\b/i.test(title)) return 'BMW_M';
-  if (/\bAMG\b/i.test(fullText)) return 'MERCEDES_AMG';
+  // Détection large pour Mercedes (AMG ou Standard)
+  if (/\bMERCEDES\b|\bCLASSE\s*[ABCEGVS]\b|\bCLA\b|\bGLA\b|\bGLB\b|\bGLC\b|\bGLE\b|\bGLS\b|\bSLK\b|\bAMG\b/i.test(fullText)) return 'MERCEDES';
   if (/\bGTI\b|\bTCR\b|\bCLUBSPORT\b/i.test(fullText) || /GOLF/i.test(title)) return 'VW_GOLF';
   if (/\bFERRARI\b|\bPORSCHE\b/i.test(fullText)) return 'PORSCHE';
   if (/MEGANE|CLIO/i.test(title) && /R\.?S/i.test(title)) return 'RENAULT_SPORT';
@@ -206,12 +244,24 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
   let scoreMod = 0;
   const tags = new Set<string>();
 
-  // A. NETTOYAGE PRÉALABLE (Anti-Marketing)
-  const marketingCutoff = text.search(/nous pouvons réaliser|nos services|reprise possible|financement possible|livraison possible|contactez-nous|visible dans nos locaux|extension de garantie|nous vous proposons/i);
-  let processText = marketingCutoff > -1 ? text.substring(0, marketingCutoff) : text;
+  // A. SMART PARSING (Saut du blabla commercial)
+  const optionsIndex = text.search(/OPTIONS ET .QUIPEMENTS|PRINCIPAUX EQUIPEMENTS|EQUIPEMENT.*IMPORTANT|LISTE DES OPTIONS/i);
+  let processText = text;
+  
+  if (optionsIndex > -1) {
+      processText = text.substring(0, 100) + " " + text.substring(optionsIndex); 
+  }
 
-  // B. NETTOYAGE CLASSIQUE
+  // B. NETTOYAGE AGRESSIF
   let cleanText = processText
+    .replace(/OUVERT DEPUIS \d+ ANS/gi, "")
+    .replace(/---------- NOS SERVICES[\s\S]*?_______________________________________________________________________________/gi, " ")
+    .replace(/pack clés en main[\s\S]*?label inclus/gi, " ")
+    .replace(/pack sérénité[\s\S]*?label inclus/gi, " ")
+    .replace(/pack prestige[\s\S]*?surprise du chef/gi, " ")
+    .replace(/extension de garantie.*/gi, " ")
+    .replace(/financement de \d+ à \d+ mois/gi, " ")
+    .replace(/livraison dans toute la france/gi, " ")
     .replace(/non contractuel.*/gi, "")
     .replace(/sous réserve d'erreur.*/gi, "")
     .replace(/jamais accident.*/gi, "")
@@ -228,7 +278,10 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
 
   // C. RÈGLES DE GÉNÉRATION AUTOMATIQUES
   const modelConfig = KNOWLEDGE_DB[context];
-  if (modelConfig && modelConfig.generations) {
+  
+  // Correction V10.3 : On désactive la génération auto par année pour MERCEDES 
+  // pour éviter qu'une Classe A 2017 soit taguée "C63 W205" par erreur.
+  if (modelConfig && modelConfig.generations && context !== 'MERCEDES') {
     for (const gen of modelConfig.generations) {
       if (vehicle.annee >= gen.start && vehicle.annee <= gen.end) {
         tags.add(gen.tag);
@@ -396,7 +449,7 @@ function calculateClusterStats(vehicles: ParsedVehicle[]) {
 }
 
 // ============================================
-// 4. MOTEUR DE SCORING (V9.0)
+// 4. MOTEUR DE SCORING (V11.0)
 // ============================================
 
 export const calculateSmartScore = (
@@ -429,12 +482,11 @@ export const calculateSmartScore = (
 
     let coteCluster = stats && stats.count > 1 && !clusterId.includes("SPECIAL") ? stats.median : vehicle.prix;
 
-    // ANALYSE EXPERTE
     const fullText = (vehicle.titre + " " + vehicle.description).toLowerCase();
     const analysis = analyzeDescription(fullText, context, vehicle, customRules);
 
-    // Ajustement Km (Bonus Pépite)
-    const isWreck = analysis.tags.has("💀 MOTEUR HS") || analysis.tags.has("💀 ACCIDENT GRAVE") || analysis.tags.has("💥 ACCIDENTÉE");
+    // Ajustement Km
+    const isWreck = analysis.tags.has("💀 MOTEUR HS") || analysis.tags.has("💀 ACCIDENT GRAVE") || analysis.tags.has("💥 ACCIDENTÉE") || analysis.tags.has("⚠️ KM NON GARANTI");
     
     if (vehicle.kilometrage > 0 && !clusterId.includes("SPECIAL") && !isWreck) {
       const currentYear = new Date().getFullYear();
@@ -461,8 +513,8 @@ export const calculateSmartScore = (
     const isTrackTool = analysis.tags.has('🏁 CHÂSSIS PRO') || /schirmer|arceau/i.test(fullText);
     const isEliteTuner = analysis.tags.has('🦄 PRÉPA D\'ÉLITE');
     const isUnique = analysis.tags.has('✨ CONFIG UNIQUE');
-    const isCollector = analysis.tags.has('🏆 COLLECTOR USINE');
-    const isNewGen = analysis.tags.has('🆕 GÉNÉRATION 8');
+    const isCollector = analysis.tags.has('🏆 COLLECTOR USINE') || analysis.tags.has('✨ ÉDITION ONE');
+    const isNewGen = analysis.tags.has('🆕 NEW GEN') || analysis.tags.has('🆕 GÉNÉRATION 8') || analysis.tags.has('🆕 NEW GEN (FACELIFT)');
 
     if (clusterId.includes('SPECIAL') || analysis.tags.has('🏝️ DOM-TOM')) {
         mathScore = 70; 
@@ -484,7 +536,7 @@ export const calculateSmartScore = (
       analysis.tags.add("🚨 PRIX SUSPECT");
     }
     
-    // Gestion des Voitures Chères Justifiées
+    // Protection Prix Élevé
     if ((isTrackTool || isUnique) && ecartPourcent < -20) {
        mathScore = 65; 
        if (isUnique) analysis.tags.delete("🚨 PRIX SUSPECT");
@@ -506,7 +558,7 @@ export const calculateSmartScore = (
         finalScore = 10;
     }
 
-    if (analysis.tags.has("💀 MOTEUR HS") || analysis.tags.has("💀 ACCIDENT GRAVE") || analysis.tags.has("⛔ EXCLU PAR MISSION")) {
+    if (analysis.tags.has("💀 MOTEUR HS") || analysis.tags.has("💀 ACCIDENT GRAVE") || analysis.tags.has("⚠️ KM NON GARANTI") || analysis.tags.has("⛔ EXCLU PAR MISSION")) {
       finalScore = 0;
     }
 
@@ -555,12 +607,11 @@ export const sortVehicles = (vehicles: VehicleWithScore[], criteria: SortCriteri
     case 'score': 
     default: return sorted.sort((a, b) => {
         if (b.dealScore !== a.dealScore) return b.dealScore - a.dealScore;
-        return a.prix - b.prix; // En cas d'égalité de score, le moins cher gagne
+        return a.prix - b.prix; 
     });
   }
 };
 
-// Helper pour filtrer
 export function getTopOpportunities(vehicles: VehicleWithScore[], limit = 500): VehicleWithScore[] {
   return sortVehicles(vehicles.filter((v) => v.dealScore >= 50), 'score').slice(0, limit);
 }
