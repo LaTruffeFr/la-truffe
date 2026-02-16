@@ -1,344 +1,147 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { 
-  CheckCircle2, Star, ShieldCheck, 
-  TrendingDown, Search, Eye, AlertTriangle, History, Euro, HelpCircle, Sparkles
-} from 'lucide-react';
-import { Footer } from '@/components/landing';
-import { Header } from '@/components/Header';
+import { Helmet } from 'react-helmet-async';
+import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useVipAccess } from '@/hooks/useVipAccess';
 import { BetaWaitlistModal } from '@/components/BetaWaitlistModal';
-
 
 const Pricing = () => {
   const navigate = useNavigate();
   const { isVip } = useVipAccess();
   const [showBetaModal, setShowBetaModal] = useState(false);
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+
+  const handleCTA = (plan: string) => {
+    if (isVip) navigate(`/checkout?plan=${plan}`);
+    else setShowBetaModal(true);
+  };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans text-slate-900">
-      
-      {/* --- HEADER (Navigation Unifiée) --- */}
-      <Header activeLink="pricing" />
+    <div className="min-h-screen bg-background font-display text-foreground">
+      <Helmet><title>Nos Offres | LaTruffe</title></Helmet>
 
-      {/* --- HERO SECTION --- */}
-      <section className="relative py-20 bg-slate-900 text-white overflow-hidden text-center">
-        <div className="container mx-auto px-4 max-w-4xl relative z-10">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-6 leading-tight">
-            La méthode pas chère pour éviter les erreurs qui coûtent cher
-          </h1>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-8">
-            Un simple audit de prix aujourd'hui t'évite des mauvaises surprises demain – et t'aide à repérer les bonnes affaires immédiatement.
-          </p>
-        </div>
-      </section>
+      <div className="max-w-md mx-auto min-h-screen relative pb-10 flex flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors">
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <h1 className="text-lg font-bold tracking-tight">Nos Offres</h1>
+          <div className="w-10" />
+        </header>
 
-      {/* --- PRICING CARDS --- */}
-      <section className="py-16 bg-slate-50 -mt-10 rounded-t-[3rem] relative z-20">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
-            
-            {/* CARD 3 RAPPORTS (Meilleure offre) */}
-            <div className="bg-white rounded-2xl shadow-xl border-2 border-primary relative overflow-hidden order-1 md:order-2 transform md:-translate-y-6">
-              <div className="bg-primary text-white text-center py-2 text-sm font-bold uppercase tracking-wider">
-                Recommandé pour économiser
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">Vérifier 3 voitures</h3>
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">-40%</Badge>
-                </div>
-                <p className="text-slate-500 text-sm mb-6">Idéal pour comparer plusieurs annonces</p>
-                
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-4xl font-bold text-primary">17,99 €</span>
-                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
-                </div>
-                <p className="text-xs text-slate-400 mb-6">Prix total 53,97 € <span className="line-through">89,97 €</span></p>
-
-                {isVip ? (
-                  <Button className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mb-4"
-                  onClick={() => navigate('/checkout?plan=3')}>
-                    Acheter 3 rapports
-                  </Button>
-                ) : (
-                  <Button className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mb-4"
-                  onClick={() => setShowBetaModal(true)}>
-                    <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
-                  </Button>
-                )}
-                
-                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 3 crédits valables 1 an</p>
-
-                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Audit de prix complet</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Analyse courbe décote</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Aide à la négociation</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* CARD 2 RAPPORTS */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 relative overflow-hidden order-2 md:order-1">
-              <div className="bg-slate-100 text-slate-600 text-center py-2 text-sm font-bold uppercase tracking-wider">
-                Populaire
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">Vérifier 2 voitures</h3>
-                  <Badge variant="outline" className="text-green-600 border-green-200">-33%</Badge>
-                </div>
-                <p className="text-slate-500 text-sm mb-6">Pour départager deux modèles</p>
-                
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-4xl font-bold text-slate-900">19,99 €</span>
-                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
-                </div>
-                <p className="text-xs text-slate-400 mb-6">Prix total 39,98 € <span className="line-through">59,98 €</span></p>
-
-                {isVip ? (
-                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
-                  onClick={() => navigate('/checkout?plan=2')}>
-                    Acheter 2 rapports
-                  </Button>
-                ) : (
-                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
-                  onClick={() => setShowBetaModal(true)}>
-                    <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
-                  </Button>
-                )}
-                
-                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 2 crédits</p>
-
-                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Audit de prix complet</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Analyse du marché</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* CARD 1 RAPPORT */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 relative overflow-hidden order-3">
-              <div className="bg-white text-white text-center py-2 text-sm font-bold uppercase tracking-wider">
-                &nbsp;
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">Vérifier 1 voiture</h3>
-                </div>
-                <p className="text-slate-500 text-sm mb-6">Pour une vérification unique</p>
-                
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-4xl font-bold text-slate-900">29,99 €</span>
-                  <span className="text-sm text-slate-500 font-medium mb-1">/ rapport</span>
-                </div>
-                <p className="text-xs text-slate-400 mb-6">Plein tarif</p>
-
-                {isVip ? (
-                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
-                  onClick={() => navigate('/checkout?plan=1')}>
-                    Acheter 1 rapport
-                  </Button>
-                ) : (
-                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-slate-300 hover:bg-slate-50 mb-4"
-                  onClick={() => setShowBetaModal(true)}>
-                    <Sparkles className="w-4 h-4 mr-2" /> Rejoindre la Bêta
-                  </Button>
-                )}
-                
-                <p className="text-center text-xs text-slate-500 mb-6">Tu obtiendras 1 crédit</p>
-
-                <ul className="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Audit de prix complet</li>
-                </ul>
-              </div>
-            </div>
-
+        <main className="flex-1 px-5 pt-2 flex flex-col gap-6">
+          {/* Hero */}
+          <div className="text-center space-y-2 mb-2">
+            <h2 className="text-3xl font-extrabold text-foreground">Choisissez votre plan</h2>
+            <p className="text-muted-foreground text-sm">Débloquez la puissance de l'analyse automobile.</p>
           </div>
-          
-          <div className="text-center mt-8">
-            <Link to="/enterprise" className="text-sm text-primary font-medium hover:underline">
-              Afficher les tarifs pour les professionnels
+
+          {/* Billing Toggle */}
+          <div className="bg-card p-1.5 rounded-full flex relative shadow-sm mx-4 mb-4 border border-border">
+            <div className={`w-1/2 h-full absolute left-1.5 top-1.5 bottom-1.5 bg-primary rounded-full shadow-sm transition-transform duration-300 ease-out z-0 ${
+              billing === 'annual' ? 'translate-x-full' : ''
+            }`} />
+            <button onClick={() => setBilling('monthly')} className={`relative z-10 w-1/2 py-2 text-sm font-semibold text-center ${billing === 'monthly' ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
+              Mensuel
+            </button>
+            <button onClick={() => setBilling('annual')} className={`relative z-10 w-1/2 py-2 text-sm font-semibold text-center ${billing === 'annual' ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
+              Annuel <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full ml-1 font-bold">-20%</span>
+            </button>
+          </div>
+
+          {/* Card 1: Gratuit */}
+          <div className="bg-card rounded-DEFAULT p-6 shadow-corporate border border-border">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-foreground">Gratuit</h3>
+                <p className="text-xs text-muted-foreground mt-1">Pour les curieux du marché.</p>
+              </div>
+              <div className="bg-accent p-2 rounded-full">🚗</div>
+            </div>
+            <div className="mb-6 flex items-baseline">
+              <span className="text-4xl font-extrabold text-foreground">0€</span>
+              <span className="text-muted-foreground ml-1 font-medium">/mois</span>
+            </div>
+            <ul className="space-y-4 mb-8">
+              <li className="flex items-start gap-3"><CheckCircle2 className="w-5 h-5 text-primary mt-0.5" /><span className="text-sm text-muted-foreground">Tendances de marché basiques</span></li>
+              <li className="flex items-start gap-3"><CheckCircle2 className="w-5 h-5 text-primary mt-0.5" /><span className="text-sm text-muted-foreground">1 alerte véhicule active</span></li>
+              <li className="flex items-start gap-3"><CheckCircle2 className="w-5 h-5 text-primary mt-0.5" /><span className="text-sm text-muted-foreground">Résumé quotidien par email</span></li>
+            </ul>
+            <button onClick={() => handleCTA('free')} className="w-full py-3.5 rounded-full border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors">
+              S'inscrire
+            </button>
+          </div>
+
+          {/* Card 2: Pack Chasseur (Highlighted) */}
+          <div className="relative transform scale-105 z-10">
+            <div className="absolute -inset-0.5 bg-gradient-to-b from-primary to-blue-400 rounded-DEFAULT blur opacity-30" />
+            <div className="relative bg-primary text-primary-foreground rounded-DEFAULT p-7 shadow-xl overflow-hidden">
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-4 right-4">
+                <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full border border-white/10 shadow-sm">Populaire</span>
+              </div>
+              <div className="mb-5">
+                <h3 className="text-2xl font-bold">Pack Chasseur</h3>
+                <p className="text-blue-100 text-sm mt-1">Pour les acheteurs actifs.</p>
+              </div>
+              <div className="mb-6 flex items-baseline">
+                <span className="text-5xl font-extrabold tracking-tight">{billing === 'monthly' ? '29€' : '23€'}</span>
+                <span className="text-blue-100 ml-1 font-medium">/mois</span>
+              </div>
+              <ul className="space-y-4 mb-8">
+                {['Alertes en temps réel', 'Outils d\'évaluation avancés', '50 rapports d\'historique', 'Support prioritaire'].map(f => (
+                  <li key={f} className="flex items-start gap-3">
+                    <span className="bg-white text-primary rounded-full p-0.5 mt-0.5"><CheckCircle2 className="w-3.5 h-3.5" /></span>
+                    <span className="text-sm font-medium text-white">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => handleCTA('chasseur')} className="w-full py-4 rounded-full bg-white text-primary font-bold text-base shadow-lg hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                Commencer <ArrowRight className="w-4 h-4" />
+              </button>
+              <p className="text-center text-xs text-blue-200 mt-4 opacity-80">Annulable à tout moment.</p>
+            </div>
+          </div>
+
+          {/* Card 3: Pack Pro */}
+          <div className="bg-card rounded-DEFAULT p-6 shadow-corporate border border-border">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-foreground">Pack Pro</h3>
+                <p className="text-xs text-muted-foreground mt-1">Pour les concessionnaires.</p>
+              </div>
+              <div className="bg-primary/10 p-2 rounded-full text-primary">🏢</div>
+            </div>
+            <div className="mb-6 flex items-baseline">
+              <span className="text-4xl font-extrabold text-foreground">{billing === 'monthly' ? '99€' : '79€'}</span>
+              <span className="text-muted-foreground ml-1 font-medium">/mois</span>
+            </div>
+            <ul className="space-y-4 mb-8">
+              {['Tout du Pack Chasseur', 'Accès API complet', 'Rapports illimités', 'Export CSV & Gestion d\'équipe'].map(f => (
+                <li key={f} className="flex items-start gap-3"><CheckCircle2 className="w-5 h-5 text-primary mt-0.5" /><span className="text-sm text-muted-foreground">{f}</span></li>
+              ))}
+            </ul>
+            <button onClick={() => handleCTA('pro')} className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-corporate-md hover:bg-primary/90 transition-colors">
+              Devenir Pro
+            </button>
+          </div>
+
+          {/* Footer Trust */}
+          <div className="mt-4 pb-8 flex flex-col items-center space-y-4 text-center">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Ils nous font confiance</p>
+            <div className="flex gap-4 opacity-50 grayscale">
+              <div className="h-6 w-16 bg-slate-300 rounded" />
+              <div className="h-6 w-16 bg-slate-300 rounded" />
+              <div className="h-6 w-16 bg-slate-300 rounded" />
+            </div>
+            <Link to="/enterprise" className="text-sm text-primary font-semibold hover:underline">
+              Besoin d'une offre Enterprise ?
             </Link>
-            <p className="text-xs text-slate-400 mt-2">La TVA peut s'appliquer selon votre localisation.</p>
           </div>
-        </div>
-      </section>
+        </main>
+      </div>
 
-      {/* --- TESTIMONIALS --- */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-slate-900 mb-12">Découvre l’avis d’autres clients</h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-              <div className="flex justify-center mb-4 text-yellow-400">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-              </div>
-              <p className="text-slate-600 italic mb-4 text-sm">
-                "Après avoir utilisé La Truffe j'ai eu l'assurance que le véhicule que je convoitais était au bon prix et à un kilométrage cohérent. J'ai acheté 3 jours plus tard."
-              </p>
-              <div className="font-bold text-slate-900">Franck <span className="text-green-600 text-xs font-normal ml-2">Avis vérifié</span></div>
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-              <div className="flex justify-center mb-4 text-yellow-400">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-              </div>
-              <p className="text-slate-600 italic mb-4 text-sm">
-                "Grâce à La Truffe je n'ai pas acheté le véhicule. Après avoir vu l'analyse de décote, j'ai changé d'avis quant à cet achat !!"
-              </p>
-              <div className="font-bold text-slate-900">Giles <span className="text-green-600 text-xs font-normal ml-2">Avis vérifié</span></div>
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-              <div className="flex justify-center mb-4 text-yellow-400">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-              </div>
-              <p className="text-slate-600 italic mb-4 text-sm">
-                "C’est la première fois que j’utilise La Truffe et je suis très satisfait. Rapport simple et efficace."
-              </p>
-              <div className="font-bold text-slate-900">Housseyn <span className="text-green-600 text-xs font-normal ml-2">Avis vérifié</span></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- BENEFITS GRID (Achète malin) --- */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900">Achète malin</h2>
-            <p className="text-slate-600 mt-2">Assure-toi que ton nouveau véhicule est un investissement sûr.</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="flex gap-4">
-              <div className="shrink-0 w-12 h-12 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
-                <Euro className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-1">Évite de surpayer</h4>
-                <p className="text-sm text-slate-600">Les données sur la valeur marchande moyenne t'aident à savoir si une voiture vaut son prix instantanément.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="shrink-0 w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                <TrendingDown className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-1">Vérifie le kilométrage</h4>
-                <p className="text-sm text-slate-600">Nous analysons la cohérence du kilométrage par rapport à l'année et au prix pour détecter les anomalies.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="shrink-0 w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
-                <Eye className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-1">Obtiens un aperçu clair</h4>
-                <p className="text-sm text-slate-600">Personne n'aime les mauvaises surprises : visualisez la position du véhicule sur le marché global.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="shrink-0 w-12 h-12 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-1">Détecte les anomalies</h4>
-                <p className="text-sm text-slate-600">Un prix trop bas cache souvent quelque chose. Nos algos "Sniper" filtrent les offres suspectes.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="shrink-0 w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                <History className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-1">Identifie les événements clés</h4>
-                <p className="text-sm text-slate-600">La clarté est essentielle. Comprenez l'historique de prix du modèle pour acheter au bon moment.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="shrink-0 w-12 h-12 bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center">
-                <Search className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-1">Repère les dommages cachés</h4>
-                <p className="text-sm text-slate-600">Reste informé si le prix reflète un véhicule accidenté ou en mauvais état.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- DATA SOURCES INFO --- */}
-      <section className="py-20 bg-white border-t border-slate-100">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Nos données proviennent de plus de 900 sources</h2>
-          <p className="text-slate-600 leading-relaxed">
-            Nos rapports d'audit s'appuient sur des données provenant de plus de 900 bases de données internationales issues de registres d'annonces, de cotes officielles et d'autres institutions. Une fois que nous avons regroupé toutes les informations pertinentes, nous les organisons pour vous donner le "Juste Prix".
-          </p>
-          <div className="mt-6 p-4 bg-slate-50 rounded-xl text-xs text-slate-500 inline-block border border-slate-100">
-            Chaque collecte de données a un coût technique, c'est pourquoi nos rapports approfondis ne sont pas gratuits.
-          </div>
-        </div>
-      </section>
-
-      {/* --- FAQ --- */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-slate-900 flex items-center justify-center gap-2">
-              <HelpCircle className="w-8 h-8 text-primary" /> Questions fréquemment posées
-            </h2>
-          </div>
-          
-          <Accordion type="single" collapsible className="w-full bg-white rounded-xl shadow-sm border border-slate-200 px-4">
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-slate-900 font-semibold text-left">Qu'est-ce qu'un audit La Truffe ?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
-                C'est une analyse complète du marché pour un modèle donné. Nous comparons votre véhicule cible à des milliers d'autres pour déterminer s'il est vendu au juste prix.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
-              <AccordionTrigger className="text-slate-900 font-semibold text-left">Quelles informations figurent dans un rapport ?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
-                Vous y trouverez le "Prix Truffe" (cote réelle), la courbe de décote, le classement de l'offre par rapport au marché (Sniper Chart), et une analyse des équipements.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger className="text-slate-900 font-semibold text-left">En quoi est-ce différent des cotes gratuites ?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
-                Les cotes gratuites sont souvent théoriques. La Truffe analyse le marché **réel** en temps réel, incluant les annonces actives et vendues récemment, pour une précision chirurgicale.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-4">
-              <AccordionTrigger className="text-slate-900 font-semibold text-left">Puis-je utiliser le rapport pour négocier ?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
-                Oui ! C'est un outil de négociation puissant. Montrer au vendeur que son véhicule est 2000€ au-dessus de la moyenne du marché est un argument factuel imparable.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-5">
-              <AccordionTrigger className="text-slate-900 font-semibold text-left">Quels modes de paiement acceptez-vous ?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
-                Nous acceptons toutes les cartes bancaires (Visa, Mastercard, Amex) ainsi que Apple Pay et Google Pay via notre plateforme sécurisée Stripe.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </section>
-
-      <Footer />
-
-      {/* Modale Bêta */}
       <BetaWaitlistModal open={showBetaModal} onOpenChange={setShowBetaModal} />
     </div>
   );
