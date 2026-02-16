@@ -6,28 +6,27 @@
 
 @layer base {
   :root {
-    /* LaTruffe Design System — #0d7ff2 primary */
-    --background: 200 18% 97%; /* #f5f7f8 */
-    --foreground: 213 27% 17%; /* slate-800 */
+    /* Corporate Trust - Light Professional Theme */
+    --background: 220 14% 98%;
+    --foreground: 217 33% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 213 27% 17%;
+    --card-foreground: 217 33% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 213 27% 17%;
+    --popover-foreground: 217 33% 12%;
 
-    --primary: 210 90% 50%; /* #0d7ff2 */
+    --primary: 217 91% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-dark: 210 90% 42%; /* #0b6bc9 */
 
-    --secondary: 210 14% 96%;
-    --secondary-foreground: 213 27% 17%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 217 33% 12%;
 
-    --muted: 210 14% 96%;
+    --muted: 220 14% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 210 14% 93%;
-    --accent-foreground: 213 27% 17%;
+    --accent: 220 14% 93%;
+    --accent-foreground: 217 33% 12%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -36,33 +35,110 @@
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 213 27% 17%;
+    --warning-foreground: 217 33% 12%;
 
-    --border: 214 20% 91%;
-    --input: 214 20% 91%;
-    --ring: 210 90% 50%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 53%;
 
-    --radius: 1rem;
-
-    --surface: 0 0% 100%;
-    --surface-dark: 210 25% 15%;
+    --radius: 0.5rem;
 
     --chart-positive: 160 84% 39%;
     --chart-negative: 0 84% 60%;
     --chart-neutral: 215 16% 47%;
 
-    --brand-blue: 210 90% 50%;
+    /* Brand colors */
+    --brand-blue: 217 91% 53%;
     --brand-green: 160 84% 39%;
-    --brand-navy: 213 27% 17%;
+    --brand-navy: 217 33% 12%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 213 27% 17%;
-    --sidebar-primary: 210 90% 50%;
+    --sidebar-foreground: 217 33% 12%;
+    --sidebar-primary: 217 91% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 14% 96%;
-    --sidebar-accent-foreground: 213 27% 17%;
-    --sidebar-border: 214 20% 91%;
-    --sidebar-ring: 210 90% 50%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 217 33% 12%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 53%;
+  }
+}
+
+/* ===== STYLES D'IMPRESSION / PDF ===== */
+@media print {
+  /* Masquer les éléments non imprimables */
+  .no-print,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Forcer fond blanc partout */
+  body,
+  .pdf-content,
+  .corporate-card,
+  .corporate-card-elevated {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Section Arguments - forcer fond blanc */
+  .negotiation-card {
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  /* Enlever les ombres des cartes */
+  .card-shadow,
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+}
+
+/* Styles pour le rendu PDF via html2canvas */
+.pdf-export {
+  /* Forcer fond blanc */
+  background-color: #F8F9FA !important;
+  color: black !important;
+
+  /* Masquer les éléments non imprimables */
+  .no-print,
+  .pdf-hide {
+    display: none !important;
+  }
+
+  /* Forcer texte aligné à gauche (évite les bugs de justification) */
+  .pdf-text-left,
+  .text-justify {
+    text-align: left !important;
+  }
+
+  /* Section Arguments - forcer fond blanc */
+  .negotiation-card {
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  /* Forcer le texte visible sur toutes les cartes */
+  .bg-slate-900,
+  .bg-black,
+  [class*="bg-slate-9"],
+  [class*="bg-black"] {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Enlever les ombres */
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+
+  /* Top 5 grid en 2 colonnes max */
+  .top5-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
   }
 }
 
@@ -79,7 +155,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     overflow-x: hidden;
     overflow-y: auto;
@@ -91,70 +166,62 @@
 }
 
 @layer components {
-  /* Glass panel effect from design */
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-  }
-
-  /* Scanner beam gradient */
-  .scanner-beam {
-    background: linear-gradient(90deg, transparent 0%, rgba(13, 127, 242, 0.3) 50%, transparent 100%);
-  }
-
-  /* Hide scrollbar */
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  /* Corporate card style */
+  /* Corporate card style with subtle shadow */
   .corporate-card {
-    @apply bg-card border border-border;
-    border-radius: 1rem;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+    @apply bg-card rounded-lg border border-border;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
     transition: box-shadow 0.2s ease;
   }
+
   .corporate-card:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   }
 
+  /* Elevated card for important content */
   .corporate-card-elevated {
-    @apply bg-card border border-border;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+    @apply bg-card rounded-lg border border-border;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   }
 
-  /* Trust badge */
+  /* Trust badge styling */
   .trust-badge {
-    @apply inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium;
-    border-radius: 9999px;
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium;
   }
+
   .trust-badge-success {
     @apply trust-badge bg-success/10 text-success;
   }
+
   .trust-badge-primary {
     @apply trust-badge bg-primary/10 text-primary;
   }
 
   /* Score circle */
   .score-circle {
-    @apply flex items-center justify-center font-bold;
-    border-radius: 9999px;
+    @apply flex items-center justify-center rounded-full font-bold;
   }
+
   .score-circle-good {
     @apply score-circle border-2 border-success text-success;
   }
+
   .score-circle-medium {
     @apply score-circle border-2 border-warning text-warning;
   }
 
-  /* Gauge */
+  /* Search bar styling */
+  .search-bar {
+    @apply flex items-center bg-card border-2 border-border rounded-lg overflow-hidden;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .search-bar:focus-within {
+    @apply border-primary;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 0 0 3px hsl(var(--primary) / 0.1);
+  }
+
+  /* Speedometer gauge */
   .gauge-container {
     position: relative;
     width: 100%;
@@ -162,24 +229,60 @@
     aspect-ratio: 2 / 1;
     margin: 0 auto;
   }
+
+  .gauge-background {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
   .gauge-arc {
     stroke-linecap: round;
     transition: stroke-dashoffset 1s ease-out;
   }
 
-  /* Scrollbar thin */
+  /* Social proof bar */
+  .social-proof-bar {
+    @apply bg-muted/50 border-y border-border py-8;
+  }
+
+  /* Audit list item */
+  .audit-list-item {
+    @apply flex items-center gap-4 p-4 bg-card border border-border rounded-lg;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .audit-list-item:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+  }
+
+  /* Disclaimer text */
+  .disclaimer-text {
+    @apply text-xs text-muted-foreground/70 leading-relaxed;
+  }
+
+  /* Focus ring enhancement */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Enhanced scrollbar */
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: hsl(var(--muted));
     border-radius: 3px;
   }
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
     border-radius: 3px;
+    transition: background 0.2s;
   }
+
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground));
   }
@@ -190,95 +293,92 @@
     @apply transition-all duration-300 ease-out;
   }
 
+  /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
 
+  /* Text balance for headings */
   .text-balance {
     text-wrap: balance;
   }
 
+  /* Gold gradient for buttons */
   .bg-gold-gradient {
     background: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(45 93% 47%) 100%);
   }
+
   .gold-glow {
     box-shadow: 0 4px 14px -2px hsl(38 92% 50% / 0.4);
   }
+
   .gold-glow:hover {
     box-shadow: 0 6px 20px -2px hsl(38 92% 50% / 0.5);
   }
+
   .success-glow {
     box-shadow: 0 4px 14px -2px hsl(160 84% 39% / 0.3);
   }
 
+  /* Animate on scroll utilities */
   .animate-fade-in-up {
     animation: fadeInUp 0.6s ease-out forwards;
     opacity: 0;
   }
-  .animate-delay-100 { animation-delay: 100ms; }
-  .animate-delay-200 { animation-delay: 200ms; }
-  .animate-delay-300 { animation-delay: 300ms; }
-  .animate-delay-400 { animation-delay: 400ms; }
 
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+  .animate-delay-100 {
+    animation-delay: 100ms;
   }
 
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Hover lift effect */
   .hover-lift {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
+
   .hover-lift:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px -8px rgb(0 0 0 / 0.15);
   }
 
+  /* Pulse animation for CTA */
   .animate-pulse-subtle {
     animation: pulseSlight 2s ease-in-out infinite;
   }
+
   @keyframes pulseSlight {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-  }
-}
-
-/* Print styles */
-@media print {
-  .no-print, .print\\:hidden { display: none !important; }
-  body, .pdf-content, .corporate-card, .corporate-card-elevated {
-    background-color: white !important;
-    color: black !important;
-  }
-  .negotiation-card {
-    background-color: white !important;
-    border: 1px solid #e2e8f0 !important;
-    color: black !important;
-    box-shadow: none !important;
-  }
-  [class*="shadow"] { box-shadow: none !important; }
-}
-
-.pdf-export {
-  background-color: #F8F9FA !important;
-  color: black !important;
-  .no-print, .pdf-hide { display: none !important; }
-  .negotiation-card {
-    background-color: white !important;
-    border: 1px solid #e2e8f0 !important;
-    color: black !important;
-    box-shadow: none !important;
-  }
-  .bg-slate-900, .bg-black, [class*="bg-slate-9"], [class*="bg-black"] {
-    background-color: white !important;
-    color: black !important;
-  }
-  [class*="shadow"] { box-shadow: none !important; }
-  .top5-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1rem !important;
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
   }
 }

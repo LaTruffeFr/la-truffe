@@ -21,7 +21,6 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          dark: "hsl(var(--primary-dark))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -55,10 +54,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        surface: {
-          DEFAULT: "hsl(var(--surface))",
-          dark: "hsl(var(--surface-dark))",
-        },
         brand: {
           blue: "hsl(var(--brand-blue))",
           green: "hsl(var(--brand-green))",
@@ -82,21 +77,14 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
         logo: ['Outfit', 'sans-serif'],
       },
       borderRadius: {
-        DEFAULT: "1rem",
-        lg: "2rem",
-        xl: "3rem",
-        md: "calc(1rem - 4px)",
-        sm: "calc(1rem - 8px)",
-        full: "9999px",
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'soft': '0 10px 30px -10px rgba(13, 127, 242, 0.1)',
-        'soft-hover': '0 20px 40px -10px rgba(13, 127, 242, 0.2)',
-        'float': '0 20px 40px -5px rgba(0, 0, 0, 0.05)',
         'corporate': '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
         'corporate-md': '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         'corporate-lg': '0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
@@ -126,14 +114,6 @@ export default {
           from: { strokeDashoffset: "283" },
           to: { strokeDashoffset: "var(--gauge-value)" },
         },
-        "pulse-slow": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.5" },
-        },
-        scan: {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(100%)" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -142,8 +122,6 @@ export default {
         "scale-in": "scale-in 0.3s ease-out forwards",
         "slide-in-right": "slide-in-right 0.4s ease-out forwards",
         "gauge-fill": "gauge-fill 1.5s ease-out forwards",
-        "pulse-slow": "pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        scan: "scan 2s linear infinite",
       },
     },
   },
