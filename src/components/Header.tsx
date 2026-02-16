@@ -36,6 +36,22 @@ export const Header = ({ variant = 'default', activeLink = 'none' }: HeaderProps
                 Accueil
               </Link>
               
+              {/* 👇👇👇 NOUVEAU BOUTON AJOUTÉ ICI 👇👇👇 */}
+              <Link 
+                to="/vendre" 
+                className="flex items-center gap-1 text-green-600 font-bold hover:text-green-700 transition-colors animate-in fade-in slide-in-from-top-1"
+              >
+                <Sparkles className="w-4 h-4" /> Vendre ma voiture
+              </Link>
+              {/* 👆👆👆 FIN DU NOUVEAU BOUTON 👆👆👆 */}
+
+              <Link 
+                to="/annonces" 
+                className="font-medium hover:text-primary transition-colors"
+              >
+              Acheter
+              </Link>
+              
               <div className="relative group">
                 <button className={`flex items-center gap-1 transition-colors focus:outline-none py-2 ${activeLink === 'pricing' ? 'text-primary font-semibold' : 'hover:text-primary'}`}>
                   Rapports <ChevronDown className="w-4 h-4" />
