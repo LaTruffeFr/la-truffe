@@ -1,0 +1,255 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const SUPPORTED_DOMAINS = [
+  "leboncoin.fr",
+  "lacentrale.fr",
+  "autoscout24.fr",
+  "autoscout24.com",
+];
+
+function isValidListingUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return SUPPORTED_DOMAINS.some(d => parsed.hostname.includes(d));
+  } catch {
+    return false;
+  }
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    // --- Auth ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Non autorisé" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Authentification invalide" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Parse body ---
+    const { url } = await req.json();
+    if (!url || !isValidListingUrl(url)) {
+      return new Response(JSON.stringify({ error: "URL invalide. Sites supportés : LeBonCoin, La Centrale, AutoScout24." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Step 1: Scrape with Firecrawl ---
+    const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
+    if (!FIRECRAWL_API_KEY) {
+      return new Response(JSON.stringify({ error: "Connecteur Firecrawl non configuré" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Scraping URL:", url);
+    const scrapeResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        formats: ["markdown"],
+        onlyMainContent: true,
+        waitFor: 3000,
+      }),
+    });
+
+    if (!scrapeResponse.ok) {
+      const errText = await scrapeResponse.text();
+      console.error("Firecrawl error:", scrapeResponse.status, errText);
+      return new Response(JSON.stringify({ error: "Impossible de scraper l'annonce. Vérifiez le lien." }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const scrapeData = await scrapeResponse.json();
+    const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || "";
+
+    if (!markdown || markdown.length < 50) {
+      return new Response(JSON.stringify({ error: "Contenu de l'annonce insuffisant. L'annonce a peut-être été supprimée." }), {
+        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Scraped content length:", markdown.length);
+
+    // --- Step 2: AI Analysis ---
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          {
+            role: "system",
+            content: `Tu es un expert automobile français reconnu, spécialisé dans l'évaluation de véhicules d'occasion. Tu analyses les annonces pour aider les acheteurs à prendre la meilleure décision.
+
+Tu dois TOUJOURS retourner un JSON valide (pas de markdown, pas de \`\`\`).`
+          },
+          {
+            role: "user",
+            content: `Analyse cette annonce automobile et génère un rapport d'audit complet.
+
+URL de l'annonce : ${url}
+
+Contenu de l'annonce :
+${markdown.slice(0, 4000)}
+
+Retourne UNIQUEMENT un JSON valide avec ce format exact :
+{
+  "marque": "la marque du véhicule",
+  "modele": "le modèle du véhicule",
+  "annee": 2020,
+  "kilometrage": 50000,
+  "prix_affiche": 25000,
+  "carburant": "Diesel|Essence|Hybride|Électrique",
+  "transmission": "Manuelle|Automatique",
+  "localisation": "ville ou département",
+  "prix_estime": 24000,
+  "prix_truffe": 22500,
+  "score": 75,
+  "options": ["option 1", "option 2", "max 8"],
+  "etat": "Excellent|Très bon|Bon|Moyen|À vérifier",
+  "points_forts": ["max 5 points positifs concis"],
+  "points_faibles": ["max 5 points négatifs ou alertes"],
+  "expert_opinion": "Paragraphe de 3-5 phrases donnant un avis d'expert sur cette annonce. Sois direct, factuel et utile pour l'acheteur.",
+  "negotiation_arguments": [
+    {"titre": "Argument 1", "desc": "Explication détaillée pour négocier"},
+    {"titre": "Argument 2", "desc": "Explication détaillée pour négocier"},
+    {"titre": "Argument 3", "desc": "Explication détaillée pour négocier"}
+  ],
+  "resume": "Résumé en 2 phrases max pour l'acheteur. Direct et factuel."
+}
+
+Règles d'estimation du prix :
+- prix_estime = valeur marché réaliste basée sur le modèle, l'année, le km et l'état
+- prix_truffe = prix négocié optimal que l'acheteur devrait viser
+- score = note de 10 à 98 (10=mauvaise affaire, 98=affaire exceptionnelle)
+- Si tu ne peux pas déterminer une info, mets null
+- Les arguments de négociation doivent être concrets et basés sur l'annonce`
+          }
+        ],
+        temperature: 0.3,
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Trop de requêtes. Réessayez dans quelques secondes." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "Crédits IA insuffisants." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      console.error("AI error:", aiResponse.status);
+      return new Response(JSON.stringify({ error: "Erreur lors de l'analyse IA." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const aiData = await aiResponse.json();
+    const content = aiData.choices?.[0]?.message?.content || "";
+
+    let analysis;
+    try {
+      const cleanJson = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      analysis = JSON.parse(cleanJson);
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError, content.slice(0, 300));
+      return new Response(JSON.stringify({ error: "L'IA n'a pas pu analyser cette annonce. Réessayez." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Step 3: Save report to DB ---
+    const reportData = {
+      user_id: user.id,
+      marque: analysis.marque || "Inconnu",
+      modele: analysis.modele || "Inconnu",
+      annee: analysis.annee || null,
+      kilometrage: analysis.kilometrage || null,
+      prix_affiche: analysis.prix_affiche || null,
+      prix_estime: analysis.prix_estime || null,
+      prix_truffe: analysis.prix_truffe || null,
+      prix_moyen: analysis.prix_estime || null,
+      lien_annonce: url,
+      carburant: analysis.carburant || null,
+      transmission: analysis.transmission || null,
+      expert_opinion: analysis.expert_opinion || null,
+      negotiation_arguments: JSON.stringify(analysis.negotiation_arguments || []),
+      status: "completed" as const,
+      total_vehicules: 1,
+      market_data: {
+        type: "single_audit",
+        options: analysis.options || [],
+        etat: analysis.etat || null,
+        points_forts: analysis.points_forts || [],
+        points_faibles: analysis.points_faibles || [],
+        resume: analysis.resume || null,
+        score: analysis.score || 50,
+        localisation: analysis.localisation || null,
+      },
+    };
+
+    const { data: report, error: insertError } = await supabase
+      .from("reports")
+      .insert(reportData)
+      .select("id")
+      .single();
+
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      return new Response(JSON.stringify({ error: "Erreur lors de la sauvegarde du rapport." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Report created:", report.id);
+
+    return new Response(JSON.stringify({ 
+      reportId: report.id,
+      analysis 
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (e) {
+    console.error("audit-url error:", e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur inconnue" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

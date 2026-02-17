@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
-  Plus, FileText, FolderOpen, User, Search, Shield,
-  Loader2, Clock, CheckCircle, Eye, AlertCircle
+  Plus, FileText, FolderOpen, User, Link2, Shield,
+  Loader2, Clock, CheckCircle, Eye, AlertCircle, ExternalLink
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,12 +44,11 @@ const ClientDashboard = () => {
   const displayEmail = userEmail || user?.email || "";
   const initials = displayEmail.substring(0, 2).toUpperCase();
 
-  const [marque, setMarque] = useState('');
-  const [modele, setModele] = useState('');
-  const [precision, setPrecision] = useState('');
+  const [listingUrl, setListingUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
+  const [analysisProgress, setAnalysisProgress] = useState('');
 
   // Charger les rapports de l'utilisateur
   const fetchReports = async () => {
@@ -70,55 +69,7 @@ const ClientDashboard = () => {
   // Vérifier s'il y a une demande en attente après connexion
   useEffect(() => {
     if (!user) return;
-
-    const pendingAudit = sessionStorage.getItem('pendingAudit');
-    if (pendingAudit) {
-      sessionStorage.removeItem('pendingAudit');
-      const { marque, modele } = JSON.parse(pendingAudit);
-      
-      // Créer automatiquement la demande
-      const createPendingReport = async () => {
-        // Déduire 1 crédit atomiquement (sauf pour les admins et VIP)
-        if (!isAdmin && !hasUnlimitedCredits) {
-          const { data: creditDeducted, error: creditError } = await supabase
-            .rpc('deduct_credit', { _user_id: user.id });
-          
-          if (creditError || !creditDeducted) {
-            toast({
-              variant: "destructive",
-              title: "Crédits insuffisants",
-              description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
-            });
-            navigate('/pricing');
-            return;
-          }
-        }
-
-        const { error } = await supabase.from('reports').insert({
-          user_id: user.id,
-          marque,
-          modele,
-          status: 'pending',
-        });
-
-        if (!error) {
-          await refreshCredits();
-          toast({
-            title: "Demande envoyée !",
-            description: `Votre demande d'audit pour ${marque} ${modele} a été soumise.${(!isAdmin && !hasUnlimitedCredits) ? ' 1 crédit déduit.' : ''}`,
-          });
-          fetchReports();
-        } else {
-          // Si l'insertion échoue, on devrait idéalement rembourser le crédit
-          // mais pour l'instant on log l'erreur
-          console.error('Error creating report after credit deduction:', error);
-        }
-      };
-      
-      createPendingReport();
-    } else {
-      fetchReports();
-    }
+    fetchReports();
   }, [user]);
 
   const handleLogout = async () => {
@@ -127,80 +78,90 @@ const ClientDashboard = () => {
     navigate('/');
   };
 
-  const handleGenerateReport = async (e: React.FormEvent) => {
+  const handleAuditUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!marque.trim() || !modele.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Champs manquants",
-        description: "Veuillez entrer au moins une marque et un modèle.",
-      });
+    const trimmedUrl = listingUrl.trim();
+    if (!trimmedUrl) {
+      toast({ variant: "destructive", title: "Lien manquant", description: "Collez le lien d'une annonce." });
       return;
     }
 
-    if (!user) {
-      navigate('/auth');
+    // Validate URL
+    const supportedDomains = ['leboncoin.fr', 'lacentrale.fr', 'autoscout24.fr', 'autoscout24.com'];
+    try {
+      const parsed = new URL(trimmedUrl);
+      if (!supportedDomains.some(d => parsed.hostname.includes(d))) {
+        toast({ variant: "destructive", title: "Site non supporté", description: "Seuls LeBonCoin, La Centrale et AutoScout24 sont supportés." });
+        return;
+      }
+    } catch {
+      toast({ variant: "destructive", title: "URL invalide", description: "Veuillez entrer une URL valide." });
       return;
     }
+
+    if (!user) { navigate('/auth'); return; }
 
     setIsSubmitting(true);
+    setAnalysisProgress('Vérification des crédits...');
     try {
-      // Déduire 1 crédit atomiquement AVANT de créer le rapport (sauf pour les admins et VIP)
+      // Déduire 1 crédit (sauf admins/VIP)
       if (!isAdmin && !hasUnlimitedCredits) {
         const { data: creditDeducted, error: creditError } = await supabase
           .rpc('deduct_credit', { _user_id: user.id });
         
         if (creditError || !creditDeducted) {
-          toast({
-            variant: "destructive",
-            title: "Crédits insuffisants",
-            description: "Vous n'avez plus de crédits. Achetez-en pour continuer.",
-          });
+          toast({ variant: "destructive", title: "Crédits insuffisants", description: "Achetez des crédits pour continuer." });
           navigate('/pricing');
           setIsSubmitting(false);
           return;
         }
       }
 
-      // Créer le rapport après la déduction réussie
-      const { error } = await supabase.from('reports').insert({
-        user_id: user.id,
-        marque: marque.trim(),
-        modele: modele.trim(),
-        notes: precision.trim() || null,
-        status: 'pending',
+      setAnalysisProgress('Scraping de l\'annonce...');
+      
+      // Call the audit-url edge function
+      const { data, error } = await supabase.functions.invoke('audit-url', {
+        body: { url: trimmedUrl },
       });
 
       if (error) {
-        console.error('Error creating report after credit deduction:', error);
-        throw error;
+        console.error('Audit error:', error);
+        throw new Error(error.message || "Erreur lors de l'analyse");
       }
 
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      setAnalysisProgress('Rapport généré !');
+
       toast({
-        title: "Demande envoyée !",
-        description: `Votre demande d'audit a été soumise.${(!isAdmin && !hasUnlimitedCredits) ? ' 1 crédit déduit.' : ''}`,
+        title: "Audit terminé ! ✅",
+        description: `Rapport créé pour ${data.analysis?.marque || 'le véhicule'} ${data.analysis?.modele || ''}.${(!isAdmin && !hasUnlimitedCredits) ? ' 1 crédit déduit.' : ''}`,
+        className: "bg-green-600 text-white border-0",
       });
 
-      // Réinitialiser le formulaire et recharger les rapports
-      setMarque('');
-      setModele('');
-      setPrecision('');
-      fetchReports();
+      setListingUrl('');
       
-      // Rafraîchir les crédits affichés
-      if (!isAdmin && !hasUnlimitedCredits) {
-        await refreshCredits();
+      if (!isAdmin && !hasUnlimitedCredits) await refreshCredits();
+
+      // Navigate to the report
+      if (data?.reportId) {
+        navigate(`/report/${data.reportId}`);
+      } else {
+        fetchReports();
       }
-    } catch (error) {
-      console.error('Error creating report:', error);
+    } catch (error: any) {
+      console.error('Audit error:', error);
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de soumettre votre demande. Réessayez.",
+        title: "Erreur d'analyse",
+        description: error.message || "Impossible d'analyser cette annonce. Réessayez.",
       });
     } finally {
       setIsSubmitting(false);
+      setAnalysisProgress('');
     }
   };
 
@@ -305,50 +266,34 @@ const ClientDashboard = () => {
 
           {/* --- MAIN CONTENT --- */}
           <div className="lg:col-span-9 space-y-6 md:space-y-8">
-            <section>
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Demander un audit de prix</h2>
+             <section>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Analyser une annonce</h2>
               
               <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                   <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
-                    <Search className="w-4 h-4" /> Quel véhicule recherchez-vous ?
+                    <Link2 className="w-4 h-4" /> Collez le lien de l'annonce
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 md:p-8">
-                  <form onSubmit={handleGenerateReport} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="marque" className="text-sm font-semibold text-slate-700">Marque *</Label>
-                        <Input 
-                          id="marque"
-                          placeholder="Ex: Audi, BMW..." 
-                          className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
-                          value={marque}
-                          onChange={(e) => setMarque(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="modele" className="text-sm font-semibold text-slate-700">Modèle *</Label>
-                        <Input 
-                          id="modele"
-                          placeholder="Ex: A3, Serie 1..." 
-                          className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
-                          value={modele}
-                          onChange={(e) => setModele(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
+                  <form onSubmit={handleAuditUrl} className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="precision" className="text-sm font-semibold text-slate-700">Précision (Année, Finition...)</Label>
+                      <Label htmlFor="listingUrl" className="text-sm font-semibold text-slate-700">Lien de l'annonce *</Label>
                       <Input 
-                        id="precision"
-                        placeholder="Ex: 2020, S-Line, Diesel..." 
-                        className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-primary"
-                        value={precision}
-                        onChange={(e) => setPrecision(e.target.value)}
+                        id="listingUrl"
+                        type="url"
+                        placeholder="https://www.leboncoin.fr/voitures/..." 
+                        className="h-12 text-base bg-slate-50 border-slate-200 focus:border-primary"
+                        value={listingUrl}
+                        onChange={(e) => setListingUrl(e.target.value)}
+                        required
+                        disabled={isSubmitting}
                       />
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="secondary" className="text-xs font-normal">LeBonCoin</Badge>
+                        <Badge variant="secondary" className="text-xs font-normal">La Centrale</Badge>
+                        <Badge variant="secondary" className="text-xs font-normal">AutoScout24</Badge>
+                      </div>
                     </div>
                     <div className="pt-2">
                       <Button 
@@ -358,13 +303,13 @@ const ClientDashboard = () => {
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
-                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Envoi en cours...</>
+                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> {analysisProgress || 'Analyse en cours...'}</>
                         ) : (
-                          <>Envoyer ma demande</>
+                          <><ExternalLink className="w-4 h-4 mr-2" /> Lancer l'audit</>
                         )}
                       </Button>
                       <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> Notre équipe analysera votre demande et vous enverra le rapport sous 24h.
+                        <AlertCircle className="w-3 h-3" /> L'IA va scraper et analyser l'annonce en quelques secondes. 1 crédit par audit.
                       </p>
                     </div>
                   </form>
