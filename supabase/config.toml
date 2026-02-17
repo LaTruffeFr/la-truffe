@@ -27,3 +27,7 @@ verify_jwt = false
 [functions.analyze-vehicles]
 # AI analysis requires auth
 verify_jwt = false
+
+[functions.audit-url]
+# Single listing audit - auth checked in code
+verify_jwt = false

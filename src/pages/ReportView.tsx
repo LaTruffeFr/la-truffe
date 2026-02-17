@@ -95,15 +95,19 @@ interface Report {
   annee: number | null; 
   kilometrage: number | null; 
   prix_affiche: number | null; 
+  prix_estime: number | null;
   prix_moyen: number | null;
   prix_truffe: number | null;
   lien_annonce: string | null;
+  carburant: string | null;
+  transmission: string | null;
   status: 'pending' | 'in_progress' | 'completed';
   expert_opinion: string | null;
   negotiation_arguments: string | null;
   negotiation_points: any[] | null;
   vehicles_data: VehicleData[] | null;
   total_vehicules: number | null;
+  market_data: any | null;
 }
 
 const ReportView = () => {
@@ -152,25 +156,43 @@ const ReportView = () => {
   }, [showAllVehicles]);
 
   const vehiclesData = useMemo(() => report?.vehicles_data as VehicleData[] || [], [report]);
+  const isSingleAudit = useMemo(() => {
+    const md = report?.market_data as any;
+    return md?.type === 'single_audit';
+  }, [report]);
+  const singleAuditData = useMemo(() => isSingleAudit ? (report?.market_data as any) : null, [report, isSingleAudit]);
   const trendLine = useMemo(() => calculateLogTrendLine(vehiclesData), [vehiclesData]);
   const vehiculeCible = useMemo(() => vehiclesData.length > 0 ? [...vehiclesData].sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0))[0] : null, [vehiclesData]);
   const topOpportunities = useMemo(() => vehiclesData.length > 0 ? [...vehiclesData].sort((a, b) => (b.dealScore || 0) - (a.dealScore || 0)).slice(0, 5) : [], [vehiclesData]);
 
   const stats = useMemo(() => {
     if (!report) return null;
+    if (isSingleAudit) {
+      const prixAffiche = Number(report.prix_affiche || 0);
+      const prixEstime = Number(report.prix_estime || report.prix_moyen || prixAffiche);
+      const prixTruffe = Number(report.prix_truffe || prixEstime);
+      const economy = prixAffiche > 0 ? prixAffiche - prixTruffe : 0;
+      const percentEconomy = prixAffiche > 0 ? Math.round((economy / prixAffiche) * 100) : 0;
+      const score = singleAuditData?.score || 50;
+      return { prixMarche: prixEstime, prixCible: prixTruffe, prixAffiche, economy, percentEconomy, score, isGoodDeal: prixAffiche <= prixEstime, totalVehicules: 1 };
+    }
     const prixMarche = Number(report.prix_moyen || 0);
     const prixCible = vehiculeCible ? Number(vehiculeCible.prix || 0) : prixMarche;
     const economy = prixMarche > 0 ? prixMarche - prixCible : 0;
     const percentEconomy = prixMarche > 0 ? Math.round((economy / prixMarche) * 100) : 0;
     const score = vehiculeCible ? Math.min(98, Math.max(10, Number(vehiculeCible.dealScore || vehiculeCible.score_confiance || 50))) : 50;
     return { prixMarche, prixCible, economy, percentEconomy, score, isGoodDeal: economy > 0, totalVehicules: report.total_vehicules || vehiclesData.length };
-  }, [report, vehiculeCible, vehiclesData]);
+  }, [report, vehiculeCible, vehiclesData, isSingleAudit, singleAuditData]);
 
   const negotiationPoints = useMemo(() => {
     if (!report) return [];
     if (report.negotiation_points && Array.isArray(report.negotiation_points)) return report.negotiation_points;
     if (report.expert_opinion?.includes("|||DATA|||")) { try { return JSON.parse(report.expert_opinion.split("|||DATA|||")[1]); } catch (e) {} }
     if (report.negotiation_arguments) {
+        try {
+          const parsed = JSON.parse(report.negotiation_arguments);
+          if (Array.isArray(parsed)) return parsed;
+        } catch {}
         return report.negotiation_arguments.split('\n').filter(l => l.trim()).map(l => ({ titre: l.split(':')[0] || "Argument", desc: l.split(':')[1] || l }));
     }
     return [{ titre: "Analyse en attente", desc: "Les arguments sont en cours de rédaction." }];
@@ -218,8 +240,8 @@ const ReportView = () => {
         <div className="flex flex-col md:flex-row gap-6 mb-8 pdf-section">
           <div className="w-full md:w-1/3">
             <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-[4/3] group bg-slate-100">
-              <ProxiedImage src={vehiculeCible?.image} brand={report.marque} alt={vehiculeCible?.titre} className="w-full h-full object-cover object-center" />
-              <div className="absolute top-3 right-3"><Badge className={`${stats.isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1 shadow-md border-0`}>{stats.isGoodDeal ? 'Excellent Deal' : 'Prix Marché'}</Badge></div>
+              <ProxiedImage src={isSingleAudit ? undefined : vehiculeCible?.image} brand={report.marque} alt={`${report.marque} ${report.modele}`} className="w-full h-full object-cover object-center" />
+              <div className="absolute top-3 right-3"><Badge className={`${stats.isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1 shadow-md border-0`}>{stats.isGoodDeal ? 'Bonne affaire' : 'Prix élevé'}</Badge></div>
             </div>
           </div>
           <div className="w-full md:w-2/3 flex flex-col justify-between">
@@ -228,25 +250,26 @@ const ReportView = () => {
                 <div>
                   <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1 leading-tight">{report.marque} {report.modele}</h1>
                   <p className="text-slate-500 flex items-center gap-2 text-sm line-clamp-1">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium shrink-0">{report.annee}</span>
-                    <span className="truncate">• {vehiculeCible?.titre || `${report.marque} ${report.modele}`}</span>
+                    {report.annee && <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium shrink-0">{report.annee}</span>}
+                    {singleAuditData?.etat && <span className="truncate">• État : {singleAuditData.etat}</span>}
+                    {!isSingleAudit && vehiculeCible?.titre && <span className="truncate">• {vehiculeCible.titre}</span>}
                   </p>
                 </div>
                 <div className="text-left sm:text-right mt-2 sm:mt-0">
-                  <div className="text-3xl font-bold text-slate-900">{safeNum(vehiculeCible?.prix || stats.prixMarche)} €</div>
-                  <div className="text-sm text-slate-500">Meilleur prix trouvé</div>
+                  <div className="text-3xl font-bold text-slate-900">{safeNum(isSingleAudit ? report.prix_affiche : (vehiculeCible?.prix || stats.prixMarche))} €</div>
+                  <div className="text-sm text-slate-500">{isSingleAudit ? 'Prix affiché' : 'Meilleur prix trouvé'}</div>
                 </div>
               </div>
               <Separator className="my-4 hidden md:block" />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0"><Gauge className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Kilométrage</p><p className="font-bold text-slate-900 truncate">{safeNum(vehiculeCible?.kilometrage)} km</p></div></div>
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-orange-50 text-orange-600 rounded-lg shrink-0"><Fuel className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Carburant</p><p className="font-bold text-slate-900 capitalize truncate">{vehiculeCible?.carburant || 'N/A'}</p></div></div>
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-purple-50 text-purple-600 rounded-lg shrink-0"><Calendar className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Année</p><p className="font-bold text-slate-900 truncate">{vehiculeCible?.annee}</p></div></div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0"><Gauge className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Kilométrage</p><p className="font-bold text-slate-900 truncate">{safeNum(isSingleAudit ? report.kilometrage : vehiculeCible?.kilometrage)} km</p></div></div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-orange-50 text-orange-600 rounded-lg shrink-0"><Fuel className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Carburant</p><p className="font-bold text-slate-900 capitalize truncate">{(isSingleAudit ? report.carburant : vehiculeCible?.carburant) || 'N/A'}</p></div></div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-purple-50 text-purple-600 rounded-lg shrink-0"><Calendar className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Année</p><p className="font-bold text-slate-900 truncate">{report.annee || vehiculeCible?.annee || 'N/A'}</p></div></div>
                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3"><div className="p-2 bg-green-50 text-green-600 rounded-lg shrink-0"><ShieldCheck className="w-5 h-5" /></div><div className="min-w-0"><p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold truncate">Score</p><p className="font-bold text-slate-900 truncate">{stats.score}/100</p></div></div>
               </div>
             </div>
             <div className="mt-6 flex gap-3 print:hidden">
-              <Button className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-base md:text-lg no-print pdf-hide" onClick={() => { const link = vehiculeCible?.lien || report.lien_annonce; if (link) window.open(link, '_blank'); }}>Voir l'annonce</Button>
+              <Button className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-base md:text-lg no-print pdf-hide" onClick={() => { const link = report.lien_annonce || vehiculeCible?.lien; if (link) window.open(link, '_blank'); }}>Voir l'annonce</Button>
               <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300 no-print pdf-hide"><Share2 className="w-5 h-5 text-slate-600" /></Button>
             </div>
           </div>
@@ -275,22 +298,97 @@ const ReportView = () => {
             <CardHeader className="pb-2"><CardTitle className="text-lg flex items-center gap-2"><Euro className="w-5 h-5 text-primary" /> Analyse Financière</CardTitle></CardHeader>
             <CardContent className="p-6 pt-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                <div><p className="text-sm text-slate-500 mb-1">Prix moyen du marché</p><p className="text-2xl font-bold text-slate-900">{safeNum(stats.prixMarche)} €</p></div>
-                <div className="text-left sm:text-right"><p className="text-sm text-slate-500 mb-1">Économie potentielle</p><p className={`text-2xl font-bold ${stats.economy > 0 ? 'text-green-600' : 'text-orange-500'}`}>{stats.economy > 0 ? '-' : '+'}{safeNum(Math.abs(stats.economy))} €</p></div>
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">{isSingleAudit ? 'Valeur marché estimée' : 'Prix moyen du marché'}</p>
+                  <p className="text-2xl font-bold text-slate-900">{safeNum(stats.prixMarche)} €</p>
+                </div>
+                {isSingleAudit && (stats as any).prixAffiche > 0 && (
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Prix La Truffe (négocié)</p>
+                    <p className="text-2xl font-bold text-green-600">{safeNum(stats.prixCible)} €</p>
+                  </div>
+                )}
+                <div className="text-left sm:text-right">
+                  <p className="text-sm text-slate-500 mb-1">{isSingleAudit ? 'Marge de négociation' : 'Économie potentielle'}</p>
+                  <p className={`text-2xl font-bold ${stats.economy > 0 ? 'text-green-600' : 'text-orange-500'}`}>{stats.economy > 0 ? '-' : '+'}{safeNum(Math.abs(stats.economy))} €</p>
+                </div>
               </div>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-1 font-medium"><span>Positionnement Prix</span><span className={stats.isGoodDeal ? "text-green-600" : "text-orange-600"}>{stats.isGoodDeal ? "Sous la cote" : "Au-dessus de la cote"}</span></div>
                   <Progress value={Math.min(100, Math.max(0, 50 - stats.percentEconomy))} className="h-2.5 bg-slate-100" />
                 </div>
-                {stats.economy > 0 && <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 flex gap-3 items-start"><AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" /><p><strong>Attention :</strong> Le prix est attractif (-{Math.abs(stats.percentEconomy)}%), vérifiez bien l'historique.</p></div>}
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* --- SECTION SINGLE AUDIT : Points Forts / Faibles / Options --- */}
+        {isSingleAudit && singleAuditData && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8 pdf-section">
+            {/* Points forts */}
+            {singleAuditData.points_forts?.length > 0 && (
+              <Card className="border-slate-200 shadow-md bg-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" /> Points forts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 pt-2">
+                  <ul className="space-y-3">
+                    {singleAuditData.points_forts.map((p: string, i: number) => (
+                      <li key={i} className="flex items-start gap-3 text-sm">
+                        <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">✓</span>
+                        <span className="text-slate-700">{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+            {/* Points faibles */}
+            {singleAuditData.points_faibles?.length > 0 && (
+              <Card className="border-slate-200 shadow-md bg-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-500" /> Points de vigilance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 pt-2">
+                  <ul className="space-y-3">
+                    {singleAuditData.points_faibles.map((p: string, i: number) => (
+                      <li key={i} className="flex items-start gap-3 text-sm">
+                        <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">!</span>
+                        <span className="text-slate-700">{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Options détectées */}
+        {isSingleAudit && singleAuditData?.options?.length > 0 && (
+          <div className="mb-8 pdf-section">
+            <Card className="border-slate-200 shadow-md bg-white">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">🛠️ Équipements détectés</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 pt-2">
+                <div className="flex flex-wrap gap-2">
+                  {singleAuditData.options.map((opt: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="text-sm px-3 py-1">{opt}</Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* --- SECTION 3 : GRAPHIQUE SNIPER (LOG) --- */}
-        {vehiclesData.length > 0 && (
+        {!isSingleAudit && vehiclesData.length > 0 && (
           <div className="mb-8 pdf-section">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2"><TrendingDown className="w-6 h-6 text-primary" /> Analyse du Marché</h2>
             <Card className="shadow-lg border-slate-200 overflow-hidden h-[350px] md:h-[500px]">
@@ -302,7 +400,7 @@ const ReportView = () => {
         )}
 
         {/* --- SECTION 4 : TOP 5 DES ALTERNATIVES --- */}
-        {topOpportunities.length > 0 && (
+        {!isSingleAudit && topOpportunities.length > 0 && (
            <div className="mb-12 pdf-section">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Alternatives
