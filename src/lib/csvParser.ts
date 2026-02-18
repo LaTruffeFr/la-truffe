@@ -76,9 +76,9 @@ const COLUMN_PATTERNS: Record<keyof ColumnMapping, RegExp[]> = {
   transmission: [/transmission/i, /gearbox/i, /boîte/i, /boite/i, /gear/i],
   puissance: [/power/i, /puissance/i, /hp/i, /cv/i, /ch/i, /bhp/i],
   image: [/image/i, /img/i, /photo/i, /picture/i, /src/i, /thumbnail/i],
-  lien: [/link/i, /url/i, /href/i, /lien/i],
+  lien: [/link/i, /url/i, /href/i, /lien/i, /web_scraper_start_url/i],
   localisation: [/location/i, /city/i, /ville/i, /localisation/i, /region/i, /département/i],
-  description: [/description/i, /detail/i, /détail/i, /annonce/i, /texte/i, /body/i, /contenu/i],
+  description: [/description/i, /detail/i, /détail/i, /annonce/i, /texte/i, /body/i, /contenu/i, /^infos?$/i],
 };
 
 const BRANDS = [
@@ -666,7 +666,20 @@ function parseRow(
   }
   
   // Validate minimum required data
-  if (prix <= 0) return null;
+  if (prix <= 0) {
+    // Try to extract price from title or description via regex
+    const priceRegex = /([0-9\s]+)\s*€/;
+    for (const field of row) {
+      const match = field.match(priceRegex);
+      if (match) {
+        const digits = match[1].replace(/[^0-9]/g, '');
+        const extracted = parseInt(digits, 10);
+        if (extracted >= 500 && extracted <= 2000000) { prix = extracted; break; }
+      }
+    }
+    // If still no price, default to 0 instead of rejecting
+    if (prix <= 0) prix = 0;
+  }
   if (!titre && marque === 'Autre') return null;
   
   // Build final title if missing
