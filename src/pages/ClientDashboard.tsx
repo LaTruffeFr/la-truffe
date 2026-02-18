@@ -48,7 +48,6 @@ const ClientDashboard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
-  const [analysisProgress, setAnalysisProgress] = useState('');
 
   // Charger les rapports de l'utilisateur
   const fetchReports = async () => {
@@ -66,7 +65,6 @@ const ClientDashboard = () => {
     setIsLoadingReports(false);
   };
 
-  // Vérifier s'il y a une demande en attente après connexion
   useEffect(() => {
     if (!user) return;
     fetchReports();
@@ -78,7 +76,7 @@ const ClientDashboard = () => {
     navigate('/');
   };
 
-  const handleAuditUrl = async (e: React.FormEvent) => {
+  const handleSubmitLink = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const trimmedUrl = listingUrl.trim();
@@ -87,7 +85,6 @@ const ClientDashboard = () => {
       return;
     }
 
-    // Validate URL
     const supportedDomains = ['leboncoin.fr', 'lacentrale.fr', 'autoscout24.fr', 'autoscout24.com'];
     try {
       const parsed = new URL(trimmedUrl);
@@ -103,65 +100,36 @@ const ClientDashboard = () => {
     if (!user) { navigate('/auth'); return; }
 
     setIsSubmitting(true);
-    setAnalysisProgress('Vérification des crédits...');
     try {
-      // Déduire 1 crédit (sauf admins/VIP)
-      if (!isAdmin && !hasUnlimitedCredits) {
-        const { data: creditDeducted, error: creditError } = await supabase
-          .rpc('deduct_credit', { _user_id: user.id });
-        
-        if (creditError || !creditDeducted) {
-          toast({ variant: "destructive", title: "Crédits insuffisants", description: "Achetez des crédits pour continuer." });
-          navigate('/pricing');
-          setIsSubmitting(false);
-          return;
-        }
-      }
+      const { error } = await supabase
+        .from('reports')
+        .insert({
+          user_id: user.id,
+          lien_annonce: trimmedUrl,
+          status: 'pending' as const,
+          marque: 'Analyse en cours',
+          modele: 'En attente expert',
+        });
 
-      setAnalysisProgress('Scraping de l\'annonce...');
-      
-      // Call the audit-url edge function
-      const { data, error } = await supabase.functions.invoke('audit-url', {
-        body: { url: trimmedUrl },
-      });
-
-      if (error) {
-        console.error('Audit error:', error);
-        throw new Error(error.message || "Erreur lors de l'analyse");
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      setAnalysisProgress('Rapport généré !');
+      if (error) throw error;
 
       toast({
-        title: "Audit terminé ! ✅",
-        description: `Rapport créé pour ${data.analysis?.marque || 'le véhicule'} ${data.analysis?.modele || ''}.${(!isAdmin && !hasUnlimitedCredits) ? ' 1 crédit déduit.' : ''}`,
+        title: "Demande envoyée ! ✅",
+        description: "Votre demande a été transmise à l'expert. Vous recevrez le rapport sous peu.",
         className: "bg-green-600 text-white border-0",
       });
 
       setListingUrl('');
-      
-      if (!isAdmin && !hasUnlimitedCredits) await refreshCredits();
-
-      // Navigate to the report
-      if (data?.reportId) {
-        navigate(`/report/${data.reportId}`);
-      } else {
-        fetchReports();
-      }
+      fetchReports();
     } catch (error: any) {
-      console.error('Audit error:', error);
+      console.error('Submit error:', error);
       toast({
         variant: "destructive",
-        title: "Erreur d'analyse",
-        description: error.message || "Impossible d'analyser cette annonce. Réessayez.",
+        title: "Erreur",
+        description: error.message || "Impossible d'envoyer la demande. Réessayez.",
       });
     } finally {
       setIsSubmitting(false);
-      setAnalysisProgress('');
     }
   };
 
@@ -276,7 +244,7 @@ const ClientDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 md:p-8">
-                  <form onSubmit={handleAuditUrl} className="space-y-6">
+                  <form onSubmit={handleSubmitLink} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="listingUrl" className="text-sm font-semibold text-slate-700">Lien de l'annonce *</Label>
                       <Input 
@@ -303,13 +271,13 @@ const ClientDashboard = () => {
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
-                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> {analysisProgress || 'Analyse en cours...'}</>
+                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Envoi en cours...</>
                         ) : (
-                          <><ExternalLink className="w-4 h-4 mr-2" /> Lancer l'audit</>
+                          <><ExternalLink className="w-4 h-4 mr-2" /> Demander un audit</>
                         )}
                       </Button>
                       <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> L'IA va scraper et analyser l'annonce en quelques secondes. 1 crédit par audit.
+                        <AlertCircle className="w-3 h-3" /> Un expert analysera votre annonce et vous enverra le rapport.
                       </p>
                     </div>
                   </form>
