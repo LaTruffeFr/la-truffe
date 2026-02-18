@@ -504,14 +504,26 @@ function extractFromCombinedField(text: string): CombinedData {
 
   if (!text) return result;
 
-  // Extract year: Année: "2018" or Année: 2018
-  const yearMatch = text.match(/ann[ée]e\s*[:=]?\s*"?(\d{4})"?/i);
+  // Extract year: multiple formats
+  // Format 1: Année: "2018" or Année: 2018
+  // Format 2: LeBonCoin scrape - "Année modèle2017" (no separator)
+  const yearMatch = text.match(/ann[ée]e\s*(?:mod[èe]le)?\s*[:=]?\s*"?(\d{4})"?/i);
   if (yearMatch) {
     const year = parseInt(yearMatch[1], 10);
     if (year >= 1980 && year <= 2026) result.annee = year;
   }
+  // Format 3: "Date de première mise en circulation07/2017"
+  if (!result.annee) {
+    const circMatch = text.match(/mise\s*en\s*circulation\s*[:=]?\s*"?\d{0,2}\/?(\d{4})"?/i);
+    if (circMatch) {
+      const year = parseInt(circMatch[1], 10);
+      if (year >= 1980 && year <= 2026) result.annee = year;
+    }
+  }
 
-  // Extract mileage: Kilométrage: "54000 km" or Kilométrage: "54 000 km"
+  // Extract mileage: multiple formats
+  // Format 1: Kilométrage: "54000 km"
+  // Format 2: LeBonCoin scrape - "Kilométrage84014 km" (no separator)
   const kmMatch = text.match(/kilom[ée]trage\s*[:=]?\s*"?([0-9\s.]+)\s*km"?/i);
   if (kmMatch) {
     const kmDigits = kmMatch[1].replace(/[^0-9]/g, '');
@@ -519,8 +531,10 @@ function extractFromCombinedField(text: string): CombinedData {
     if (km >= 0 && km <= 500000) result.kilometrage = km;
   }
 
-  // Extract fuel: Carburant: "Essence"
-  const fuelMatch = text.match(/carburant\s*[:=]?\s*"?([^".,]+)"?/i);
+  // Extract fuel: multiple formats
+  // Format 1: Carburant: "Essence"
+  // Format 2: "ÉnergieEssence" (LeBonCoin scrape, no separator)
+  const fuelMatch = text.match(/(?:carburant|[ée]nergie)\s*[:=]?\s*"?([A-Za-zÀ-ÿ]+)"?/i);
   if (fuelMatch) {
     const fuel = fuelMatch[1].trim().toLowerCase();
     if (/essence/i.test(fuel)) result.carburant = 'essence';
@@ -530,12 +544,20 @@ function extractFromCombinedField(text: string): CombinedData {
     else if (/gpl|gnv/i.test(fuel)) result.carburant = 'gpl';
   }
 
-  // Extract transmission: Boîte de vitesse: "Automatique"
-  const transMatch = text.match(/bo[îi]te\s*(?:de\s*vitesse)?\s*[:=]?\s*"?([^".,]+)"?/i);
+  // Extract transmission: multiple formats
+  // Format 1: Boîte de vitesse: "Automatique"
+  // Format 2: "Boîte de vitesseAutomatique" (no separator)
+  const transMatch = text.match(/bo[îi]te\s*(?:de\s*vitesse)?\s*[:=]?\s*"?([A-Za-zÀ-ÿ]+)"?/i);
   if (transMatch) {
     const trans = transMatch[1].trim().toLowerCase();
     if (/automatique|auto/i.test(trans)) result.transmission = 'automatique';
     else if (/manu/i.test(trans)) result.transmission = 'manuelle';
+  }
+
+  // Extract puissance DIN from "Puissance DIN400 Ch" format
+  const powerMatch = text.match(/puissance\s*(?:din)?\s*[:=]?\s*"?(\d{2,4})\s*(?:ch|cv|hp)/i);
+  if (powerMatch) {
+    // Store in result for later use (not part of CombinedData but useful)
   }
 
   return result;
@@ -572,7 +594,7 @@ function parseRow(
   // First pass: try to find combined data field (LeBonCoin format)
   let combinedData: CombinedData | null = null;
   for (const field of row) {
-    if (/ann[ée]e.*kilom[ée]trage/i.test(field) || /kilom[ée]trage.*ann[ée]e/i.test(field)) {
+    if (/ann[ée]e.*kilom[ée]trage/i.test(field) || /kilom[ée]trage.*ann[ée]e/i.test(field) || /[ée]nergie.*bo[îi]te/i.test(field) || /marque.*mod[èe]le.*ann[ée]e/i.test(field)) {
       combinedData = extractFromCombinedField(field);
       break;
     }
@@ -1109,7 +1131,7 @@ function parseWebScraperCsv(headers: string[], rows: string[][]): ParsedVehicle[
   const lowerHeaders = headers.map(h => h.toLowerCase().trim());
 
   // Detect format: must have "titre" (or "annonces") AND "info" columns
-  const hasInfo = lowerHeaders.includes('info');
+  const hasInfo = lowerHeaders.includes('info') || lowerHeaders.includes('infos');
   const hasTitre = lowerHeaders.includes('titre');
   const hasAnnonces = lowerHeaders.includes('annonces');
   const hasWebScraper = lowerHeaders.some(h => h.includes('web_scraper'));
@@ -1118,13 +1140,19 @@ function parseWebScraperCsv(headers: string[], rows: string[][]): ParsedVehicle[
 
   console.log('Detected WebScraper.io CSV format');
 
-  const idx = (name: string) => lowerHeaders.indexOf(name);
+  const idx = (name: string) => {
+    const i = lowerHeaders.indexOf(name);
+    if (i >= 0) return i;
+    return -1;
+  };
   const titreIdx = idx('titre');
-  const infoIdx = idx('info');
+  const infoIdx = lowerHeaders.includes('info') ? idx('info') : idx('infos');
   const descIdx = idx('description');
   const prixIdx = idx('prix');
   const imageIdx = idx('image');
-  const annoncesIdx = idx('annonces'); // this is the listing URL
+  const annoncesIdx = idx('annonces');
+  // Also check for web_scraper_start_url as listing URL
+  const wsUrlIdx = lowerHeaders.indexOf('web_scraper_start_url');
 
   const vehicles: ParsedVehicle[] = [];
 
@@ -1139,7 +1167,7 @@ function parseWebScraperCsv(headers: string[], rows: string[][]): ParsedVehicle[
     const description = get(descIdx);
     const rawPrix = get(prixIdx);
     const image = get(imageIdx);
-    const lien = get(annoncesIdx);
+    const lien = get(annoncesIdx) || get(wsUrlIdx);
 
     // Parse price: "48 500 €" or "47 990 €"
     let prix = 0;
@@ -1148,7 +1176,19 @@ function parseWebScraperCsv(headers: string[], rows: string[][]): ParsedVehicle[
       prix = parseInt(digits, 10) || 0;
       if (prix < 500 || prix > 2000000) prix = 0;
     }
-    if (prix <= 0) continue;
+    // If no prix column, try extracting from titre or description
+    if (prix <= 0) {
+      const priceRegex = /([0-9\s]+)\s*€/;
+      for (const text of [titre, info, description]) {
+        const match = text.match(priceRegex);
+        if (match) {
+          const digits = match[1].replace(/[^0-9]/g, '');
+          const extracted = parseInt(digits, 10);
+          if (extracted >= 500 && extracted <= 2000000) { prix = extracted; break; }
+        }
+      }
+    }
+    // Default to 0 if no price found — don't reject the row
 
     // Parse the concatenated `info` field for structured data
     const parsed = parseWebScraperInfoField(info);
@@ -1367,7 +1407,7 @@ export function parseCSVFile(
           if (quickParse2.data && (quickParse2.data as string[][]).length >= 2) {
             const wsHeaders = (quickParse2.data as string[][])[0].map(h => String(h || '').trim());
             const lowerWsHeaders = wsHeaders.map(h => h.toLowerCase());
-            if (lowerWsHeaders.includes('info') && (lowerWsHeaders.includes('titre') || lowerWsHeaders.includes('annonces'))) {
+            if ((lowerWsHeaders.includes('info') || lowerWsHeaders.includes('infos')) && (lowerWsHeaders.includes('titre') || lowerWsHeaders.includes('annonces'))) {
               onProgress?.(15);
               const fullParse2 = Papa.parse(rawText, { skipEmptyLines: true });
               const allRows2 = (fullParse2.data as string[][]);
