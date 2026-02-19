@@ -26,6 +26,7 @@ import CGV from "./pages/CGV";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AdminRoute } from "./components/AdminRoute";
 import SellCar from "./pages/SellCar";
+import SellLanding from "./pages/SellLanding";
 import Marketplace from "./pages/Marketplace";
 import ListingDetails from "./pages/ListingDetails";
 
@@ -68,7 +69,11 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/why-us" element={<About />} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
-            <Route path="/vendre" element={<SellCar />} />
+            
+            {/* Routes pour la vente - PAGE MARKETING + FORMULAIRE */}
+            <Route path="/vendre" element={<SellLanding />} /> {/* Pourquoi vendre avec nous */}
+            <Route path="/vendre/formulaire" element={<SellCar />} /> {/* Déposer votre annonce */}
+            
             <Route path="/annonces" element={<Marketplace />} />
             <Route path="/annonce/:id" element={<ListingDetails />} />
             <Route path="/cgv" element={<CGV />} />

@@ -11,13 +11,14 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Link2, Shield,
-  Loader2, Clock, CheckCircle, Eye, AlertCircle, ExternalLink
+  Loader2, Clock, CheckCircle, Eye, AlertCircle, ExternalLink, Car
 } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { useAuth } from '@/hooks/useAuth';
 import { useVipAccess } from '@/hooks/useVipAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { SellerListings } from '@/components/SellerListings';
 
 interface Report {
   id: string;
@@ -44,6 +45,7 @@ const ClientDashboard = () => {
   const displayEmail = userEmail || user?.email || "";
   const initials = displayEmail.substring(0, 2).toUpperCase();
 
+  const [activeTab, setActiveTab] = useState<'reports' | 'listings'>('reports');
   const [listingUrl, setListingUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
@@ -203,8 +205,19 @@ const ClientDashboard = () => {
                     <Shield className="w-4 h-4 mr-3" /> Espace Admin
                   </Button>
                 )}
-                <Button variant="ghost" className="w-full justify-start text-primary bg-primary/5 font-semibold h-10">
+                <Button 
+                  variant="ghost" 
+                  className={`w-full justify-start h-10 font-semibold ${activeTab === 'reports' ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-primary hover:bg-muted'}`}
+                  onClick={() => setActiveTab('reports')}
+                >
                   <LayoutDashboard className="w-4 h-4 mr-3" /> Mes rapports
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`w-full justify-start h-10 font-semibold ${activeTab === 'listings' ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-primary hover:bg-muted'}`}
+                  onClick={() => setActiveTab('listings')}
+                >
+                  <Car className="w-4 h-4 mr-3" /> Mes annonces
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -234,8 +247,10 @@ const ClientDashboard = () => {
 
           {/* --- MAIN CONTENT --- */}
           <div className="lg:col-span-9 space-y-6 md:space-y-8">
-             <section>
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Analyser une annonce</h2>
+            {activeTab === 'reports' ? (
+              <>
+                <section>
+                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Analyser une annonce</h2>
               
               <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
@@ -355,6 +370,13 @@ const ClientDashboard = () => {
                 </div>
               )}
             </section>
+              </>
+            ) : (
+              <section>
+                <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Mes annonces</h2>
+                {user && <SellerListings userId={user.id} />}
+              </section>
+            )}
           </div>
         </div>
       </main>

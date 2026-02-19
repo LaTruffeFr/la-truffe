@@ -119,7 +119,7 @@ Retourne UNIQUEMENT un JSON valide (pas de markdown, pas de \`\`\`):
       "etat": "Excellent|Très bon|Bon|Moyen|À vérifier",
       "pointsForts": ["max 3 points positifs concis"],
       "pointsFaibles": ["max 3 points négatifs ou alertes"],
-      "resumeClient": "Résumé en 1-2 phrases pour un acheteur. Direct et factuel.",
+      "resumeClient": "2-3 phrases MAXIMUM expliquant pourquoi cette voiture est intéressante (ou pas). NE PAS énumérer les specs. Exemple: 'Moteur robuste avec historique complet, idéal pour celui qui cherche de la fiabilité' ou 'Attention: plusieurs frais à prévoir pour les périphériques'. Sois direct et passionné.",
       "bonusScore": "nombre entre -20 et +20 (positif = bonne affaire confirmée, négatif = risques détectés)"
     }
   ]

@@ -110,11 +110,14 @@ export default function SellCar() {
           
           {/* HEADER DE LA PAGE */}
           <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 border border-green-300 text-sm font-medium text-green-700 mb-4">
+              ✨ Étape 2: Dépôt de l'annonce
+            </div>
             <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl mb-4">
-              Vendez votre voiture au <span className="text-green-600">Juste Prix</span>
+              Créez votre annonce
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Certifiez votre véhicule avec notre IA et accédez à des acheteurs qualifiés en moins de 2 minutes.
+              Notre IA analyse votre véhicule et crée un rapport détaillé pour attirer les bons acheteurs.
             </p>
           </div>
 

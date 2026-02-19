@@ -142,7 +142,7 @@ Retourne UNIQUEMENT un JSON valide avec ce format exact :
   "etat": "Excellent|Très bon|Bon|Moyen|À vérifier",
   "points_forts": ["max 5 points positifs concis"],
   "points_faibles": ["max 5 points négatifs ou alertes"],
-  "expert_opinion": "Paragraphe de 3-5 phrases donnant un avis d'expert sur cette annonce. Sois direct, factuel et utile pour l'acheteur.",
+  "expert_opinion": "IMPORTANT: Cet avis NE doit PAS énumérer les caractéristiques techniques (le prix, km, année sont déjà visibles). Au lieu de ça, écris 2-3 phrases MAXIMUM qui expliquent POURQUOI cette annonce est intéressante ou pas. Exemple: 'Le moteur DAZA est mythique et sans FAP, ce qui en fait un choix rassurant malgré le kilométrage élevé' ou 'L'historique Audi complet rassure sur la maintenance, mais le prix reste agressif comparé au marché'. Sois direct, passionné et concis.",
   "negotiation_arguments": [
     {"titre": "Argument 1", "desc": "Explication détaillée pour négocier"},
     {"titre": "Argument 2", "desc": "Explication détaillée pour négocier"},

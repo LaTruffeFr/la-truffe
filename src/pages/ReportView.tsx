@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, Download, Share2, CheckCircle2, 
   AlertTriangle, TrendingDown, Calendar, Gauge, Fuel, 
-  Euro, ShieldCheck, Loader2, Search, MapPin, Trophy, ListFilter, ExternalLink,
+  Euro, ShieldCheck, Loader2, Search, MapPin, Trophy, ListFilter, ExternalLink, Sparkles,
   ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 import {
@@ -26,9 +26,11 @@ import {
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 import { Footer } from '@/components/landing';
+import { SmartOptionsDisplay } from '@/components/SmartOptionsDisplay';
 import { generatePDF } from '@/lib/pdfGenerator';
 import { ExpertTag } from '@/lib/vehicleAnalysis';
 import { ProxiedImage, getBrandPlaceholder } from '@/components/ProxiedImage';
+import { normalizeText } from '@/lib/utils';
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
