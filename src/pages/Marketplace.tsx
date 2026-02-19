@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { 
@@ -13,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 export default function Marketplace() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchListings();
@@ -81,7 +83,7 @@ export default function Marketplace() {
         {/* GRILLE DES ANNONCES */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {listings.map((car) => (
-            <Card key={car.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col h-full">
+            <Card key={car.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col h-full cursor-pointer" onClick={() => navigate(`/annonce/${car.id}`)}>
               
               {/* IMAGE + BADGES */}
               <div className="relative h-56 overflow-hidden bg-slate-200">
@@ -156,9 +158,9 @@ export default function Marketplace() {
                 
                 <Button 
                   className="bg-slate-900 hover:bg-slate-800 text-white rounded-full w-10 h-10 p-0 flex items-center justify-center shadow-lg"
-                  onClick={() => alert(`Contact Vendeur: ${car.seller_contact}`)}
+                  onClick={(e) => { e.stopPropagation(); navigate(`/annonce/${car.id}`); }}
                 >
-                  <Phone className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4" />
                 </Button>
               </CardFooter>
             </Card>

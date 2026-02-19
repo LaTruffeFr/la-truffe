@@ -35,6 +35,57 @@ export type Database = {
         }
         Relationships: []
       }
+      cars: {
+        Row: {
+          ai_avis: string | null
+          ai_score: number | null
+          ai_tags: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_user_listing: boolean
+          mileage: number | null
+          price: number
+          seller_contact: string | null
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          ai_avis?: string | null
+          ai_score?: number | null
+          ai_tags?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_user_listing?: boolean
+          mileage?: number | null
+          price?: number
+          seller_contact?: string | null
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          ai_avis?: string | null
+          ai_score?: number | null
+          ai_tags?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_user_listing?: boolean
+          mileage?: number | null
+          price?: number
+          seller_contact?: string | null
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       garage_billing: {
         Row: {
           created_at: string

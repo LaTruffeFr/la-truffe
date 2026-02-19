@@ -27,6 +27,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import { AdminRoute } from "./components/AdminRoute";
 import SellCar from "./pages/SellCar";
 import Marketplace from "./pages/Marketplace";
+import ListingDetails from "./pages/ListingDetails";
 
 // 👇 1. IMPORT IMPORTANT : Ta nouvelle page de rapport réel
 import ReportView from "./pages/ReportView"; 
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/vendre" element={<SellCar />} />
             <Route path="/annonces" element={<Marketplace />} />
+            <Route path="/annonce/:id" element={<ListingDetails />} />
             <Route path="/cgv" element={<CGV />} />
             
             {/* Route 404 (doit être à la fin) */}
