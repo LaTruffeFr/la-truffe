@@ -755,3 +755,95 @@ export const generateSimulationReport = (url: string, userPrice: number = 0): Si
     verdict,
   };
 };
+
+// ============================================
+// 6. SCORING INDIVIDUEL POUR ANNONCES MARKETPLACE
+// ============================================
+
+/**
+ * Score a single car listing using the full vehicleAnalysis engine.
+ * Used by SellCar.tsx to certify a car before publishing.
+ * Returns { score, tags, avis, verdict }.
+ */
+export function scoreSingleCar(car: {
+  marque: string;
+  modele: string;
+  prix: number;
+  kilometrage: number;
+  annee: number;
+  description: string;
+  titre?: string;
+}): { score: number; tags: string[]; avis: string; verdict: string } {
+  const vehicle: ParsedVehicle = {
+    id: 'single',
+    titre: car.titre || `${car.marque} ${car.modele}`,
+    marque: car.marque,
+    modele: car.modele,
+    prix: car.prix,
+    kilometrage: car.kilometrage,
+    annee: car.annee,
+    carburant: 'autre',
+    transmission: 'autre',
+    puissance: 0,
+    image: '',
+    lien: '',
+    localisation: '',
+    description: car.description || '',
+  };
+
+  const context = detectContext(vehicle);
+  const fullText = (vehicle.titre + ' ' + vehicle.description).toLowerCase();
+  const analysis = analyzeDescription(fullText, context, vehicle);
+
+  // Km adjustment on a virtual median (the car's own price since single listing)
+  let coteRef = vehicle.prix;
+  const currentYear = new Date().getFullYear();
+  const age = Math.max(1, currentYear - vehicle.annee);
+  const kmRef = 15000 * age;
+
+  if (vehicle.kilometrage > 0) {
+    if (vehicle.kilometrage < age * 8000) {
+      coteRef *= 1.30;
+      analysis.tags.add('💎 PÉPITE KM');
+    } else if (vehicle.kilometrage < kmRef * 0.7) {
+      coteRef *= 1.15;
+    }
+    if (vehicle.kilometrage > kmRef * 1.5) {
+      coteRef *= 0.85;
+    }
+  }
+
+  // Base score: start at 60 for a single listing (no cluster comparison)
+  let finalScore = 60 + analysis.scoreMod;
+
+  // Kill switches
+  if (analysis.tags.has('💀 MOTEUR HS') || analysis.tags.has('💀 ACCIDENT GRAVE') || analysis.tags.has('⚠️ KM NON GARANTI')) {
+    finalScore = 0;
+  }
+
+  finalScore = Math.max(0, Math.min(99, Math.round(finalScore)));
+
+  // Generate verdict
+  let verdict = 'Correct';
+  if (finalScore >= 80) verdict = 'Excellente';
+  else if (finalScore >= 65) verdict = 'Bonne';
+  else if (finalScore >= 45) verdict = 'Correct';
+  else verdict = 'Risqué';
+
+  // Generate expert opinion from tags
+  const tagsList = Array.from(analysis.tags);
+  const positives = tagsList.filter(t => !t.includes('⚠️') && !t.includes('💀') && !t.includes('🚨') && !t.includes('💥'));
+  const negatives = tagsList.filter(t => t.includes('⚠️') || t.includes('💀') || t.includes('🚨') || t.includes('💥'));
+
+  let avis = `Véhicule ${car.marque} ${car.modele} de ${car.annee} avec ${car.kilometrage.toLocaleString()} km. `;
+  if (positives.length > 0) avis += `Points forts détectés : ${positives.slice(0, 3).map(t => t.replace(/^[^\s]+\s/, '')).join(', ')}. `;
+  if (negatives.length > 0) avis += `Attention : ${negatives.slice(0, 2).map(t => t.replace(/^[^\s]+\s/, '')).join(', ')}. `;
+  if (positives.length === 0 && negatives.length === 0) avis += 'Annonce standard sans élément particulier détecté.';
+
+  return {
+    score: finalScore,
+    tags: tagsList,
+    avis: avis.trim(),
+    verdict,
+  };
+}
