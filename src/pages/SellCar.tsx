@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { certifyCar } from '../utils/aiCertifier';
+import { scoreSingleCar } from '@/lib/vehicleAnalysis';
 import Header from '@/components/Header'; // 👈 AJOUT DE L'IMPORT DU HEADER
 import { 
   Loader2, CheckCircle, Upload, Car, ShieldCheck, 
@@ -50,7 +50,14 @@ export default function SellCar() {
     
     try {
       setLoadingStep("🧠 Analyse IA du véhicule en cours...");
-      const aiResult = await certifyCar(formData, imageFile);
+      const aiResult = scoreSingleCar({
+        marque: formData.marque,
+        modele: formData.modele,
+        prix: Number(formData.price),
+        kilometrage: Number(formData.mileage),
+        annee: Number(formData.year),
+        description: formData.description,
+      });
       
       if (!aiResult) throw new Error("L'IA n'a pas pu analyser le véhicule.");
       setCertification(aiResult);
