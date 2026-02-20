@@ -50,14 +50,14 @@ export function ListingAuditTrail({ listingId }: { listingId: string }) {
   const fetchAuditLog = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("listing_audit_log")
         .select("*")
         .eq("listing_id", listingId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAuditLog(data as AuditEntry[]);
+      setAuditLog((data || []) as AuditEntry[]);
     } catch (error) {
       console.error("Error fetching audit log:", error);
       toast({

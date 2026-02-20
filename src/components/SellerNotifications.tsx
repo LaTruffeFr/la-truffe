@@ -44,14 +44,14 @@ export function SellerNotifications({ userId }: { userId: string }) {
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setNotifications((prev) => [payload.new as Notification, ...prev]);
+            setNotifications((prev) => [payload.new as unknown as Notification, ...prev]);
           } else if (payload.eventType === "DELETE") {
             setNotifications((prev) =>
-              prev.filter((n) => n.id !== payload.old.id)
+              prev.filter((n) => n.id !== (payload.old as any).id)
             );
           } else if (payload.eventType === "UPDATE") {
             setNotifications((prev) =>
-              prev.map((n) => (n.id === payload.new.id ? payload.new : n))
+              prev.map((n) => (n.id === (payload.new as any).id ? payload.new as unknown as Notification : n))
             );
           }
         }
@@ -66,7 +66,7 @@ export function SellerNotifications({ userId }: { userId: string }) {
   const fetchNotifications = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("notifications")
         .select(
           `
@@ -85,7 +85,7 @@ export function SellerNotifications({ userId }: { userId: string }) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setNotifications(data as Notification[]);
+      setNotifications((data || []) as Notification[]);
     } catch (error) {
       console.error("Error fetching notifications:", error);
       toast({
@@ -100,7 +100,7 @@ export function SellerNotifications({ userId }: { userId: string }) {
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("notifications")
         .update({ is_read: true })
         .eq("id", notificationId);
@@ -122,7 +122,7 @@ export function SellerNotifications({ userId }: { userId: string }) {
 
   const handleDelete = async (notificationId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("notifications")
         .delete()
         .eq("id", notificationId);
