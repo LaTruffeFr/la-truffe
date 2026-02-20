@@ -103,32 +103,34 @@ const ClientDashboard = () => {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('reports')
-        .insert({
-          user_id: user.id,
-          lien_annonce: trimmedUrl,
-          status: 'pending' as const,
-          marque: 'Analyse en cours',
-          modele: 'En attente expert',
-        });
+      // Appeler la edge function audit-url qui scrape + analyse IA + sauvegarde
+      const { data, error } = await supabase.functions.invoke('audit-url', {
+        body: { url: trimmedUrl },
+      });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message || "Erreur lors de l'appel à l'audit");
+      
+      if (data?.error) throw new Error(data.error);
 
       toast({
-        title: "Demande envoyée ! ✅",
-        description: "Votre demande a été transmise à l'expert. Vous recevrez le rapport sous peu.",
+        title: "Analyse terminée ! ✅",
+        description: "Votre rapport d'audit est prêt. Cliquez dessus pour le consulter.",
         className: "bg-green-600 text-white border-0",
       });
 
       setListingUrl('');
       fetchReports();
+      
+      // Naviguer directement vers le rapport si on a l'ID
+      if (data?.reportId) {
+        navigate(`/report/${data.reportId}`);
+      }
     } catch (error: any) {
       console.error('Submit error:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message || "Impossible d'envoyer la demande. Réessayez.",
+        description: error.message || "Impossible d'analyser l'annonce. Réessayez.",
       });
     } finally {
       setIsSubmitting(false);
@@ -286,13 +288,13 @@ const ClientDashboard = () => {
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
-                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Envoi en cours...</>
+                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Analyse en cours...</>
                         ) : (
-                          <><ExternalLink className="w-4 h-4 mr-2" /> Demander un audit</>
+                          <><ExternalLink className="w-4 h-4 mr-2" /> Lancer l'audit</>
                         )}
                       </Button>
                       <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> Un expert analysera votre annonce et vous enverra le rapport.
+                        <AlertCircle className="w-3 h-3" /> L'analyse IA est instantanée (10-30 secondes).
                       </p>
                     </div>
                   </form>
