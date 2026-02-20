@@ -31,14 +31,14 @@ export function ListingPhotoGallery({
   const fetchPhotos = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("listing_photos")
         .select("*")
         .eq("listing_id", listingId)
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      setPhotos(data as ListingPhoto[]);
+      setPhotos((data || []) as ListingPhoto[]);
     } catch (error) {
       console.error("Error fetching photos:", error);
       toast({
@@ -80,7 +80,7 @@ export function ListingPhotoGallery({
           .getPublicUrl(filePath);
 
         // Save to database
-        const { error: dbError } = await supabase
+        const { error: dbError } = await (supabase as any)
           .from("listing_photos")
           .insert({
             listing_id: listingId,
@@ -114,7 +114,7 @@ export function ListingPhotoGallery({
   const handleSetPrimary = async (photoId: string) => {
     try {
       // Update all photos for this listing
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("listing_photos")
         .update({ is_primary: false })
         .eq("listing_id", listingId);
@@ -122,7 +122,7 @@ export function ListingPhotoGallery({
       if (error) throw error;
 
       // Set the selected photo as primary
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from("listing_photos")
         .update({ is_primary: true })
         .eq("id", photoId);
@@ -146,7 +146,7 @@ export function ListingPhotoGallery({
 
   const handleDeletePhoto = async (photoId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("listing_photos")
         .delete()
         .eq("id", photoId);

@@ -52,7 +52,7 @@ export function ListingStatistics({ userId }: { userId: string }) {
   const fetchListingsWithStats = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("cars")
         .select(
           `
