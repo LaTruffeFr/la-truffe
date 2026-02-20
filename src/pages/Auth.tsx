@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { lovable } from '@/integrations/lovable/index';
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { signIn, signUp, user, isAdmin, isRoleLoading } = useAuth();
   
@@ -19,17 +21,24 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Récupérer les paramètres query
+  const redirectUrl = searchParams.get('redirect');
+  const messageText = searchParams.get('message');
 
   // Redirect based on role when user is logged in and role is resolved
   useEffect(() => {
     if (user && !isRoleLoading) {
-      if (isAdmin) {
+      // Si un redirect est spécifié, utiliser celui-ci (ex: /vendre/formulaire)
+      if (redirectUrl) {
+        navigate(redirectUrl, { replace: true });
+      } else if (isAdmin) {
         navigate('/admin', { replace: true });
       } else {
         navigate('/client-dashboard', { replace: true });
       }
     }
-  }, [user, isAdmin, isRoleLoading, navigate]);
+  }, [user, isAdmin, isRoleLoading, navigate, redirectUrl]);
 
   // Show loading while checking role
   if (user && isRoleLoading) {
@@ -129,6 +138,16 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Afficher le message si fourni */}
+          {messageText && (
+            <Alert className="mb-4 border-blue-200 bg-blue-50">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                {decodeURIComponent(messageText)}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

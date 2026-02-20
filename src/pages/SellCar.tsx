@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { scoreSingleCar } from '@/lib/vehicleAnalysis';
 import Header from '@/components/Header'; // 👈 AJOUT DE L'IMPORT DU HEADER
 import { 
@@ -15,6 +17,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
 export default function SellCar() {
+  const navigate = useNavigate();
+  const { user, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState("");
@@ -25,6 +29,14 @@ export default function SellCar() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [certification, setCertification] = useState<any>(null);
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    if (!authLoading && !user) {
+      // Rediriger vers login avec un message
+      navigate('/auth?redirect=/vendre/formulaire&message=Créez un compte pour vendre votre véhicule');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleChange = (e: any) => setFormData({ ...formData, [e.target.name]: e.target.value });
   
@@ -43,6 +55,13 @@ export default function SellCar() {
   };
 
   const handleSubmit = async () => {
+    // Vérifications de sécurité
+    if (!user) {
+      alert("Vous devez être connecté pour créer une annonce.");
+      navigate('/auth');
+      return;
+    }
+
     if (!imageFile) return alert("Une photo est obligatoire pour l'analyse IA !");
     if (!formData.contact) return alert("Indiquez un moyen de contact.");
     
@@ -86,7 +105,8 @@ export default function SellCar() {
         is_user_listing: true,
         ai_score: aiResult.score,
         ai_avis: aiResult.avis,
-        ai_tags: aiResult.tags
+        ai_tags: aiResult.tags,
+        user_id: user.id // ✅ CRUCIAL : Ajouter l'ID du vendeur
       });
 
       if (dbError) throw dbError;
@@ -99,6 +119,23 @@ export default function SellCar() {
       setLoading(false);
     }
   };
+
+  // Afficher un loader pendant la vérification de l'auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirection automatique si pas connecté (le navigate dans useEffect s'en charge)
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
