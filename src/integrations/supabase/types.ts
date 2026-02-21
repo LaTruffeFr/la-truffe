@@ -50,6 +50,7 @@ export type Database = {
           seller_contact: string | null
           title: string
           updated_at: string
+          user_id: string | null
           year: number | null
         }
         Insert: {
@@ -66,6 +67,7 @@ export type Database = {
           seller_contact?: string | null
           title: string
           updated_at?: string
+          user_id?: string | null
           year?: number | null
         }
         Update: {
@@ -82,6 +84,7 @@ export type Database = {
           seller_contact?: string | null
           title?: string
           updated_at?: string
+          user_id?: string | null
           year?: number | null
         }
         Relationships: []

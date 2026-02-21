@@ -94,7 +94,7 @@ export default function SellCar() {
         .getPublicUrl(fileName);
 
       setLoadingStep("📝 Création de l'annonce certifiée...");
-      const { error: dbError } = await supabase.from('cars' as any).insert({
+      const { error: dbError } = await supabase.from('cars').insert({
         title: `${formData.marque} ${formData.modele}`,
         description: formData.description,
         price: Number(formData.price),
@@ -106,7 +106,7 @@ export default function SellCar() {
         ai_score: aiResult.score,
         ai_avis: aiResult.avis,
         ai_tags: aiResult.tags,
-        user_id: user.id // ✅ CRUCIAL : Ajouter l'ID du vendeur
+        user_id: user.id,
       });
 
       if (dbError) throw dbError;
