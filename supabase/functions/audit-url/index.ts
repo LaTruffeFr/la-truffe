@@ -97,28 +97,13 @@ serve(async (req) => {
 
     console.log("Scraped content length:", markdown.length);
 
-    // --- Step 2: AI Analysis ---
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    // --- Step 2: AI Analysis with Gemini ---
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `Tu es un expert automobile français reconnu, spécialisé dans l'évaluation de véhicules d'occasion. Tu analyses les annonces pour aider les acheteurs à prendre la meilleure décision.
+    const prompt = `Tu es un expert automobile français reconnu, spécialisé dans l'évaluation de véhicules d'occasion. Tu analyses les annonces pour aider les acheteurs à prendre la meilleure décision.
 
-Tu dois TOUJOURS retourner un JSON valide (pas de markdown, pas de \`\`\`).`
-          },
-          {
-            role: "user",
-            content: `Analyse cette annonce automobile et génère un rapport d'audit complet.
+Analyse cette annonce automobile et génère un rapport d'audit complet.
 
 URL de l'annonce : ${url}
 
@@ -142,7 +127,7 @@ Retourne UNIQUEMENT un JSON valide avec ce format exact :
   "etat": "Excellent|Très bon|Bon|Moyen|À vérifier",
   "points_forts": ["max 5 points positifs concis"],
   "points_faibles": ["max 5 points négatifs ou alertes"],
-  "expert_opinion": "IMPORTANT: Cet avis NE doit PAS énumérer les caractéristiques techniques (le prix, km, année sont déjà visibles). Au lieu de ça, écris 2-3 phrases MAXIMUM qui expliquent POURQUOI cette annonce est intéressante ou pas. Exemple: 'Le moteur DAZA est mythique et sans FAP, ce qui en fait un choix rassurant malgré le kilométrage élevé' ou 'L'historique Audi complet rassure sur la maintenance, mais le prix reste agressif comparé au marché'. Sois direct, passionné et concis.",
+  "expert_opinion": "2-3 phrases MAXIMUM qui expliquent POURQUOI cette annonce est intéressante ou pas. Sois direct, passionné et concis.",
   "negotiation_arguments": [
     {"titre": "Argument 1", "desc": "Explication détaillée pour négocier"},
     {"titre": "Argument 2", "desc": "Explication détaillée pour négocier"},
@@ -156,32 +141,30 @@ Règles d'estimation du prix :
 - prix_truffe = prix négocié optimal que l'acheteur devrait viser
 - score = note de 10 à 98 (10=mauvaise affaire, 98=affaire exceptionnelle)
 - Si tu ne peux pas déterminer une info, mets null
-- Les arguments de négociation doivent être concrets et basés sur l'annonce`
-          }
-        ],
-        temperature: 0.3,
+- Les arguments de négociation doivent être concrets et basés sur l'annonce`;
+
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          responseMimeType: "application/json",
+        },
       }),
     });
 
     if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Trop de requêtes. Réessayez dans quelques secondes." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Crédits IA insuffisants." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      console.error("AI error:", aiResponse.status);
+      const errText = await aiResponse.text();
+      console.error("Gemini API error:", aiResponse.status, errText);
       return new Response(JSON.stringify({ error: "Erreur lors de l'analyse IA." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     let analysis;
     try {

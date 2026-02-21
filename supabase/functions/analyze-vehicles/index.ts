@@ -57,8 +57,8 @@ serve(async (req) => {
     // --- End Authentication ---
 
     const { vehicles } = await req.json() as { vehicles: VehicleInput[] };
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
     if (!vehicles || vehicles.length === 0) {
       return new Response(JSON.stringify({ analyses: [] }), {
@@ -89,24 +89,16 @@ Marque: ${v.marque} | Modèle: ${v.modele} | Année: ${v.annee} | KM: ${v.kilome
 Description: ${v.description.slice(0, 500)}`
       ).join('\n\n---\n\n');
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            {
-              role: "system",
-              content: `Tu es un expert automobile français spécialisé dans l'analyse de véhicules d'occasion. 
+          contents: [{
+            parts: [{
+              text: `Tu es un expert automobile français spécialisé dans l'analyse de véhicules d'occasion.
 Pour chaque véhicule, analyse la description et extrais les informations clés.
-Tu dois retourner un JSON structuré.`
-            },
-            {
-              role: "user",
-              content: `Analyse ces ${batch.length} véhicules et retourne un JSON avec exactement ce format:
+
+Analyse ces ${batch.length} véhicules et retourne un JSON avec exactement ce format:
 
 ${vehicleList}
 
@@ -119,7 +111,7 @@ Retourne UNIQUEMENT un JSON valide (pas de markdown, pas de \`\`\`):
       "etat": "Excellent|Très bon|Bon|Moyen|À vérifier",
       "pointsForts": ["max 3 points positifs concis"],
       "pointsFaibles": ["max 3 points négatifs ou alertes"],
-      "resumeClient": "2-3 phrases MAXIMUM expliquant pourquoi cette voiture est intéressante (ou pas). NE PAS énumérer les specs. Exemple: 'Moteur robuste avec historique complet, idéal pour celui qui cherche de la fiabilité' ou 'Attention: plusieurs frais à prévoir pour les périphériques'. Sois direct et passionné.",
+      "resumeClient": "2-3 phrases MAXIMUM expliquant pourquoi cette voiture est intéressante (ou pas). NE PAS énumérer les specs. Sois direct et passionné.",
       "bonusScore": "nombre entre -20 et +20 (positif = bonne affaire confirmée, négatif = risques détectés)"
     }
   ]
@@ -131,30 +123,23 @@ Règles de scoring bonusScore:
 - Signes d'usure, frais à prévoir, fumeur → -5 à -10
 - Accident, moteur HS, problème grave → -15 à -20
 - Description vague ou trop courte → 0`
-            }
-          ],
-          temperature: 0.3,
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            responseMimeType: "application/json",
+          },
         }),
       });
 
       if (!response.ok) {
-        if (response.status === 429) {
-          console.error("Rate limited, skipping batch");
-          continue;
-        }
-        if (response.status === 402) {
-          console.error("Payment required");
-          return new Response(JSON.stringify({ error: "Crédit IA insuffisant" }), {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        console.error("AI error:", response.status);
+        const errText = await response.text();
+        console.error("Gemini API error:", response.status, errText);
         continue;
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || "";
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       
       try {
         const cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
