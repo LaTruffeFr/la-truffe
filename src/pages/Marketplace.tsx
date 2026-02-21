@@ -24,7 +24,7 @@ export default function Marketplace() {
     try {
       // On récupère uniquement les annonces des utilisateurs (is_user_listing = true)
       const { data, error } = await supabase
-        .from('cars' as any)
+        .from('cars')
         .select('*')
         .eq('is_user_listing', true)
         .order('created_at', { ascending: false });

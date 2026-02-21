@@ -40,7 +40,7 @@ export default function ListingDetails() {
     queryKey: ['car', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('cars' as any)
+        .from('cars')
         .select('*')
         .eq('id', id)
         .single();

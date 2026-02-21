@@ -72,7 +72,7 @@ export function SellerListings({ userId }: SellerListingsProps) {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('cars' as any)
+        .from('cars')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -116,7 +116,7 @@ export function SellerListings({ userId }: SellerListingsProps) {
 
     try {
       const { error } = await supabase
-        .from('cars' as any)
+        .from('cars')
         .update({
           title: formData.title,
           description: formData.description,
@@ -156,7 +156,7 @@ export function SellerListings({ userId }: SellerListingsProps) {
 
     try {
       const { error } = await supabase
-        .from('cars' as any)
+        .from('cars')
         .delete()
         .eq('id', deletingId)
         .eq('user_id', userId);
@@ -198,7 +198,7 @@ export function SellerListings({ userId }: SellerListingsProps) {
             Vous n'avez pas encore d'annonces. <br />
             <span className="text-sm">Créez votre première annonce pour la vendre !</span>
           </p>
-          <Button variant="default" size="sm" onClick={() => window.location.href = '/sell-car'}>
+          <Button variant="default" size="sm" onClick={() => window.location.href = '/vendre/formulaire'}>
             <Plus className="w-4 h-4 mr-2" /> Créer une annonce
           </Button>
         </CardContent>
@@ -215,7 +215,7 @@ export function SellerListings({ userId }: SellerListingsProps) {
         <Button 
           variant="default" 
           size="sm"
-          onClick={() => window.location.href = '/sell-car'}
+          onClick={() => window.location.href = '/vendre/formulaire'}
         >
           <Plus className="w-4 h-4 mr-2" /> Nouvelle annonce
         </Button>
@@ -447,7 +447,7 @@ export function SellerListings({ userId }: SellerListingsProps) {
                   variant="outline" 
                   size="sm"
                   className="h-9"
-                  onClick={() => window.open(`/listing/${listing.id}`, '_blank')}
+                  onClick={() => window.open(`/annonce/${listing.id}`, '_blank')}
                 >
                   <Eye className="w-4 h-4 md:mr-1.5" />
                   <span className="hidden md:inline">Voir</span>
