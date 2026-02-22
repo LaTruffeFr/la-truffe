@@ -49,6 +49,25 @@ export function MobileNav() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
 
+              {/* Vendre & Acheter */}
+              <div className="pt-2">
+                <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Marketplace</p>
+                <button
+                  onClick={() => handleNavigate('/vendre')}
+                  className="flex items-center justify-between w-full px-4 py-3 text-left text-green-600 font-medium rounded-lg hover:bg-green-50 transition-colors"
+                >
+                  🚗 Vendre ma voiture
+                  <ChevronRight className="h-4 w-4 text-green-500" />
+                </button>
+                <button
+                  onClick={() => handleNavigate('/annonces')}
+                  className="flex items-center justify-between w-full px-4 py-3 text-left text-foreground rounded-lg hover:bg-muted transition-colors"
+                >
+                  Acheter
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+
               {/* Rapports Section */}
               <div className="pt-2">
                 <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Rapports</p>
