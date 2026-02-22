@@ -72,9 +72,9 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url,
-        formats: ["markdown"],
-        onlyMainContent: true,
-        waitFor: 3000,
+        formats: ["markdown", "html"],
+        onlyMainContent: false,
+        waitFor: 8000,
       }),
     });
 
@@ -88,14 +88,18 @@ serve(async (req) => {
 
     const scrapeData = await scrapeResponse.json();
     const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || "";
+    const html = scrapeData?.data?.html || scrapeData?.html || "";
+    
+    // Use markdown if available, otherwise fall back to HTML content
+    const scrapedContent = markdown.length > 200 ? markdown : html;
 
-    if (!markdown || markdown.length < 50) {
+    if (!scrapedContent || scrapedContent.length < 50) {
       return new Response(JSON.stringify({ error: "Contenu de l'annonce insuffisant. L'annonce a peut-être été supprimée." }), {
         status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Scraped content length:", markdown.length);
+    console.log("Scraped content length:", scrapedContent.length, "markdown:", markdown.length, "html:", html.length);
 
     // --- Step 2: AI Analysis with Gemini ---
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -108,7 +112,7 @@ Analyse cette annonce automobile et génère un rapport d'audit complet.
 URL de l'annonce : ${url}
 
 Contenu de l'annonce :
-${markdown.slice(0, 4000)}
+${scrapedContent.slice(0, 6000)}
 
 Retourne UNIQUEMENT un JSON valide avec ce format exact :
 {
