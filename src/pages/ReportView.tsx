@@ -241,9 +241,43 @@ const ReportView = () => {
         {/* --- SECTION 1 : EN-TÊTE --- */}
         <div className="flex flex-col md:flex-row gap-6 mb-8 pdf-section">
           <div className="w-full md:w-1/3">
-            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-[4/3] group bg-slate-100">
-              <ProxiedImage src={isSingleAudit ? undefined : vehiculeCible?.image} brand={report.marque} alt={`${report.marque} ${report.modele}`} className="w-full h-full object-cover object-center" />
-              <div className="absolute top-3 right-3"><Badge className={`${stats.isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1 shadow-md border-0`}>{stats.isGoodDeal ? 'Bonne affaire' : 'Prix élevé'}</Badge></div>
+            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-[4/3] group bg-slate-800">
+              {/* Image: use single audit image_url, screenshot fallback, or vehicle image */}
+              {isSingleAudit && singleAuditData?.image_url ? (
+                <img 
+                  src={singleAuditData.image_url} 
+                  alt={`${report.marque} ${report.modele}`} 
+                  className="w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    // Fallback to screenshot if image fails
+                    if (singleAuditData?.screenshot) {
+                      (e.target as HTMLImageElement).src = `data:image/png;base64,${singleAuditData.screenshot}`;
+                    } else {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }
+                  }}
+                />
+              ) : isSingleAudit && singleAuditData?.screenshot ? (
+                <img 
+                  src={`data:image/png;base64,${singleAuditData.screenshot}`} 
+                  alt={`${report.marque} ${report.modele}`} 
+                  className="w-full h-full object-cover object-center"
+                />
+              ) : (
+                <ProxiedImage src={vehiculeCible?.image} brand={report.marque} alt={`${report.marque} ${report.modele}`} className="w-full h-full object-cover object-center" />
+              )}
+              {/* Badge overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <div className="absolute top-3 right-3">
+                <Badge className={`${stats.isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1.5 shadow-lg border-0 text-sm font-bold`}>
+                  {stats.isGoodDeal ? '✅ Bonne affaire' : '⚠️ Prix élevé'}
+                </Badge>
+              </div>
+              <div className="absolute bottom-3 left-3">
+                <Badge className="bg-white/90 text-slate-900 px-3 py-1 shadow-md border-0 font-bold text-xs backdrop-blur-sm">
+                  Score: {stats.score}/100
+                </Badge>
+              </div>
             </div>
           </div>
           <div className="w-full md:w-2/3 flex flex-col justify-between">
@@ -254,6 +288,7 @@ const ReportView = () => {
                   <p className="text-slate-500 flex items-center gap-2 text-sm line-clamp-1">
                     {report.annee && <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium shrink-0">{report.annee}</span>}
                     {singleAuditData?.etat && <span className="truncate">• État : {singleAuditData.etat}</span>}
+                    {singleAuditData?.localisation && <span className="truncate flex items-center gap-1"><MapPin className="w-3 h-3" />{singleAuditData.localisation}</span>}
                     {!isSingleAudit && vehiculeCible?.titre && <span className="truncate">• {vehiculeCible.titre}</span>}
                   </p>
                 </div>
@@ -271,11 +306,23 @@ const ReportView = () => {
               </div>
             </div>
             <div className="mt-6 flex gap-3 print:hidden">
-              <Button className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-base md:text-lg no-print pdf-hide" onClick={() => { const link = report.lien_annonce || vehiculeCible?.lien; if (link) window.open(link, '_blank'); }}>Voir l'annonce</Button>
+              <Button className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-base md:text-lg no-print pdf-hide" onClick={() => { const link = report.lien_annonce || vehiculeCible?.lien; if (link) window.open(link, '_blank'); }}>
+                <ExternalLink className="w-5 h-5 mr-2" /> Voir l'annonce
+              </Button>
               <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300 no-print pdf-hide"><Share2 className="w-5 h-5 text-slate-600" /></Button>
             </div>
           </div>
         </div>
+
+        {/* --- RÉSUMÉ RAPIDE (Single Audit) --- */}
+        {isSingleAudit && singleAuditData?.resume && (
+          <Card className="mb-8 border-primary/20 bg-primary/5 shadow-sm pdf-section">
+            <CardContent className="p-5 flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <p className="text-slate-700 text-sm leading-relaxed font-medium">{singleAuditData.resume}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* --- SECTION 2 : VERDICT --- */}
         <div className="grid md:grid-cols-3 gap-6 mb-8 pdf-section">
@@ -330,18 +377,19 @@ const ReportView = () => {
           <div className="grid md:grid-cols-2 gap-6 mb-8 pdf-section">
             {/* Points forts */}
             {singleAuditData.points_forts?.length > 0 && (
-              <Card className="border-slate-200 shadow-md bg-white">
+              <Card className="border-green-200/50 shadow-md bg-gradient-to-br from-green-50/50 to-white overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" /> Points forts
+                    <div className="p-1.5 bg-green-100 rounded-lg"><CheckCircle2 className="w-5 h-5 text-green-600" /></div> Points forts
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 pt-2">
                   <ul className="space-y-3">
                     {singleAuditData.points_forts.map((p: string, i: number) => (
                       <li key={i} className="flex items-start gap-3 text-sm">
-                        <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">✓</span>
-                        <span className="text-slate-700">{p}</span>
+                        <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">✓</span>
+                        <span className="text-slate-700 leading-relaxed">{p}</span>
                       </li>
                     ))}
                   </ul>
@@ -350,18 +398,19 @@ const ReportView = () => {
             )}
             {/* Points faibles */}
             {singleAuditData.points_faibles?.length > 0 && (
-              <Card className="border-slate-200 shadow-md bg-white">
+              <Card className="border-orange-200/50 shadow-md bg-gradient-to-br from-orange-50/50 to-white overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-orange-400 to-amber-500" />
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-orange-500" /> Points de vigilance
+                    <div className="p-1.5 bg-orange-100 rounded-lg"><AlertTriangle className="w-5 h-5 text-orange-600" /></div> Points de vigilance
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 pt-2">
                   <ul className="space-y-3">
                     {singleAuditData.points_faibles.map((p: string, i: number) => (
                       <li key={i} className="flex items-start gap-3 text-sm">
-                        <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">!</span>
-                        <span className="text-slate-700">{p}</span>
+                        <span className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">!</span>
+                        <span className="text-slate-700 leading-relaxed">{p}</span>
                       </li>
                     ))}
                   </ul>

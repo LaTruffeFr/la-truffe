@@ -72,7 +72,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url,
-        formats: ["markdown", "html"],
+        formats: ["markdown", "html", "screenshot"],
         onlyMainContent: false,
         waitFor: 8000,
       }),
@@ -89,6 +89,23 @@ serve(async (req) => {
     const scrapeData = await scrapeResponse.json();
     const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || "";
     const html = scrapeData?.data?.html || scrapeData?.html || "";
+    const screenshot = scrapeData?.data?.screenshot || scrapeData?.screenshot || null;
+    const metadata = scrapeData?.data?.metadata || scrapeData?.metadata || {};
+    
+    // Extract image URL from metadata or HTML
+    let imageUrl = metadata?.ogImage || metadata?.["og:image"] || null;
+    if (!imageUrl && html) {
+      // Try to extract first large image from HTML
+      const imgMatch = html.match(/<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i);
+      if (imgMatch) imageUrl = imgMatch[1];
+    }
+    if (!imageUrl && html) {
+      // Broader image extraction
+      const imgMatch2 = html.match(/https?:\/\/[^"'\s]+(?:\.jpg|\.jpeg|\.png|\.webp)/i);
+      if (imgMatch2) imageUrl = imgMatch2[0];
+    }
+    
+    console.log("Image URL found:", imageUrl ? imageUrl.slice(0, 80) : "none");
     
     // Use markdown if available, otherwise fall back to HTML content
     const scrapedContent = markdown.length > 200 ? markdown : html;
@@ -208,6 +225,8 @@ Règles d'estimation du prix :
         resume: analysis.resume || null,
         score: analysis.score || 50,
         localisation: analysis.localisation || null,
+        image_url: imageUrl || null,
+        screenshot: screenshot || null,
       },
     };
 
