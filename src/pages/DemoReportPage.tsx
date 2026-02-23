@@ -1,442 +1,370 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { 
-  ArrowLeft, Download, Share2, CheckCircle2, 
-  AlertTriangle, TrendingDown, Calendar, Gauge, Fuel, 
-  Euro, ShieldCheck, Search, Trophy, ExternalLink
+  ArrowLeft, ExternalLink, Terminal, ShieldCheck, 
+  Cpu, MessageSquareWarning, Zap, CheckCircle2, AlertTriangle, Loader2,
+  Copy, Check, Snowflake, Flame, CircleDashed, Settings2, TrendingDown,
+  BrainCircuit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-// J'utilise le sniper chart comme validé
-import { SniperChart } from "@/components/trading/SniperChart";
-import { getDemoReport, DemoReport } from "@/data/demoData";
-import { Footer } from "@/components/landing";
+import { Footer } from "@/components/landing/Footer";
 
-// Définition d'un type pour les données véhicules compatibles avec SniperChart
-// Adaptez ce type si nécessaire selon la définition réelle dans SniperChart.tsx
-interface VehicleData {
-  id: string;
-  prix: number;
-  kilometrage: number;
-  titre: string;
-  annee: number;
-  image?: string;
-  lien?: string;
-  // Ajoutez d'autres propriétés si nécessaire
-}
+// Fausses données simulant un retour parfait de l'Edge Function "URL Audit"
+const demoUrlReport = {
+  marque: "Tesla",
+  modele: "Model 3 Grande Autonomie (AWD)",
+  annee: 2021,
+  kilometrage: 46500,
+  prix_affiche: 29900,
+  prix_truffe: 27100,
+  score: 74,
+  carburant: "Électrique",
+  image: "https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=1200&auto=format&fit=crop",
+  lien: "https://www.leboncoin.fr/ad/voitures/2489731548",
+  tags_algo: [
+    { label: "PRIX SURÉVALUÉ", type: "destructive" },
+    { label: "GARANTIE BATTERIE ACTIVE", type: "success" },
+    { label: "FORTE CONCURRENCE", type: "warning" },
+    { label: "PROPRIÉTAIRE UNIQUE", type: "success" }
+  ],
+  options_extraites: ["Autopilot Amélioré", "Intérieur Blanc Premium", "Jantes 19\" Sport", "Pompe à chaleur", "Sièges chauffants AV/AR"],
+  expert_opinion: "Cette Model 3 Grande Autonomie de 2021 est une excellente cuvée (présence de la pompe à chaleur). Cependant, le vendeur particulier l'a affichée à 29 900 €, ce qui est 2 800 € au-dessus du marché actuel. Les récentes baisses de prix de Tesla sur le neuf ont fait chuter la cote de l'occasion. Ne l'achetez pas à ce prix, une grosse marge de négociation est possible.",
+  negotiation: [
+    {
+      titre: "La carte de la baisse des prix du neuf",
+      desc: "C'est l'argument ultime sur les Tesla. Envoyez ce message : « Bonjour, votre configuration m'intéresse. Cependant, avec la récente baisse des prix et le bonus écologique sur les modèles neufs, votre prix d'occasion est trop proche du neuf. Si vous êtes prêt à la laisser à 27 100 €, je peux finaliser la vente rapidement. »"
+    },
+    {
+      titre: "Vérifier le talon d'Achille (Les pneus)",
+      desc: "Les Model 3 Dual Motor consomment énormément de pneus. L'annonce ne précise pas leur état. Si vous allez la voir, vérifiez-les. Un train de pneus 19 pouces coûte environ 800€. Si la gomme est proche du témoin, c'est un levier de négociation immédiat à utiliser devant le véhicule."
+    }
+  ]
+};
+
+// Composant pour la Jauge Circulaire
+const ScoreCircularGauge = ({ score }: { score: number }) => {
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (score / 100) * circumference;
+  
+  // Couleur dynamique selon le score
+  const colorClass = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500';
+
+  return (
+    <div className="relative flex items-center justify-center w-36 h-36 mx-auto drop-shadow-sm">
+      <svg className="transform -rotate-90 w-36 h-36">
+        <circle cx="72" cy="72" r={radius} stroke="currentColor" strokeWidth="10" fill="transparent" className="text-slate-100" />
+        <circle cx="72" cy="72" r={radius} stroke="currentColor" strokeWidth="10" fill="transparent"
+          strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className={`${colorClass} transition-all duration-1000 ease-out`} />
+      </svg>
+      <div className="absolute flex flex-col items-center justify-center mt-1">
+        <span className={`text-4xl font-black ${colorClass}`}>{score}</span>
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">/ 100</span>
+      </div>
+    </div>
+  );
+};
+
+// Fonction pour associer une icône à une option détectée
+const getOptionIcon = (opt: string) => {
+  const text = opt.toLowerCase();
+  if (text.includes('pompe')) return <Snowflake className="w-4 h-4 text-blue-500" />;
+  if (text.includes('siège')) return <Flame className="w-4 h-4 text-orange-500" />;
+  if (text.includes('jante')) return <CircleDashed className="w-4 h-4 text-slate-700" />;
+  if (text.includes('autopilot')) return <Cpu className="w-4 h-4 text-purple-500" />;
+  return <Settings2 className="w-4 h-4 text-slate-500" />;
+};
+
 
 const DemoReportPage = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [report, setReport] = useState<DemoReport | null>(null);
-  const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [isCopied, setIsCopied] = useState(false);
 
-  // Simulation de chargement
+  // Animation de chargement
   useEffect(() => {
-    const loadData = () => {
-      const reportId = id || "demo-1";
-      const foundReport = getDemoReport(reportId);
+    const timer = setInterval(() => {
+      setLoadingStep(prev => {
+        if (prev >= 4) { clearInterval(timer); return 4; }
+        return prev + 1;
+      });
+    }, 800);
+    return () => clearInterval(timer);
+  }, []);
 
-      if (foundReport) {
-        setReport(foundReport);
-      } else {
-        navigate("/");
-      }
-      setLoading(false);
-    };
-
-    setTimeout(loadData, 800);
-  }, [id, navigate]);
-
-  const handleDownload = () => {
-    toast({
-      title: "Téléchargement lancé",
-      description: "Votre rapport PDF complet est en cours de génération.",
-    });
+  const handleCopySMS = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    toast({ title: "Copié !", description: "Le message est prêt à être envoyé au vendeur." });
+    setTimeout(() => setIsCopied(false), 3000);
   };
 
-  if (loading) {
+  const isLoading = loadingStep < 4;
+  const report = demoUrlReport;
+  const economy = report.prix_affiche - report.prix_truffe;
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="text-slate-500 font-medium animate-pulse">Analyse du marché en temps réel...</p>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <Helmet><title>Analyse en cours... | La Truffe</title></Helmet>
+        <Card className="w-full max-w-lg border-primary/20 bg-slate-900 shadow-2xl overflow-hidden text-slate-100">
+          <CardHeader className="border-b border-slate-800 bg-slate-950/50 pb-4">
+            <CardTitle className="flex items-center gap-2 text-primary font-mono text-lg">
+              <Terminal className="h-5 w-5 animate-pulse" /> Exemple : Analyse URL en cours...
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4 font-mono text-sm">
+            <Progress value={loadingStep * 25} className="h-1.5 mb-6 bg-slate-800 [&>div]:bg-primary" />
+            <div className={`flex items-center gap-2 transition-all ${loadingStep >= 1 ? "text-primary" : "text-slate-600 opacity-30"}`}>
+              {loadingStep === 0 ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} &gt; Scraping LeBonCoin... [OK]
+            </div>
+            <div className={`flex items-center gap-2 transition-all ${loadingStep >= 2 ? "text-primary" : "text-slate-600 opacity-30"}`}>
+              {loadingStep === 1 ? <Loader2 className="w-4 h-4 animate-spin" /> : loadingStep > 1 ? <CheckCircle2 className="w-4 h-4" /> : <Loader2 className="w-4 h-4 opacity-0" />} &gt; Extraction JSON via Gemini IA... [OK]
+            </div>
+            <div className={`flex items-center gap-2 transition-all ${loadingStep >= 3 ? "text-primary" : "text-slate-600 opacity-30"}`}>
+              {loadingStep === 2 ? <Loader2 className="w-4 h-4 animate-spin" /> : loadingStep > 2 ? <CheckCircle2 className="w-4 h-4" /> : <Loader2 className="w-4 h-4 opacity-0" />} &gt; Jugement strict Algo V11... [Score calculé]
+            </div>
+            <div className={`flex items-center gap-2 transition-all ${loadingStep >= 4 ? "text-primary" : "text-slate-600 opacity-30"}`}>
+              {loadingStep === 3 ? <Loader2 className="w-4 h-4 animate-spin" /> : loadingStep > 3 ? <CheckCircle2 className="w-4 h-4" /> : <Loader2 className="w-4 h-4 opacity-0" />} &gt; Rédaction argumentaire... [Terminé]
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (!report) return null;
-
-  const vehiculeCible = report.vehicles_data[0];
-  const economy = report.prix_moyen - vehiculeCible.prix;
-  const isGoodDeal = economy > 0;
-  const score = isGoodDeal ? 92 : 45;
-  const vehiclesData = report.vehicles_data;
-
-  // Calcul TrendLine (Logarithmique pour être cohérent avec l'app principale)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const calculateLogTrendLine = (data: any[]) => {
-    if (!data || data.length < 2) return { type: 'log', a: 0, b: 0 };
-    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    let count = 0;
-    data.forEach(v => {
-      if (v.kilometrage > 100 && v.prix > 1000) {
-        const x = Math.log(v.kilometrage);
-        const y = v.prix;
-        sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
-        count++;
-      }
-    });
-    if (count < 2) return { type: 'log', a: 0, b: 0 };
-    const slope = (count * sumXY - sumX * sumY) / (count * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / count;
-    return { type: 'log', a: intercept, b: slope };
-  }
-  
-  const trendLine = calculateLogTrendLine(vehiclesData);
-
-  // LOGIQUE TOP 5 : On trie par score (simulé ici par le prix le plus bas pour l'exemple)
-  // On exclut le véhicule cible (index 0) pour montrer des alternatives
-  const top5Deals = [...vehiclesData]
-    .slice(1) // On enlève le premier (le nôtre)
-    .sort((a, b) => a.prix - b.prix) // On trie par prix croissant (les meilleures affaires)
-    .slice(0, 5); // On garde les 5 premiers
-
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900">
-      
-      {/* --- HEADER --- */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <Helmet><title>Rapport d'Audit : Tesla Model 3 | La Truffe</title></Helmet>
+
+      {/* --- HEADER NAVBAR --- */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
-            La Truffe
-          </Link>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/client-dashboard')}>
+          <Link to="/" className="font-bold text-xl tracking-tight text-slate-900">La Truffe</Link>
+          <div className="flex items-center gap-4">
+            <Badge variant="secondary" className="hidden sm:inline-flex bg-amber-100 text-amber-800 hover:bg-amber-100">
+              Ceci est un exemple de rapport
+            </Badge>
+            <Button variant="outline" size="sm" onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Retour
-            </Button>
-            <Button size="sm" onClick={handleDownload} className="hidden sm:flex">
-              <Download className="w-4 h-4 mr-2" /> Télécharger PDF
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl space-y-8">
         
-        {/* --- FICHE VÉHICULE --- */}
-        <div className="flex flex-col md:flex-row gap-6 mb-8">
-          <div className="w-full md:w-1/3">
-            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-[4/3] group">
-              <img 
-                src={vehiculeCible.image} 
-                alt={vehiculeCible.titre} 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute top-3 right-3">
-                <Badge className={`${isGoodDeal ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1 shadow-md`}>
-                  {isGoodDeal ? 'Excellent Deal' : 'Prix Moyen'}
-                </Badge>
-              </div>
-            </div>
+        {/* --- CAR PROFILE BANNER --- */}
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-lg border-4 border-white shrink-0">
+            <img src={report.image} alt={report.modele} className="w-full h-full object-cover" />
           </div>
-
-          <div className="w-full md:w-2/3 flex flex-col justify-between">
-            <div>
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h1 className="text-3xl font-extrabold text-slate-900 mb-1">{report.marque} {report.modele}</h1>
-                  <p className="text-slate-500 flex items-center gap-2 text-sm">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium">2019</span>
-                    • {vehiculeCible.titre}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-slate-900">{vehiculeCible.prix.toLocaleString()} €</div>
-                  <div className="text-sm text-slate-500">Prix affiché</div>
-                </div>
-              </div>
-
-              <Separator className="my-4" />
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Gauge className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold">Kilométrage</p>
-                    <p className="font-bold text-slate-900">{vehiculeCible.kilometrage.toLocaleString()} km</p>
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Fuel className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold">Carburant</p>
-                    <p className="font-bold text-slate-900">Essence</p>
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><Calendar className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold">Année</p>
-                    <p className="font-bold text-slate-900">{vehiculeCible.annee || 2019}</p>
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-green-50 text-green-600 rounded-lg"><ShieldCheck className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold">Fiabilité</p>
-                    <p className="font-bold text-slate-900">Élevée</p>
-                  </div>
-                </div>
-              </div>
+          <div className="text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-0">Leboncoin</Badge>
+              <span className="text-sm text-slate-500 font-mono">ID: TSL-892X</span>
             </div>
-
-            <div className="mt-6 flex gap-3">
-              {/* --- CORRECTION 1 : .lien au lieu de .lien_url --- */}
-              <Button 
-                className="flex-1 bg-slate-900 hover:bg-slate-800 h-12 text-lg"
-                onClick={() => window.open(vehiculeCible.lien || '#', '_blank')}
-              >
-                Voir l'annonce originale <ExternalLink className="ml-2 w-4 h-4"/>
-              </Button>
-              <Button variant="outline" className="h-12 w-12 p-0 flex items-center justify-center border-slate-300">
-                <Share2 className="w-5 h-5 text-slate-600" />
-              </Button>
-            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">{report.marque} {report.modele}</h1>
+            <p className="text-slate-500 font-medium mt-1">Année {report.annee} • {report.kilometrage.toLocaleString('fr-FR')} km • {report.carburant}</p>
           </div>
         </div>
 
-        {/* --- SCORES & ANALYSE --- */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="md:col-span-1 border-slate-200 shadow-md bg-white overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 to-emerald-600" />
+        {/* =========================================
+            HERO SECTION : LES 3 GROSSES CARTES GRID
+            ========================================= */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          
+          {/* CARTE 1 : SCORE */}
+          <Card className="border-slate-200 shadow-sm bg-white overflow-hidden flex flex-col justify-center py-6 relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-amber-400"></div>
             <CardContent className="p-6 text-center">
-              <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider mb-4">Score La Truffe</h3>
-              <div className="relative inline-flex items-center justify-center">
-                <svg className="w-32 h-32 transform -rotate-90">
-                  <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
-                  <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={351} strokeDashoffset={351 - (351 * score) / 100} className="text-green-500" />
-                </svg>
-                <span className="absolute text-4xl font-extrabold text-slate-900">{score}</span>
-              </div>
-              <p className="mt-4 font-bold text-green-600 text-lg flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5" /> Très bonne affaire
+              <p className="text-xs font-bold text-slate-400 uppercase mb-6 tracking-widest flex items-center justify-center gap-2">
+                <ShieldCheck className="w-4 h-4" /> Score de Confiance
               </p>
-              <p className="text-slate-500 text-sm mt-1">Ce véhicule est mieux placé que 85% du marché.</p>
+              <ScoreCircularGauge score={report.score} />
+              <p className="mt-6 text-sm text-slate-500">Véhicule intéressant, mais points d'attention détectés.</p>
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2 border-slate-200 shadow-md bg-white">
+          {/* CARTE 2 : PRIX & ÉCONOMIE */}
+          <Card className="border-slate-200 shadow-sm bg-white relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Euro className="w-5 h-5 text-primary" /> Analyse Financière
-              </CardTitle>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Analyse de Valeur</p>
             </CardHeader>
-            <CardContent className="p-6 pt-2">
-              <div className="flex items-center justify-between mb-6">
+            <CardContent className="space-y-6">
+              <div className="flex justify-between items-end border-b border-slate-100 pb-4">
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Prix du marché estimé</p>
-                  <p className="text-2xl font-bold text-slate-900">{report.prix_moyen.toLocaleString()} €</p>
+                  <p className="text-sm text-slate-500 mb-1">Prix Vendeur</p>
+                  <p className="text-2xl font-semibold text-slate-400 line-through decoration-red-400/50">{report.prix_affiche.toLocaleString('fr-FR')} €</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-slate-500 mb-1">Économie potentielle</p>
-                  <p className="text-2xl font-bold text-green-600">-{economy.toLocaleString()} €</p>
+                  <p className="text-sm font-bold text-emerald-600 mb-1 flex items-center justify-end gap-1"><CheckCircle2 className="w-4 h-4"/> Vraie Cote</p>
+                  <p className="text-4xl font-black text-slate-900">{report.prix_truffe.toLocaleString('fr-FR')} €</p>
                 </div>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1 font-medium">
-                    <span>Positionnement Prix</span>
-                    <span className="text-green-600">Sous la cote</span>
+              
+              <div className="bg-emerald-50 rounded-xl p-4 flex items-center justify-between border border-emerald-100 shadow-inner">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-500 text-white p-2 rounded-lg">
+                    <TrendingDown className="w-5 h-5" />
                   </div>
-                  <Progress value={25} className="h-2.5 bg-slate-100" />
-                  <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span>Très bas</span>
-                    <span>Moyen</span>
-                    <span>Élevé</span>
-                  </div>
+                  <span className="font-semibold text-emerald-900">Marge de négo.</span>
                 </div>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 flex gap-3 items-start">
-                  <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" />
-                  <p><strong>Attention :</strong> Le prix est attractif (-{Math.round((economy/report.prix_moyen)*100)}%), vérifiez bien l'historique d'entretien et l'absence d'accident.</p>
-                </div>
+                <span className="text-2xl font-black text-emerald-600">+{economy.toLocaleString('fr-FR')} €</span>
               </div>
             </CardContent>
+          </Card>
+
+          {/* CARTE 3 : BADGES DU MARCHÉ (ALGO V11) */}
+          <Card className="border-slate-200 shadow-sm bg-white">
+             <CardHeader className="pb-4 border-b border-slate-50">
+               <CardTitle className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                 <Zap className="w-4 h-4 text-primary" /> Signaux détectés (V11)
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="p-6">
+               <div className="flex flex-col gap-3">
+                 {report.tags_algo.map((tag, i) => {
+                   let badgeColor = "bg-slate-100 text-slate-700";
+                   let Icon = Zap;
+                   
+                   if (tag.type === 'destructive') {
+                     badgeColor = "bg-red-50 text-red-700 border-red-200 ring-1 ring-red-100";
+                     Icon = AlertTriangle;
+                   } else if (tag.type === 'success') {
+                     badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
+                     Icon = CheckCircle2;
+                   } else if (tag.type === 'warning') {
+                     badgeColor = "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100";
+                     Icon = MessageSquareWarning;
+                   }
+
+                   return (
+                     <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${badgeColor}`}>
+                       <Icon className="w-5 h-5" />
+                       <span className="font-bold text-sm">{tag.label}</span>
+                     </div>
+                   )
+                 })}
+               </div>
+             </CardContent>
           </Card>
         </div>
 
-        {/* --- GRAPHIQUE --- */}
-        {vehiclesData.length > 0 && (
-          <div className="mb-12 pdf-section">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <TrendingDown className="w-6 h-6 text-primary" /> Analyse du Marché
-            </h2>
-            <Card className="shadow-lg border-slate-200 overflow-hidden h-[350px] md:h-[500px]">
-              <CardContent className="p-2 md:p-4 h-full">
-                <SniperChart 
-                  data={vehiclesData as any} 
-                  trendLine={trendLine}
-                  onVehicleClick={(vehicle) => { setSelectedVehicle(vehicle); }} 
-                />
+        {/* =========================================
+            SYNTHÈSE DE L'IA (ALERT BLOC)
+            ========================================= */}
+        <Alert className="bg-primary/5 border-primary/20 p-6 md:p-8 rounded-2xl flex flex-col md:flex-row items-start md:items-center gap-6 shadow-sm">
+          <div className="bg-white p-4 rounded-full shadow-sm border border-primary/10 shrink-0">
+            <BrainCircuit className="w-8 h-8 text-primary" />
+          </div>
+          <div>
+            <AlertTitle className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-2">
+              L'avis du Cerveau Hybride
+            </AlertTitle>
+            <AlertDescription className="text-slate-700 leading-relaxed text-base">
+              {report.expert_opinion}
+            </AlertDescription>
+          </div>
+        </Alert>
+
+        <div className="grid md:grid-cols-3 gap-8 pb-12">
+          
+          {/* =========================================
+              PLAYBOOK DE NÉGOCIATION (TIMELINE)
+              ========================================= */}
+          <div className="md:col-span-2 space-y-6">
+            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <MessageSquareWarning className="w-6 h-6 text-primary" /> Votre Playbook de Négociation
+            </h3>
+            
+            <Card className="border-slate-200 shadow-sm overflow-hidden">
+              <CardContent className="p-6 md:p-8">
+                <div className="border-l-2 border-slate-200 ml-4 pl-8 py-2 relative space-y-12">
+                  
+                  {report.negotiation.map((nego, i) => {
+                    // Si la description contient un message entre guillemets, on le stylise façon SMS
+                    const parts = nego.desc.split('«');
+                    const hasSMS = parts.length === 2;
+
+                    return (
+                      <div key={i} className="relative">
+                        {/* Point de la timeline */}
+                        <div className="absolute -left-[43px] top-0 w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center font-bold text-slate-500 shadow-sm z-10">
+                          {i+1}
+                        </div>
+                        
+                        <h4 className="font-bold text-lg text-slate-900 mb-2">{nego.titre}</h4>
+                        
+                        {hasSMS ? (
+                          <div className="space-y-4">
+                            <p className="text-slate-600 leading-relaxed">{parts[0]}</p>
+                            
+                            {/* BULLE SMS */}
+                            <div className="relative w-full md:w-5/6">
+                              <div className="bg-blue-600 text-white p-5 rounded-2xl rounded-bl-sm shadow-md pr-12 relative">
+                                <p className="text-[15px] leading-relaxed italic">
+                                  "{parts[1].replace('»', '').trim()}"
+                                </p>
+                              </div>
+                              {/* Bouton de copie flottant */}
+                              <Button 
+                                onClick={() => handleCopySMS(parts[1].replace('»', '').trim())}
+                                className="absolute -bottom-4 right-4 shadow-lg rounded-full w-12 h-12 p-0 bg-slate-900 hover:bg-slate-800 transition-transform hover:scale-105"
+                              >
+                                {isCopied ? <Check className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5 text-white" />}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            {nego.desc}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+
+                </div>
               </CardContent>
             </Card>
           </div>
-        )}
 
-        {/* --- NOUVEAU : TOP 5 DES ALTERNATIVES --- */}
-        {top5Deals.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-yellow-500" /> Les 5 Meilleures Alternatives
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {top5Deals.map((deal, idx) => (
-                <Card key={idx} className="overflow-hidden hover:shadow-lg transition-shadow border-slate-200 group">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-                    <img 
-                      src={deal.image || "/placeholder.svg"} 
-                      alt={deal.titre}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute top-2 left-2">
-                      <Badge className="bg-white/90 text-slate-900 hover:bg-white font-bold shadow-sm">
-                        #{idx + 1}
-                      </Badge>
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-bold text-slate-900 truncate mb-1">{deal.titre}</h3>
-                    <div className="flex justify-between items-end mb-3">
-                      <div>
-                        <p className="text-2xl font-bold text-primary">{deal.prix.toLocaleString()} €</p>
-                        <p className="text-xs text-slate-500">{deal.kilometrage.toLocaleString()} km • {deal.annee}</p>
+          {/* =========================================
+              OPTIONS EXTRAITES (GRILLE)
+              ========================================= */}
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <Cpu className="w-6 h-6 text-purple-500" /> Équipements détectés
+            </h3>
+            
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="p-6">
+                <p className="text-sm text-slate-500 mb-6">L'IA a lu la description et identifié ces options valorisantes qui justifient (en partie) le prix :</p>
+                <div className="flex flex-col gap-3">
+                  {report.options_extraites.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <div className="bg-white p-2 rounded-md shadow-sm">
+                        {getOptionIcon(opt)}
                       </div>
-                      <div className="text-right">
-                        <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
-                          {Math.round(100 - (deal.prix / report.prix_moyen * 100))}% sous la cote
-                        </Badge>
-                      </div>
+                      <span className="font-medium text-slate-700 text-sm">{opt}</span>
                     </div>
-                    {/* --- CORRECTION 2 : .lien au lieu de .lien_url --- */}
-                    <Button 
-                      variant="default" 
-                      className="w-full bg-slate-900 hover:bg-slate-800"
-                      onClick={() => window.open(deal.lien, '_blank')}
-                    >
-                      Voir l'annonce
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-              
-              {/* Carte "Voir plus" */}
-              <Card className="flex flex-col items-center justify-center p-6 border-dashed border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group" onClick={() => navigate('/auth')}>
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                  <Search className="w-6 h-6 text-primary" />
+                  ))}
                 </div>
-                <h3 className="font-bold text-slate-900">Voir les 50 autres annonces</h3>
-                <p className="text-sm text-slate-500 text-center mt-1">Accédez à l'espace complet pour filtrer tout le marché.</p>
-              </Card>
-            </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
 
-        {/* --- AVIS EXPERT & NÉGO --- */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12 items-start">
-          {/* Avis de l'expert */}
-          {report.expert_opinion && (
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                🧐 L'avis de l'expert
-              </h2>
-              <Card className="border-l-4 border-l-primary shadow-sm">
-                <CardContent className="p-6">
-                  <div className="prose prose-slate max-w-none">
-                    {report.expert_opinion.split('\n\n').map((paragraph, idx) => {
-                      // Gère le formatage markdown basique
-                      const formattedText = paragraph
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-                      
-                      return (
-                        <p 
-                          key={idx} 
-                          className="text-slate-700 leading-relaxed mb-4"
-                          dangerouslySetInnerHTML={{ __html: formattedText }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="mt-6 flex items-center gap-3 pt-4 border-t border-slate-100">
-                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">JD</div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">Julien D.</p>
-                      <p className="text-xs text-slate-500">Analyste Automobile Senior</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Arguments de négociation */}
-          {report.negotiation_arguments && (
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                🥊 Arguments de négociation
-              </h2>
-              <Card className="shadow-sm">
-                <CardContent className="p-6">
-                  <div className="space-y-6">
-                    {report.negotiation_arguments.split(/\n\n(?=\d\.)/).map((section, idx) => {
-                      const lines = section.split('\n').filter(line => line.trim());
-                      const title = lines[0] || '';
-                      const content = lines.slice(1).join('\n');
-                      
-                      // Parse le titre pour extraire le numéro
-                      const numberMatch = title.match(/^(\d)\./);
-                      const number = numberMatch ? numberMatch[1] : String(idx + 1);
-                      const titleText = title.replace(/^\d\.?\s*/, '');
-                      
-                      // Formatte le contenu avec le markdown basique
-                      const formattedContent = content
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                        .replace(/\n/g, '<br/>');
-                      
-                      return (
-                        <div key={idx} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
-                          <div className="flex gap-3 items-start">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm">
-                              {number}
-                            </div>
-                            <div className="flex-1">
-                              <h3 
-                                className="font-bold text-slate-900 mb-2"
-                                dangerouslySetInnerHTML={{ 
-                                  __html: titleText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                                }}
-                              />
-                              <div 
-                                className="text-sm text-slate-600 leading-relaxed"
-                                dangerouslySetInnerHTML={{ __html: formattedContent }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </div>
 
       </main>
