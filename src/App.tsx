@@ -31,7 +31,8 @@ import Marketplace from "./pages/Marketplace";
 import ListingDetails from "./pages/ListingDetails";
 
 // 👇 1. IMPORT IMPORTANT : Ta nouvelle page de rapport réel
-import ReportView from "./pages/ReportView"; 
+import ReportView from "./pages/ReportView";
+import PublicAudit from "./pages/PublicAudit";
 
 const queryClient = new QueryClient();
 
@@ -53,7 +54,7 @@ const App = () => (
             <Route path="/report/:id" element={<ReportView />} />
 
             {/* Anciennes routes de démo (tu peux les garder) */}
-            <Route path="/audit/:id" element={<DemoReportPage />} />
+            <Route path="/audit/:id" element={<PublicAudit />} />
             <Route path="/demo/:id" element={<DemoReportPage />} />
 
             <Route path="/payment-success" element={<PaymentSuccess />} />
