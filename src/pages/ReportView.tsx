@@ -228,13 +228,20 @@ const ReportView = () => {
     return [];
   }, [report]);
 
-  // Création dynamique des tags "Signaux" à partir des points forts/faibles pour coller au design
+  // Use algorithm tags if available, fallback to points_forts/faibles
+  const allTags = useMemo(() => singleAuditData?.tags || [], [singleAuditData]);
   const signaux = useMemo(() => {
-    let s = [];
+    if (allTags.length > 0) {
+      return allTags.slice(0, 8).map((tag: string) => ({
+        label: tag,
+        type: (tag.includes('⚠️') || tag.includes('💀') || tag.includes('🚨') || tag.includes('💥') || tag.includes('🔧')) ? 'destructive' : 'success'
+      }));
+    }
+    let s: any[] = [];
     if (singleAuditData?.points_forts) singleAuditData.points_forts.forEach((pt: string) => s.push({ label: pt, type: 'success' }));
     if (singleAuditData?.points_faibles) singleAuditData.points_faibles.forEach((pt: string) => s.push({ label: pt, type: 'destructive' }));
-    return s.slice(0, 5); // Limite l'affichage à 5 badges
-  }, [singleAuditData]);
+    return s.slice(0, 8);
+  }, [singleAuditData, allTags]);
 
   if (loading || authLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   if (!report || !stats) return null;
@@ -385,23 +392,27 @@ const ReportView = () => {
                  <Zap className="w-4 h-4 text-primary" /> Signaux détectés (V11)
                </CardTitle>
              </CardHeader>
-             <CardContent className="p-6">
-               <div className="flex flex-col gap-3">
-                 {signaux.length > 0 ? signaux.map((tag, i) => {
-                   let badgeColor = tag.type === 'destructive' ? "bg-red-50 text-red-700 border-red-200 ring-1 ring-red-100" : "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
-                   let Icon = tag.type === 'destructive' ? AlertTriangle : CheckCircle2;
-                   
-                   return (
-                     <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${badgeColor}`}>
-                       <Icon className="w-5 h-5 shrink-0" />
-                       <span className="font-bold text-sm leading-tight">{tag.label}</span>
-                     </div>
-                   )
-                 }) : (
-                   <p className="text-sm text-slate-500 italic">Aucun signal majeur détecté sur cette annonce.</p>
-                 )}
-               </div>
-             </CardContent>
+              <CardContent className="p-6">
+                <div className="flex flex-wrap gap-2">
+                  {signaux.length > 0 ? signaux.map((tag: any, i: number) => {
+                    const isNegative = tag.type === 'destructive';
+                    const isGold = tag.label.includes('🏆') || tag.label.includes('✨') || tag.label.includes('🦄');
+                    let badgeColor = isNegative 
+                      ? "bg-red-50 text-red-700 border-red-200 ring-1 ring-red-100" 
+                      : isGold 
+                        ? "bg-amber-50 text-amber-800 border-amber-200 ring-1 ring-amber-100"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
+                    
+                    return (
+                      <Badge key={i} className={`text-xs font-bold px-3 py-1.5 border ${badgeColor}`}>
+                        {tag.label}
+                      </Badge>
+                    );
+                  }) : (
+                    <p className="text-sm text-slate-500 italic">Aucun signal détecté.</p>
+                  )}
+                </div>
+              </CardContent>
           </Card>
         </div>
 
@@ -434,8 +445,11 @@ const ReportView = () => {
                 <div className="border-l-2 border-slate-100 ml-4 pl-8 py-2 relative space-y-12">
                   
                   {negotiationPoints.length > 0 ? negotiationPoints.map((nego: any, i: number) => {
-                    const parts = nego.desc.split('«');
-                    const hasSMS = parts.length === 2;
+                    // Detect SMS between « » or " "
+                    const smsMatch = nego.desc.match(/[«"]([\s\S]*?)[»"]/);
+                    const beforeSms = smsMatch ? nego.desc.slice(0, nego.desc.indexOf(smsMatch[0])) : null;
+                    const smsText = smsMatch ? smsMatch[1].trim() : null;
+                    const hasSMS = !!smsText;
 
                     return (
                       <div key={i} className="relative">
@@ -447,15 +461,13 @@ const ReportView = () => {
                         
                         {hasSMS ? (
                           <div className="space-y-4">
-                            <p className="text-slate-600 leading-relaxed">{parts[0]}</p>
+                            <p className="text-slate-600 leading-relaxed">{beforeSms}</p>
                             <div className="relative w-full md:w-5/6">
                               <div className="bg-blue-600 text-white p-5 rounded-2xl rounded-bl-sm shadow-md pr-12 relative">
-                                <p className="text-[15px] leading-relaxed italic">
-                                  "{parts[1].replace('»', '').trim()}"
-                                </p>
+                                <p className="text-[15px] leading-relaxed italic">"{smsText}"</p>
                               </div>
                               <Button 
-                                onClick={() => handleCopySMS(parts[1].replace('»', '').trim())}
+                                onClick={() => handleCopySMS(smsText!)}
                                 className="absolute -bottom-4 right-4 shadow-lg rounded-full w-12 h-12 p-0 bg-slate-900 hover:bg-slate-800 transition-transform hover:scale-105"
                               >
                                 {isCopied ? <Check className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5 text-white" />}

@@ -6,21 +6,171 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SUPPORTED_DOMAINS = [
-  "leboncoin.fr",
-  "lacentrale.fr",
-  "autoscout24.fr",
-  "autoscout24.com",
-];
+const SUPPORTED_DOMAINS = ["leboncoin.fr", "lacentrale.fr", "autoscout24.fr", "autoscout24.com"];
 
 function isValidListingUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     return SUPPORTED_DOMAINS.some(d => parsed.hostname.includes(d));
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
+
+// ================================================================
+// KNOWLEDGE_DB & SCORING ENGINE (Ported from vehicleAnalysis.ts)
+// ================================================================
+
+const BOOSTERS = [
+  { regex: /première main|1ère main|1ere main/i, score: 5, tag: '💎 1ÈRE MAIN' },
+  { regex: /origine france|française/i, score: 5, tag: '🇫🇷 ORIGINE FR' },
+  { regex: /carnet.*jour|suivi.*limpide|full suivi|factures/i, score: 4, tag: '📘 HISTORIQUE' },
+  { regex: /carnet.*tamponné|suivi.*exclusif|entretien.*réseau/i, score: 5, tag: '📘 HISTORIQUE PREMIUM' },
+  { regex: /propriétaire depuis.*(ans|année)/i, score: 4, tag: '💎 PROPRIO LONGUE DURÉE' },
+  { regex: /double des cl[ée]fs?|2 cl[ée]fs?/i, score: 3, tag: '🔑 DOUBLE CLÉS' },
+  { regex: /non fumeur|non-fumeur/i, score: 2, tag: '🚭 NON FUMEUR' },
+  { regex: /dort.*garage|stockée.*sec/i, score: 3, tag: '🏠 DORT GARAGE' },
+  { regex: /malus payé|écotaxe payée|pas de malus/i, score: 8, tag: '💶 TAXE OK' },
+  { regex: /garantie.*(12|24).*mois|sous garantie/i, score: 4, tag: '🛡️ GARANTIE' },
+  { regex: /ct ok|contrôle technique ok|vierge/i, score: 3, tag: '✅ CT OK' },
+  { regex: /distri.*neuve|chaine.*neuve|vidange.*boite/i, score: 3, tag: '🔧 GROS ENTRETIEN FAIT' },
+  { regex: /embrayage.*neuf|volant moteur.*neuf/i, score: 4, tag: '⚙️ EMBRAYAGE NEUF' },
+  { regex: /rien à prévoir|état irréprochable/i, score: 5, tag: '✨ RIEN À PRÉVOIR' },
+  { regex: /full option|toutes options/i, score: 2, tag: '🎯 FULL OPTIONS' },
+  { regex: /céramique|ppf|film protection/i, score: 3, tag: '✨ PROTECTION CARROSSERIE' },
+  { regex: /unique|config.*unique/i, score: 3, tag: '✨ CONFIG UNIQUE' },
+  { regex: /edition one|edition 1/i, score: 8, tag: '✨ ÉDITION ONE' },
+  { regex: /passionné|maniaque/i, score: 2, tag: '💖 PROPRIO PASSIONNÉ' },
+];
+
+const TUNING_PRO = [
+  { regex: /homologu|certificat|tüv/i, score: 5, tag: '✅ PIÈCES HOMOLOGUÉES' },
+  { regex: /mhd|xhp|bootmod|jb4|flexfuel|e85/i, score: 3, tag: '💻 GESTION AVANCÉE' },
+  { regex: /milltek|akrapovic|remus|bullx|supersprint|scorpion/i, score: 3, tag: '💨 LIGNE DE MARQUE' },
+  { regex: /schirmer|g[- ]power|manhart|ac schnitzer|alpina|abt/i, score: 10, tag: '🦄 PRÉPA D\'ÉLITE' },
+  { regex: /kw|bilstein|ohlins|h&r|eibach/i, score: 4, tag: '🏁 CHÂSSIS PRO' },
+  { regex: /brembo|ap racing|alcon/i, score: 4, tag: '🛑 FREINAGE PISTE' },
+  { regex: /crankhub|poulie|capture plate|renforc/i, score: 5, tag: '🛡️ MÉCANIQUE RENFORCÉE' },
+];
+
+const KILLERS = [
+  { regex: /moteur hs|bruit moteur|claquement|joint de culasse/i, score: -100, tag: '💀 MOTEUR HS' },
+  { regex: /subi.*accident|véhicule accidenté|sinistre|épave/i, score: -100, tag: '💀 ACCIDENT GRAVE' },
+  { regex: /(?<!jamais |non |pas d'|pas de |aucun |sans )accident(?!é)/i, score: -50, tag: '💥 ACCIDENTÉE' },
+  { regex: /dans l'état(?!.*irréprochable)/i, score: -25, tag: '⚠️ VENTE EN L\'ÉTAT' },
+  { regex: /sans ct|contrôle technique.*(refusé|contre)/i, score: -25, tag: '⚠️ SANS CT' },
+  { regex: /frais à prévoir|prévoir.*pneus/i, score: -10, tag: '🔧 FRAIS À PRÉVOIR' },
+  { regex: /parcours.*toutes distances|idéal export|marchand/i, score: -15, tag: '🚩 LOUCHE' },
+  { regex: /vente urgente|premier arrivé/i, score: -5, tag: '⚠️ VENTE PRESSÉE' },
+  { regex: /boite hs/i, score: -80, tag: '💀 BOITE HS' },
+  { regex: /voyant.*allumé|témoin.*allumé/i, score: -40, tag: '⚠️ VOYANT MOTEUR' },
+  { regex: /kilométrage non garanti|compteur non garanti|km non garanti/i, score: -100, tag: '⚠️ KM NON GARANTI' },
+];
+
+const TUNING = [
+  { regex: /stage 1|stage 2|reprog|carto|éthanol(?!.*homologué)/i, score: -5, tag: '🔧 REPROG' },
+  { regex: /stage 3|gros turbo/i, score: -5, tag: '🚀 STAGE 3' },
+  { regex: /suppression.*(fap|cata|egr|adblue)|décata|defap|downpipe/i, score: -5, tag: '⚠️ DÉFAP (ILLÉGAL)' },
+];
+
+function detectContext(marque: string, modele: string, description: string): string {
+  const fullText = `${marque} ${modele} ${description}`.toUpperCase();
+  if (/\bRS3\b|\bRS4\b|\bRS5\b|\bTTRS\b/.test(fullText)) return 'AUDI_RS';
+  if (/\bM2\b|\bM3\b|\bM4\b/.test(fullText)) return 'BMW_M';
+  if (/\bMERCEDES\b|\bAMG\b|\bCLASSE\s*[ABCEGVS]\b/.test(fullText)) return 'MERCEDES';
+  if (/\bGTI\b|\bTCR\b|\bCLUBSPORT\b|\bGOLF\b/.test(fullText)) return 'VW_GOLF';
+  if (/\bPORSCHE\b/.test(fullText)) return 'PORSCHE';
+  return 'GENERIC';
+}
+
+interface ScoringResult {
+  score: number;
+  tags: string[];
+  verdict: string;
+  coteEstimee: number;
+}
+
+function scoreSingleCarBackend(car: {
+  marque: string; modele: string; prix: number;
+  kilometrage: number; annee: number; description: string;
+  options?: string[];
+}): ScoringResult {
+  const description = (car.description || '') + ' ' + (car.options || []).join(' ');
+  const context = detectContext(car.marque, car.modele, description);
+  
+  let scoreMod = 0;
+  const tags = new Set<string>();
+
+  // Clean text
+  let cleanText = description
+    .replace(/OUVERT DEPUIS \d+ ANS/gi, "")
+    .replace(/extension de garantie.*/gi, " ")
+    .replace(/financement de \d+ à \d+ mois/gi, " ")
+    .replace(/livraison dans toute la france/gi, " ")
+    .replace(/non contractuel.*/gi, "")
+    .replace(/jamais accident.*/gi, "")
+    .replace(/pas d[' ]accident/gi, "")
+    .replace(/sans accident/gi, "")
+    .replace(/par[- ]choc/gi, "parechoc");
+
+  // DOM-TOM detection
+  if (/réunion|reunion|guadeloupe|martinique|guyane|mayotte/i.test(cleanText)) {
+    scoreMod += 5; tags.add('🏝️ DOM-TOM');
+  }
+
+  // Collector detection
+  const titleUpper = `${car.marque} ${car.modele}`.toUpperCase();
+  const isFakeCollector = /(STYLE|LOOK|REPLICA|TYPE)\s+.*(GTS|CS|DTM|TCR)/i.test(titleUpper);
+  const isRealSpecial = !isFakeCollector && /\bGTS\b|\bDTM\b|\bCS\b|\bCSL\b|\bHERITAGE\b|\bTCR\b|\bCLUBSPORT\b/i.test(titleUpper);
+  if (isRealSpecial) { scoreMod += 40; tags.add("🏆 COLLECTOR USINE"); }
+
+  // Scan all rules
+  [...BOOSTERS, ...TUNING_PRO, ...KILLERS, ...TUNING].forEach(rule => {
+    if (rule.regex.test(cleanText)) { scoreMod += rule.score; tags.add(rule.tag); }
+  });
+
+  // Import detection
+  const isImport = !cleanText.includes("france") && (cleanText.includes("import") || cleanText.includes("allemagne"));
+  const isMalusPaid = /malus payé|écotaxe payée|française|origine france|carte grise fran|immatricul/i.test(cleanText);
+  if (isImport && !isMalusPaid) { scoreMod -= 15; tags.add("⚠️ MALUS ?"); }
+
+  // Km adjustment
+  let coteRef = car.prix;
+  const currentYear = new Date().getFullYear();
+  const age = Math.max(1, currentYear - car.annee);
+  const kmRef = 15000 * age;
+
+  const isWreck = tags.has("💀 MOTEUR HS") || tags.has("💀 ACCIDENT GRAVE") || tags.has("⚠️ KM NON GARANTI");
+  if (car.kilometrage > 0 && !isWreck) {
+    if (car.kilometrage < age * 8000) { coteRef *= 1.30; tags.add('💎 PÉPITE KM'); }
+    else if (car.kilometrage < kmRef * 0.7) { coteRef *= 1.15; }
+    if (car.kilometrage > kmRef * 1.5) { coteRef *= 0.85; }
+  }
+
+  // Suspect price
+  const ecartPourcent = coteRef > 0 ? ((coteRef - car.prix) / coteRef) * 100 : 0;
+  const isElite = tags.has('🦄 PRÉPA D\'ÉLITE') || tags.has('🏆 COLLECTOR USINE') || tags.has('✨ ÉDITION ONE');
+
+  // Base score
+  let finalScore = 60 + scoreMod;
+  if (ecartPourcent > 35 && !isWreck && !isElite) {
+    finalScore = 40; tags.add("🚨 PRIX SUSPECT");
+  }
+  if (isElite) { finalScore = Math.max(finalScore, 90); tags.delete("🚨 PRIX SUSPECT"); }
+  if (isWreck) finalScore = 0;
+
+  finalScore = Math.max(0, Math.min(99, Math.round(finalScore)));
+
+  let verdict = 'Correct';
+  if (finalScore >= 80) verdict = 'Excellente affaire';
+  else if (finalScore >= 65) verdict = 'Bonne affaire';
+  else if (finalScore >= 45) verdict = 'Correct';
+  else verdict = 'Risqué';
+
+  return { score: finalScore, tags: Array.from(tags), verdict, coteEstimee: Math.round(coteRef) };
+}
+
+// ================================================================
+// MAIN HANDLER
+// ================================================================
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -55,7 +205,9 @@ serve(async (req) => {
       });
     }
 
-    // --- Step 1: Scrape with Firecrawl ---
+    // ============================
+    // STEP 0: SCRAPE WITH FIRECRAWL
+    // ============================
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
     if (!FIRECRAWL_API_KEY) {
       return new Response(JSON.stringify({ error: "Connecteur Firecrawl non configuré" }), {
@@ -63,24 +215,15 @@ serve(async (req) => {
       });
     }
 
-    console.log("Scraping URL:", url);
+    console.log("[STEP 0] Scraping URL:", url);
     const scrapeResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url,
-        formats: ["markdown", "html", "screenshot"],
-        onlyMainContent: false,
-        waitFor: 8000,
-      }),
+      headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ url, formats: ["markdown", "html", "screenshot"], onlyMainContent: false, waitFor: 8000 }),
     });
 
     if (!scrapeResponse.ok) {
-      const errText = await scrapeResponse.text();
-      console.error("Firecrawl error:", scrapeResponse.status, errText);
+      console.error("Firecrawl error:", scrapeResponse.status);
       return new Response(JSON.stringify({ error: "Impossible de scraper l'annonce. Vérifiez le lien." }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -91,142 +234,196 @@ serve(async (req) => {
     const html = scrapeData?.data?.html || scrapeData?.html || "";
     const screenshot = scrapeData?.data?.screenshot || scrapeData?.screenshot || null;
     const metadata = scrapeData?.data?.metadata || scrapeData?.metadata || {};
-    
-    // Extract image URL from metadata or HTML
+
+    // Extract image
     let imageUrl = metadata?.ogImage || metadata?.["og:image"] || null;
     if (!imageUrl && html) {
-      // Try to extract first large image from HTML
       const imgMatch = html.match(/<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i);
       if (imgMatch) imageUrl = imgMatch[1];
     }
     if (!imageUrl && html) {
-      // Broader image extraction
       const imgMatch2 = html.match(/https?:\/\/[^"'\s]+(?:\.jpg|\.jpeg|\.png|\.webp)/i);
       if (imgMatch2) imageUrl = imgMatch2[0];
     }
-    
-    console.log("Image URL found:", imageUrl ? imageUrl.slice(0, 80) : "none");
-    
-    // Use markdown if available, otherwise fall back to HTML content
-    const scrapedContent = markdown.length > 200 ? markdown : html;
 
+    const scrapedContent = markdown.length > 200 ? markdown : html;
     if (!scrapedContent || scrapedContent.length < 50) {
-      return new Response(JSON.stringify({ error: "Contenu de l'annonce insuffisant. L'annonce a peut-être été supprimée." }), {
+      return new Response(JSON.stringify({ error: "Contenu de l'annonce insuffisant." }), {
         status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Scraped content length:", scrapedContent.length, "markdown:", markdown.length, "html:", html.length);
-
-    // --- Step 2: AI Analysis with Gemini ---
+    // ============================
+    // STEP 1: EXTRACTION (1st Gemini call - Facts only)
+    // ============================
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
-    const prompt = `Tu es un expert automobile français reconnu, spécialisé dans l'évaluation de véhicules d'occasion. Tu analyses les annonces pour aider les acheteurs à prendre la meilleure décision.
-
-Analyse cette annonce automobile et génère un rapport d'audit complet.
-
-URL de l'annonce : ${url}
+    console.log("[STEP 1] Extracting facts with Gemini...");
+    const extractPrompt = `Tu es un extracteur de données automobile. Lis le contenu de cette annonce et extrais UNIQUEMENT les faits bruts. Ne donne AUCUN avis, AUCUN score, AUCUNE opinion.
 
 Contenu de l'annonce :
 ${scrapedContent.slice(0, 6000)}
 
-Retourne UNIQUEMENT un JSON valide avec ce format exact :
+Retourne UNIQUEMENT un JSON valide :
 {
-  "marque": "la marque du véhicule",
-  "modele": "le modèle du véhicule",
-  "annee": 2020,
-  "kilometrage": 50000,
-  "prix_affiche": 25000,
-  "carburant": "Diesel|Essence|Hybride|Électrique",
-  "transmission": "Manuelle|Automatique",
-  "localisation": "ville ou département",
-  "prix_estime": 24000,
-  "prix_truffe": 22500,
-  "score": 75,
-  "options": ["option 1", "option 2", "max 8"],
-  "etat": "Excellent|Très bon|Bon|Moyen|À vérifier",
-  "points_forts": ["max 5 points positifs concis"],
-  "points_faibles": ["max 5 points négatifs ou alertes"],
-  "expert_opinion": "2-3 phrases MAXIMUM qui expliquent POURQUOI cette annonce est intéressante ou pas. Sois direct, passionné et concis.",
-  "negotiation_arguments": [
-    {"titre": "Argument 1", "desc": "Explication détaillée pour négocier"},
-    {"titre": "Argument 2", "desc": "Explication détaillée pour négocier"},
-    {"titre": "Argument 3", "desc": "Explication détaillée pour négocier"}
-  ],
-  "resume": "Résumé en 2 phrases max pour l'acheteur. Direct et factuel."
-}
+  "marque": "string",
+  "modele": "string",
+  "annee": number|null,
+  "kilometrage": number|null,
+  "prix_affiche": number|null,
+  "carburant": "Diesel|Essence|Hybride|Électrique|null",
+  "transmission": "Manuelle|Automatique|null",
+  "puissance": "string|null",
+  "localisation": "string|null",
+  "options": ["liste", "brute", "des", "équipements", "max 15"],
+  "description_vendeur": "le texte complet de la description du vendeur, copié tel quel"
+}`;
 
-Règles d'estimation du prix :
-- prix_estime = valeur marché réaliste basée sur le modèle, l'année, le km et l'état
-- prix_truffe = prix négocié optimal que l'acheteur devrait viser
-- score = note de 10 à 98 (10=mauvaise affaire, 98=affaire exceptionnelle)
-- Si tu ne peux pas déterminer une info, mets null
-- Les arguments de négociation doivent être concrets et basés sur l'annonce`;
-
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const extractResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType: "application/json",
-        },
+        contents: [{ parts: [{ text: extractPrompt }] }],
+        generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
       }),
     });
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("Gemini API error:", aiResponse.status, errText);
-      return new Response(JSON.stringify({ error: "Erreur lors de l'analyse IA." }), {
+    if (!extractResponse.ok) {
+      console.error("Gemini extraction error:", extractResponse.status);
+      return new Response(JSON.stringify({ error: "Erreur lors de l'extraction IA." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const aiData = await aiResponse.json();
-    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    let analysis;
+    const extractData = await extractResponse.json();
+    const extractText = extractData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    let facts;
     try {
-      const cleanJson = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      analysis = JSON.parse(cleanJson);
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError, content.slice(0, 300));
-      return new Response(JSON.stringify({ error: "L'IA n'a pas pu analyser cette annonce. Réessayez." }), {
+      facts = JSON.parse(extractText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
+    } catch {
+      console.error("Failed to parse extraction:", extractText.slice(0, 300));
+      return new Response(JSON.stringify({ error: "L'IA n'a pas pu lire cette annonce." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // --- Step 3: Save report to DB ---
+    console.log("[STEP 1] Extracted:", facts.marque, facts.modele, facts.prix_affiche, "€");
+
+    // ============================
+    // STEP 2: THE JUDGE (Deterministic Algorithm)
+    // ============================
+    console.log("[STEP 2] Running deterministic scoring engine...");
+    const scoring = scoreSingleCarBackend({
+      marque: facts.marque || "Inconnu",
+      modele: facts.modele || "Inconnu",
+      prix: facts.prix_affiche || 0,
+      kilometrage: facts.kilometrage || 0,
+      annee: facts.annee || new Date().getFullYear(),
+      description: facts.description_vendeur || scrapedContent.slice(0, 3000),
+      options: facts.options || [],
+    });
+
+    console.log("[STEP 2] Score:", scoring.score, "| Tags:", scoring.tags.join(", "));
+
+    // ============================
+    // STEP 3: THE WRITER (2nd Gemini call - Redaction with tags context)
+    // ============================
+    console.log("[STEP 3] Writing expert opinion with Gemini...");
+    const writePrompt = `Tu es un expert automobile français qui rédige des analyses pour des acheteurs.
+
+Voici les données factuelles :
+- Véhicule : ${facts.marque} ${facts.modele} de ${facts.annee || 'N/A'}
+- Prix affiché : ${facts.prix_affiche ? facts.prix_affiche.toLocaleString() + ' €' : 'N/A'}
+- Kilométrage : ${facts.kilometrage ? facts.kilometrage.toLocaleString() + ' km' : 'N/A'}
+- Carburant : ${facts.carburant || 'N/A'}
+- Localisation : ${facts.localisation || 'N/A'}
+- Options notables : ${(facts.options || []).join(', ') || 'Aucune mentionnée'}
+
+Voici le SCORE calculé par notre algorithme : ${scoring.score}/100 (Verdict : ${scoring.verdict})
+Voici les TAGS détectés par l'algorithme : ${scoring.tags.join(' | ') || 'Aucun'}
+
+Rédige un JSON avec EXACTEMENT ce format :
+{
+  "expert_opinion": "3-4 phrases MAX. Commence par le verdict (${scoring.verdict}). Commente les tags détectés. Sois direct et passionné. N'invente PAS de tags ou de données non présentes.",
+  "negotiation_playbook": [
+    {
+      "titre": "Titre de l'argument 1",
+      "desc": "Explication concrète. OBLIGATOIRE : termine par un modèle de message entre guillemets français « comme ceci ». Ex: «Bonjour, j'ai vu votre annonce pour la ${facts.marque} ${facts.modele}...»"
+    },
+    {
+      "titre": "Titre de l'argument 2", 
+      "desc": "Explication concrète basée sur les tags détectés."
+    },
+    {
+      "titre": "Titre de l'argument 3",
+      "desc": "Dernier argument basé sur le marché."
+    }
+  ]
+}
+
+RÈGLES STRICTES :
+- Base-toi UNIQUEMENT sur les tags fournis. N'invente rien.
+- L'argument de négociation n°1 DOIT contenir un modèle de SMS/email entre « guillemets français ».
+- Le texte doit refléter le score : si score > 80, sois enthousiaste. Si < 50, sois prudent.`;
+
+    const writeResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: writePrompt }] }],
+        generationConfig: { temperature: 0.5, responseMimeType: "application/json" },
+      }),
+    });
+
+    let redaction = { expert_opinion: "", negotiation_playbook: [] as any[] };
+    if (writeResponse.ok) {
+      const writeData = await writeResponse.json();
+      const writeText = writeData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      try {
+        redaction = JSON.parse(writeText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
+      } catch {
+        console.error("Failed to parse redaction, using fallback");
+        redaction.expert_opinion = `Score ${scoring.score}/100 - ${scoring.verdict}. ${scoring.tags.slice(0, 3).join(', ')}.`;
+      }
+    }
+
+    console.log("[STEP 3] Redaction complete.");
+
+    // ============================
+    // SAVE REPORT
+    // ============================
     const reportData = {
       user_id: user.id,
-      marque: analysis.marque || "Inconnu",
-      modele: analysis.modele || "Inconnu",
-      annee: analysis.annee || null,
-      kilometrage: analysis.kilometrage || null,
-      prix_affiche: analysis.prix_affiche || null,
-      prix_estime: analysis.prix_estime || null,
-      prix_truffe: analysis.prix_truffe || null,
-      prix_moyen: analysis.prix_estime || null,
+      marque: facts.marque || "Inconnu",
+      modele: facts.modele || "Inconnu",
+      annee: facts.annee || null,
+      kilometrage: facts.kilometrage || null,
+      prix_affiche: facts.prix_affiche || null,
+      prix_estime: scoring.coteEstimee,
+      prix_truffe: Math.round(scoring.coteEstimee * 0.92),
+      prix_moyen: scoring.coteEstimee,
       lien_annonce: url,
-      carburant: analysis.carburant || null,
-      transmission: analysis.transmission || null,
-      expert_opinion: analysis.expert_opinion || null,
-      negotiation_arguments: JSON.stringify(analysis.negotiation_arguments || []),
+      carburant: facts.carburant || null,
+      transmission: facts.transmission || null,
+      expert_opinion: redaction.expert_opinion || null,
+      negotiation_arguments: JSON.stringify(redaction.negotiation_playbook || []),
       status: "completed" as const,
       total_vehicules: 1,
       market_data: {
         type: "single_audit",
-        options: analysis.options || [],
-        etat: analysis.etat || null,
-        points_forts: analysis.points_forts || [],
-        points_faibles: analysis.points_faibles || [],
-        resume: analysis.resume || null,
-        score: analysis.score || 50,
-        localisation: analysis.localisation || null,
+        options: facts.options || [],
+        etat: scoring.verdict,
+        points_forts: scoring.tags.filter(t => !t.includes('⚠️') && !t.includes('💀') && !t.includes('🚨') && !t.includes('💥') && !t.includes('🔧')),
+        points_faibles: scoring.tags.filter(t => t.includes('⚠️') || t.includes('💀') || t.includes('🚨') || t.includes('💥') || t.includes('🔧')),
+        tags: scoring.tags,
+        resume: `${facts.marque} ${facts.modele} ${facts.annee || ''} — Score ${scoring.score}/100 (${scoring.verdict}).`,
+        score: scoring.score,
+        localisation: facts.localisation || null,
         image_url: imageUrl || null,
         screenshot: screenshot || null,
+        description_vendeur: facts.description_vendeur || null,
+        puissance: facts.puissance || null,
       },
     };
 
@@ -243,12 +440,9 @@ Règles d'estimation du prix :
       });
     }
 
-    console.log("Report created:", report.id);
+    console.log("[DONE] Report created:", report.id);
 
-    return new Response(JSON.stringify({ 
-      reportId: report.id,
-      analysis 
-    }), {
+    return new Response(JSON.stringify({ reportId: report.id, analysis: { ...facts, ...scoring, ...redaction } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
