@@ -88,7 +88,7 @@ const KNOWLEDGE_DB: Record<string, any> = {
 
   // 🟠 TUNING
   TUNING: [
-    { regex: /stage 1|stage 2|reprog|carto|éthanol(?!.*homologué)|e85(?!.*homologué)/i, score: -5, tag: '🔧 REPROG' },
+    { regex: /stage 1|stage 2|reprog|\bcarto\b|cartographie moteur|éthanol(?!.*homologué)|e85(?!.*homologué)/i, score: -5, tag: '🔧 REPROG' },
     { regex: /forgé|forger/i, score: 0, tag: '🔧 MOTEUR FORGÉ' },
     { regex: /stage 3|gros turbo|hybride/i, score: -5, tag: '🚀 STAGE 3' },
     { regex: /pop.*bang|rupture/i, score: -5, tag: '💥 POP & BANG' },
@@ -297,7 +297,7 @@ function analyzeDescription(text: string, context: string, vehicle: ParsedVehicl
   
   let isRealSpecial = false;
   if (!isFakeCollector) {
-      isRealSpecial = /\bGTS\b|\bDTM\b|\bCS\b|\bCSL\b|\bHERITAGE\b|magny[- ]cours|\btrophy r\b|tour auto|\btcr\b|\bclubsport\b/i.test(titleUpper);
+      isRealSpecial = /(GTS\b|DTM\b|CS\b|CSL\b|h.ritage|magny[- ]cours|trophy r|tcr\b|clubsport|edition 1|edition one|\b(?:\d+|x|n[°o]?)\s*(?:of|sur|\/)\s*\d+\b)/i.test(titleUpper);
   }
 
   if (isRealSpecial) {
