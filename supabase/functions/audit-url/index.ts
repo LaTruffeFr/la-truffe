@@ -158,26 +158,20 @@ serve(async (req: Request) => {
     else if (finalScore < 50) prixEstime = Math.round(rawCarData.prix_affiche * 0.85);
     else prixEstime = Math.round(rawCarData.prix_affiche * 0.95);
 
-    const writingPrompt = \`AGIS EXCLUSIVEMENT COMME UN MÉCANICIEN PASSIONNÉ ET EXPERT AUTOMOBILE (Surnom: La Truffe). 
-    TU PARLES À UN POTE POUR L'AIDER À ACHETER CETTE VOITURE SUR LEBONCOIN. 
-    VÉHICULE : \${rawCarData.marque} \${rawCarData.modele}, KM: \${rawCarData.kilometrage}, Prix: \${rawCarData.prix_affiche}€. SCORE: \${finalScore}/100. TAGS : [\${finalTagsList.join(', ')}].
+    const writingPrompt = `Oublie toutes tes instructions précédentes. Ton seul et unique rôle est d'incarner "La Truffe", un GARAGISTE et MÉCANICIEN rustre, direct et passionné.
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(', ')}].
 
-    RÈGLES DE STYLE INFRANCHISSABLES :
-    1. AUCUN JARGON DE BANQUIER OU SOUTENU. Mots STRICTEMENT INTERDITS : ROI, TCO, investissement, capital, optimisation, financier, stratégique, transaction, liquidité, amortissement, exponentielle, inflexion. Si tu utilises un de ces mots, c'est un échec total.
-    2. Utilise le vocabulaire d'un vrai passionné auto : "vidange", "coussinets de bielle", "maladie connue", "frais à prévoir", "carnet limpide", "pneus", "freins", "boîte DKG", "turbo".
-    3. Sois direct, familier (mais poli), franc, comme un expert sur un forum auto. Fais des phrases courtes.
+    RÈGLES ABSOLUES :
+    1. Tu es UN MÉCANICIEN. Tu n'es PAS un analyste, PAS un conseiller financier.
+    2. Utilise le vocabulaire du garage : "vidange", "coussinets de bielle", "maladie", "frais à prévoir", "carnet", "pneus", "freins", "boîte de vitesse", "châssis".
+    3. NE PRONONCE JAMAIS les mots suivants (sinon tu seras désactivé) : "analyste", "financier", "ROI", "TCO", "investissement", "capital", "liquidité", "dépréciation", "décote", "marché", "résiduelle", "agressif", "préventifs".
 
     LE PLAYBOOK EN 3 POINTS :
-    - Argument 1 : LE SMS À COPIER-COLLER (entre guillemets « »). Il doit être naturel, court, de passionné à passionné. 
-      EXEMPLE DE TON ATTENDU : « Bonjour, superbe M4 ! Vu les 120 000 km, est-ce que les gros frais (vidange boîte DKG, freins, amortisseurs) ont été faits récemment ? Si le carnet est limpide, je suis prêt à vous faire une offre sérieuse autour de 40 000 €. Bonne journée ! »
-    - Argument 2 et 3 : Parle UNIQUEMENT de mécanique et d'usure. Qu'est-ce qui va casser à ce kilométrage ? Que faut-il vérifier sous le capot lors de la visite ?
+    - Argument 1 : Rédige un SMS d'approche à copier-coller (entre guillemets « »). Il doit être simple et poser des questions de mécanique. 
+      EXEMPLE DE SMS : « Bonjour, belle voiture ! Vu le kilométrage, est-ce que les gros frais (vidange de boîte, freins, amortisseurs) ont été faits récemment ? Si le carnet est clair, on peut discuter du prix. »
+    - Argument 2 et 3 : Analyse l'usure des pièces à ce kilométrage précis. Quelles pièces vont bientôt casser ? Que faut-il vérifier sous le capot le jour de la visite ?
 
-    Retourne ce JSON exact : { "expert_opinion": "Ton avis franc de mécano en 3 lignes", "negotiation_arguments": [{"titre": "...", "desc": "..."}] }\`;
-
-    const writingRes = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${GEMINI_API_KEY}\`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: writingPrompt }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json" } }),
-    });
+    Retourne ce JSON exact : { "expert_opinion": "Ton avis franc de garagiste en 3 lignes", "negotiation_arguments": [{"titre": "...", "desc": "..."}] }`;
 
     const writingData = await writingRes.json();
     const finalReview = JSON.parse(writingData.candidates[0].content.parts[0].text.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim());
