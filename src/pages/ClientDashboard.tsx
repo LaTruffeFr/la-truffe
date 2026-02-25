@@ -19,6 +19,40 @@ import { useVipAccess } from '@/hooks/useVipAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { SellerListings } from '@/components/SellerListings';
+import { Progress } from '@/components/ui/progress';
+
+const AUDIT_STEPS = [
+  'Scraping de l\'annonce...',
+  'Interrogation de l\'IA Agentique...',
+  'Détection des tags et signaux...',
+  'Calcul de la vraie cote...',
+  'Génération du Playbook...',
+];
+
+const AuditLoadingText = () => {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setStep(s => (s + 1) % AUDIT_STEPS.length), 3000);
+    return () => clearInterval(interval);
+  }, []);
+  return <span className="animate-fade-in">{AUDIT_STEPS[step]}</span>;
+};
+
+const AuditLoadingProgress = () => {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress(p => Math.min(p + 1, 95));
+    }, 160); // ~15s to reach 95%
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <div className="mt-4 space-y-2">
+      <Progress value={progress} className="h-2" />
+      <p className="text-xs text-muted-foreground text-center">{progress}% — Veuillez patienter…</p>
+    </div>
+  );
+};
 
 interface Report {
   id: string;
@@ -288,14 +322,17 @@ const ClientDashboard = () => {
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
-                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Analyse en cours...</>
+                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> <AuditLoadingText /></>
                         ) : (
                           <><ExternalLink className="w-4 h-4 mr-2" /> Lancer l'audit</>
                         )}
                       </Button>
-                      <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> L'analyse IA est instantanée (10-30 secondes).
-                      </p>
+                      {isSubmitting && <AuditLoadingProgress />}
+                      {!isSubmitting && (
+                        <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> L'analyse IA prend environ 15 secondes.
+                        </p>
+                      )}
                     </div>
                   </form>
                 </CardContent>

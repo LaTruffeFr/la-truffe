@@ -167,7 +167,7 @@ DIRECTIVES STRICTES :
 1. Dans "raisonnement", justifie le Modèle Exact. Par exemple : "Je trouve 'M2 Competition Héritage' dans le titre, c'est une série limitée → COLLECTOR USINE".
 2. Dans "raisonnement", justifie CHAQUE tag pour éviter les faux-positifs. Par exemple : "Je vois 'GPS Cartographique' → c'est un GPS standard, PAS une reprog moteur. Je ne mets PAS le tag REPROG."
 3. Lis l'annonce ENTIÈREMENT, y compris la fin, car les séries limitées et options premium sont souvent cachées tout en bas.
-4. Pour les options : Exclus les options basiques (USB, GPS, ABS, ESP, Airbags). Liste UNIQUEMENT les options premium et distinctives (Carbone, Harman Kardon, Toit ouvrant, Sièges chauffants, Caméra de recul, Jantes spécifiques, Pack Performance, etc.).
+4. RÈGLE ABSOLUE POUR LES OPTIONS : INTERDICTION FORMELLE de lister les options de base (GPS, USB, Bluetooth, Radio, Clim, ABS, Airbags, Wi-Fi). Tu dois CHERCHER et lister UNIQUEMENT les équipements sportifs ou luxueux (ex: Carbone, Cuir, Sièges Sport, Échappement, Jantes, Harman Kardon, Toit ouvrant).
 5. N'invente JAMAIS de tags qui ne sont pas dans le RULEBOOK.
 
 Retourne UNIQUEMENT ce JSON valide :
@@ -182,7 +182,7 @@ Retourne UNIQUEMENT ce JSON valide :
   "transmission": "Manuelle|Automatique|null",
   "puissance": "string|null",
   "localisation": "string|null",
-  "options": ["liste", "des", "options", "premium", "uniquement"],
+  "options": ["Inserts Carbone", "Sièges Sport"],
   "description_vendeur": "le texte complet de la description du vendeur, copié tel quel",
   "tags_detectes": [
     { "tag": "NOM DU TAG EXACT", "score": SCORE_NUMERIQUE, "justification": "Pourquoi ce tag" }
@@ -225,7 +225,7 @@ Retourne UNIQUEMENT ce JSON valide :
     // STEP 2: LE JUGE (Score déterministe basé sur les tags IA)
     // ============================
     console.log("[STEP 2] Calcul du score déterministe...");
-    
+
     let scoreMod = 0;
     const finalTagsList: string[] = [];
     let isKiller = false;
@@ -257,10 +257,10 @@ Retourne UNIQUEMENT ce JSON valide :
     console.log("[STEP 2] Score:", finalScore, "| Verdict:", verdict, "| Tags:", finalTagsList.join(", "));
 
     // ============================
-    // STEP 3: LE RÉDACTEUR (2ème appel Gemini - Playbook financier)
+    // STEP 3: LE RÉDACTEUR (2ème appel Gemini - Playbook)
     // ============================
     console.log("[STEP 3] Rédaction du playbook avec Gemini...");
-    const writingPrompt = `Tu es un analyste automobile expert de 'La Truffe', spécialisé en négociation financière. Rédige un audit premium.
+    const writingPrompt = `Tu es "La Truffe", un expert automobile d'élite, passionné et redoutable en négociation. Rédige l'audit premium.
 
 VÉHICULE ANALYSÉ :
 - Marque/Modèle : ${rawCarData.marque} ${rawCarData.modele}
@@ -275,12 +275,11 @@ RÉSULTAT DE L'ALGORITHME :
 - Score La Truffe : ${finalScore}/100 (Verdict : ${verdict})
 - Tags détectés : ${finalTagsList.join(' | ') || 'Aucun'}
 
-CONSIGNES DE RÉDACTION :
-1. "expert_opinion" : 3-4 phrases MAX. Commence par le verdict. Commente les tags. Sois direct, technique et financier. N'invente AUCUN tag absent de la liste ci-dessus.
-2. "negotiation_arguments" : Exactement 3 arguments. Ton style : agressif, financier, ultra-technique.
-   - L'argument n°1 DOIT IMPÉRATIVEMENT contenir un modèle de SMS/Email d'approche stratégique entre guillemets français « comme ceci ». Ce SMS doit être prêt à copier-coller, personnalisé avec le nom du véhicule.
-   - Les arguments 2 et 3 doivent être basés sur les tags et le marché.
-3. Si le score est > 80, sois enthousiaste mais propose quand même une négociation. Si < 50, sois très prudent et alarmiste.
+Ton style : Franc, direct, expert auto (pas de jargon de banquier, ne dis pas "optimisation du capital" ou "liquidité"). Parle mécanique, marché, et usure.
+- L'argument 1 DOIT impérativement être un SMS d'approche stratégique entre guillemets français « comme ceci ». Ce SMS doit être naturel, courtois mais ferme, prêt à être envoyé sur Leboncoin (pas de langage soutenu excessif). Personnalisé avec le nom du véhicule.
+- Les arguments 2 et 3 doivent être basés sur les tags et le marché.
+- Rédige l'avis expert ("expert_opinion") en 3 lignes percutantes.
+- Si le score est > 80, sois enthousiaste mais propose quand même une négo. Si < 50, sois très prudent.
 
 Retourne UNIQUEMENT ce JSON valide :
 {
