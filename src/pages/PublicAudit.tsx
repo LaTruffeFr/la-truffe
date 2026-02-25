@@ -225,17 +225,17 @@ const PublicAudit = () => {
                     <p className="text-4xl font-black text-foreground">{safeNum(stats.prixCible)} €</p>
                   </div>
                 </div>
-                <div className={`rounded-xl p-4 flex items-center justify-between border shadow-corporate ${stats.economy > 0 ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30' : 'bg-orange-50 border-orange-100 dark:bg-orange-950/20 dark:border-orange-900/30'}`}>
+                <div className={`rounded-xl p-4 flex items-center justify-between border shadow-corporate ${stats.economy >= 0 ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30' : 'bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30'}`}>
                   <div className="flex items-center gap-3">
-                    <div className={`${stats.economy > 0 ? 'bg-emerald-500' : 'bg-orange-500'} text-white p-2 rounded-lg`}>
+                    <div className="bg-emerald-500 text-white p-2 rounded-lg">
                       <TrendingDown className="w-5 h-5" />
                     </div>
-                    <span className={`font-semibold ${stats.economy > 0 ? 'text-emerald-900 dark:text-emerald-200' : 'text-orange-900 dark:text-orange-200'}`}>
-                      {stats.economy > 0 ? 'Marge de négo.' : 'Surcote détectée'}
+                    <span className="font-semibold text-emerald-900 dark:text-emerald-200">
+                      {stats.economy >= 0 ? 'Marge de négo.' : 'Économie estimée'}
                     </span>
                   </div>
-                  <span className={`text-2xl font-black ${stats.economy > 0 ? 'text-emerald-600' : 'text-orange-600'}`}>
-                    {stats.economy > 0 ? '+' : ''}{safeNum(stats.economy)} €
+                  <span className="text-2xl font-black text-emerald-600">
+                    +{safeNum(Math.abs(stats.economy))} €
                   </span>
                 </div>
               </CardContent>
