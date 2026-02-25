@@ -260,36 +260,20 @@ Retourne UNIQUEMENT ce JSON valide :
     // STEP 3: LE RÉDACTEUR (2ème appel Gemini - Playbook)
     // ============================
     console.log("[STEP 3] Rédaction du playbook avec Gemini...");
-    const writingPrompt = `Tu es "La Truffe", un expert automobile d'élite, passionné et redoutable en négociation. Rédige l'audit premium.
+    const writingPrompt = `Tu es "La Truffe", un mécanicien passionné et un expert en achat de voitures de sport. Ton rôle est de conseiller un ami acheteur pour qu'il ne se fasse pas avoir.
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(', ')}].
 
-VÉHICULE ANALYSÉ :
-- Marque/Modèle : ${rawCarData.marque} ${rawCarData.modele}
-- Année : ${rawCarData.annee || 'N/A'}
-- Kilométrage : ${rawCarData.kilometrage ? rawCarData.kilometrage.toLocaleString() + ' km' : 'N/A'}
-- Prix affiché : ${prixAffiche ? prixAffiche.toLocaleString() + ' €' : 'N/A'}
-- Carburant : ${rawCarData.carburant || 'N/A'}
-- Localisation : ${rawCarData.localisation || 'N/A'}
-- Options premium : ${(rawCarData.options || []).join(', ') || 'Aucune'}
+    TON STYLE OBLIGATOIRE : 
+    - Parle comme un vrai gars de l'automobile : utilise un vocabulaire de garage et de passionné (usure, vidange, maladie connue du moteur, coussinets, freins, etc.).
+    - BANNIS DÉFINITIVEMENT TOUT JARGON FINANCIER. Mots strictement INTERDITS : "ROI", "TCO", "investissement", "optimisation", "capital", "liquidité", "dépréciation", "stratégie", "chirurgicale". Si tu utilises un de ces mots, c'est un échec.
+    - Sois détendu, franc, mais intraitable sur la mécanique.
 
-RÉSULTAT DE L'ALGORITHME :
-- Score La Truffe : ${finalScore}/100 (Verdict : ${verdict})
-- Tags détectés : ${finalTagsList.join(' | ') || 'Aucun'}
+    LE PLAYBOOK EN 3 POINTS :
+    - L'argument 1 DOIT impérativement être un SMS d'approche à copier-coller, entre guillemets (« »). Le SMS doit être sympa, naturel, de passionné à passionné. Interdiction d'être arrogant.
+      EXEMPLE DE SMS ATTENDU : « Bonjour, superbe M4 ! Vu le kilométrage, est-ce que les gros entretiens (vidange boîte DKG, freins) ont été faits récemment ? Si l'historique est limpide, je suis prêt à vous faire une offre sérieuse autour de 41 000 €. Bonne journée ! »
+    - Argument 2 et 3 : Parle des points faibles mécaniques liés au modèle et au kilométrage, des frais à venir, et de ce qu'il faut vérifier sur place.
 
-Ton style : Franc, direct, expert auto (pas de jargon de banquier, ne dis pas "optimisation du capital" ou "liquidité"). Parle mécanique, marché, et usure.
-- L'argument 1 DOIT impérativement être un SMS d'approche stratégique entre guillemets français « comme ceci ». Ce SMS doit être naturel, courtois mais ferme, prêt à être envoyé sur Leboncoin (pas de langage soutenu excessif). Personnalisé avec le nom du véhicule.
-- Les arguments 2 et 3 doivent être basés sur les tags et le marché.
-- Rédige l'avis expert ("expert_opinion") en 3 lignes percutantes.
-- Si le score est > 80, sois enthousiaste mais propose quand même une négo. Si < 50, sois très prudent.
-
-Retourne UNIQUEMENT ce JSON valide :
-{
-  "expert_opinion": "...",
-  "negotiation_arguments": [
-    { "titre": "Titre argument 1", "desc": "Explication avec le SMS «Bonjour, j'ai vu votre annonce pour la ${rawCarData.marque} ${rawCarData.modele}...»" },
-    { "titre": "Titre argument 2", "desc": "..." },
-    { "titre": "Titre argument 3", "desc": "..." }
-  ]
-}`;
+    Retourne ce JSON exact : { "expert_opinion": "Ton avis de mécanicien franc et direct en 3 lignes", "negotiation_arguments": [{"titre": "...", "desc": "..."}] }`;
 
     const writeResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
