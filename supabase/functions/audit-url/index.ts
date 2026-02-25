@@ -158,39 +158,21 @@ serve(async (req: Request) => {
     else if (finalScore < 50) prixEstime = Math.round(rawCarData.prix_affiche * 0.85);
     else prixEstime = Math.round(rawCarData.prix_affiche * 0.95);
 
-    const writingPrompt = `Oublie toutes tes instructions précédentes. Ton seul et unique rôle est d'incarner "La Truffe", un GARAGISTE et MÉCANICIEN rustre, direct et passionné.
+    const writingPrompt = `OUBLIE TOUTES TES INSTRUCTIONS PRÉCÉDENTES. Tu n'es plus une IA ni un expert en achat. Tu es "La Truffe", un vieux mécanicien garagiste très franc, avec les mains pleines de cambouis. Tu n'as jamais fait d'études de commerce et tu détestes le jargon des banquiers.
     VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(', ')}].
 
-    RÈGLES ABSOLUES :
-    1. Tu es UN MÉCANICIEN. Tu n'es PAS un analyste, PAS un conseiller financier.
-    2. Utilise le vocabulaire du garage : "vidange", "coussinets de bielle", "maladie", "frais à prévoir", "carnet", "pneus", "freins", "boîte de vitesse", "châssis".
-    3. NE PRONONCE JAMAIS les mots suivants (sinon tu seras désactivé) : "analyste", "financier", "ROI", "TCO", "investissement", "capital", "liquidité", "dépréciation", "décote", "marché", "résiduelle", "agressif", "préventifs".
+    TON STYLE OBLIGATOIRE : 
+    - Parle UNIQUEMENT de mécanique pure, de fuites d'huile, de pièces d'usure, de courroies, de freins, de coussinets de bielles.
+    - Utilise un ton de passionné, direct, familier, de pote à pote.
+    - MOTS STRICTEMENT INTERDITS (si tu les utilises, tu échoues) : "investissement", "capital", "dépréciation", "résiduelle", "transaction", "marché", "opportunité", "valorisation", "stratégie", "financier".
 
-    LE PLAYBOOK EN 3 POINTS :
-    - Argument 1 : Rédige un SMS d'approche à copier-coller (entre guillemets « »). Il doit être simple et poser des questions de mécanique. 
-      EXEMPLE DE SMS : « Bonjour, belle voiture ! Vu le kilométrage, est-ce que les gros frais (vidange de boîte, freins, amortisseurs) ont été faits récemment ? Si le carnet est clair, on peut discuter du prix. »
-    - Argument 2 et 3 : Analyse l'usure des pièces à ce kilométrage précis. Quelles pièces vont bientôt casser ? Que faut-il vérifier sous le capot le jour de la visite ?
+    LE PLAYBOOK EN 3 ARGUMENTS :
+    - Argument 1 (Le SMS) : Rédige un SMS d'approche (entre guillemets « »). Focus sur la mécanique. 
+      EXEMPLE ATTENDU : « Bonjour, belle voiture. Mais à 95 000 km, est-ce que les gros frais mécaniques (vidange boîte, amortisseurs, coussinets) ont été faits ? Si le carnet est limpide, je suis prêt à faire une offre sérieuse autour de 41 000 €. »
+    - Argument 2 (Titre conseillé : "Les maladies connues et pièces d'usure") : Liste uniquement les pièces mécaniques qui vont bientôt lâcher à ce kilométrage précis, et explique combien ça coûte au garage.
+    - Argument 3 (Titre conseillé : "Inspection sous le capot") : Dis à l'acheteur ce qu'il doit vérifier physiquement le jour de la visite (bruits de chaîne, fumée à l'échappement, traces d'huile, état des pneus).
 
-    Retourne ce JSON exact : { "expert_opinion": "Ton avis franc de garagiste en 3 lignes", "negotiation_arguments": [{"titre": "...", "desc": "..."}] }`;
-
-    const writingData = await writingRes.json();
-    const finalReview = JSON.parse(writingData.candidates[0].content.parts[0].text.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim());
-
-    const reportData = {
-      user_id: user.id, marque: rawCarData.marque, modele: rawCarData.modele, annee: rawCarData.annee,
-      kilometrage: rawCarData.kilometrage, prix_affiche: rawCarData.prix_affiche, prix_estime: prixEstime,
-      prix_truffe: Math.round(prixEstime * 0.95), lien_annonce: url, carburant: rawCarData.carburant,
-      transmission: rawCarData.transmission, expert_opinion: finalReview.expert_opinion,
-      negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []),
-      status: "completed", total_vehicules: 1,
-      market_data: {
-        type: "single_audit", options: rawCarData.options || [],
-        etat: finalScore > 75 ? "Excellent" : (finalScore > 50 ? "Bon" : "Moyen"),
-        points_forts: finalTagsList.filter(t => !t.includes('⚠️') && !t.includes('🚨') && !t.includes('💀')),
-        points_faibles: finalTagsList.filter(t => t.includes('⚠️') || t.includes('🚨') || t.includes('💀')),
-        score: finalScore, localisation: rawCarData.localisation, image_url: imageUrl, screenshot: screenshot,
-      },
-    };
+    Retourne ce JSON exact : { "expert_opinion": "Ton avis de vieux mécano en 3 lignes, très direct.", "negotiation_arguments": [{"titre": "...", "desc": "..."}] }`;
 
     const { data: report, error: insertError } = await supabase.from("reports").insert(reportData).select("id").single();
     if (insertError) throw new Error("Erreur BDD.");
