@@ -7,7 +7,8 @@ declare const Deno: any;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const SUPPORTED_DOMAINS = ["leboncoin.fr", "lacentrale.fr", "autoscout24.fr", "autoscout24.com"];
@@ -15,8 +16,10 @@ const SUPPORTED_DOMAINS = ["leboncoin.fr", "lacentrale.fr", "autoscout24.fr", "a
 function isValidListingUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return SUPPORTED_DOMAINS.some(d => parsed.hostname.includes(d));
-  } catch { return false; }
+    return SUPPORTED_DOMAINS.some((d) => parsed.hostname.includes(d));
+  } catch {
+    return false;
+  }
 }
 
 const RULEBOOK = `
@@ -54,14 +57,31 @@ serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return new Response(JSON.stringify({ error: "Non autorisé" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!authHeader?.startsWith("Bearer "))
+      return new Response(JSON.stringify({ error: "Non autorisé" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return new Response(JSON.stringify({ error: "Authentification invalide" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user)
+      return new Response(JSON.stringify({ error: "Authentification invalide" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
 
     const { url } = await req.json();
-    if (!url || !isValidListingUrl(url)) return new Response(JSON.stringify({ error: "URL invalide." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!url || !isValidListingUrl(url))
+      return new Response(JSON.stringify({ error: "URL invalide." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
 
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -69,7 +89,8 @@ serve(async (req: Request) => {
 
     // === ÉTAPE 1 : SCRAPING ===
     const scrapeResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
-      method: "POST", headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
+      method: "POST",
+      headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ url, formats: ["markdown", "html", "screenshot"], onlyMainContent: false, waitFor: 8000 }),
     });
 
@@ -80,7 +101,9 @@ serve(async (req: Request) => {
     const screenshot = scrapeData?.data?.screenshot || scrapeData?.screenshot || null;
     let imageUrl = scrapeData?.data?.metadata?.ogImage || null;
     if (!imageUrl && html) {
-      const imgMatch = html.match(/<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i);
+      const imgMatch = html.match(
+        /<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i,
+      );
       if (imgMatch) imageUrl = imgMatch[1];
     }
     const scrapedContent = markdown.length > 200 ? markdown : html;
@@ -91,23 +114,38 @@ serve(async (req: Request) => {
     ${RULEBOOK}
     DIRECTIVES :
     1. Dans "raisonnement", justifie le Modèle Exact et les tags.
-    2. RÈGLE ABSOLUE POUR LES OPTIONS : INTERDICTION FORMELLE de lister les options de base (GPS, USB, Bluetooth, Radio, Clim, ABS, Airbags, Wi-Fi). Tu dois CHERCHER et lister UNIQUEMENT les équipements sportifs ou luxueux (ex: Carbone, Cuir, Sièges Sport, Échappement, Jantes, Harman Kardon, Toit ouvrant).
+    2. RÈGLE ABSOLUE POUR LES OPTIONS : L'annonce peut être écrite en MAJUSCULES. Traque impérativement les mots "CARBONE", "CERAMIQUE", "BANG", "HARMAN", "RECARO", "MATRIX", "COMPETITION", "CS". Liste UNIQUEMENT ces équipements sportifs/luxe. Ne liste jamais la clim, le GPS ou le régulateur.
 
     Format JSON attendu :
-    { "raisonnement": "...", "marque": "", "modele": "", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", "options": ["Inserts Carbone", "Sièges Sport"], "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] }`;
-    
-    const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: extractPrompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } }),
-    });
-    
+    { "raisonnement": "...", "marque": "", "modele": "", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", "options": ["Inserts Carbone", "Sièges Sport"], "description_vendeur": "Copie exacte du texte du vendeur", "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] }`;
+
+    const extractRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: extractPrompt }] }],
+          generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
+        }),
+      },
+    );
+
     const extractData = await extractRes.json();
-    const rawCarData = JSON.parse(extractData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
+    const rawCarData = JSON.parse(
+      extractData.candidates[0].content.parts[0].text
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim(),
+    );
 
     // === ÉTAPE 3 : SCORING DÉTERMINISTE ===
-    let scoreMod = 0; const finalTagsList: string[] = []; let isKiller = false;
-    for (const item of (rawCarData.tags_detectes || [])) {
-      scoreMod += item.score; finalTagsList.push(item.tag);
+    let scoreMod = 0;
+    const finalTagsList: string[] = [];
+    let isKiller = false;
+    for (const item of rawCarData.tags_detectes || []) {
+      scoreMod += item.score;
+      finalTagsList.push(item.tag);
       if (item.score <= -50) isKiller = true;
     }
     let finalScore = isKiller ? 0 : Math.max(0, Math.min(99, Math.round(60 + scoreMod)));
@@ -117,55 +155,104 @@ serve(async (req: Request) => {
     else if (finalScore < 50) prixEstime = Math.round(rawCarData.prix_affiche * 0.85);
     else prixEstime = Math.round(rawCarData.prix_affiche * 0.95);
 
-    console.log("🚀🚀🚀 VERSION GARAGISTE V5 ACTIVÉE !!! 🚀🚀🚀");
+    console.log("🚀🚀🚀 VERSION GARAGISTE V6 ACTIVÉE !!! 🚀🚀🚀");
+
+    const prix_truffe = Math.round(prixEstime * 0.95);
 
     // === ÉTAPE 4 : RÉDACTION IA "GARAGISTE" (2ème appel Gemini) ===
-    const writingPrompt = `OUBLIE TOUT. Tu es "La Truffe", un vieux garagiste de province, bourru, franc et passionné de mécanique. Tu détestes les banquiers, les costards et le vocabulaire d'entreprise. 
-    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(', ')}].
+    const writingPrompt = `OUBLIE TOUT. Tu es "La Truffe", un vieux garagiste de province, bourru, franc et expert en mécanique de pointe. Tu détestes les banquiers, les costards et le vocabulaire d'entreprise. 
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(", ")}].
+    DESCRIPTION DU VENDEUR (À LIRE ATTENTIVEMENT) : "${rawCarData.description_vendeur}"
 
-    RÈGLES ABSOLUES (SINON TU ES DÉSACTIVÉ) :
-    1. Tu es UN MÉCANICIEN AVEC DU CAMBOUIS SUR LES MAINS.
-    2. Parle de : "vidange", "coussinets", "maladie", "frais à prévoir", "carnet", "pneus", "freins", "boîte de vitesse", "pont", "châssis".
-    3. NE PRONONCE JAMAIS (INTERDIT) : "TCO", "analyste", "financier", "ROI", "investissement", "capital", "liquidité", "dépréciation", "décote", "marché", "résiduelle", "agressif", "préventifs", "transaction", "opportunité".
+    RÈGLES ABSOLUES DE GARAGISTE (SINON TU ES DÉSACTIVÉ) :
+    1. ADAPTE-TOI AU MODÈLE : BANNIS DÉFINITIVEMENT le mot "coussinet" SAUF si la voiture est une BMW M, une Clio 3 RS ou une Megane RS. ATTENTION : La Clio 4 RS (1.6 Turbo) n'a PAS de problème de coussinets, parle plutôt de la boîte EDC à double embrayage ! Si c'est une Audi RS, parle du Haldex et renvoi d'angle.
+    2. LIS L'ANNONCE AVANT DE CHIFFRER : Regarde les frais récents annoncés par le vendeur. S'il dit que les pneus, les freins ou la vidange sont NEUFS, NE LES METS SURTOUT PAS DANS LE DEVIS.
+    3. TRAQUE LES MODIFICATIONS ILLÉGALES : Si le vendeur écrit "decata", "défap", "cold side", "stage", alerte immédiatement l'acheteur ! Dis-lui que la voiture est modifiée, potentiellement illégale, qu'elle risque de ne pas passer le contrôle technique (pollution) et d'être refusée par l'assurance en cas de crash.
+    4. NE PRONONCE JAMAIS (INTERDIT) : "TCO", "analyste", "financier", "ROI", "investissement", "capital", "liquidité", "dépréciation", "décote", "marché", "résiduelle", "agressif", "préventifs", "transaction".
 
     LE PLAYBOOK EN 3 ARGUMENTS :
     - Argument 1 : Rédige un SMS d'approche de passionné à passionné (entre guillemets « »). 
-      EXEMPLE : « Salut, belle caisse ! À 95 000 km, est-ce que les gros frais mécaniques (vidange boîte, amortisseurs, coussinets) sont faits ? Si le carnet est limpide, je te fais une offre sérieuse autour de 41 000 €. »
-    - Argument 2 (Titre : "Les maladies connues et pièces d'usure") : Liste les pièces mécaniques qui vont lâcher à ce kilométrage exact et explique combien ça coûte au garage.
-    - Argument 3 (Titre : "Inspection sous le capot") : Dis à l'acheteur ce qu'il doit vérifier avec une lampe torche (bruits de chaîne, traces d'huile, état des pneus, disques).
-    - Argument 4 (Titre : "Le Devis La Truffe") : Estime les frais de remise en état ou d'entretien préventif à prévoir pour CE véhicule à CE kilométrage. Liste chaque poste avec un coût estimé en euros.
+      RÈGLE D'OR : Inclus OBLIGATOIREMENT une offre chiffrée réaliste autour de ${prix_truffe} € dans le SMS. 
+      EXEMPLE ATTENDU : « Salut, belle caisse ! À ${rawCarData.kilometrage} km, est-ce que les gros frais (vidange de boîte) sont faits ? Vu les modifs, je peux te faire une offre ferme à ${prix_truffe} €. »
+    - Argument 2 (Titre : "Les maladies connues et l'historique") : Liste les faiblesses du modèle MAIS commente aussi ce que le vendeur a écrit dans l'annonce (les pièces déjà changées ou les modifs dangereuses comme le décata).
+    - Argument 3 (Titre : "Inspection sous le capot") : Ce qu'il faut vérifier physiquement (bruits, fuites, traces de modifications).
 
-    Retourne ce JSON exact : { "expert_opinion": "Ton avis de vieux mécano franc en 3 phrases simples.", "negotiation_arguments": [{"titre": "...", "desc": "..."}], "devis_estime": [{"piece": "Vidange boîte auto", "cout_euros": 450}, {"piece": "Plaquettes + disques AV", "cout_euros": 600}] }`;
+    NOUVEAU : Ajoute une section "devis_estime" contenant un tableau des frais prévus avec leur coût estimé EN VRAIS PRIX DE GARAGE. Sois réaliste et NE FACTURE PAS ce qui est déjà neuf.
+    
+    Retourne CE JSON EXACT : 
+    { 
+      "expert_opinion": "Ton avis de vieux mécano franc...", 
+      "negotiation_arguments": [{"titre": "...", "desc": "..."}],
+      "devis_estime": [
+        {"piece": "Nom de l'intervention précise", "cout_euros": 250}
+      ]
+    }`;
 
-    const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: writingPrompt }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json" } }),
-    });
+    const writingRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: writingPrompt }] }],
+          generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
+        }),
+      },
+    );
 
     const writingData = await writingRes.json();
-    const finalReview = JSON.parse(writingData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
+    const finalReview = JSON.parse(
+      writingData.candidates[0].content.parts[0].text
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim(),
+    );
 
     // === ÉTAPE 5 : SAUVEGARDE BDD ===
     const reportData = {
-      user_id: user.id, marque: rawCarData.marque, modele: rawCarData.modele, annee: rawCarData.annee, kilometrage: rawCarData.kilometrage,
-      prix_affiche: rawCarData.prix_affiche, prix_estime: prixEstime, prix_truffe: Math.round(prixEstime * 0.95), lien_annonce: url,
-      carburant: rawCarData.carburant, transmission: rawCarData.transmission, expert_opinion: finalReview.expert_opinion,
-      negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []), status: "completed", total_vehicules: 1,
+      user_id: user.id,
+      marque: rawCarData.marque,
+      modele: rawCarData.modele,
+      annee: rawCarData.annee,
+      kilometrage: rawCarData.kilometrage,
+      prix_affiche: rawCarData.prix_affiche,
+      prix_estime: prixEstime,
+      prix_truffe: Math.round(prixEstime * 0.95),
+      lien_annonce: url,
+      carburant: rawCarData.carburant,
+      transmission: rawCarData.transmission,
+      expert_opinion: finalReview.expert_opinion,
+      negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []),
+      status: "completed",
+      total_vehicules: 1,
       notes: JSON.stringify(finalReview.devis_estime || []),
       market_data: {
-        type: "single_audit", options: rawCarData.options || [],
-        etat: finalScore > 75 ? "Excellent" : (finalScore > 50 ? "Bon" : "Moyen"),
-        points_forts: finalTagsList.filter((t: string) => !t.includes('⚠️') && !t.includes('💀')),
-        points_faibles: finalTagsList.filter((t: string) => t.includes('⚠️') || t.includes('💀')),
-        score: finalScore, localisation: rawCarData.localisation, image_url: imageUrl, screenshot: screenshot,
+        type: "single_audit",
+        options: rawCarData.options || [],
+        etat: finalScore > 75 ? "Excellent" : finalScore > 50 ? "Bon" : "Moyen",
+        points_forts: finalTagsList.filter((t: string) => !t.includes("⚠️") && !t.includes("💀")),
+        points_faibles: finalTagsList.filter((t: string) => t.includes("⚠️") || t.includes("💀")),
+        score: finalScore,
+        localisation: rawCarData.localisation,
+        image_url: imageUrl,
+        screenshot: screenshot,
       },
     };
 
-    const { data: report, error: insertError } = await supabase.from("reports").insert(reportData).select("id").single();
+    const { data: report, error: insertError } = await supabase
+      .from("reports")
+      .insert(reportData)
+      .select("id")
+      .single();
     if (insertError) throw new Error("Erreur BDD.");
 
-    return new Response(JSON.stringify({ reportId: report.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ reportId: report.id }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
