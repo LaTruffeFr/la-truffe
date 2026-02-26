@@ -133,8 +133,9 @@ serve(async (req: Request) => {
       EXEMPLE : « Salut, belle caisse ! À 95 000 km, est-ce que les gros frais mécaniques (vidange boîte, amortisseurs, coussinets) sont faits ? Si le carnet est limpide, je te fais une offre sérieuse autour de 41 000 €. »
     - Argument 2 (Titre : "Les maladies connues et pièces d'usure") : Liste les pièces mécaniques qui vont lâcher à ce kilométrage exact et explique combien ça coûte au garage.
     - Argument 3 (Titre : "Inspection sous le capot") : Dis à l'acheteur ce qu'il doit vérifier avec une lampe torche (bruits de chaîne, traces d'huile, état des pneus, disques).
+    - Argument 4 (Titre : "Le Devis La Truffe") : Estime les frais de remise en état ou d'entretien préventif à prévoir pour CE véhicule à CE kilométrage. Liste chaque poste avec un coût estimé en euros.
 
-    Retourne ce JSON exact : { "expert_opinion": "Ton avis de vieux mécano franc en 3 phrases simples.", "negotiation_arguments": [{"titre": "...", "desc": "..."}] }`;
+    Retourne ce JSON exact : { "expert_opinion": "Ton avis de vieux mécano franc en 3 phrases simples.", "negotiation_arguments": [{"titre": "...", "desc": "..."}], "devis_estime": [{"piece": "Vidange boîte auto", "cout_euros": 450}, {"piece": "Plaquettes + disques AV", "cout_euros": 600}] }`;
 
     const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -150,6 +151,7 @@ serve(async (req: Request) => {
       prix_affiche: rawCarData.prix_affiche, prix_estime: prixEstime, prix_truffe: Math.round(prixEstime * 0.95), lien_annonce: url,
       carburant: rawCarData.carburant, transmission: rawCarData.transmission, expert_opinion: finalReview.expert_opinion,
       negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []), status: "completed", total_vehicules: 1,
+      notes: JSON.stringify(finalReview.devis_estime || []),
       market_data: {
         type: "single_audit", options: rawCarData.options || [],
         etat: finalScore > 75 ? "Excellent" : (finalScore > 50 ? "Bon" : "Moyen"),

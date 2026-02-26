@@ -490,6 +490,37 @@ const ReportView = () => {
             </Card>
           </div>
 
+          {/* DEVIS DE LA TRUFFE */}
+          {isSingleAudit && (() => {
+            let devisItems: { piece: string; cout_euros: number }[] = [];
+            try { devisItems = JSON.parse(report.notes || '[]'); } catch {}
+            if (!Array.isArray(devisItems) || devisItems.length === 0) return null;
+            const total = devisItems.reduce((s, d) => s + (d.cout_euros || 0), 0);
+            return (
+              <div className="md:col-span-2 space-y-6">
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  🧾 Le Devis de La Truffe (Frais à prévoir)
+                </h3>
+                <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-dashed divide-slate-200">
+                      {devisItems.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center px-6 py-3">
+                          <span className="text-sm text-slate-700 font-medium">{item.piece}</span>
+                          <span className="text-sm font-bold text-slate-900 font-mono">{safeNum(item.cout_euros)} €</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center px-6 py-4 bg-orange-50 border-t-2 border-orange-300">
+                      <span className="font-bold text-orange-800">TOTAL ESTIMÉ</span>
+                      <span className="text-xl font-black text-orange-600 font-mono">{safeNum(total)} €</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
+
           {/* OPTIONS EXTRAITES */}
           <div className="space-y-6">
             <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
