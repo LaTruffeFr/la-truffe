@@ -21,31 +21,21 @@ function isValidListingUrl(url: string): boolean {
 
 const RULEBOOK = `
 RÈGLES D'ATTRIBUTION DES TAGS (AVEC LEUR SCORE) :
-
 === BOOSTERS (positifs) ===
-- '💎 1ÈRE MAIN' (+5) : Première main, 1ère main.
-- '🇫🇷 ORIGINE FR' (+5) : Origine France, française, achat concession française.
-- '📘 HISTORIQUE PREMIUM' (+5) : Carnet tamponné, suivi exclusif en réseau constructeur.
-- '📘 HISTORIQUE' (+4) : Carnet à jour, factures, suivi limpide.
-- '💶 TAXE OK' (+8) : Malus payé, écotaxe payée, pas de malus.
-- '🛡️ GARANTIE' (+4) : Garantie 12 ou 24 mois, sous garantie.
-- '✅ CT OK' (+3) : Contrôle technique OK, vierge.
-- '🔧 GROS ENTRETIEN FAIT' (+3) : Distribution neuve, chaîne neuve, vidange boîte.
-
-=== COLLECTORS & SÉRIES LIMITÉES (gros bonus) ===
-- '🏆 COLLECTOR USINE' (+40) : CHERCHE les séries limitées comme "1 of 40", "x of 40", "Edition Héritage", "Heritage", CS, CSL, GTS, DTM, TCR.
-
-=== TUNING (négatifs - modifications non-premium) ===
-- '🔧 REPROG' (-5) : Stage 1, Stage 2, reprogrammation, cartographie MOTEUR.
-  PIÈGE CRITIQUE : "GPS Cartographique" ou "Navigation Cartographique" n'est PAS une reprog moteur ! C'est un GPS standard. Ne confonds JAMAIS.
-
+- '💎 1ÈRE MAIN' (+5)
+- '🇫🇷 ORIGINE FR' (+5)
+- '📘 HISTORIQUE PREMIUM' (+5)
+- '📘 HISTORIQUE' (+4)
+- '💶 TAXE OK' (+8)
+- '🛡️ GARANTIE' (+4)
+- '✅ CT OK' (+3)
+- '🔧 GROS ENTRETIEN FAIT' (+3)
+=== TUNING (négatifs - modifications) ===
+- '⚠️ MODIFIÉE' (-15) : Cherche les mots "decata", "défap", "stage 1", "stage 2", "cartographie", "ligne inox".
 === DANGERS (très négatifs) ===
-- '💀 MOTEUR HS' (-100) : Moteur HS, bruit moteur, claquement, joint de culasse.
-- '💀 ACCIDENT GRAVE' (-100) : Véhicule accidenté, sinistre, épave.
-- '⚠️ KM NON GARANTI' (-100) : Kilométrage non garanti.
-- '💀 BOITE HS' (-80) : Boîte HS.
-- '💥 ACCIDENTÉE' (-50) : Mention d'accident (sauf si précédé de "jamais").
-- '🏝️ DOM-TOM' (+5) : Réunion, Guadeloupe, Martinique, Guyane, Mayotte.
+- '💀 MOTEUR HS' (-100)
+- '💀 ACCIDENT GRAVE' (-100)
+- '⚠️ KM NON GARANTI' (-100)
 `;
 
 serve(async (req: Request) => {
@@ -74,26 +64,29 @@ serve(async (req: Request) => {
 
     if (!scrapeResponse.ok) throw new Error("Impossible de scraper l'annonce.");
     const scrapeData = await scrapeResponse.json();
-    const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || "";
     const html = scrapeData?.data?.html || scrapeData?.html || "";
+    const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || html;
     const screenshot = scrapeData?.data?.screenshot || scrapeData?.screenshot || null;
     let imageUrl = scrapeData?.data?.metadata?.ogImage || null;
     if (!imageUrl && html) {
       const imgMatch = html.match(/<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i);
       if (imgMatch) imageUrl = imgMatch[1];
     }
-    const scrapedContent = markdown.length > 200 ? markdown : html;
 
-    // === ÉTAPE 2 : EXTRACTION IA (1er appel Gemini) ===
-    const extractPrompt = `Tu es l'Agent Analyste 'La Truffe'. Lis l'annonce, réfléchis à voix haute pour déjouer les pièges, extrais les données et attribue les tags.
-    ANNONCE : ${scrapedContent}
+    // === ÉTAPE 2 : EXTRACTION IA ===
+    const extractPrompt = `Tu es un extracteur de données strict. Lis cette annonce automobile :
+    ${markdown}
+    
     ${RULEBOOK}
-    DIRECTIVES :
-    1. Dans "raisonnement", justifie le Modèle Exact et les tags.
-    2. RÈGLE ABSOLUE POUR LES OPTIONS : L'annonce peut être écrite en MAJUSCULES. Traque impérativement les mots "CARBONE", "CERAMIQUE", "BANG", "HARMAN", "RECARO", "MATRIX", "COMPETITION", "CS". Liste UNIQUEMENT ces équipements sportifs/luxe. Ne liste jamais la clim, le GPS ou le régulateur.
-
-    Format JSON attendu :
-    { "raisonnement": "...", "marque": "", "modele": "", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", "options": ["Inserts Carbone", "Sièges Sport"], "description_vendeur": "Copie exacte du texte du vendeur", "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] }`;
+    
+    Format JSON attendu (Sois ultra précis sur 'pieces_neuves' et 'modifications_tuning') :
+    { 
+      "marque": "", "modele": "", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", 
+      "options_premium": ["Carbone", "Harman Kardon"], 
+      "pieces_neuves_annoncees": "Liste TOUT ce que le vendeur dit avoir changé ou mis à neuf (ex: pneus, freins, distribution). Si rien, écris 'Aucune'.",
+      "modifications_tuning": "Liste les modifs illégales ou tuning (ex: decata, stage 1, defap). Si aucune, écris 'Aucune'.",
+      "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] 
+    }`;
     
     const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -103,8 +96,8 @@ serve(async (req: Request) => {
     const extractData = await extractRes.json();
     const rawCarData = JSON.parse(extractData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
 
-    // === ÉTAPE 3 : SCORING DÉTERMINISTE ===
-    let scoreMod = 0; const finalTagsList = []; let isKiller = false;
+    // === ÉTAPE 3 : SCORING ===
+    let scoreMod = 0; const finalTagsList: string[] = []; let isKiller = false;
     for (const item of (rawCarData.tags_detectes || [])) {
       scoreMod += item.score; finalTagsList.push(item.tag);
       if (item.score <= -50) isKiller = true;
@@ -116,59 +109,51 @@ serve(async (req: Request) => {
     else if (finalScore < 50) prixEstime = Math.round(rawCarData.prix_affiche * 0.85);
     else prixEstime = Math.round(rawCarData.prix_affiche * 0.95);
 
-    console.log("🚀🚀🚀 VERSION GARAGISTE V6 ACTIVÉE !!! 🚀🚀🚀");
-
     const prix_truffe = Math.round(prixEstime * 0.95);
 
-    // === ÉTAPE 4 : RÉDACTION IA "GARAGISTE" (2ème appel Gemini) ===
-    const writingPrompt = `OUBLIE TOUT. Tu es "La Truffe", un vieux garagiste de province, bourru, franc et expert en mécanique de pointe. Tu détestes les banquiers, les costards et le vocabulaire d'entreprise. 
-    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(', ')}].
-    DESCRIPTION DU VENDEUR (À LIRE ATTENTIVEMENT) : "${rawCarData.description_vendeur}"
+    // === ÉTAPE 4 : RÉDACTION IA (Le Garagiste) ===
+    const writingPrompt = `Tu es "La Truffe", un vieux mécanicien franc et bourru.
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | KM: ${rawCarData.kilometrage} | Prix: ${rawCarData.prix_affiche}€.
+    PIÈCES NEUVES SELON LE VENDEUR : "${rawCarData.pieces_neuves_annoncees}"
+    MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
 
-    RÈGLES ABSOLUES DE GARAGISTE (SINON TU ES DÉSACTIVÉ) :
-    1. ADAPTE-TOI AU MODÈLE : BANNIS DÉFINITIVEMENT le mot "coussinet" SAUF si la voiture est une BMW M, une Clio 3 RS ou une Megane RS. ATTENTION : La Clio 4 RS (1.6 Turbo) n'a PAS de problème de coussinets, parle plutôt de la boîte EDC à double embrayage ! Si c'est une Audi RS, parle du Haldex et renvoi d'angle.
-    2. LIS L'ANNONCE AVANT DE CHIFFRER : Regarde les frais récents annoncés par le vendeur. S'il dit que les pneus, les freins ou la vidange sont NEUFS, NE LES METS SURTOUT PAS DANS LE DEVIS.
-    3. TRAQUE LES MODIFICATIONS ILLÉGALES : Si le vendeur écrit "decata", "défap", "cold side", "stage", alerte immédiatement l'acheteur ! Dis-lui que la voiture est modifiée, potentiellement illégale, qu'elle risque de ne pas passer le contrôle technique (pollution) et d'être refusée par l'assurance en cas de crash.
-    4. NE PRONONCE JAMAIS (INTERDIT) : "TCO", "analyste", "financier", "ROI", "investissement", "capital", "liquidité", "dépréciation", "décote", "marché", "résiduelle", "agressif", "préventifs", "transaction".
-
-    LE PLAYBOOK EN 3 ARGUMENTS :
-    - Argument 1 : Rédige un SMS d'approche de passionné à passionné (entre guillemets « »). 
-      RÈGLE D'OR : Inclus OBLIGATOIREMENT une offre chiffrée réaliste autour de ${prix_truffe} € dans le SMS. 
-      EXEMPLE ATTENDU : « Salut, belle caisse ! À ${rawCarData.kilometrage} km, est-ce que les gros frais (vidange de boîte) sont faits ? Vu les modifs, je peux te faire une offre ferme à ${prix_truffe} €. »
-    - Argument 2 (Titre : "Les maladies connues et l'historique") : Liste les faiblesses du modèle MAIS commente aussi ce que le vendeur a écrit dans l'annonce (les pièces déjà changées ou les modifs dangereuses comme le décata).
-    - Argument 3 (Titre : "Inspection sous le capot") : Ce qu'il faut vérifier physiquement (bruits, fuites, traces de modifications).
-
-    NOUVEAU : Ajoute une section "devis_estime" contenant un tableau des frais prévus avec leur coût estimé EN VRAIS PRIX DE GARAGE. Sois réaliste et NE FACTURE PAS ce qui est déjà neuf.
+    CONSIGNES STRICTES :
+    1. Si la voiture est une "Clio 4 RS" : Parle UNIQUEMENT de la boîte EDC à surveiller. Il est STRICTEMENT INTERDIT d'écrire le mot "coussinets". Ce moteur n'a pas ce problème.
+    2. Si le champ MODIFICATIONS DÉTECTÉES contient "decata", "defap" ou "stage" : Tu DOIS hurler dans ton avis. Dis que la voiture est modifiée, illégale, et qu'elle ne passera pas la pollution au CT.
+    3. Dans le DEVIS ESTIMÉ : NE FACTURE SURTOUT PAS les pièces inscrites dans "PIÈCES NEUVES SELON LE VENDEUR" (ex: si les pneus sont neufs, ne les mets pas dans le devis !).
     
+    LE PLAYBOOK EN 3 ARGUMENTS :
+    - Argument 1 : Rédige un SMS d'approche (« ») avec une offre ferme autour de ${prix_truffe} €. S'il y a un decata, utilise-le pour faire baisser le prix.
+    - Argument 2 (Titre : "Mécanique et Historique") : Liste les maladies connues du modèle et commente les réparations ou modifications du vendeur.
+    - Argument 3 (Titre : "Inspection sous le capot") : Ce qu'il faut vérifier sur place.
+
     Retourne CE JSON EXACT : 
     { 
-      "expert_opinion": "Ton avis de vieux mécano franc...", 
+      "expert_opinion": "Ton avis général en 3 phrases, très franc.", 
       "negotiation_arguments": [{"titre": "...", "desc": "..."}],
-      "devis_estime": [
-        {"piece": "Nom de l'intervention précise", "cout_euros": 250}
-      ]
+      "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}]
     }`;
 
     const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: writingPrompt }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json" } }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: writingPrompt }] }], generationConfig: { temperature: 0.3, responseMimeType: "application/json" } }),
     });
 
     const writingData = await writingRes.json();
     const finalReview = JSON.parse(writingData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
 
-    // === ÉTAPE 5 : SAUVEGARDE BDD ===
+    // === ÉTAPE 5 : SAUVEGARDE ===
     const reportData = {
       user_id: user.id, marque: rawCarData.marque, modele: rawCarData.modele, annee: rawCarData.annee, kilometrage: rawCarData.kilometrage,
-      prix_affiche: rawCarData.prix_affiche, prix_estime: prixEstime, prix_truffe: Math.round(prixEstime * 0.95), lien_annonce: url,
+      prix_affiche: rawCarData.prix_affiche, prix_estime: prixEstime, prix_truffe: prix_truffe, lien_annonce: url,
       carburant: rawCarData.carburant, transmission: rawCarData.transmission, expert_opinion: finalReview.expert_opinion,
       negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []), status: "completed", total_vehicules: 1,
       notes: JSON.stringify(finalReview.devis_estime || []),
       market_data: {
-        type: "single_audit", options: rawCarData.options || [],
+        type: "single_audit", options: rawCarData.options_premium || [],
         etat: finalScore > 75 ? "Excellent" : (finalScore > 50 ? "Bon" : "Moyen"),
-        points_forts: finalTagsList.filter(t => !t.includes('⚠️') && !t.includes('💀')),
-        points_faibles: finalTagsList.filter(t => t.includes('⚠️') || t.includes('💀')),
+        points_forts: finalTagsList.filter((t: string) => !t.includes('⚠️') && !t.includes('💀')),
+        points_faibles: finalTagsList.filter((t: string) => t.includes('⚠️') || t.includes('💀')),
         score: finalScore, localisation: rawCarData.localisation, image_url: imageUrl, screenshot: screenshot,
       },
     };
