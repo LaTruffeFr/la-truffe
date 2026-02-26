@@ -37,7 +37,6 @@ RÈGLES D'ATTRIBUTION DES TAGS (AVEC LEUR SCORE) :
 
 === COLLECTORS & SÉRIES LIMITÉES (gros bonus) ===
 - '🏆 COLLECTOR USINE' (+40) : CHERCHE les séries limitées comme "1 of 40", "x of 40", "Edition Héritage", "Heritage", CS, CSL, GTS, DTM, TCR.
-  PIÈGE : Ne PAS confondre avec "STYLE GTS" ou "LOOK CS" qui sont des répliques.
 
 === TUNING (négatifs - modifications non-premium) ===
 - '🔧 REPROG' (-5) : Stage 1, Stage 2, reprogrammation, cartographie MOTEUR.
@@ -141,7 +140,7 @@ serve(async (req: Request) => {
 
     // === ÉTAPE 3 : SCORING DÉTERMINISTE ===
     let scoreMod = 0;
-    const finalTagsList: string[] = [];
+    const finalTagsList = [];
     let isKiller = false;
     for (const item of rawCarData.tags_detectes || []) {
       scoreMod += item.score;
@@ -230,8 +229,8 @@ serve(async (req: Request) => {
         type: "single_audit",
         options: rawCarData.options || [],
         etat: finalScore > 75 ? "Excellent" : finalScore > 50 ? "Bon" : "Moyen",
-        points_forts: finalTagsList.filter((t: string) => !t.includes("⚠️") && !t.includes("💀")),
-        points_faibles: finalTagsList.filter((t: string) => t.includes("⚠️") || t.includes("💀")),
+        points_forts: finalTagsList.filter((t) => !t.includes("⚠️") && !t.includes("💀")),
+        points_faibles: finalTagsList.filter((t) => t.includes("⚠️") || t.includes("💀")),
         score: finalScore,
         localisation: rawCarData.localisation,
         image_url: imageUrl,
