@@ -334,6 +334,37 @@ const PublicAudit = () => {
               </Card>
             </div>
 
+            {/* DEVIS DE LA TRUFFE */}
+            {(() => {
+              let devisItems: { piece: string; cout_euros: number }[] = [];
+              try { devisItems = JSON.parse(report.notes || '[]'); } catch {}
+              if (!Array.isArray(devisItems) || devisItems.length === 0) return null;
+              const total = devisItems.reduce((s: number, d: any) => s + (d.cout_euros || 0), 0);
+              return (
+                <div className="md:col-span-2 space-y-6">
+                  <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                    🧾 Le Devis de La Truffe (Frais à prévoir)
+                  </h3>
+                  <Card className="border-border shadow-corporate bg-card overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-dashed divide-border">
+                        {devisItems.map((item: any, i: number) => (
+                          <div key={i} className="flex justify-between items-center px-6 py-3">
+                            <span className="text-sm text-foreground/80 font-medium">{item.piece}</span>
+                            <span className="text-sm font-bold text-foreground font-mono">{safeNum(item.cout_euros)} €</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between items-center px-6 py-4 bg-orange-50 dark:bg-orange-950/20 border-t-2 border-orange-300">
+                        <span className="font-bold text-orange-800 dark:text-orange-300">TOTAL ESTIMÉ</span>
+                        <span className="text-xl font-black text-orange-600 font-mono">{safeNum(total)} €</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })()}
+
             {/* EQUIPMENT */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
