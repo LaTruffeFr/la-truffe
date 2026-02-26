@@ -7,8 +7,7 @@ declare const Deno: any;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const SUPPORTED_DOMAINS = ["leboncoin.fr", "lacentrale.fr", "autoscout24.fr", "autoscout24.com"];
@@ -16,10 +15,8 @@ const SUPPORTED_DOMAINS = ["leboncoin.fr", "lacentrale.fr", "autoscout24.fr", "a
 function isValidListingUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return SUPPORTED_DOMAINS.some((d) => parsed.hostname.includes(d));
-  } catch {
-    return false;
-  }
+    return SUPPORTED_DOMAINS.some(d => parsed.hostname.includes(d));
+  } catch { return false; }
 }
 
 const RULEBOOK = `
@@ -56,31 +53,14 @@ serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer "))
-      return new Response(JSON.stringify({ error: "Non autorisé" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!authHeader?.startsWith("Bearer ")) return new Response(JSON.stringify({ error: "Non autorisé" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user)
-      return new Response(JSON.stringify({ error: "Authentification invalide" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return new Response(JSON.stringify({ error: "Authentification invalide" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const { url } = await req.json();
-    if (!url || !isValidListingUrl(url))
-      return new Response(JSON.stringify({ error: "URL invalide." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!url || !isValidListingUrl(url)) return new Response(JSON.stringify({ error: "URL invalide." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -88,8 +68,7 @@ serve(async (req: Request) => {
 
     // === ÉTAPE 1 : SCRAPING ===
     const scrapeResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
+      method: "POST", headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ url, formats: ["markdown", "html", "screenshot"], onlyMainContent: false, waitFor: 8000 }),
     });
 
@@ -100,9 +79,7 @@ serve(async (req: Request) => {
     const screenshot = scrapeData?.data?.screenshot || scrapeData?.screenshot || null;
     let imageUrl = scrapeData?.data?.metadata?.ogImage || null;
     if (!imageUrl && html) {
-      const imgMatch = html.match(
-        /<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i,
-      );
+      const imgMatch = html.match(/<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i);
       if (imgMatch) imageUrl = imgMatch[1];
     }
     const scrapedContent = markdown.length > 200 ? markdown : html;
@@ -117,34 +94,19 @@ serve(async (req: Request) => {
 
     Format JSON attendu :
     { "raisonnement": "...", "marque": "", "modele": "", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", "options": ["Inserts Carbone", "Sièges Sport"], "description_vendeur": "Copie exacte du texte du vendeur", "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] }`;
-
-    const extractRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: extractPrompt }] }],
-          generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
-        }),
-      },
-    );
-
+    
+    const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: extractPrompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } }),
+    });
+    
     const extractData = await extractRes.json();
-    const rawCarData = JSON.parse(
-      extractData.candidates[0].content.parts[0].text
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?/g, "")
-        .trim(),
-    );
+    const rawCarData = JSON.parse(extractData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
 
     // === ÉTAPE 3 : SCORING DÉTERMINISTE ===
-    let scoreMod = 0;
-    const finalTagsList = [];
-    let isKiller = false;
-    for (const item of rawCarData.tags_detectes || []) {
-      scoreMod += item.score;
-      finalTagsList.push(item.tag);
+    let scoreMod = 0; const finalTagsList = []; let isKiller = false;
+    for (const item of (rawCarData.tags_detectes || [])) {
+      scoreMod += item.score; finalTagsList.push(item.tag);
       if (item.score <= -50) isKiller = true;
     }
     let finalScore = isKiller ? 0 : Math.max(0, Math.min(99, Math.round(60 + scoreMod)));
@@ -160,7 +122,7 @@ serve(async (req: Request) => {
 
     // === ÉTAPE 4 : RÉDACTION IA "GARAGISTE" (2ème appel Gemini) ===
     const writingPrompt = `OUBLIE TOUT. Tu es "La Truffe", un vieux garagiste de province, bourru, franc et expert en mécanique de pointe. Tu détestes les banquiers, les costards et le vocabulaire d'entreprise. 
-    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(", ")}].
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele}, KM: ${rawCarData.kilometrage}, Prix: ${rawCarData.prix_affiche}€. SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(', ')}].
     DESCRIPTION DU VENDEUR (À LIRE ATTENTIVEMENT) : "${rawCarData.description_vendeur}"
 
     RÈGLES ABSOLUES DE GARAGISTE (SINON TU ES DÉSACTIVÉ) :
@@ -187,71 +149,35 @@ serve(async (req: Request) => {
       ]
     }`;
 
-    const writingRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: writingPrompt }] }],
-          generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
-        }),
-      },
-    );
+    const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: writingPrompt }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json" } }),
+    });
 
     const writingData = await writingRes.json();
-    const finalReview = JSON.parse(
-      writingData.candidates[0].content.parts[0].text
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?/g, "")
-        .trim(),
-    );
+    const finalReview = JSON.parse(writingData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
 
     // === ÉTAPE 5 : SAUVEGARDE BDD ===
     const reportData = {
-      user_id: user.id,
-      marque: rawCarData.marque,
-      modele: rawCarData.modele,
-      annee: rawCarData.annee,
-      kilometrage: rawCarData.kilometrage,
-      prix_affiche: rawCarData.prix_affiche,
-      prix_estime: prixEstime,
-      prix_truffe: Math.round(prixEstime * 0.95),
-      lien_annonce: url,
-      carburant: rawCarData.carburant,
-      transmission: rawCarData.transmission,
-      expert_opinion: finalReview.expert_opinion,
-      negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []),
-      status: "completed",
-      total_vehicules: 1,
+      user_id: user.id, marque: rawCarData.marque, modele: rawCarData.modele, annee: rawCarData.annee, kilometrage: rawCarData.kilometrage,
+      prix_affiche: rawCarData.prix_affiche, prix_estime: prixEstime, prix_truffe: Math.round(prixEstime * 0.95), lien_annonce: url,
+      carburant: rawCarData.carburant, transmission: rawCarData.transmission, expert_opinion: finalReview.expert_opinion,
+      negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []), status: "completed", total_vehicules: 1,
       notes: JSON.stringify(finalReview.devis_estime || []),
       market_data: {
-        type: "single_audit",
-        options: rawCarData.options || [],
-        etat: finalScore > 75 ? "Excellent" : finalScore > 50 ? "Bon" : "Moyen",
-        points_forts: finalTagsList.filter((t) => !t.includes("⚠️") && !t.includes("💀")),
-        points_faibles: finalTagsList.filter((t) => t.includes("⚠️") || t.includes("💀")),
-        score: finalScore,
-        localisation: rawCarData.localisation,
-        image_url: imageUrl,
-        screenshot: screenshot,
+        type: "single_audit", options: rawCarData.options || [],
+        etat: finalScore > 75 ? "Excellent" : (finalScore > 50 ? "Bon" : "Moyen"),
+        points_forts: finalTagsList.filter(t => !t.includes('⚠️') && !t.includes('💀')),
+        points_faibles: finalTagsList.filter(t => t.includes('⚠️') || t.includes('💀')),
+        score: finalScore, localisation: rawCarData.localisation, image_url: imageUrl, screenshot: screenshot,
       },
     };
 
-    const { data: report, error: insertError } = await supabase
-      .from("reports")
-      .insert(reportData)
-      .select("id")
-      .single();
+    const { data: report, error: insertError } = await supabase.from("reports").insert(reportData).select("id").single();
     if (insertError) throw new Error("Erreur BDD.");
 
-    return new Response(JSON.stringify({ reportId: report.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ reportId: report.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
