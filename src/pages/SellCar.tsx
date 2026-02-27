@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-import Header from '@/components/Header'; // 👈 AJOUT DE L'IMPORT DU HEADER
+import Header from '@/components/Header';
 import { 
   Loader2, CheckCircle, Upload, Car, ShieldCheck, 
-  Zap, Trophy, AlertCircle, Sparkles, X 
+  Zap, Trophy, AlertCircle, Sparkles, X, Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,16 +24,24 @@ export default function SellCar() {
   const [loadingStep, setLoadingStep] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
+  // 👇 AJOUT DES NOUVEAUX CHAMPS DANS LE STATE
   const [formData, setFormData] = useState({
-    marque: '', modele: '', year: '', mileage: '', price: '', description: '', contact: ''
+    marque: '', 
+    modele: '', 
+    motorisation: '', // NOUVEAU
+    carburant: '',    // NOUVEAU
+    couleur: '',      // NOUVEAU
+    year: '', 
+    mileage: '', 
+    price: '', 
+    description: '', 
+    contact: ''
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [certification, setCertification] = useState<any>(null);
 
-  // Vérifier l'authentification au chargement
   useEffect(() => {
     if (!authLoading && !user) {
-      // Rediriger vers login avec un message
       navigate('/auth?redirect=/vendre/formulaire&message=Créez un compte pour vendre votre véhicule');
     }
   }, [user, authLoading, navigate]);
@@ -55,7 +63,6 @@ export default function SellCar() {
   };
 
   const handleSubmit = async () => {
-    // Vérifications de sécurité
     if (!user) {
       alert("Vous devez être connecté pour créer une annonce.");
       navigate('/auth');
@@ -64,20 +71,23 @@ export default function SellCar() {
 
     if (!imageFile) return alert("Une photo est obligatoire pour l'analyse IA !");
     if (!formData.contact) return alert("Indiquez un moyen de contact.");
+    if (!formData.motorisation || !formData.carburant) return alert("La motorisation et le carburant sont obligatoires.");
     
     setLoading(true);
     
     try {
       setLoadingStep("🧠 Expertise de votre annonce par La Truffe...");
       
+      // 👇 ENVOI DES NOUVELLES DONNÉES À L'IA
       const { data: aiAnalysis, error: aiError } = await supabase.functions.invoke('analyze-manual-listing', {
         body: {
           marque: formData.marque,
-          modele: formData.modele,
+          modele: `${formData.modele} ${formData.motorisation}`, // On combine pour aider l'IA
+          carburant: formData.carburant,
           annee: Number(formData.year),
           kilometrage: Number(formData.mileage),
           prix: Number(formData.price),
-          description: formData.description
+          description: `Couleur: ${formData.couleur}. ${formData.description}` // On injecte la couleur
         }
       });
 
@@ -102,9 +112,11 @@ export default function SellCar() {
         .getPublicUrl(fileName);
 
       setLoadingStep("📝 Création de l'annonce certifiée...");
+      
+      // 👇 SAUVEGARDE EN BASE DE DONNÉES
       const { error: dbError } = await supabase.from('cars').insert({
-        title: `${formData.marque} ${formData.modele}`,
-        description: formData.description,
+        title: `${formData.marque} ${formData.modele} ${formData.motorisation}`, // Le titre devient ultra précis
+        description: `Carburant : ${formData.carburant} | Couleur : ${formData.couleur}\n\n${formData.description}`,
         price: Number(formData.price),
         mileage: Number(formData.mileage),
         year: Number(formData.year),
@@ -128,7 +140,6 @@ export default function SellCar() {
     }
   };
 
-  // Afficher un loader pendant la vérification de l'auth
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -140,20 +151,15 @@ export default function SellCar() {
     );
   }
 
-  // Redirection automatique si pas connecté (le navigate dans useEffect s'en charge)
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* 👇 AJOUT DU COMPOSANT HEADER ICI */}
       <Header /> 
       
       <div className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           
-          {/* HEADER DE LA PAGE */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 border border-green-300 text-sm font-medium text-green-700 mb-4">
               ✨ Étape 2: Dépôt de l'annonce
@@ -168,7 +174,6 @@ export default function SellCar() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* COLONNE GAUCHE : FORMULAIRE */}
             <div className="lg:col-span-2 space-y-8">
               {step === 1 && (
                 <Card className="shadow-xl border-0 overflow-hidden">
@@ -178,22 +183,49 @@ export default function SellCar() {
                       <Car className="w-6 h-6 text-green-600"/> Informations du véhicule
                     </CardTitle>
                     <CardDescription>
-                      Remplissez ce formulaire pour obtenir votre certification LaTruffe.
+                      Soyez le plus précis possible. L'IA se base sur ces informations pour générer l'expertise.
                     </CardDescription>
                   </CardHeader>
                   
                   <CardContent className="space-y-6">
+                    {/* LIGNE 1 : MARQUE ET MODÈLE */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="marque">Marque</Label>
-                        <Input id="marque" name="marque" placeholder="Ex: Audi" onChange={handleChange} className="bg-slate-50" />
+                        <Input id="marque" name="marque" placeholder="Ex: BMW" onChange={handleChange} className="bg-slate-50" />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="modele">Modèle</Label>
-                        <Input id="modele" name="modele" placeholder="Ex: RS3 Sportback" onChange={handleChange} className="bg-slate-50" />
+                        <Label htmlFor="modele">Modèle précis</Label>
+                        <Input id="modele" name="modele" placeholder="Ex: Série 3 M340i xDrive" onChange={handleChange} className="bg-slate-50" />
                       </div>
                     </div>
 
+                    {/* LIGNE 2 : MOTORISATION ET CARBURANT (LES PLUS IMPORTANTS) */}
+                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="motorisation" className="text-blue-900 font-bold flex items-center gap-2">
+                          Motorisation <Info className="w-4 h-4 text-blue-500" />
+                        </Label>
+                        <Input id="motorisation" name="motorisation" placeholder="Ex: 3.0 L 374ch" onChange={handleChange} className="bg-white border-blue-200 focus-visible:ring-blue-500" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="carburant" className="text-blue-900 font-bold">Carburant</Label>
+                        <select 
+                          id="carburant" 
+                          name="carburant" 
+                          onChange={handleChange} 
+                          className="flex h-10 w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        >
+                          <option value="">Sélectionnez...</option>
+                          <option value="Essence">Essence</option>
+                          <option value="Diesel">Diesel</option>
+                          <option value="Hybride">Hybride</option>
+                          <option value="Electrique">Électrique</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* LIGNE 3 : ANNÉE, KM, COULEUR */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="year">Année</Label>
@@ -207,28 +239,35 @@ export default function SellCar() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="price">Prix souhaité</Label>
-                        <div className="relative">
-                          <Input id="price" name="price" type="number" placeholder="35000" onChange={handleChange} className="bg-slate-50 pr-8 font-semibold text-green-700" />
-                          <span className="absolute right-3 top-2.5 text-gray-500 font-bold">€</span>
-                        </div>
+                        <Label htmlFor="couleur">Couleur</Label>
+                        <Input id="couleur" name="couleur" placeholder="Ex: Bleu Portimao" onChange={handleChange} className="bg-slate-50" />
                       </div>
                     </div>
 
+                    {/* LIGNE 4 : PRIX */}
                     <div className="space-y-2">
-                      <Label htmlFor="description">Description & Options</Label>
+                      <Label htmlFor="price">Prix souhaité</Label>
+                      <div className="relative max-w-xs">
+                        <Input id="price" name="price" type="number" placeholder="35000" onChange={handleChange} className="bg-slate-50 pr-8 font-semibold text-green-700 text-lg" />
+                        <span className="absolute right-4 top-2.5 text-gray-500 font-bold">€</span>
+                      </div>
+                    </div>
+
+                    {/* LIGNE 5 : DESCRIPTION */}
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description & Options complètes</Label>
                       <Textarea 
                         id="description" 
                         name="description" 
-                        placeholder="Dites-nous tout : Options, état des pneus, entretiens récents, défauts..." 
-                        className="h-32 bg-slate-50"
+                        placeholder="Soyez transparent. Listez les options, l'état des pneus, les entretiens récents, et les éventuels défauts. L'IA récompensera votre honnêteté par un meilleur score." 
+                        className="h-40 bg-slate-50"
                         onChange={handleChange} 
                       />
-                      <p className="text-xs text-slate-500 text-right">Plus vous êtes précis, meilleur sera votre score.</p>
                     </div>
 
                     <Separator />
 
+                    {/* MÉDIAS ET CONTACT */}
                     <div className="space-y-4">
                       <Label className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-amber-500" /> Photo pour l'analyse IA
@@ -270,7 +309,7 @@ export default function SellCar() {
 
                     <div className="space-y-2">
                       <Label htmlFor="contact">Votre Email ou Téléphone</Label>
-                      <Input id="contact" name="contact" placeholder="pour que les acheteurs vous contactent" onChange={handleChange} className="bg-slate-50" />
+                      <Input id="contact" name="contact" placeholder="Pour que les acheteurs vous contactent" onChange={handleChange} className="bg-slate-50" />
                     </div>
 
                     <Button 
@@ -400,9 +439,9 @@ export default function SellCar() {
 
                 <Alert className="bg-white border-blue-100 shadow-sm">
                   <AlertCircle className="h-4 w-4 text-blue-600" />
-                  <AlertTitle className="text-blue-800 font-bold">Conseil Photo</AlertTitle>
+                  <AlertTitle className="text-blue-800 font-bold">Conseil IA</AlertTitle>
                   <AlertDescription className="text-xs text-blue-600 mt-1">
-                    Prenez une photo de 3/4 avant avec une bonne lumière. Une voiture propre augmente le score IA de 5 à 10 points !
+                    Plus vous êtes précis sur la motorisation (ex: "2.0 TSI 300"), plus La Truffe sera pertinente dans son devis et rassurera les acheteurs potentiels.
                   </AlertDescription>
                 </Alert>
 
