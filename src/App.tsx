@@ -80,6 +80,7 @@ const App = () => (
               <Route path="/vendre/formulaire" element={<SellCar />} /> {/* Déposer votre annonce */}
               <Route path="/annonces" element={<Marketplace />} />
               <Route path="/annonce/:id" element={<ListingDetails />} />
+              <Route path="/listing/:id" element={<ListingDetails />} />
               <Route path="/cgv" element={<CGV />} />
               {/* Route 404 (doit être à la fin) */}
               <Route path="*" element={<NotFound />} />
