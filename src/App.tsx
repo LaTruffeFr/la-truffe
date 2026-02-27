@@ -29,6 +29,7 @@ import SellCar from "./pages/SellCar";
 import SellLanding from "./pages/SellLanding";
 import Marketplace from "./pages/Marketplace";
 import ListingDetails from "./pages/ListingDetails";
+import AuditPage from "./pages/Audit";
 
 // 👇 1. IMPORT IMPORTANT : Ta nouvelle page de rapport réel
 import ReportView from "./pages/ReportView";
@@ -81,6 +82,7 @@ const App = () => (
               <Route path="/annonces" element={<Marketplace />} />
               <Route path="/annonce/:id" element={<ListingDetails />} />
               <Route path="/listing/:id" element={<ListingDetails />} />
+              <Route path="/audit" element={<AuditPage />} />
               <Route path="/cgv" element={<CGV />} />
               {/* Route 404 (doit être à la fin) */}
               <Route path="*" element={<NotFound />} />
