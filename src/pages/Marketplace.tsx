@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, SlidersHorizontal, Gauge, Calendar, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Search, SlidersHorizontal, Gauge, Calendar, ShieldCheck, ShieldAlert, Car } from "lucide-react";
 
 // Définition du type de nos annonces
 interface Car {
