@@ -1,20 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import Header from "@/components/Header"; // ⚠️ Vérifie que le chemin vers ton Header est correct
 import { 
-  Search, 
-  SlidersHorizontal, 
-  Gauge, 
-  Calendar, 
-  ShieldCheck, 
-  ShieldAlert, 
-  Car as CarIcon,
-  ChevronRight,
-  TrendingUp,
-  X
+  Search, SlidersHorizontal, Gauge, Calendar, 
+  ShieldCheck, ShieldAlert, Car as CarIcon, 
+  ChevronRight, TrendingUp, X 
 } from "lucide-react";
 
-// On utilise CarData pour éviter le conflit avec l'icône Car
 interface CarData {
   id: string;
   title: string;
@@ -76,9 +69,11 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans pb-20">
       
+      {/* HEADER DU SITE */}
+      <Header />
+
       {/* HERO SECTION PREMIUM */}
       <div className="relative bg-slate-900 pt-32 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Effet de fond subtil */}
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1603386329225-868f9b1ee6c9?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
         
@@ -93,7 +88,6 @@ export default function Marketplace() {
             </span>
           </h1>
           
-          {/* Barre de recherche principale géante */}
           <div className="max-w-2xl mx-auto bg-white p-2 rounded-2xl shadow-2xl flex items-center gap-2">
             <div className="flex-1 flex items-center pl-4">
               <Search className="w-6 h-6 text-slate-400" />
@@ -102,7 +96,7 @@ export default function Marketplace() {
                 placeholder="Quelle voiture cherchez-vous ? (ex: Golf 8 GTI)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-3 pr-4 py-3 text-lg text-slate-900 bg-transparent border-none focus:ring-0 outline-none placeholder:text-slate-400"
+                className="w-full pl-3 pr-4 py-3 text-lg text-slate-900 bg-transparent border-none outline-none placeholder:text-slate-400"
               />
             </div>
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold transition-colors">
@@ -116,9 +110,9 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* SIDEBAR FILTRES (STICKY & GLASSMORPHISM) */}
+          {/* SIDEBAR FILTRES */}
           <div className="w-full lg:w-1/4">
-            <div className="bg-white/80 backdrop-blur-xl border border-white shadow-xl rounded-2xl p-6 sticky top-24">
+            <div className="bg-white/90 backdrop-blur-xl border border-slate-200 shadow-xl rounded-2xl p-6 sticky top-24">
               <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal className="w-5 h-5 text-indigo-600" />
@@ -132,35 +126,29 @@ export default function Marketplace() {
               </div>
 
               <div className="space-y-6">
-                {/* Prix */}
                 <div>
                   <label className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-slate-400" /> Budget (€)
                   </label>
                   <div className="flex items-center gap-3">
-                    <div className="relative flex-1">
-                      <input
-                        type="number"
-                        placeholder="Min"
-                        value={minPrice}
-                        onChange={(e) => setMinPrice(e.target.value)}
-                        className="w-full pl-3 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                      />
-                    </div>
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      className="w-full pl-3 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                    />
                     <span className="text-slate-300 font-bold">-</span>
-                    <div className="relative flex-1">
-                      <input
-                        type="number"
-                        placeholder="Max"
-                        value={maxPrice}
-                        onChange={(e) => setMaxPrice(e.target.value)}
-                        className="w-full pl-3 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                      />
-                    </div>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="w-full pl-3 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                    />
                   </div>
                 </div>
 
-                {/* Kilométrage Max */}
                 <div>
                   <label className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                     <Gauge className="w-4 h-4 text-slate-400" /> Kilométrage Max
@@ -170,7 +158,7 @@ export default function Marketplace() {
                     placeholder="ex: 80000"
                     value={maxMileage}
                     onChange={(e) => setMaxMileage(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
                   />
                 </div>
               </div>
@@ -209,7 +197,6 @@ export default function Marketplace() {
                       to={`/listing/${car.id}`}
                       className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 hover:-translate-y-1"
                     >
-                      {/* Image Premium */}
                       <div className="relative h-56 w-full bg-slate-900 overflow-hidden">
                         <img 
                           src={car.image_url || "/placeholder.svg"} 
@@ -218,7 +205,6 @@ export default function Marketplace() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
                         
-                        {/* Score Absolu (Top Right) */}
                         {car.ai_score && (
                           <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-lg border flex items-center gap-1.5 font-bold shadow-lg backdrop-blur-md ${scoreStyle.bg} ${scoreStyle.text} ${scoreStyle.border}`}>
                             {scoreStyle.icon}
@@ -226,7 +212,6 @@ export default function Marketplace() {
                           </div>
                         )}
 
-                        {/* Titre superposé */}
                         <div className="absolute bottom-4 left-4 right-4">
                           <h3 className="text-xl font-extrabold text-white line-clamp-1 drop-shadow-md">
                             {car.title}
@@ -234,7 +219,6 @@ export default function Marketplace() {
                         </div>
                       </div>
 
-                      {/* Infos (Bottom) */}
                       <div className="p-5 flex flex-col flex-grow bg-white">
                         <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
                           <div className="flex items-center gap-4 text-sm font-semibold text-slate-600">
