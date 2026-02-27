@@ -21,32 +21,21 @@ function isValidListingUrl(url: string): boolean {
 
 const RULEBOOK = `
 RÈGLES D'ATTRIBUTION DES TAGS (AVEC LEUR SCORE) :
-
 === BOOSTERS (positifs) ===
-- '💎 1ÈRE MAIN' (+5) : Première main, 1ère main.
-- '🇫🇷 ORIGINE FR' (+5) : Origine France, française.
-- '📘 HISTORIQUE PREMIUM' (+5) : Carnet tamponné réseau constructeur.
-- '📘 HISTORIQUE' (+4) : Carnet à jour, factures.
-- '💶 TAXE OK' (+8) : Malus payé, écotaxe payée.
-- '🛡️ GARANTIE' (+4) : Garantie 12 ou 24 mois.
-- '✅ CT OK' (+3) : Contrôle technique OK, vierge.
-- '🔧 GROS ENTRETIEN FAIT' (+3) : Distribution neuve, chaîne neuve, vidange boîte.
-
-=== COLLECTORS & SÉRIES LIMITÉES (gros bonus) ===
-- '🏆 COLLECTOR USINE' (+40) : Séries limitées "1 of 40", "Edition Héritage", CS, CSL, GTS, DTM, TCR.
-  PIÈGE : Ne PAS confondre avec "STYLE GTS" ou "LOOK CS" qui sont des répliques.
-
-=== TUNING (négatifs) ===
-- '🔧 REPROG' (-5) : Stage 1, Stage 2, reprogrammation moteur.
-  PIÈGE CRITIQUE : "GPS Cartographique" n'est PAS une reprog moteur !
-- '⚠️ MODIFIÉE' (-15) : decata, défap, ligne inox non homologuée.
-
+- '💎 1ÈRE MAIN' (+5)
+- '🇫🇷 ORIGINE FR' (+5)
+- '📘 HISTORIQUE PREMIUM' (+5)
+- '📘 HISTORIQUE' (+4)
+- '💶 TAXE OK' (+8)
+- '🛡️ GARANTIE' (+4)
+- '✅ CT OK' (+3)
+- '🔧 GROS ENTRETIEN FAIT' (+3)
+=== TUNING (négatifs - modifications) ===
+- '⚠️ MODIFIÉE' (-15) : Cherche les mots "decata", "défap", "stage", "cartographie", "ligne inox".
 === DANGERS (très négatifs) ===
-- '💀 MOTEUR HS' (-100) : Moteur HS, claquement, joint de culasse.
-- '💀 ACCIDENT GRAVE' (-100) : Véhicule accidenté, sinistre, épave.
-- '⚠️ KM NON GARANTI' (-100) : Kilométrage non garanti.
-- '💀 BOITE HS' (-80) : Boîte HS.
-- '💥 ACCIDENTÉE' (-50) : Mention d'accident (sauf si précédé de "jamais").
+- '💀 MOTEUR HS' (-100)
+- '💀 ACCIDENT GRAVE' (-100)
+- '⚠️ KM NON GARANTI' (-100)
 `;
 
 serve(async (req: Request) => {
@@ -84,21 +73,21 @@ serve(async (req: Request) => {
       if (imgMatch) imageUrl = imgMatch[1];
     }
 
-    const scrapedContent = markdown.length > 200 ? markdown : html;
-
-    // === ÉTAPE 2 : EXTRACTION IA (Agent Analyste) ===
-    const extractPrompt = `Tu es l'Agent Analyste 'La Truffe'. Lis l'annonce, réfléchis à voix haute pour déjouer les pièges, extrais les données et attribue les tags.
-    ANNONCE : ${scrapedContent}
+    // === ÉTAPE 2 : EXTRACTION IA (GOD MODE) ===
+    const extractPrompt = `Tu es un extracteur de données expert en automobile. Lis cette annonce :
+    ${markdown}
+    
     ${RULEBOOK}
-    DIRECTIVES :
-    1. Dans "raisonnement", justifie le Modèle Exact (code moteur si possible) et les tags.
-    2. IDENTIFICATION EXPERTE : Identifie le code moteur précis et l'architecture (ex: N54, EA888, FA20, 13B-MSP). C'est CRITIQUE pour l'étape suivante.
-    3. RÈGLE ABSOLUE POUR LES OPTIONS : INTERDICTION FORMELLE de lister les options de base (GPS, USB, Bluetooth, Radio, Clim, ABS, Airbags, Wi-Fi). Liste UNIQUEMENT les équipements sportifs ou luxueux (ex: Carbone, Cuir, Sièges Sport, Échappement, Jantes, Harman Kardon, Toit ouvrant).
-    4. PIÈCES NEUVES : Liste TOUT ce que le vendeur dit avoir changé ou mis à neuf. Si rien, écris 'Aucune'.
-    5. MODIFICATIONS : Liste les modifs tuning (decata, stage 1, defap, ligne). Si aucune, écris 'Aucune'.
-
-    Format JSON attendu :
-    { "raisonnement": "...", "marque": "", "modele": "", "code_moteur": "ex: N55B30", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", "options": ["Inserts Carbone", "Sièges Sport"], "pieces_neuves_annoncees": "...", "modifications_tuning": "...", "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] }`;
+    
+    Format JSON attendu (Sois ultra précis) :
+    { 
+      "marque": "", "modele": "", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", 
+      "code_moteur_estime": "Devine le code moteur exact (ex: S55, MR16DDT, 2.0 TFSI DAZA). C'est CRUCIAL.",
+      "options_premium": ["Carbone", "Harman Kardon", "Recaro"], 
+      "pieces_neuves_annoncees": "Liste TOUT ce que le vendeur dit avoir changé ou mis à neuf (ex: pneus, freins, distribution). Si rien, écris 'Aucune'.",
+      "modifications_tuning": "Liste les modifs illégales ou tuning (ex: decata, stage 1, defap). Si aucune, écris 'Aucune'.",
+      "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] 
+    }`;
     
     const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -123,39 +112,28 @@ serve(async (req: Request) => {
 
     const prix_truffe = Math.round(prixEstime * 0.95);
 
-    console.log("🚀 GOD MODE V6 — Code moteur détecté :", rawCarData.code_moteur || "inconnu");
-
-    // === ÉTAPE 4 : RÉDACTION IA (Le Garagiste GOD MODE) ===
-    const writingPrompt = `OUBLIE TOUT. Tu es "La Truffe", un vieux garagiste de province, bourru, franc et passionné de mécanique. Tu détestes les banquiers, les costards et le vocabulaire d'entreprise.
-
-    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | CODE MOTEUR : ${rawCarData.code_moteur || "inconnu"} | KM: ${rawCarData.kilometrage} | Prix: ${rawCarData.prix_affiche}€.
-    SCORE: ${finalScore}/100. TAGS : [${finalTagsList.join(', ')}].
+    // === ÉTAPE 4 : RÉDACTION IA (LE MÉCANICIEN INFALLIBLE) ===
+    const writingPrompt = `Tu es "La Truffe", un vieux mécanicien franc, bourru et ultra-expert.
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix : ${rawCarData.prix_affiche}€.
     PIÈCES NEUVES SELON LE VENDEUR : "${rawCarData.pieces_neuves_annoncees}"
     MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
 
-    === RÈGLES D'ANALYSE DYNAMIQUE (GOD MODE) ===
+    RÈGLES D'OR DE MÉCANIQUE (INTERDICTION D'INVENTER) :
+    1. Base-toi UNIQUEMENT sur le code moteur (${rawCarData.code_moteur_estime}). Si c'est une Clio 4 RS (MR16DDT), BANNIS le mot "coussinets". Parle plutôt de la boîte EDC à surveiller.
+    2. Si le vendeur a écrit "decata", "defap", "stage" ou "cartographie" dans l'annonce, TU DOIS HURLER au loup dans ton avis. Dis que c'est illégal et que ça passera pas la pollution.
+    3. POUR LE DEVIS : Soustrais mathématiquement les "PIÈCES NEUVES" de tes prévisions. Si les pneus ou freins sont neufs, NE LES METS PAS DANS LE DEVIS.
 
-    1. IDENTIFICATION EXPERTE : Tu connais le code moteur "${rawCarData.code_moteur || "inconnu"}". N'invente JAMAIS de pannes génériques. Liste UNIQUEMENT les maladies documentées de CE bloc moteur précis. Exemple : si c'est un N54, parle des injecteurs piézo et de la wastegate. Si c'est un FA20 Subaru, parle du joint de culasse. Si c'est un 13B-MSP Mazda, parle du test de compression rotatif. INTERDIT de parler de "coussinets" si le moteur n'est pas historiquement touché.
+    LE PLAYBOOK EN 3 ARGUMENTS :
+    - Argument 1 : Rédige un SMS d'approche (« ») avec une offre ferme autour de ${prix_truffe} €. S'il y a des modifications, utilise-les pour justifier la baisse de prix.
+    - Argument 2 (Titre : "Mécanique et Historique") : Liste les maladies connues de CE moteur précis (${rawCarData.code_moteur_estime}). Commente les pièces neuves ou les modifications du vendeur.
+    - Argument 3 (Titre : "Inspection sous le capot") : Ce qu'il faut vérifier sur place (bruits, fuites, etc).
 
-    2. TRAQUE DES MODIFICATIONS : Si MODIFICATIONS DÉTECTÉES contient "decata", "defap", "stage" ou "E85 non homologué" : HURLE au loup sur la légalité et le CT pollution. Si c'est de la belle pièce (Eventuri, Akrapovic, KW), félicite le goût mais préviens sur la revente et l'assurance.
-
-    3. INSPECTION SUR MESURE : Dis à l'acheteur OÙ regarder exactement sur CE modèle. Sois chirurgical. Exemples : Porsche → fuites IMS/RMS. BMW N54 → suintement turbo, jeu wastegate. Audi EA888 → consommation d'huile, tensor de chaîne. Renault RS → état embrayage/EDC.
-
-    4. DEVIS INTELLIGENT : Calcule les frais d'usure normaux pour ${rawCarData.kilometrage} km sur ce moteur exact, mais DÉDUIS OBLIGATOIREMENT les pièces annoncées comme neuves par le vendeur ("${rawCarData.pieces_neuves_annoncees}"). Si les pneus sont neufs, NE LES FACTURE PAS.
-
-    === RÈGLES ABSOLUES (SINON TU ES DÉSACTIVÉ) ===
-    - Tu es UN MÉCANICIEN AVEC DU CAMBOUIS SUR LES MAINS.
-    - Parle de : "vidange", "distribution", "freins", "pneus", "boîte", "pont", "châssis", "turbo", "injecteurs".
-    - NE PRONONCE JAMAIS : "TCO", "ROI", "investissement", "capital", "liquidité", "dépréciation", "résiduelle", "opportunité", "analyste", "financier".
-
-    === LE PLAYBOOK EN 4 ARGUMENTS ===
-    - Argument 1 : SMS d'approche de passionné à passionné (entre « »), avec une offre ferme autour de ${prix_truffe}€. Naturel, courtois mais ferme. Si decata détecté, utilise-le pour négocier.
-    - Argument 2 (Titre : "Les maladies connues de ce moteur") : Maladies documentées de CE bloc moteur à CE kilométrage. Commente les réparations/modifications du vendeur.
-    - Argument 3 (Titre : "Inspection chirurgicale") : Points EXACTS à vérifier sur place avec une lampe torche, spécifiques à CE modèle.
-    - Argument 4 (Titre : "Le Devis La Truffe") : Tableau des frais à prévoir.
-
-    Retourne CE JSON EXACT :
-    { "expert_opinion": "Ton avis de vieux mécano en 3 phrases.", "negotiation_arguments": [{"titre": "...", "desc": "..."}], "devis_estime": [{"piece": "Nom", "cout_euros": 250}] }`;
+    Retourne CE JSON EXACT : 
+    { 
+      "expert_opinion": "Ton avis général en 3 phrases, très franc.", 
+      "negotiation_arguments": [{"titre": "...", "desc": "..."}],
+      "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}]
+    }`;
 
     const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -173,7 +151,7 @@ serve(async (req: Request) => {
       negotiation_arguments: JSON.stringify(finalReview.negotiation_arguments || []), status: "completed", total_vehicules: 1,
       notes: JSON.stringify(finalReview.devis_estime || []),
       market_data: {
-        type: "single_audit", options: rawCarData.options || [], code_moteur: rawCarData.code_moteur || null,
+        type: "single_audit", options: rawCarData.options_premium || [],
         etat: finalScore > 75 ? "Excellent" : (finalScore > 50 ? "Bon" : "Moyen"),
         points_forts: finalTagsList.filter((t: string) => !t.includes('⚠️') && !t.includes('💀')),
         points_faibles: finalTagsList.filter((t: string) => t.includes('⚠️') || t.includes('💀')),
