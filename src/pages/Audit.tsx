@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { 
   Search, Link as LinkIcon, Loader2, BrainCircuit, 
-  Receipt, CheckCircle2, TrendingUp, Zap, ShieldCheck,
-  AlertTriangle, Info, ArrowRight, Sparkles
+  Receipt, CheckCircle2, TrendingUp, Zap, Sparkles,
+  ShieldCheck, ArrowRight
 } from "lucide-react";
 
 export default function AuditPage() {
@@ -18,7 +18,7 @@ export default function AuditPage() {
   const [loadingStep, setLoadingStep] = useState("");
   const [report, setReport] = useState<any>(null);
 
-  // FORCE L'AUTHENTIFICATION : On garde la valeur ajoutée du compte
+  // 🔒 SÉCURITÉ : On redirige vers l'auth si l'utilisateur n'est pas connecté
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth?redirect=/audit&message=Veuillez créer un compte pour utiliser le scanner d'URL");
@@ -42,63 +42,65 @@ export default function AuditPage() {
       if (error) throw error;
       
       setLoadingStep("Le Cerveau Hybride traque les vices cachés...");
-      await new Promise(r => setTimeout(r, 1500)); // Temps pour l'effet "Wow"
+      await new Promise(r => setTimeout(r, 1500)); // Effet de réflexion IA
 
-      setLoadingStep("Calcul du devis et du playbook...");
+      setLoadingStep("Génération du Playbook de négociation...");
       await new Promise(r => setTimeout(r, 1000));
 
       setReport(data);
     } catch (error: any) {
       console.error(error);
-      alert("Erreur : Vérifiez l'URL (Leboncoin ou La Centrale uniquement).");
+      alert("Erreur lors de l'analyse : Vérifiez l'URL (Leboncoin ou La Centrale uniquement).");
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  if (authLoading) return null; // Évite le flash avant redirection
+  // Gestion du chargement initial de la session
+  if (authLoading) return null;
+  if (!user) return null;
 
-  // --- ÉCRAN DE CHARGEMENT "CERVEAU HYBRIDE" ---
+  // --- ÉCRAN DE CHARGEMENT IA (CERVEAU PULSANT) ---
   if (isAnalyzing) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-6">
-        <div className="relative mb-12">
-          <BrainCircuit className="w-28 h-28 text-indigo-500 animate-pulse relative z-10" />
-          <div className="absolute inset-0 bg-indigo-500 blur-[80px] opacity-30 animate-pulse"></div>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white font-sans px-4">
+        <div className="relative mb-8">
+          <BrainCircuit className="w-24 h-24 text-indigo-500 animate-pulse relative z-10" />
+          <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-50 animate-pulse"></div>
         </div>
-        <h2 className="text-3xl font-black mb-6 tracking-tight text-center">Analyse Turbo en cours...</h2>
-        <div className="flex items-center gap-3 text-indigo-300 font-bold text-lg bg-white/5 border border-white/10 px-8 py-4 rounded-2xl backdrop-blur-md">
-          <Loader2 className="w-6 h-6 animate-spin" /> {loadingStep}
+        <h2 className="text-3xl font-extrabold mb-4 tracking-tight text-center">Analyse de l'annonce en cours...</h2>
+        <div className="flex items-center gap-3 text-indigo-300 font-medium text-lg bg-white/5 px-6 py-3 rounded-full border border-white/10">
+          <Loader2 className="w-5 h-5 animate-spin" /> {loadingStep}
+        </div>
+        <div className="w-64 h-1.5 bg-slate-800 rounded-full mt-8 overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 w-1/2 animate-[ping_1.5s_infinite_alternate]"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24">
       <Header />
 
-      {/* HERO SECTION DÉDIÉE */}
+      {/* BANNIÈRE HERO DÉDIÉE */}
       <div className="bg-slate-900 pt-32 pb-24 px-4 text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-600/10 to-transparent"></div>
         <div className="relative z-10 max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-bold mb-6">
-            <Sparkles className="w-4 h-4" /> Scanner d'annonces V11
+            <Sparkles className="w-4 h-4" /> Expertise IA Professionnelle
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-6">
-            Collez. Scannez. <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400">Négociez.</span>
+            Scanner d'Annonce <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400">La Truffe</span>
           </h1>
-          <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10">
-            L'IA La Truffe analyse instantanément n'importe quelle annonce Leboncoin ou La Centrale pour vous dire si c'est une affaire ou un piège.
-          </p>
-
-          {/* LA BARRE DE SCAN GÉANTE */}
-          <div className="max-w-3xl mx-auto bg-white p-2 rounded-2xl shadow-2xl flex flex-col sm:flex-row gap-2">
+          
+          {/* BARRE DE RECHERCHE GÉANTE */}
+          <div className="max-w-3xl mx-auto bg-white p-2 rounded-2xl shadow-2xl flex flex-col sm:flex-row gap-2 mt-8">
             <div className="flex-1 flex items-center pl-4">
               <LinkIcon className="w-6 h-6 text-slate-400" />
               <input
                 type="url"
-                placeholder="Collez l'URL de l'annonce ici..."
+                placeholder="Collez l'URL Leboncoin ou La Centrale..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="w-full pl-3 pr-4 py-4 text-lg text-slate-900 outline-none placeholder:text-slate-400"
@@ -108,42 +110,35 @@ export default function AuditPage() {
               onClick={handleAudit}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95"
             >
-              Scanner l'annonce
+              Auditer l'URL
             </button>
           </div>
         </div>
       </div>
 
-      {/* RÉSULTAT DE L'EXPERTISE */}
       <div className="max-w-6xl mx-auto px-4 mt-12">
+        {/* RÉSULTAT DU RAPPORT */}
         {report ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
             
-            {/* GRILLE 1 : SCORE ET COTE */}
+            {/* SCORE ET COTE */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Score */}
-              <div className="bg-white rounded-3xl p-10 shadow-xl border border-slate-100 text-center flex flex-col items-center justify-center relative">
-                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-t-3xl"></div>
-                <h3 className="text-slate-400 font-black uppercase text-xs tracking-widest mb-4">Score La Truffe</h3>
+              <div className="bg-white rounded-3xl p-10 shadow-xl border border-slate-100 text-center flex flex-col items-center justify-center">
+                <h3 className="text-slate-400 font-black uppercase text-xs tracking-widest mb-4">Score de Confiance</h3>
                 <div className={`text-9xl font-black leading-none mb-2 ${report.score >= 70 ? 'text-emerald-500' : report.score >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
                   {report.score}
                 </div>
                 <p className="text-slate-400 font-bold">/ 100</p>
               </div>
 
-              {/* Cote Financière */}
               <div className="lg:col-span-2 bg-slate-900 rounded-3xl p-10 shadow-xl text-white flex flex-col justify-center">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-indigo-400 font-black uppercase text-xs tracking-widest">Analyse de Valeur</h3>
-                  <div className="px-3 py-1 bg-white/10 rounded-lg text-xs font-bold border border-white/10">Marché France</div>
-                </div>
+                <h3 className="text-indigo-400 font-black uppercase text-xs tracking-widest mb-8">Analyse de Valeur</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="border-r border-white/10 pr-4">
+                  <div>
                     <p className="text-slate-400 text-xs font-bold mb-2 uppercase">Prix Vendeur</p>
                     <p className="text-3xl font-bold">{report.prix_vendeur?.toLocaleString('fr-FR')} €</p>
                   </div>
-                  <div className="border-r border-white/10 pr-4">
+                  <div>
                     <p className="text-slate-400 text-xs font-bold mb-2 uppercase">Vraie Cote IA</p>
                     <p className="text-3xl font-bold text-indigo-400">{report.vraie_cote?.toLocaleString('fr-FR')} €</p>
                   </div>
@@ -157,10 +152,8 @@ export default function AuditPage() {
               </div>
             </div>
 
-            {/* GRILLE 2 : AVIS ET PLAYBOOK */}
+            {/* AVIS ET PLAYBOOK */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* Colonne Gauche : Avis & Playbook */}
               <div className="lg:col-span-2 space-y-8">
                 <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
                   <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
@@ -191,7 +184,7 @@ export default function AuditPage() {
                 </div>
               </div>
 
-              {/* Colonne Droite : Devis */}
+              {/* DEVIS LATRUFFE */}
               <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden h-fit sticky top-24">
                 <div className="bg-slate-900 p-6 text-white flex items-center gap-3">
                   <Receipt className="w-6 h-6 text-indigo-400" />
@@ -224,28 +217,21 @@ export default function AuditPage() {
                 </div>
               </div>
             </div>
-
           </div>
         ) : (
-          /* ÉTAT VIDE : CONSEILS */
+          /* ÉTAT INITIAL (CONSEILS) */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center py-12">
-            <div className="p-8 bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold italic">Lbc</div>
-              <h4 className="font-bold mb-2">Leboncoin</h4>
-              <p className="text-sm text-slate-500">Copiez le lien complet de l'annonce depuis l'application ou le site.</p>
-            </div>
-            <div className="p-8 bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold italic">Lc</div>
-              <h4 className="font-bold mb-2">La Centrale</h4>
-              <p className="text-sm text-slate-500">Fonctionne avec toutes les annonces de professionnels ou de particuliers.</p>
-            </div>
-            <div className="p-8 bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShieldCheck className="w-6 h-6" />
+            {[
+              { label: "Leboncoin", desc: "Copiez le lien de l'annonce depuis l'application." },
+              { label: "La Centrale", desc: "Fonctionne avec toutes les annonces pro ou particuliers." },
+              { label: "IA Experte", desc: "Notre algorithme traque les incohérences techniques." }
+            ].map((item, i) => (
+              <div key={i} className="p-8 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold tracking-tighter italic">Lbc</div>
+                <h4 className="font-bold mb-2">{item.label}</h4>
+                <p className="text-sm text-slate-500">{item.desc}</p>
               </div>
-              <h4 className="font-bold mb-2">Certification</h4>
-              <p className="text-sm text-slate-500">Chaque audit est sauvegardé dans votre espace client personnel.</p>
-            </div>
+            ))}
           </div>
         )}
       </div>
