@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { scoreSingleCar } from '@/lib/vehicleAnalysis';
+
 import Header from '@/components/Header'; // 👈 AJOUT DE L'IMPORT DU HEADER
 import { 
   Loader2, CheckCircle, Upload, Car, ShieldCheck, 
@@ -68,17 +68,25 @@ export default function SellCar() {
     setLoading(true);
     
     try {
-      setLoadingStep("🧠 Analyse IA du véhicule en cours...");
-      const aiResult = scoreSingleCar({
-        marque: formData.marque,
-        modele: formData.modele,
-        prix: Number(formData.price),
-        kilometrage: Number(formData.mileage),
-        annee: Number(formData.year),
-        description: formData.description,
-      });
+      setLoadingStep("🧠 Expertise de votre annonce par La Truffe...");
       
-      if (!aiResult) throw new Error("L'IA n'a pas pu analyser le véhicule.");
+      const { data: aiAnalysis, error: aiError } = await supabase.functions.invoke('analyze-manual-listing', {
+        body: {
+          marque: formData.marque,
+          modele: formData.modele,
+          annee: Number(formData.year),
+          kilometrage: Number(formData.mileage),
+          prix: Number(formData.price),
+          description: formData.description
+        }
+      });
+
+      if (aiError || !aiAnalysis) {
+        console.error("Erreur IA:", aiError);
+        throw new Error("L'IA n'a pas pu analyser votre véhicule. Veuillez réessayer.");
+      }
+      
+      const aiResult = { score: aiAnalysis.score, avis: aiAnalysis.expert_opinion, tags: aiAnalysis.tags };
       setCertification(aiResult);
 
       setLoadingStep("☁️ Sécurisation de la photo...");

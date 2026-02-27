@@ -31,3 +31,7 @@ verify_jwt = false
 [functions.audit-url]
 # Single listing audit - auth checked in code
 verify_jwt = false
+
+[functions.analyze-manual-listing]
+# Manual listing AI analysis - auth checked in code
+verify_jwt = false
