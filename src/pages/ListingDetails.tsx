@@ -51,7 +51,7 @@ export default function ListingDetails() {
       if (error) {
         console.error("Erreur de récupération :", error);
       } else {
-        setCar(data as CarDetails);
+        setCar(data as unknown as CarDetails);
       }
       setLoading(false);
     };
