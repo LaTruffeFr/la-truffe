@@ -5,23 +5,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 
-// Importation des pages (Vérifie que tous ces fichiers existent bien dans src/pages/)
+// Importations basées EXACTEMENT sur ta liste de fichiers
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
 import Cote from "./pages/Cote";
-// On garde une route pour le scanner d'audit (si tu as une page Audit.tsx)
-import Audit from "./pages/Index"; // ou "./pages/Audit" selon le nom de ton fichier
+import Audit from "./pages/Audit"; 
+import Marketplace from "./pages/Marketplace"; 
+import Vendre from "./pages/SellCar"; // On connecte l'URL /vendre à ton composant SellCar.tsx
+import ReportView from "./pages/ReportView"; // On utilise ton ReportView.tsx
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import Report from "./pages/Report";
 import NotFound from "./pages/NotFound";
-
-// Remarque : Si Marketplace.tsx et Vendre.tsx n'existent pas encore, 
-// Lovable risque de mettre une petite erreur. Dis-le moi !
-import Marketplace from "./pages/Marketplace"; 
-import Vendre from "./pages/Vendre"; 
 
 const queryClient = new QueryClient();
 
@@ -42,7 +38,7 @@ const App = () => (
             <Route path="/audit" element={<Audit />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/vendre" element={<Vendre />} />
-            <Route path="/report/:id" element={<Report />} />
+            <Route path="/report/:id" element={<ReportView />} />
             
             {/* Tableaux de bord */}
             <Route path="/client" element={<ClientDashboard />} />
