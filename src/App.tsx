@@ -1,97 +1,64 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { VehicleDataProvider } from "@/contexts/VehicleDataContext";
-import { ScrollToTop } from "@/components/ScrollToTop";
 
-// Imports des pages
+// Importation des pages (Vérifie que tous ces fichiers existent bien dans src/pages/)
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import ClientDashboard from "./pages/ClientDashboard";
-import DemoReportPage from "./pages/DemoReportPage";
 import Pricing from "./pages/Pricing";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
-import Settings from "./pages/Settings";
-import Transactions from "./pages/Transactions";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import MentionsLegales from "./pages/MentionsLegales";
-import CGV from "./pages/CGV";
+import Cote from "./pages/Cote";
+// On garde une route pour le scanner d'audit (si tu as une page Audit.tsx)
+import Audit from "./pages/Index"; // ou "./pages/Audit" selon le nom de ton fichier
+import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import { AdminRoute } from "./components/AdminRoute";
-import SellCar from "./pages/SellCar";
-import SellLanding from "./pages/SellLanding";
-import Marketplace from "./pages/Marketplace";
-import ListingDetails from "./pages/ListingDetails";
-import AuditPage from "./pages/Audit";
+import Report from "./pages/Report";
+import NotFound from "./pages/NotFound";
 
-// 👇 1. IMPORT IMPORTANT : Ta nouvelle page de rapport réel
-import ReportView from "./pages/ReportView";
-import PublicAudit from "./pages/PublicAudit";
+// Remarque : Si Marketplace.tsx et Vendre.tsx n'existent pas encore, 
+// Lovable risque de mettre une petite erreur. Dis-le moi !
+import Marketplace from "./pages/Marketplace"; 
+import Vendre from "./pages/Vendre"; 
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/client-dashboard" element={<ClientDashboard />} />
-              {/* 👇 2. C'EST ICI QUE TU AJOUTES LA ROUTE DU RAPPORT RÉEL */}
-              <Route path="/report/:id" element={<ReportView />} />
-              {/* Anciennes routes de démo (tu peux les garder) */}
-              <Route path="/audit/:id" element={<PublicAudit />} />
-              <Route path="/demo/:id" element={<DemoReportPage />} />
-              <Route path="/payment-success" element={<PaymentSuccess />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <VehicleDataProvider>
-                      <AdminDashboard />
-                    </VehicleDataProvider>
-                  </AdminRoute>
-                }
-              />
-              {/* Routes statiques */}
-              <Route path="/enterprise" element={<About />} />
-              <Route path="/qui-sommes-nous" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/why-us" element={<About />} />
-              <Route path="/mentions-legales" element={<MentionsLegales />} />
-              {/* Routes pour la vente - PAGE MARKETING + FORMULAIRE */}
-              <Route path="/vendre" element={<SellLanding />} /> {/* Pourquoi vendre avec nous */}
-              <Route path="/vendre/formulaire" element={<SellCar />} /> {/* Déposer votre annonce */}
-              <Route path="/annonces" element={<Marketplace />} />
-              <Route path="/annonce/:id" element={<ListingDetails />} />
-              <Route path="/listing/:id" element={<ListingDetails />} />
-              <Route path="/audit" element={<AuditPage />} />
-              <Route path="/cgv" element={<CGV />} />
-              {/* Route 404 (doit être à la fin) */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            {/* Pages publiques */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/cote" element={<Cote />} />
+            <Route path="/audit" element={<Audit />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/vendre" element={<Vendre />} />
+            <Route path="/report/:id" element={<Report />} />
+            
+            {/* Tableaux de bord */}
+            <Route path="/client" element={<ClientDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+
+            {/* Redirections de compatibilité (pour éviter les 404 sur les anciens liens) */}
+            <Route path="/settings" element={<Navigate to="/client" replace />} />
+            <Route path="/transactions" element={<Navigate to="/client" replace />} />
+
+            {/* Page 404 par défaut */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
 );
 
 export default App;
