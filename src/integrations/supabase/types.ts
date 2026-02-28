@@ -37,7 +37,9 @@ export type Database = {
       }
       cars: {
         Row: {
+          ai_arguments: Json | null
           ai_avis: string | null
+          ai_devis: Json | null
           ai_score: number | null
           ai_tags: string[] | null
           created_at: string
@@ -54,7 +56,9 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          ai_arguments?: Json | null
           ai_avis?: string | null
+          ai_devis?: Json | null
           ai_score?: number | null
           ai_tags?: string[] | null
           created_at?: string
@@ -71,7 +75,9 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          ai_arguments?: Json | null
           ai_avis?: string | null
+          ai_devis?: Json | null
           ai_score?: number | null
           ai_tags?: string[] | null
           created_at?: string

@@ -96,7 +96,7 @@ export default function SellCar() {
         throw new Error("L'IA n'a pas pu analyser votre véhicule. Veuillez réessayer.");
       }
       
-      const aiResult = { score: aiAnalysis.score, avis: aiAnalysis.expert_opinion, tags: aiAnalysis.tags };
+      const aiResult = { score: aiAnalysis.score, avis: aiAnalysis.expert_opinion, tags: aiAnalysis.tags, arguments: aiAnalysis.negotiation_arguments, devis: aiAnalysis.devis_estime };
       setCertification(aiResult);
 
       setLoadingStep("☁️ Sécurisation de la photo...");
@@ -126,6 +126,8 @@ export default function SellCar() {
         ai_score: aiResult.score,
         ai_avis: aiResult.avis,
         ai_tags: aiResult.tags,
+        ai_arguments: aiResult.arguments,
+        ai_devis: aiResult.devis,
         user_id: user.id,
       });
 

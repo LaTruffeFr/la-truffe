@@ -285,60 +285,6 @@ const ClientDashboard = () => {
           <div className="lg:col-span-9 space-y-6 md:space-y-8">
             {activeTab === 'reports' ? (
               <>
-                <section>
-                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Analyser une annonce</h2>
-              
-              <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
-                <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
-                  <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
-                    <Link2 className="w-4 h-4" /> Collez le lien de l'annonce
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 md:p-8">
-                  <form onSubmit={handleSubmitLink} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="listingUrl" className="text-sm font-semibold text-slate-700">Lien de l'annonce *</Label>
-                      <Input 
-                        id="listingUrl"
-                        type="url"
-                        placeholder="https://www.leboncoin.fr/voitures/..." 
-                        className="h-12 text-base bg-slate-50 border-slate-200 focus:border-primary"
-                        value={listingUrl}
-                        onChange={(e) => setListingUrl(e.target.value)}
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="secondary" className="text-xs font-normal">LeBonCoin</Badge>
-                        <Badge variant="secondary" className="text-xs font-normal">La Centrale</Badge>
-                        <Badge variant="secondary" className="text-xs font-normal">AutoScout24</Badge>
-                      </div>
-                    </div>
-                    <div className="pt-2">
-                      <Button 
-                        type="submit" 
-                        size="lg" 
-                        className="w-full md:w-auto h-12 px-8 font-bold bg-primary hover:bg-primary/90 shadow-md"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> <AuditLoadingText /></>
-                        ) : (
-                          <><ExternalLink className="w-4 h-4 mr-2" /> Lancer l'audit</>
-                        )}
-                      </Button>
-                      {isSubmitting && <AuditLoadingProgress />}
-                      {!isSubmitting && (
-                        <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" /> L'analyse IA prend environ 15 secondes.
-                        </p>
-                      )}
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </section>
-
             <section>
               <h2 className="text-xl font-bold text-slate-900 mb-4">Mes demandes d'audit</h2>
               

@@ -1,0 +1,2 @@
+ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS ai_arguments jsonb DEFAULT NULL;
+ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS ai_devis jsonb DEFAULT NULL;
