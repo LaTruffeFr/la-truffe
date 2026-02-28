@@ -1,26 +1,26 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Lock, Loader2, ShieldCheck, Star, CreditCard, Mail } from 'lucide-react';
+import { ArrowLeft, Lock, Loader2, ShieldCheck, Star, CreditCard, Mail, CheckCircle2, Zap, Target, Infinity } from 'lucide-react';
 import { Footer } from '@/components/landing';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-// IDs des prix Stripe (vrais price_id)
+// IDs des prix Stripe (vrais price_id) - À METTRE À JOUR AVEC TES ID STRIPE
 const PRICE_IDS: Record<string, string> = {
-  '1': 'price_1SqKnwPpNQZ47toNVMJLXVaA',  // Audit Unitaire - 9.90€
-  '2': 'price_1SqKo7PpNQZ47toNWEW27KV7',  // Pack Duo - 17.90€
-  '3': 'price_1SqKoHPpNQZ47toNQ3RduPl3',  // Pack Chasseur - 24.90€
+  'curieux': 'price_1SqKnwPpNQZ47toNVMJLXVaA',  // 4.90€
+  'chasseur': 'price_1SqKo7PpNQZ47toNWEW27KV7', // 9.90€
+  'vip': 'price_1SqKoHPpNQZ47toNQ3RduPl3',      // 49.00€
 };
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialPlan = searchParams.get('plan') || '1';
+  const [searchParams] = useSearchParams();
+  const initialPlan = searchParams.get('plan') || 'chasseur';
   const [selectedPlanId, setSelectedPlanId] = useState(initialPlan);
   const [loading, setLoading] = useState(false);
   const [guestEmail, setGuestEmail] = useState('');
@@ -28,13 +28,43 @@ const Checkout = () => {
   const { user } = useAuth();
 
   const packs = {
-    '1': { id: '1', name: "Audit Unitaire", price: 9.90, credits: 1, desc: "Analyse complète pour 1 véhicule", tag: null },
-    '2': { id: '2', name: "Pack Duo", price: 17.90, credits: 2, desc: "Idéal pour comparer deux modèles", tag: "Populaire" },
-    '3': { id: '3', name: "Pack Chasseur", price: 24.90, credits: 3, desc: "Le choix des experts (Recommandé)", tag: "Meilleure offre" },
+    'curieux': { 
+      id: 'curieux', 
+      name: "Pack Curieux", 
+      price: 4.90, 
+      credits: "3 Crédits IA", 
+      desc: "Idéal pour vérifier quelques annonces", 
+      tag: null,
+      icon: Zap,
+      color: "text-indigo-500",
+      bg: "bg-indigo-50"
+    },
+    'chasseur': { 
+      id: 'chasseur', 
+      name: "Pack Chasseur", 
+      price: 9.90, 
+      credits: "10 Crédits IA", 
+      desc: "Le choix des acheteurs actifs", 
+      tag: "Recommandé",
+      icon: Target,
+      color: "text-emerald-500",
+      bg: "bg-emerald-50"
+    },
+    'vip': { 
+      id: 'vip', 
+      name: "Pass VIP Pro", 
+      price: 49.00, 
+      credits: "Crédits Illimités", 
+      desc: "Accès total (Facturation mensuelle)", 
+      tag: "Pro",
+      icon: Infinity,
+      color: "text-amber-500",
+      bg: "bg-amber-50"
+    },
   };
 
   // @ts-ignore
-  const selectedPack = packs[selectedPlanId] || packs['1'];
+  const selectedPack = packs[selectedPlanId] || packs['chasseur'];
   const priceId = PRICE_IDS[selectedPlanId as keyof typeof PRICE_IDS];
 
   const handleCheckout = async () => {
@@ -42,8 +72,8 @@ const Checkout = () => {
     if (!user && !guestEmail) {
       toast({
         variant: "destructive",
-        title: "Email requis",
-        description: "Veuillez entrer votre email pour continuer.",
+        title: "Adresse Email requise",
+        description: "Veuillez entrer votre email pour recevoir vos crédits.",
       });
       return;
     }
@@ -61,8 +91,8 @@ const Checkout = () => {
       if (error) throw error;
 
       if (data?.url) {
-        // Ouvrir Stripe Checkout dans un nouvel onglet
-        window.open(data.url, '_blank');
+        // Ouvrir Stripe Checkout dans la même page (meilleure UX)
+        window.location.href = data.url;
       } else {
         throw new Error("Aucune URL de paiement reçue");
       }
@@ -70,8 +100,8 @@ const Checkout = () => {
       console.error('Erreur checkout:', error);
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création du paiement.",
+        title: "Erreur de connexion",
+        description: error.message || "Impossible de se connecter au serveur de paiement Stripe.",
       });
     } finally {
       setLoading(false);
@@ -79,137 +109,185 @@ const Checkout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-slate-900">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
+      
+      {/* HEADER ULTRA MINIMALISTE POUR MAXIMISER LA CONVERSION */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-5xl">
+          <Link to="/" className="font-black text-2xl tracking-tighter text-slate-900 hover:opacity-80 transition-opacity">
             La Truffe
           </Link>
-          <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-            <Lock className="w-3 h-3" /> Paiement Sécurisé Stripe
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+            <Lock className="w-3.5 h-3.5 text-emerald-500" /> Checkout Sécurisé
           </div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
-        <Button variant="ghost" className="mb-6 pl-0 hover:pl-2 transition-all" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Retour
+      <main className="flex-1 container mx-auto px-4 py-8 md:py-12 max-w-5xl">
+        <Button variant="ghost" className="mb-6 -ml-4 font-bold text-slate-500 hover:text-slate-900" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Modifier mon choix
         </Button>
 
-        <div className="grid md:grid-cols-12 gap-8">
-          <div className="md:col-span-7 space-y-8">
-            {/* SÉLECTEUR DE PACK */}
+        <div className="grid lg:grid-cols-12 gap-10 items-start">
+          
+          {/* COLONNE GAUCHE (Sélection & Email) */}
+          <div className="lg:col-span-7 space-y-10">
+            
+            {/* ÉTAPE 1 : SÉLECTEUR DE PACK */}
             <section>
-              <h2 className="text-xl font-bold text-slate-900 mb-4">1. Choisissez votre pack</h2>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black">1</div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Vérifiez votre sélection</h2>
+              </div>
+              
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {Object.values(packs).map((pack: any) => (
-                  <div 
-                    key={pack.id}
-                    onClick={() => setSelectedPlanId(pack.id)}
-                    className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all ${selectedPlanId === pack.id ? 'border-primary bg-primary/5 shadow-md' : 'border-slate-200 bg-white hover:border-slate-300'}`}
-                  >
-                    {pack.tag && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{pack.tag}</div>}
-                    <div className="text-center">
-                      <h3 className={`font-bold ${selectedPlanId === pack.id ? 'text-primary' : 'text-slate-900'}`}>{pack.name}</h3>
-                      <div className="text-xl font-bold my-2">{pack.price} €</div>
-                      <div className="text-xs text-slate-500">{pack.credits} Crédits</div>
+                {Object.values(packs).map((pack: any) => {
+                  const isSelected = selectedPlanId === pack.id;
+                  const Icon = pack.icon;
+                  return (
+                    <div 
+                      key={pack.id}
+                      onClick={() => setSelectedPlanId(pack.id)}
+                      className={`relative cursor-pointer rounded-2xl p-5 transition-all duration-200 flex flex-col h-full
+                        ${isSelected 
+                          ? 'border-2 border-indigo-500 bg-white shadow-lg ring-4 ring-indigo-500/10' 
+                          : 'border-2 border-slate-100 bg-white hover:border-indigo-200 hover:shadow-md'
+                        }`}
+                    >
+                      {pack.tag && (
+                        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border shadow-sm
+                          ${isSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-slate-500 border-slate-200'}`}>
+                          {pack.tag}
+                        </div>
+                      )}
+                      
+                      <div className="text-center flex-1 flex flex-col justify-center">
+                        <div className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center mb-3 ${isSelected ? pack.bg : 'bg-slate-50'}`}>
+                          <Icon className={`w-5 h-5 ${isSelected ? pack.color : 'text-slate-400'}`} />
+                        </div>
+                        <h3 className={`font-black mb-1 ${isSelected ? 'text-slate-900' : 'text-slate-600'}`}>{pack.name}</h3>
+                        <div className="text-2xl font-black text-slate-900 mb-1">{pack.price.toFixed(2)} €</div>
+                        <div className={`text-xs font-bold px-2 py-1 rounded-md inline-block mx-auto mt-auto
+                          ${isSelected ? pack.bg + ' ' + pack.color : 'bg-slate-100 text-slate-500'}`}>
+                          {pack.credits}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
 
-            {/* ZONE DE PAIEMENT */}
+            {/* ÉTAPE 2 : IDENTIFICATION */}
             <section>
-              <h2 className="text-xl font-bold text-slate-900 mb-4">2. Paiement sécurisé</h2>
-              <Card className="border-slate-200 shadow-sm">
-                <CardContent className="p-6 space-y-6">
-                  {/* Afficher l'email de l'utilisateur connecté ou demander un email */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black">2</div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Où envoyer vos crédits ?</h2>
+              </div>
+              
+              <Card className="border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white">
+                <CardContent className="p-8">
                   {user ? (
-                    <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <Mail className="w-5 h-5 text-green-600" />
+                    <div className="flex items-center gap-4 p-5 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                      </div>
                       <div>
-                        <p className="text-sm text-green-700 font-medium">Connecté en tant que</p>
-                        <p className="text-green-800 font-bold">{user.email}</p>
+                        <p className="text-sm text-emerald-600 font-bold uppercase tracking-wider mb-0.5">Connecté avec succès</p>
+                        <p className="text-lg text-slate-900 font-black">{user.email}</p>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <Label htmlFor="guest-email" className="text-slate-700 font-medium">
-                        Votre email
+                    <div className="space-y-4">
+                      <Label htmlFor="guest-email" className="text-slate-700 font-bold text-base">
+                        Adresse Email <span className="text-rose-500">*</span>
                       </Label>
                       <Input
                         id="guest-email"
                         type="email"
-                        placeholder="votre@email.com"
+                        placeholder="jean.dupont@email.com"
                         value={guestEmail}
                         onChange={(e) => setGuestEmail(e.target.value)}
-                        className="h-12"
+                        className="h-14 text-lg bg-slate-50 border-slate-200 focus-visible:ring-indigo-500"
+                        required
                       />
-                      <p className="text-xs text-slate-500">
-                        Vous recevrez votre rapport à cette adresse
+                      <p className="text-sm text-slate-500 font-medium flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-slate-400" /> Vos crédits seront instantanément liés à cette adresse.
                       </p>
                     </div>
                   )}
-
-                  {/* Bouton de paiement */}
-                  <Button 
-                    onClick={handleCheckout}
-                    disabled={loading}
-                    className="w-full h-14 text-lg font-bold bg-slate-900 hover:bg-slate-800 gap-3"
-                  >
-                    {loading ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      <>
-                        <CreditCard className="w-5 h-5" />
-                        Payer {selectedPack.price.toFixed(2)} €
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Méthodes de paiement acceptées */}
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 pt-4 border-t border-slate-100">
-                    <span className="text-xs text-slate-500">Paiements acceptés :</span>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Visa</div>
-                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Mastercard</div>
-                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Apple Pay</div>
-                      <div className="bg-slate-100 px-2 py-1 rounded text-xs font-medium">Google Pay</div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </section>
+
           </div>
 
-          {/* RÉCAPITULATIF À DROITE */}
-          <div className="md:col-span-5">
+          {/* COLONNE DROITE (Récapitulatif & Paiement) */}
+          <div className="lg:col-span-5">
             <div className="sticky top-24 space-y-6">
-              <Card className="bg-slate-900 text-white border-none shadow-xl">
-                <CardHeader><CardTitle>Récapitulatif</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-start pb-4 border-b border-slate-700">
+              <Card className="bg-slate-900 text-white border-none shadow-2xl rounded-3xl overflow-hidden">
+                <div className="p-8 pb-6 border-b border-slate-800">
+                  <h3 className="font-black text-xl mb-6">Récapitulatif de commande</h3>
+                  
+                  <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-bold text-lg">{selectedPack.name}</h3>
-                      <p className="text-sm text-slate-400">{selectedPack.desc}</p>
+                      <h4 className="font-bold text-lg text-white">{selectedPack.name}</h4>
+                      <p className="text-sm font-medium text-slate-400">{selectedPack.desc}</p>
                     </div>
-                    <div className="text-xl font-bold">{selectedPack.price.toFixed(2)} €</div>
+                    <div className="text-xl font-bold text-white">{selectedPack.price.toFixed(2)} €</div>
                   </div>
-                  <div className="flex justify-between text-xl font-bold pt-2">
-                    <span>Total à payer</span>
-                    <span>{selectedPack.price.toFixed(2)} €</span>
+                  
+                  <div className="flex justify-between items-center text-sm font-medium text-slate-400 mt-4 mb-2">
+                    <span>TVA (20%)</span>
+                    <span>Inclus</span>
                   </div>
-                </CardContent>
-                <CardContent className="bg-slate-800/50 p-4 text-xs text-slate-400 flex flex-col gap-2 rounded-b-xl">
-                  <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-green-400" /> Paiement sécurisé par Stripe</div>
-                  <div className="flex items-center gap-2"><Star className="w-4 h-4 text-yellow-400" /> 4.9/5 par nos clients</div>
-                </CardContent>
+                </div>
+
+                <div className="p-8 pt-6 bg-slate-900">
+                  <div className="flex justify-between items-end mb-8">
+                    <span className="text-lg font-medium text-slate-300">Total à payer</span>
+                    <span className="text-4xl font-black text-white">{selectedPack.price.toFixed(2)} €</span>
+                  </div>
+
+                  <Button 
+                    onClick={handleCheckout}
+                    disabled={loading || (!user && !guestEmail)}
+                    className="w-full h-16 text-lg font-black bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-transform active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-6 h-6 mr-3 animate-spin" /> Connexion sécurisée...</>
+                    ) : (
+                      <><Lock className="w-5 h-5 mr-3" /> Payer de manière sécurisée</>
+                    )}
+                  </Button>
+
+                  <div className="mt-8 flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      Paiements Acceptés
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-3">
+                      <div className="bg-white/10 px-3 py-1.5 rounded-md text-xs font-bold text-slate-300 border border-white/5">CB</div>
+                      <div className="bg-white/10 px-3 py-1.5 rounded-md text-xs font-bold text-slate-300 border border-white/5">Visa</div>
+                      <div className="bg-white/10 px-3 py-1.5 rounded-md text-xs font-bold text-slate-300 border border-white/5">Mastercard</div>
+                      <div className="bg-white/10 px-3 py-1.5 rounded-md text-xs font-bold text-slate-300 border border-white/5">Apple Pay</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-slate-950 p-4 text-xs font-medium text-slate-500 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+                  <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-500" /> Chiffrement AES-256</div>
+                  <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-500" /> Garanti sans frais cachés</div>
+                </div>
               </Card>
+
+              <p className="text-center text-xs font-medium text-slate-500 max-w-sm mx-auto">
+                En validant votre paiement, vous acceptez nos <Link to="/terms" className="underline hover:text-slate-900">Conditions Générales de Vente</Link>. Vous recevrez une facture par email immédiatement après l'achat.
+              </p>
             </div>
           </div>
         </div>
       </main>
+      
       <Footer />
     </div>
   );
