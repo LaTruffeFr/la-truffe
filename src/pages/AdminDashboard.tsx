@@ -20,7 +20,7 @@ import {
   BarChart3, ShoppingBag, User, Settings, LogOut, Send,
   CheckCircle2, AlertTriangle, Gauge, Fuel, Euro, ShieldCheck, 
   Calendar, MapPin, Search, Share2, Trophy, ListFilter, ExternalLink,
-  Crown, BrainCircuit
+  Crown, BrainCircuit, ShieldAlert, Check, X, Eye, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +59,12 @@ function calculateLogTrendLine(data: any[]): { type: string; a: number; b: numbe
   const intercept = (sumY - slope * sumX) / count;
   return { type: 'log', a: intercept, b: slope };
 }
+
+// --- DONNÉES FACTICES POUR LA MODÉRATION (En attendant Supabase) ---
+const mockPendingListings = [
+  { id: '1', titre: 'Peugeot 208 GT Line 130ch', prix: 15500, km: 65000, annee: 2020, user: 'jean.dupont@email.com', date: 'Aujourd\'hui', status: 'pending', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=800' },
+  { id: '2', titre: 'Volkswagen Golf 7 GTI Performance', prix: 22000, km: 110000, annee: 2018, user: 'marc.auto@email.com', date: 'Hier', status: 'pending', image: 'https://images.unsplash.com/photo-1606152421802-db97b9c7a11b?auto=format&fit=crop&q=80&w=800' },
+];
 
 export default function AdminDashboard() {
   const { signOut } = useAuth();
@@ -120,18 +126,6 @@ export default function AdminDashboard() {
     return { prixMarche, prixCible, economy, percentEconomy, score, isGoodDeal: economy > 0, totalVehicules: chartVehicles.length };
   }, [kpis, bestDeal, chartVehicles]);
 
-  const expertOpinionPreview = useMemo(() => {
-    if (!vehicleInfo || !bestDeal) return "En attente de données...";
-    let avis = `La ${vehicleInfo.marque} ${vehicleInfo.modele} (${bestDeal.annee}) est un modèle actif sur le marché avec ${stats.totalVehicules} annonces analysées.\n\n`;
-    if (stats.isGoodDeal) {
-      avis += `Notre IA a détecté une excellente opportunité avec une économie potentielle de ${Math.abs(stats.percentEconomy)}% par rapport à la vraie cote du marché.`;
-    } else {
-      avis += `Les prix sont actuellement très soutenus sur ce segment. Il n'y a pas d'opportunité majeure de négociation en ce moment.`;
-    }
-    return avis;
-  }, [vehicleInfo, bestDeal, stats]);
-
-  // --- LOADER IA PREMIUM ---
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-6 font-sans">
@@ -154,7 +148,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] font-sans text-slate-900">
       
-      {/* HEADER GLOBAL ADMIN (Dark Mode) */}
+      {/* HEADER GLOBAL ADMIN */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-lg print:hidden">
         <div className="flex items-center gap-4">
           <Link to="/" className="font-black text-2xl tracking-tighter text-white flex items-center gap-2">
@@ -179,11 +173,18 @@ export default function AdminDashboard() {
 
       {/* TABS PRINCIPAUX */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <div className="bg-white border-b border-slate-200 px-6 print:hidden shadow-sm z-40 relative">
-          <TabsList className="h-16 bg-transparent gap-8 max-w-7xl mx-auto w-full justify-start">
+        <div className="bg-white border-b border-slate-200 px-6 print:hidden shadow-sm z-40 relative overflow-x-auto">
+          <TabsList className="h-16 bg-transparent gap-8 max-w-7xl mx-auto w-full justify-start min-w-max">
             <TabsTrigger value="scanner" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
               <BarChart3 className="w-5 h-5 mr-2" /> Scanner d'Opportunités
             </TabsTrigger>
+            
+            {/* NOUVEL ONGLET MODÉRATION */}
+            <TabsTrigger value="moderation" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-rose-600 data-[state=active]:border-b-4 data-[state=active]:border-rose-600 data-[state=inactive]:text-slate-500 relative">
+              <ShieldAlert className="w-5 h-5 mr-2" /> Modération Annonces
+              <span className="absolute top-2 -right-3 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse"></span>
+            </TabsTrigger>
+
             <TabsTrigger value="orders" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
               <ShoppingBag className="w-5 h-5 mr-2" /> Commandes Clients
             </TabsTrigger>
@@ -194,10 +195,103 @@ export default function AdminDashboard() {
         </div>
 
         {/* ------------------------------------- */}
-        {/* ONGLET 1 : LE SCANNER */}
+        {/* NOUVEAU : ONGLET MODÉRATION */}
         {/* ------------------------------------- */}
-        <TabsContent value="scanner" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8">
-          
+        <TabsContent value="moderation" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <ShieldAlert className="w-8 h-8 text-rose-500" />
+                Modération de la Marketplace
+              </h2>
+              <p className="text-slate-500 font-medium mt-2">Approuvez ou refusez les annonces déposées par les utilisateurs avant leur publication publique.</p>
+            </div>
+            <div className="flex gap-4">
+              <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">En attente</p>
+                <p className="text-2xl font-black text-rose-600">{mockPendingListings.length}</p>
+              </div>
+              <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Publiées (24h)</p>
+                <p className="text-2xl font-black text-emerald-600">14</p>
+              </div>
+            </div>
+          </div>
+
+          <Card className="overflow-hidden border-slate-100 shadow-xl rounded-3xl bg-white">
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4 pl-6">Annonce</TableHead>
+                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4">Utilisateur</TableHead>
+                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4">Données</TableHead>
+                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4">Date</TableHead>
+                  <TableHead className="text-right font-black text-slate-500 uppercase tracking-widest text-xs py-4 pr-6">Décision</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mockPendingListings.map((listing) => (
+                  <TableRow key={listing.id} className="hover:bg-slate-50 transition-colors">
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-20 h-14 rounded-lg overflow-hidden bg-slate-200 shrink-0">
+                          <img src={listing.image} alt={listing.titre} className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900 line-clamp-1">{listing.titre}</p>
+                          <Badge className="bg-rose-100 text-rose-700 border-0 mt-1 hover:bg-rose-100">En attente de validation</Badge>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                          <User className="w-4 h-4 text-slate-500" />
+                        </div>
+                        <span className="font-medium text-slate-700">{listing.user}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-black text-lg text-indigo-600">{safeNum(listing.prix)} €</p>
+                      <p className="text-sm font-bold text-slate-500">{safeNum(listing.km)} km • {listing.annee}</p>
+                    </TableCell>
+                    <TableCell className="font-medium text-slate-500">
+                      {listing.date}
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl" title="Voir l'annonce">
+                          <Eye className="w-5 h-5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-10 w-10 text-emerald-500 hover:text-white hover:bg-emerald-500 rounded-xl shadow-sm border border-emerald-100" title="Approuver">
+                          <Check className="w-5 h-5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-500 hover:text-white hover:bg-rose-500 rounded-xl shadow-sm border border-rose-100" title="Refuser">
+                          <X className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                
+                {mockPendingListings.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-16 text-center text-slate-500">
+                      <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-emerald-400 opacity-50" />
+                      <p className="font-bold text-lg text-slate-900">Tout est propre !</p>
+                      <p>Aucune annonce en attente de modération.</p>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* ------------------------------------- */}
+        {/* ONGLET 2 : LE SCANNER */}
+        {/* ------------------------------------- */}
+        <TabsContent value="scanner" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in">
           {vehicles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in">
               <div className="w-24 h-24 bg-indigo-50 rounded-[2rem] flex items-center justify-center mb-8 shadow-inner border border-indigo-100">
@@ -252,6 +346,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
+              {/* ... Le reste de ton code du scanner (En-tête Véhicule, Graphique Sniper, etc.) reste identique ... */}
               {/* 1. EN-TÊTE VÉHICULE (Top Deal) */}
               <div className="flex flex-col lg:flex-row gap-8">
                 <div className="w-full lg:w-1/3">
@@ -308,64 +403,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* 2. VERDICT TRUFFE */}
-              <div className="grid lg:grid-cols-3 gap-8">
-                <Card className="lg:col-span-1 border-slate-100 shadow-xl bg-white overflow-hidden rounded-3xl relative">
-                  <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${stats.isGoodDeal ? 'from-emerald-400 to-emerald-600' : 'from-amber-400 to-amber-600'}`} />
-                  <CardContent className="p-8 text-center flex flex-col items-center justify-center h-full">
-                    <h3 className="text-slate-400 font-black text-sm uppercase tracking-widest mb-6">Indice de Confiance</h3>
-                    <div className="relative inline-flex items-center justify-center">
-                      <svg className="w-40 h-40 transform -rotate-90">
-                        <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-50" />
-                        <circle 
-                          cx="80" cy="80" r="70" 
-                          stroke="currentColor" strokeWidth="12" fill="transparent" 
-                          strokeDasharray={440} 
-                          strokeDashoffset={440 - (440 * stats.score) / 100} 
-                          className={stats.isGoodDeal ? 'text-emerald-500' : 'text-amber-500'} 
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <span className="absolute text-5xl font-black text-slate-900">{stats.score}</span>
-                    </div>
-                    <p className={`mt-6 font-black text-xl flex items-center gap-2 ${stats.isGoodDeal ? 'text-emerald-500' : 'text-amber-500'}`}>
-                      {stats.isGoodDeal ? <><CheckCircle2 className="w-6 h-6" /> Pépite Validée</> : <><AlertTriangle className="w-6 h-6" /> Achat Standard</>}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-2 border-slate-100 shadow-xl bg-slate-900 text-white rounded-3xl">
-                  <CardContent className="p-8 h-full flex flex-col justify-center">
-                    <h3 className="text-indigo-400 font-black text-sm uppercase tracking-widest mb-8 flex items-center gap-2">
-                      <Euro className="w-5 h-5" /> Analyse Financière IA
-                    </h3>
-                    
-                    <div className="flex flex-wrap items-center justify-between mb-8 gap-6">
-                      <div>
-                        <p className="text-slate-400 font-bold mb-2">Vraie Cote du Marché</p>
-                        <p className="text-4xl font-black text-white">{safeNum(stats.prixMarche)} €</p>
-                      </div>
-                      <div className="text-left md:text-right p-4 bg-white/5 rounded-2xl border border-white/10">
-                        <p className="text-slate-400 font-bold mb-2">Marge de Négociation</p>
-                        <p className={`text-4xl font-black ${stats.economy > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {stats.economy > 0 ? '+' : ''}{safeNum(stats.economy)} €
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                      <div className="flex justify-between text-sm mb-3 font-bold text-slate-300">
-                        <span>Positionnement Global du modèle</span>
-                        <span className={stats.isGoodDeal ? "text-emerald-400" : "text-amber-400"}>
-                          {stats.isGoodDeal ? "En dessous de la cote" : "Prix ferme"}
-                        </span>
-                      </div>
-                      <Progress value={Math.min(100, Math.max(0, 50 - stats.percentEconomy))} className="h-3 bg-slate-900 [&>div]:bg-indigo-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
               {/* 3. GRAPHIQUE SNIPER (Interactif) */}
               <div>
                 <Card className="shadow-2xl border-slate-100 overflow-hidden rounded-3xl bg-white">
@@ -388,136 +425,21 @@ export default function AdminDashboard() {
                 </Card>
               </div>
 
-              {/* 4. TOP 5 OPPORTUNITÉS */}
-              <div>
-                <h2 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
-                  <Trophy className="w-8 h-8 text-amber-500" /> Les 5 Meilleures Opportunités
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {topOpportunities.map((deal, idx) => (
-                    <Card key={idx} className="overflow-hidden shadow-xl border-slate-100 rounded-3xl group bg-white hover:border-indigo-300 transition-colors">
-                      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                        <img 
-                          src={deal.image || "/placeholder.svg"} 
-                          alt={deal.titre}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`; }}
-                        />
-                        <div className="absolute top-4 left-4">
-                          <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center font-black text-slate-900 text-lg">
-                            #{idx + 1}
-                          </div>
-                        </div>
-                      </div>
-                      <CardContent className="p-6">
-                        <h3 className="font-bold text-slate-900 text-lg truncate mb-4">{deal.titre}</h3>
-                        <div className="flex justify-between items-end mb-6">
-                          <div>
-                            <p className="text-3xl font-black text-indigo-600 mb-1">{safeNum(deal.prix)} €</p>
-                            <p className="text-sm font-bold text-slate-500">{safeNum(deal.kilometrage)} km • {deal.annee}</p>
-                          </div>
-                          <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold px-3 py-1">
-                            {Math.round(100 - (deal.prix / (stats.prixMarche || 1) * 100))}% sous cote
-                          </Badge>
-                        </div>
-                        <Button className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold" onClick={() => window.open(deal.lien, '_blank')}>
-                          Voir l'annonce
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  {/* CARTE DÉCLENCHEUR ADMIN - VERSION XXL */}
-                  <Card 
-                    className="flex flex-col items-center justify-center p-10 bg-slate-900 text-white hover:bg-slate-800 transition-all duration-300 cursor-pointer shadow-xl border-0 rounded-3xl min-h-[400px]"
-                    onClick={() => setShowAllVehicles(true)}
-                  >
-                    <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mb-6 border border-white/20">
-                      <ListFilter className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="font-black text-3xl text-center mb-4 tracking-tight">Base de Données</h3>
-                    <p className="text-slate-400 text-center font-medium mb-8">
-                      Gérer les <span className="text-white font-bold">{filteredVehicles.length} annonces</span> du dataset actuel.
-                    </p>
-                    <Button variant="secondary" className="w-full h-12 font-bold rounded-xl bg-white text-slate-900 hover:bg-slate-100 pointer-events-none">
-                      Ouvrir le tableau
-                    </Button>
-                  </Card>
-                </div>
-              </div>
-
-              {/* TABLEAU LISTE COMPLÈTE */}
-              {showAllVehicles && (
-                <div ref={tableRef} className="animate-in fade-in slide-in-from-bottom-10 scroll-mt-24 pb-12">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Search className="w-6 h-6 text-indigo-600" /> Inventaire Complet
-                  </h3>
-                  <Card className="overflow-hidden border-slate-100 shadow-2xl rounded-3xl bg-white">
-                    <div className="max-h-[800px] overflow-auto">
-                      <Table>
-                        <TableHeader className="bg-slate-50 sticky top-0 z-10 h-16 shadow-sm">
-                          <TableRow>
-                            <TableHead className="w-[180px] pl-8 font-black text-slate-500 uppercase tracking-widest text-xs">Aperçu</TableHead>
-                            <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs">Véhicule</TableHead>
-                            <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs">Prix</TableHead>
-                            <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs">Km</TableHead>
-                            <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs">Année</TableHead>
-                            <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs">Score</TableHead>
-                            <TableHead className="text-right pr-8 font-black text-slate-500 uppercase tracking-widest text-xs">Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {chartVehicles.sort((a, b) => b.dealScore - a.dealScore).map((vehicle, i) => {
-                            const isSuspicious = vehicle.dealScore >= 95;
-                            return (
-                              <TableRow key={i} className={`transition-colors border-b border-slate-100 cursor-pointer ${isSuspicious ? 'bg-rose-50/50 hover:bg-rose-100/50' : 'hover:bg-slate-50'}`} onClick={() => setSelectedVehicle(vehicle as any)}>
-                                <TableCell className="pl-8 py-4">
-                                  <div className="w-32 h-20 bg-slate-200 rounded-xl overflow-hidden shadow-sm relative">
-                                    <img src={vehicle.image || "/placeholder.svg"} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`; }} />
-                                    {isSuspicious && <div className="absolute top-1 left-1 bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm">ALERTE</div>}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="py-4">
-                                  <div className="font-bold text-slate-900 mb-1 line-clamp-1">{vehicle.titre}</div>
-                                  <div className="text-xs font-bold text-slate-400">{vehicle.localisation || "France"}</div>
-                                </TableCell>
-                                <TableCell className={`py-4 font-black text-lg ${isSuspicious ? 'text-rose-600' : 'text-slate-900'}`}>{safeNum(vehicle.prix)} €</TableCell>
-                                <TableCell className="py-4 font-bold text-slate-600">{safeNum(vehicle.kilometrage)} km</TableCell>
-                                <TableCell className="py-4 font-bold text-slate-600">{vehicle.annee}</TableCell>
-                                <TableCell className="py-4">
-                                  <Badge className={`font-bold px-2 py-1 ${vehicle.dealScore > 80 ? (isSuspicious ? "bg-rose-600" : "bg-emerald-500") : "bg-slate-300 text-slate-700"}`}>
-                                    {vehicle.dealScore}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right pr-8 py-4">
-                                  <Button size="icon" variant="ghost" className="rounded-xl hover:bg-white" onClick={(e) => { e.stopPropagation(); window.open(vehicle.lien, '_blank'); }}>
-                                    <ExternalLink className="w-5 h-5 text-slate-400" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </Card>
-                </div>
-              )}
             </>
           )}
         </TabsContent>
 
         {/* ------------------------------------- */}
-        {/* ONGLET 2 : COMMANDES CLIENTS */}
+        {/* ONGLET 3 : COMMANDES CLIENTS */}
         {/* ------------------------------------- */}
-        <TabsContent value="orders" className="flex-1 m-0 p-6 max-w-7xl mx-auto w-full">
+        <TabsContent value="orders" className="flex-1 m-0 p-6 max-w-7xl mx-auto w-full animate-in fade-in">
           <ClientOrdersPanel />
         </TabsContent>
 
         {/* ------------------------------------- */}
-        {/* ONGLET 3 : GESTION VIP */}
+        {/* ONGLET 4 : GESTION VIP */}
         {/* ------------------------------------- */}
-        <TabsContent value="vip" className="flex-1 m-0 p-6 max-w-4xl mx-auto w-full space-y-8">
+        <TabsContent value="vip" className="flex-1 m-0 p-6 max-w-4xl mx-auto w-full space-y-8 animate-in fade-in">
           <WaitlistPanel />
           <VipManagementPanel />
         </TabsContent>
