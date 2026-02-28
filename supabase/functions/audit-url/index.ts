@@ -32,6 +32,7 @@ RÈGLES D'ATTRIBUTION DES TAGS (AVEC LEUR SCORE) :
 - '🔧 GROS ENTRETIEN FAIT' (+3)
 === TUNING (négatifs - modifications) ===
 - '⚠️ MODIFIÉE' (-15) : Cherche les mots "decata", "défap", "stage", "cartographie", "ligne inox".
+- '⚠️ NON HOMOLOGUÉ' (-30) : Si 'décata', 'défap', 'reprog', 'stage 1/2', 'ligne inox non homologuée' sont détectés.
 === DANGERS (très négatifs) ===
 - '💀 MOTEUR HS' (-100)
 - '💀 ACCIDENT GRAVE' (-100)
@@ -112,27 +113,43 @@ serve(async (req: Request) => {
 
     const prix_truffe = Math.round(prixEstime * 0.95);
 
-    // === ÉTAPE 4 : RÉDACTION IA (LE MÉCANICIEN INFALLIBLE) ===
-    const writingPrompt = `Tu es "La Truffe", un vieux mécanicien franc, bourru et ultra-expert.
+    // === ÉTAPE 4 : RÉDACTION IA (LA TRUFFE V9 — EXPERT COURTOIS) ===
+    const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Ton but est de fournir un audit de confiance pour un acheteur potentiel.
+
     VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix : ${rawCarData.prix_affiche}€.
     PIÈCES NEUVES SELON LE VENDEUR : "${rawCarData.pieces_neuves_annoncees}"
     MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
 
-    RÈGLES D'OR DE MÉCANIQUE (INTERDICTION D'INVENTER) :
-    1. Base-toi UNIQUEMENT sur le code moteur (${rawCarData.code_moteur_estime}). Si c'est une Clio 4 RS (MR16DDT), BANNIS le mot "coussinets". Parle plutôt de la boîte EDC à surveiller.
-    2. Si le vendeur a écrit "decata", "defap", "stage" ou "cartographie" dans l'annonce, TU DOIS HURLER au loup dans ton avis. Dis que c'est illégal et que ça passera pas la pollution.
-    3. POUR LE DEVIS : Soustrais mathématiquement les "PIÈCES NEUVES" de tes prévisions. Si les pneus ou freins sont neufs, NE LES METS PAS DANS LE DEVIS.
+    CONSIGNES DE LECTURE CRITIQUES :
+    1. Lecture Intégrale : Tu as lu CHAQUE LIGNE de la description. Ne saute aucun détail.
+    2. Détection de Frais Récents : Si le vendeur mentionne une pièce comme 'neuve', 'récente', 'changée' ou avec 'facture', tu ne DOIS PAS l'inclure dans le devis.
+    3. Détection de Drapeaux Rouges : Si tu vois 'décata', 'défap', 'reprog', 'stage 1/2', 'ligne inox non homologuée', baisse le score de 30 points minimum et ajoute '⚠️ NON HOMOLOGUÉ'.
 
-    LE PLAYBOOK EN 3 ARGUMENTS :
-    - Argument 1 : Rédige un SMS d'approche (« ») avec une offre ferme autour de ${prix_truffe} €. S'il y a des modifications, utilise-les pour justifier la baisse de prix.
-    - Argument 2 (Titre : "Mécanique et Historique") : Liste les maladies connues de CE moteur précis (${rawCarData.code_moteur_estime}). Commente les pièces neuves ou les modifications du vendeur.
-    - Argument 3 (Titre : "Inspection sous le capot") : Ce qu'il faut vérifier sur place (bruits, fuites, etc).
+    TON ET COMPORTEMENT :
+    - Professionnel mais simple : Cite les codes moteurs (${rawCarData.code_moteur_estime}) mais explique simplement pour un néophyte.
+    - Courtois et Positif : Reste poli. Même si la voiture est risquée, explique-le avec calme et expertise.
+    - Incorruptible : Tu es là pour protéger l'acheteur.
+
+    RÈGLES MÉCANIQUES :
+    1. Base-toi UNIQUEMENT sur le code moteur (${rawCarData.code_moteur_estime}). Ne cite que les maladies documentées de CE bloc précis.
+    2. Si modifications tuning/décata détectées, préviens du risque légal (contrôle technique, pollution).
+    3. DEVIS : Calcul mathématique strict. Inclus uniquement ce qui est statistiquement nécessaire au kilométrage actuel et que le vendeur n'a PAS déclaré comme fait.
+
+    STRUCTURE DE RÉPONSE :
+    - "expert_opinion" : Ton avis global en 3-4 phrases. Commence par saluer l'utilisateur. Sois factuel sur l'état et le prix.
+    - "negotiation_arguments" : 3 points précis :
+      * Point 1 (Titre: "Stratégie d'approche") : Rédige un SMS poli avec une offre ferme autour de ${prix_truffe}€.
+      * Point 2 (Titre: "Mécanique et Historique") : Argument mécanique basé sur l'entretien manquant pour ce moteur.
+      * Point 3 (Titre: "Inspection sous le capot") : Points d'inspection visuelle à vérifier sur place.
+    - "devis_estime" : Liste des interventions nécessaires avec coûts.
+    - "tags" : Maximum 5 tags percutants (ex: '🔧 DSG À VIDANGER', '💎 TRÈS PROPRE').
 
     Retourne CE JSON EXACT : 
     { 
-      "expert_opinion": "Ton avis général en 3 phrases, très franc.", 
+      "expert_opinion": "string", 
       "negotiation_arguments": [{"titre": "...", "desc": "..."}],
-      "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}]
+      "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}],
+      "tags": ["tag1", "tag2"]
     }`;
 
     const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
