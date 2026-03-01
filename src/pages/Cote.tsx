@@ -170,8 +170,12 @@ export default function Cote() {
     setStep("loading");
     calculateRealEstimate();
 
+    // TEMPORAIRE : On utilise "as any" pour bypasser la vérification stricte de TypeScript
+    // en attendant que la table "estimations" soit officiellement créée dans Supabase
+    // avec le Giga Prompt ! (Cela empêche l'écran rouge de la mort)
     try {
-      await supabase.from("estimations").insert([
+      const db = supabase as any;
+      await db.from("estimations").insert([
         {
           marque: formData.marque,
           modele: formData.modele,
@@ -180,7 +184,9 @@ export default function Cote() {
           prix_estime: estimation.exact,
         },
       ]);
-    } catch (err) {}
+    } catch (err) {
+      console.log("Sauvegarde ignorée (table non existante)");
+    }
 
     let progress = 0;
     const interval = setInterval(() => {
