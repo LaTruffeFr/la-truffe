@@ -54,6 +54,31 @@ const safeNum = (value: any): string => {
   return Number(value).toLocaleString("fr-FR");
 };
 
+// --- CALCUL DE LA COURBE DE TENDANCE DU GRAPHIQUE ---
+function calculateLogTrendLine(data: any[]): { type: string; a: number; b: number } {
+  if (!data || data.length < 2) return { type: "log", a: 0, b: 0 };
+  let sumX = 0,
+    sumY = 0,
+    sumXY = 0,
+    sumXX = 0;
+  let count = 0;
+  data.forEach((v) => {
+    if (v.kilometrage > 100 && v.prix > 1000) {
+      const x = Math.log(v.kilometrage);
+      const y = v.prix;
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumXX += x * x;
+      count++;
+    }
+  });
+  if (count < 2) return { type: "log", a: 0, b: 0 };
+  const slope = (count * sumXY - sumX * sumY) / (count * sumXX - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / count;
+  return { type: "log", a: intercept, b: slope };
+}
+
 // Jauge plus compacte et professionnelle
 const ScoreCircularGauge = ({ score }: { score: number }) => {
   const radius = 30;
@@ -549,7 +574,7 @@ const ReportView = () => {
         </div>
 
         {/* --- SECTION 4 : RADAR MARCHÉ (Si Audit Global) --- */}
-        {!isSingleAudit && (
+        {!isSingleAudit && vehiclesData.length > 0 && (
           <div className="pt-6 border-t border-slate-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
