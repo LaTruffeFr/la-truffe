@@ -2,7 +2,8 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { VehicleWithScore } from '@/lib/csvParser';
-import { useVehicleData } from '@/contexts/VehicleDataContext';
+// 👇 IMPORT CRUCIAL : On ajoute VehicleDataProvider pour corriger l'erreur
+import { useVehicleData, VehicleDataProvider } from '@/contexts/VehicleDataContext';
 import { supabase } from '@/integrations/supabase/client';
 
 // Composants
@@ -13,6 +14,7 @@ import { VipManagementPanel } from '@/components/admin/VipManagementPanel';
 import { WaitlistPanel } from '@/components/admin/WaitlistPanel';
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
+import { useToast } from '@/hooks/use-toast';
 
 // UI & Icônes
 import { 
@@ -60,7 +62,6 @@ function calculateLogTrendLine(data: any[]): { type: string; a: number; b: numbe
   return { type: 'log', a: intercept, b: slope };
 }
 
-// Pending listings state (real data from marketplace_listings)
 interface PendingListing {
   id: string;
   marque: string;
@@ -72,10 +73,19 @@ interface PendingListing {
   created_at: string;
   status: string;
   image_url: string;
+  images?: string[];
+  description: string;
+  score_ia: number;
+  seller_contact: string;
 }
-export default function AdminDashboard() {
-  const { signOut } = useAuth();
+
+// ============================================================================
+// 1. LE COMPOSANT INTERNE (Qui a besoin du Provider)
+// ============================================================================
+function AdminDashboardInner() {
+  const { signOut, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const {
     vehicles, filteredVehicles, chartVehicles, filters, dataRanges,
@@ -86,7 +96,7 @@ export default function AdminDashboard() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('scanner');
+  const [activeTab, setActiveTab] = useState('moderation'); // Par défaut sur la modération
   const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
   const [showAllVehicles, setShowAllVehicles] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -102,17 +112,31 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchPendingListings();
-  }, []);
+    if (!authLoading && user) {
+      fetchPendingListings();
+    } else if (!authLoading && !user) {
+      navigate('/');
+    }
+  }, [authLoading, user, navigate]);
 
   const handleApprove = async (id: string) => {
-    await supabase.from('marketplace_listings').update({ status: 'approved' } as any).eq('id', id);
-    fetchPendingListings();
+    try {
+      await supabase.from('marketplace_listings').update({ status: 'approved' } as any).eq('id', id);
+      toast({ title: "Annonce validée ! ✅", className: "bg-emerald-600 text-white" });
+      fetchPendingListings();
+    } catch(e) {
+      toast({ variant: "destructive", title: "Erreur" });
+    }
   };
 
   const handleReject = async (id: string) => {
-    await supabase.from('marketplace_listings').update({ status: 'rejected' } as any).eq('id', id);
-    fetchPendingListings();
+    try {
+      await supabase.from('marketplace_listings').update({ status: 'rejected' } as any).eq('id', id);
+      toast({ title: "Annonce refusée ❌", className: "bg-rose-600 text-white" });
+      fetchPendingListings();
+    } catch(e) {
+      toast({ variant: "destructive", title: "Erreur" });
+    }
   };
 
   useEffect(() => {
@@ -134,35 +158,22 @@ export default function AdminDashboard() {
     return [...chartVehicles].sort((a, b) => b.dealScore - a.dealScore)[0];
   }, [chartVehicles]);
 
-  const topOpportunities = useMemo(() => {
-    if (chartVehicles.length === 0) return [];
-    return [...chartVehicles].sort((a, b) => b.dealScore - a.dealScore).slice(0, 5);
-  }, [chartVehicles]);
-
   const stats = useMemo(() => {
     const prixMarche = kpis.avgPrice;
     const prixCible = bestDeal ? bestDeal.prix : prixMarche;
     const economy = prixMarche - prixCible;
-    const percentEconomy = prixMarche > 0 ? Math.round((economy / prixMarche) * 100) : 0;
     const score = bestDeal ? bestDeal.dealScore : 50;
-    return { prixMarche, prixCible, economy, percentEconomy, score, isGoodDeal: economy > 0, totalVehicules: chartVehicles.length };
+    return { prixMarche, prixCible, economy, score, isGoodDeal: economy > 0, totalVehicules: chartVehicles.length };
   }, [kpis, bestDeal, chartVehicles]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-6 font-sans">
-        <div className="relative mb-12">
-          <BrainCircuit className="w-28 h-28 text-indigo-500 animate-pulse relative z-10" />
-          <div className="absolute inset-0 bg-indigo-500 blur-[80px] opacity-30 animate-pulse"></div>
+        <Loader2 className="w-16 h-16 text-indigo-500 animate-spin mb-6" />
+        <h2 className="text-2xl font-black mb-2 tracking-tight text-center">Initialisation Tour de Contrôle...</h2>
+        <div className="w-64 bg-slate-800 rounded-full h-2 overflow-hidden mb-4 shadow-inner">
+          <div className="h-full bg-indigo-500 transition-all duration-300 ease-out" style={{ width: `${loadingProgress || 50}%` }} />
         </div>
-        <h2 className="text-3xl font-black mb-6 tracking-tight text-center">Génération du Rapport Global...</h2>
-        <div className="w-80 bg-slate-800 rounded-full h-2.5 overflow-hidden mb-4 shadow-inner">
-          <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 ease-out rounded-full"
-            style={{ width: `${loadingProgress}%` }}
-          />
-        </div>
-        <p className="text-indigo-400 font-bold text-lg">{loadingProgress}%</p>
       </div>
     );
   }
@@ -174,7 +185,7 @@ export default function AdminDashboard() {
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-lg print:hidden">
         <div className="flex items-center gap-4">
           <Link to="/" className="font-black text-2xl tracking-tighter text-white flex items-center gap-2">
-            La Truffe <span className="text-xs font-bold text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 px-3 py-1 rounded-full uppercase tracking-widest">Master Admin</span>
+            La Truffe <span className="text-[10px] font-black text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 px-3 py-1 rounded-lg uppercase tracking-widest">Master Admin</span>
           </Link>
         </div>
         <div className="flex items-center gap-3">
@@ -197,108 +208,116 @@ export default function AdminDashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <div className="bg-white border-b border-slate-200 px-6 print:hidden shadow-sm z-40 relative overflow-x-auto">
           <TabsList className="h-16 bg-transparent gap-8 max-w-7xl mx-auto w-full justify-start min-w-max">
-            <TabsTrigger value="scanner" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
-              <BarChart3 className="w-5 h-5 mr-2" /> Scanner d'Opportunités
-            </TabsTrigger>
             
-            {/* NOUVEL ONGLET MODÉRATION */}
             <TabsTrigger value="moderation" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-rose-600 data-[state=active]:border-b-4 data-[state=active]:border-rose-600 data-[state=inactive]:text-slate-500 relative">
               <ShieldAlert className="w-5 h-5 mr-2" /> Modération Annonces
-              <span className="absolute top-2 -right-3 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse"></span>
+              {pendingListings.length > 0 && <span className="absolute top-2 -right-3 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse"></span>}
             </TabsTrigger>
 
+            <TabsTrigger value="scanner" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
+              <BarChart3 className="w-5 h-5 mr-2" /> Scanner (CSV)
+            </TabsTrigger>
+            
             <TabsTrigger value="orders" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
               <ShoppingBag className="w-5 h-5 mr-2" /> Commandes Clients
             </TabsTrigger>
+
             <TabsTrigger value="vip" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
-              <Crown className="w-5 h-5 mr-2" /> Gestion VIP & Membres
+              <Crown className="w-5 h-5 mr-2" /> Gestion VIP
             </TabsTrigger>
           </TabsList>
         </div>
 
         {/* ------------------------------------- */}
-        {/* NOUVEAU : ONGLET MODÉRATION */}
+        {/* ONGLET 1 : MODÉRATION (Version Ultime) */}
         {/* ------------------------------------- */}
         <TabsContent value="moderation" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
               <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                 <ShieldAlert className="w-8 h-8 text-rose-500" />
-                Modération de la Marketplace
+                Modération Marketplace
               </h2>
-              <p className="text-slate-500 font-medium mt-2">Approuvez ou refusez les annonces déposées par les utilisateurs avant leur publication publique.</p>
+              <p className="text-slate-500 font-medium mt-2">Contrôle des annonces déposées avant leur publication publique.</p>
             </div>
             <div className="flex gap-4">
-              <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">En attente</p>
-                <p className="text-2xl font-black text-rose-600">{pendingListings.length}</p>
-              </div>
-              <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Publiées (24h)</p>
-                <p className="text-2xl font-black text-emerald-600">14</p>
+              <div className="bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">En attente</p>
+                <p className="text-3xl font-black text-rose-600">{pendingListings.length}</p>
               </div>
             </div>
           </div>
 
-          <Card className="overflow-hidden border-slate-100 shadow-xl rounded-3xl bg-white">
+          <Card className="overflow-hidden border-slate-100 shadow-2xl rounded-[2.5rem] bg-white">
             <Table>
-              <TableHeader className="bg-slate-50">
+              <TableHeader className="bg-slate-50 border-b border-slate-100">
                 <TableRow>
-                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4 pl-6">Annonce</TableHead>
-                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4">Utilisateur</TableHead>
-                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4">Données</TableHead>
-                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-xs py-4">Date</TableHead>
-                  <TableHead className="text-right font-black text-slate-500 uppercase tracking-widest text-xs py-4 pr-6">Décision</TableHead>
+                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-[10px] py-5 pl-8">Véhicule</TableHead>
+                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-[10px] py-5">Vendeur</TableHead>
+                  <TableHead className="font-black text-slate-500 uppercase tracking-widest text-[10px] py-5">Détails</TableHead>
+                  <TableHead className="text-right font-black text-slate-500 uppercase tracking-widest text-[10px] py-5 pr-8">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingListings.map((listing) => (
-                  <TableRow key={listing.id} className="hover:bg-slate-50 transition-colors">
-                    <TableCell className="pl-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-20 h-14 rounded-lg overflow-hidden bg-slate-200 shrink-0">
-                          <img src={listing.image_url || '/placeholder.svg'} alt={`${listing.marque} ${listing.modele}`} className="w-full h-full object-cover" />
+                {pendingListings.map((listing) => {
+                  let displayImage = "/placeholder.svg";
+                  if (listing.images && Array.isArray(listing.images) && listing.images.length > 0) displayImage = listing.images[0];
+                  else if (listing.image_url) displayImage = listing.image_url;
+
+                  return (
+                    <TableRow key={listing.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 group">
+                      <TableCell className="pl-8 py-5">
+                        <div className="flex items-center gap-5">
+                          <div className="w-32 h-24 rounded-2xl overflow-hidden bg-slate-200 shrink-0 shadow-inner group-hover:shadow-md transition-shadow">
+                            <img src={displayImage} alt={listing.modele} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-900 text-lg leading-tight">{listing.marque}</p>
+                            <p className="font-bold text-indigo-600 text-sm">{listing.modele}</p>
+                            <Badge className="bg-rose-100 text-rose-700 border-0 mt-2 hover:bg-rose-100 text-[10px] uppercase tracking-widest">En attente</Badge>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-900 line-clamp-1">{listing.marque} {listing.modele}</p>
-                          <Badge className="bg-rose-100 text-rose-700 border-0 mt-1 hover:bg-rose-100">En attente de validation</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                            <User className="w-4 h-4 text-slate-500" />
+                          </div>
+                          <span className="font-bold text-slate-700 text-xs font-mono">{listing.user_id.slice(0, 8)}</span>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                          <User className="w-4 h-4 text-slate-500" />
+                        <div className="text-xs font-medium text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg w-fit">
+                          📞 {listing.seller_contact || "Non renseigné"}
                         </div>
-                        <span className="font-medium text-slate-700 text-xs">{listing.user_id.slice(0, 8)}...</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="font-black text-lg text-indigo-600">{safeNum(listing.prix)} €</p>
-                      <p className="text-sm font-bold text-slate-500">{safeNum(listing.kilometrage)} km • {listing.annee}</p>
-                    </TableCell>
-                    <TableCell className="font-medium text-slate-500">
-                      {new Date(listing.created_at).toLocaleDateString('fr-FR')}
-                    </TableCell>
-                    <TableCell className="text-right pr-6">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button size="icon" variant="ghost" className="h-10 w-10 text-emerald-500 hover:text-white hover:bg-emerald-500 rounded-xl shadow-sm border border-emerald-100" title="Approuver" onClick={() => handleApprove(listing.id)}>
-                          <Check className="w-5 h-5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-500 hover:text-white hover:bg-rose-500 rounded-xl shadow-sm border border-rose-100" title="Refuser" onClick={() => handleReject(listing.id)}>
-                          <X className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-[1000] text-2xl text-emerald-600 tracking-tighter">{safeNum(listing.prix)} €</p>
+                        <div className="flex items-center gap-3 text-xs font-bold text-slate-500 mt-1">
+                          <span className="bg-slate-100 px-2 py-1 rounded-md">{safeNum(listing.kilometrage)} km</span>
+                          <span className="bg-slate-100 px-2 py-1 rounded-md">{listing.annee}</span>
+                          <span className="bg-slate-100 px-2 py-1 rounded-md capitalize">{listing.carburant}</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2 font-medium line-clamp-1 italic max-w-xs">"{listing.description}"</p>
+                      </TableCell>
+                      <TableCell className="text-right pr-8">
+                        <div className="flex flex-col items-end gap-2">
+                          <Button onClick={() => handleApprove(listing.id)} className="w-32 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20">
+                            <Check className="w-4 h-4 mr-2" /> Approuver
+                          </Button>
+                          <Button variant="outline" onClick={() => handleReject(listing.id)} className="w-32 border-rose-200 text-rose-600 hover:bg-rose-50 font-bold rounded-xl">
+                            <X className="w-4 h-4 mr-2" /> Refuser
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 
                 {pendingListings.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-16 text-center text-slate-500">
-                      <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-emerald-400 opacity-50" />
-                      <p className="font-bold text-lg text-slate-900">Tout est propre !</p>
-                      <p>Aucune annonce en attente de modération.</p>
+                    <TableCell colSpan={4} className="py-24 text-center">
+                      <ShieldCheck className="w-16 h-16 mx-auto mb-4 text-emerald-400 opacity-50" />
+                      <p className="font-black text-2xl text-slate-900 tracking-tight">Tout est propre !</p>
+                      <p className="text-slate-500 font-medium mt-2">Aucune annonce en attente de modération.</p>
                     </TableCell>
                   </TableRow>
                 )}
@@ -308,112 +327,108 @@ export default function AdminDashboard() {
         </TabsContent>
 
         {/* ------------------------------------- */}
-        {/* ONGLET 2 : LE SCANNER */}
+        {/* ONGLET 2 : LE SCANNER CSV */}
         {/* ------------------------------------- */}
         <TabsContent value="scanner" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in">
           {vehicles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in">
+            <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="w-24 h-24 bg-indigo-50 rounded-[2rem] flex items-center justify-center mb-8 shadow-inner border border-indigo-100">
                 <Crosshair className="w-12 h-12 text-indigo-600" />
               </div>
               <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Le Radar est prêt</h2>
-              <p className="text-slate-500 text-lg mb-8 max-w-md">Importez un dataset pour lancer l'algorithme d'analyse et repérer les anomalies du marché.</p>
-              <Button onClick={() => setIsImportModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-14 px-8 rounded-xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
+              <p className="text-slate-500 text-lg mb-8 max-w-md">Importez un dataset CSV pour lancer l'algorithme d'analyse et repérer les anomalies du marché.</p>
+              <Button onClick={() => setIsImportModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-14 px-8 rounded-2xl shadow-xl shadow-indigo-600/20 active:scale-95 transition-all">
                 <Upload className="w-5 h-5 mr-3" /> Importer un Fichier CSV
               </Button>
             </div>
           ) : (
             <>
               {/* BARRE D'ACTIONS ADMIN */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-lg sticky top-24 z-30 transition-all print:hidden">
+              <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xl sticky top-24 z-30">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex flex-wrap items-center gap-4">
-                    <h2 className="text-xl font-black text-slate-900 flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
                       {vehicleInfo?.marque} {vehicleInfo?.modele}
-                      <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 font-bold">{filteredVehicles.length} annonces</Badge>
+                      <Badge className="bg-indigo-50 text-indigo-700 border-0 font-black px-3 py-1">{filteredVehicles.length} annonces</Badge>
                     </h2>
                     <div className="hidden md:block w-px h-8 bg-slate-200" />
                     <Button variant="outline" size="sm" onClick={() => setIsFiltersOpen(!isFiltersOpen)} className={`font-bold rounded-xl border-slate-200 ${isFiltersOpen ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"}`}>
-                      <SlidersHorizontal className="w-4 h-4 mr-2" /> {isFiltersOpen ? 'Masquer Filtres' : 'Filtres'}
+                      <SlidersHorizontal className="w-4 h-4 mr-2" /> Filtres
                     </Button>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="ghost" size="sm" onClick={clearData} className="text-slate-500 hover:text-red-600 font-bold rounded-xl">
+                    <Button variant="ghost" size="sm" onClick={clearData} className="text-slate-500 hover:text-rose-600 font-bold rounded-xl">
                       <RotateCcw className="w-4 h-4 mr-2" /> Reset
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)} className="font-bold rounded-xl border-slate-200 text-slate-700">
-                      <Upload className="w-4 h-4 mr-2" /> Nouveau Scan
-                    </Button>
-                    <Button onClick={() => setIsPublishModalOpen(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 border-0">
-                      <Send className="w-4 h-4 mr-2" /> PUBLIER LE RAPPORT
+                      <Upload className="w-4 h-4 mr-2" /> Scan
                     </Button>
                   </div>
                 </div>
 
-                {/* PANNEAU DE FILTRES DÉROULANT */}
+                {/* PANNEAU DE FILTRES */}
                 {isFiltersOpen && (
-                  <div className="w-full mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in slide-in-from-top-2">
+                  <div className="w-full mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-10 animate-in slide-in-from-top-4">
                     <div className="space-y-4">
                       <Label className="font-bold text-slate-900 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-indigo-500"/> Prix : {filters.minPrice}€ - {filters.maxPrice}€</Label>
-                      <Slider value={[filters.minPrice, filters.maxPrice]} onValueChange={(val) => setFilters({ minPrice: val[0], maxPrice: val[1] })} min={0} max={dataRanges.maxPrice} step={500} className="py-2" />
+                      <Slider value={[filters.minPrice, filters.maxPrice]} onValueChange={(val) => setFilters({ minPrice: val[0], maxPrice: val[1] })} min={0} max={dataRanges.maxPrice} step={500} />
                     </div>
                     <div className="space-y-4">
                       <Label className="font-bold text-slate-900 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500"/> Kilométrage : {filters.minKm}km - {filters.maxKm}km</Label>
-                      <Slider value={[filters.minKm, filters.maxKm]} onValueChange={(val) => setFilters({ minKm: val[0], maxKm: val[1] })} min={0} max={dataRanges.maxKm} step={1000} className="py-2" />
+                      <Slider value={[filters.minKm, filters.maxKm]} onValueChange={(val) => setFilters({ minKm: val[0], maxKm: val[1] })} min={0} max={dataRanges.maxKm} step={1000} />
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* ... Le reste de ton code du scanner (En-tête Véhicule, Graphique Sniper, etc.) reste identique ... */}
-              {/* 1. EN-TÊTE VÉHICULE (Top Deal) */}
+              {/* EN-TÊTE VÉHICULE (Top Deal) */}
               <div className="flex flex-col lg:flex-row gap-8">
                 <div className="w-full lg:w-1/3">
-                  <div className="relative rounded-3xl overflow-hidden shadow-xl border border-slate-200 aspect-[4/3] group bg-white">
+                  <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-[8px] border-white aspect-[4/3] group bg-slate-100">
                     <img 
                       src={bestDeal?.image || `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`}
                       alt="Véhicule cible"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       onError={(e) => { (e.target as HTMLImageElement).src = `https://source.unsplash.com/1600x900/?car,${vehicleInfo?.marque}`; }}
                     />
-                    <div className="absolute top-4 right-4">
-                      <Badge className={`${stats.isGoodDeal ? 'bg-emerald-500' : 'bg-amber-500'} text-white px-4 py-1.5 shadow-lg border-0 font-bold text-sm`}>
-                        {stats.isGoodDeal ? 'Pépite Détectée' : 'Prix Marché'}
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-emerald-500 text-white px-4 py-2 shadow-lg border-0 font-black uppercase tracking-widest text-[10px]">
+                        Pépite Détectée
                       </Badge>
                     </div>
                   </div>
                 </div>
 
                 <div className="w-full lg:w-2/3 flex flex-col justify-between">
-                  <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl h-full">
-                    <div className="flex flex-col md:flex-row md:items-start justify-between mb-8 gap-4">
+                  <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl h-full">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between mb-10 gap-6">
                       <div>
-                        <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">{vehicleInfo?.marque} {vehicleInfo?.modele}</h1>
-                        <p className="text-slate-500 font-medium flex items-center gap-2">
-                          <span className="bg-slate-100 px-2 py-1 rounded text-slate-800 font-bold">{bestDeal?.annee}</span>
-                          • {bestDeal?.titre?.substring(0, 50) || 'Modèle standard'}...
+                        <h1 className="text-4xl md:text-5xl font-[1000] text-slate-900 tracking-tighter mb-4">{vehicleInfo?.marque} {vehicleInfo?.modele}</h1>
+                        <p className="text-slate-500 font-bold flex items-center gap-3">
+                          <span className="bg-slate-100 px-3 py-1.5 rounded-lg text-slate-800">{bestDeal?.annee}</span>
+                          • {bestDeal?.titre?.substring(0, 40) || 'Modèle standard'}...
                         </p>
                       </div>
-                      <div className="text-left md:text-right p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <div className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Meilleur Prix Trouvé</div>
-                        <div className="text-4xl font-black text-indigo-600">{safeNum(bestDeal?.prix || stats.prixMarche)} €</div>
+                      <div className="text-left md:text-right p-6 bg-slate-900 rounded-[2rem] text-white shadow-lg">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-2">Meilleur Prix Trouvé</div>
+                        <div className="text-5xl font-[1000] tracking-tighter">{safeNum(bestDeal?.prix || stats.prixMarche)} €</div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
-                        { icon: Gauge, color: "blue", label: "Kilométrage", value: `${safeNum(bestDeal?.kilometrage)} km` },
-                        { icon: Fuel, color: "orange", label: "Carburant", value: bestDeal?.carburant || 'Essence' },
-                        { icon: Calendar, color: "purple", label: "Année", value: bestDeal?.annee },
-                        { icon: ShieldCheck, color: "emerald", label: "Score", value: `${stats.score}/100` }
+                        { icon: Gauge, color: "text-indigo-600", bg: "bg-indigo-50", label: "Kilométrage", value: `${safeNum(bestDeal?.kilometrage)} km` },
+                        { icon: Fuel, color: "text-amber-600", bg: "bg-amber-50", label: "Carburant", value: bestDeal?.carburant || 'Essence' },
+                        { icon: Calendar, color: "text-purple-600", bg: "bg-purple-50", label: "Année", value: bestDeal?.annee },
+                        { icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-50", label: "Score", value: `${stats.score}/100` }
                       ].map((stat, i) => (
-                        <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
-                          <div className={`p-3 bg-${stat.color}-100 text-${stat.color}-600 rounded-xl`}>
-                            <stat.icon className="w-6 h-6" />
+                        <div key={i} className="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex flex-col gap-3">
+                          <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center`}>
+                            <stat.icon className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{stat.label}</p>
-                            <p className="font-black text-slate-900">{stat.value}</p>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">{stat.label}</p>
+                            <p className="font-black text-slate-900 text-lg">{stat.value}</p>
                           </div>
                         </div>
                       ))}
@@ -422,16 +437,15 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* 3. GRAPHIQUE SNIPER (Interactif) */}
+              {/* GRAPHIQUE SNIPER */}
               <div>
-                <Card className="shadow-2xl border-slate-100 overflow-hidden rounded-3xl bg-white">
-                  <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                    <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                      <Crosshair className="w-6 h-6 text-indigo-600" /> Le Radar de Dispersion
+                <Card className="shadow-2xl border-0 overflow-hidden rounded-[3rem] bg-slate-950 p-8">
+                  <div className="mb-8 flex items-center justify-between">
+                    <h2 className="text-3xl font-[1000] text-white flex items-center gap-3 tracking-tighter">
+                      <Crosshair className="w-8 h-8 text-indigo-500" /> Radar de Dispersion
                     </h2>
-                    <Badge variant="outline" className="font-bold text-slate-500 border-slate-200">Algorithme Linéaire/Log</Badge>
                   </div>
-                  <CardContent className="p-6 h-[500px]">
+                  <CardContent className="p-0 h-[500px]">
                     <SniperChart 
                       data={chartVehicles as any} 
                       trendLine={trendLine}
@@ -465,10 +479,21 @@ export default function AdminDashboard() {
 
       </Tabs>
 
-      {/* MODALES */}
+      {/* MODALES COMMUNES */}
       <CSVImportModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImport} />
       <PublishReportModal isOpen={isPublishModalOpen} onClose={() => setIsPublishModalOpen(false)} vehicles={chartVehicles} trendLine={trendLine as any} kpis={kpis} vehicleInfo={vehicleInfo} clients={[]} />
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
     </div>
+  );
+}
+
+// ============================================================================
+// 2. LE WRAPPER EXPORTÉ PAR DÉFAUT (Pour injecter le contexte sans crasher)
+// ============================================================================
+export default function AdminDashboard() {
+  return (
+    <VehicleDataProvider>
+      <AdminDashboardInner />
+    </VehicleDataProvider>
   );
 }
