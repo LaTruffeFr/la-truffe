@@ -12,7 +12,7 @@ import {
   Euro, ShieldCheck, Loader2, History,
   Brain, Calculator, FileCheck, Copy, Check, Settings2, BrainCircuit, 
   MessageSquareWarning, Zap, Cpu, ScanSearch, Microscope, Activity, Receipt, 
-  Hash, ShieldAlert, GaugeCircle, Sparkles
+  Hash, ShieldAlert, GaugeCircle, Sparkles, Snowflake, Flame, CircleDashed
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SniperChart } from '@/components/trading/SniperChart';
@@ -24,6 +24,16 @@ import { ProxiedImage } from '@/components/ProxiedImage';
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
   return Number(value).toLocaleString('fr-FR');
+};
+
+// --- FONCTION POUR LES ICÔNES DES OPTIONS (Celle qui manquait !) ---
+const getOptionIcon = (opt: string) => {
+  const text = opt.toLowerCase();
+  if (text.includes('pompe') || text.includes('clim')) return <Snowflake className="w-4 h-4 text-blue-500" />;
+  if (text.includes('siège') || text.includes('chauffant')) return <Flame className="w-4 h-4 text-orange-500" />;
+  if (text.includes('jante')) return <CircleDashed className="w-4 h-4 text-slate-700" />;
+  if (text.includes('auto') || text.includes('caméra') || text.includes('radar')) return <Cpu className="w-4 h-4 text-purple-500" />;
+  return <Settings2 className="w-4 h-4 text-slate-500" />;
 };
 
 // --- CALCUL DE LA COURBE DE TENDANCE ---
