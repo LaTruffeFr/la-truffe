@@ -60,12 +60,19 @@ function calculateLogTrendLine(data: any[]): { type: string; a: number; b: numbe
   return { type: 'log', a: intercept, b: slope };
 }
 
-// --- DONNÉES FACTICES POUR LA MODÉRATION (En attendant Supabase) ---
-const mockPendingListings = [
-  { id: '1', titre: 'Peugeot 208 GT Line 130ch', prix: 15500, km: 65000, annee: 2020, user: 'jean.dupont@email.com', date: 'Aujourd\'hui', status: 'pending', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=800' },
-  { id: '2', titre: 'Volkswagen Golf 7 GTI Performance', prix: 22000, km: 110000, annee: 2018, user: 'marc.auto@email.com', date: 'Hier', status: 'pending', image: 'https://images.unsplash.com/photo-1606152421802-db97b9c7a11b?auto=format&fit=crop&q=80&w=800' },
-];
-
+// Pending listings state (real data from marketplace_listings)
+interface PendingListing {
+  id: string;
+  marque: string;
+  modele: string;
+  prix: number;
+  kilometrage: number;
+  annee: number;
+  user_id: string;
+  created_at: string;
+  status: string;
+  image_url: string;
+}
 export default function AdminDashboard() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -80,18 +87,33 @@ export default function AdminDashboard() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('scanner');
-  const [clients, setClients] = useState<any[]>([]);
+  const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
   const [showAllVehicles, setShowAllVehicles] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
 
+  const fetchPendingListings = async () => {
+    const { data, error } = await supabase
+      .from('marketplace_listings')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (!error && data) setPendingListings(data as PendingListing[]);
+    else setPendingListings([]);
+  };
+
   useEffect(() => {
-    const fetchClients = async () => {
-      const { data, error } = await supabase.from('reports').select('id, marque, modele, status').eq('status', 'pending');
-      if (!error && data) setClients(data); 
-      else setClients([]);
-    };
-    fetchClients();
+    fetchPendingListings();
   }, []);
+
+  const handleApprove = async (id: string) => {
+    await supabase.from('marketplace_listings').update({ status: 'approved' } as any).eq('id', id);
+    fetchPendingListings();
+  };
+
+  const handleReject = async (id: string) => {
+    await supabase.from('marketplace_listings').update({ status: 'rejected' } as any).eq('id', id);
+    fetchPendingListings();
+  };
 
   useEffect(() => {
     if (showAllVehicles && tableRef.current) {
@@ -209,7 +231,7 @@ export default function AdminDashboard() {
             <div className="flex gap-4">
               <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">En attente</p>
-                <p className="text-2xl font-black text-rose-600">{mockPendingListings.length}</p>
+                <p className="text-2xl font-black text-rose-600">{pendingListings.length}</p>
               </div>
               <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Publiées (24h)</p>
@@ -230,15 +252,15 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockPendingListings.map((listing) => (
+                {pendingListings.map((listing) => (
                   <TableRow key={listing.id} className="hover:bg-slate-50 transition-colors">
                     <TableCell className="pl-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-20 h-14 rounded-lg overflow-hidden bg-slate-200 shrink-0">
-                          <img src={listing.image} alt={listing.titre} className="w-full h-full object-cover" />
+                          <img src={listing.image_url || '/placeholder.svg'} alt={`${listing.marque} ${listing.modele}`} className="w-full h-full object-cover" />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 line-clamp-1">{listing.titre}</p>
+                          <p className="font-bold text-slate-900 line-clamp-1">{listing.marque} {listing.modele}</p>
                           <Badge className="bg-rose-100 text-rose-700 border-0 mt-1 hover:bg-rose-100">En attente de validation</Badge>
                         </div>
                       </div>
@@ -248,25 +270,22 @@ export default function AdminDashboard() {
                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
                           <User className="w-4 h-4 text-slate-500" />
                         </div>
-                        <span className="font-medium text-slate-700">{listing.user}</span>
+                        <span className="font-medium text-slate-700 text-xs">{listing.user_id.slice(0, 8)}...</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <p className="font-black text-lg text-indigo-600">{safeNum(listing.prix)} €</p>
-                      <p className="text-sm font-bold text-slate-500">{safeNum(listing.km)} km • {listing.annee}</p>
+                      <p className="text-sm font-bold text-slate-500">{safeNum(listing.kilometrage)} km • {listing.annee}</p>
                     </TableCell>
                     <TableCell className="font-medium text-slate-500">
-                      {listing.date}
+                      {new Date(listing.created_at).toLocaleDateString('fr-FR')}
                     </TableCell>
                     <TableCell className="text-right pr-6">
                       <div className="flex items-center justify-end gap-2">
-                        <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl" title="Voir l'annonce">
-                          <Eye className="w-5 h-5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-10 w-10 text-emerald-500 hover:text-white hover:bg-emerald-500 rounded-xl shadow-sm border border-emerald-100" title="Approuver">
+                        <Button size="icon" variant="ghost" className="h-10 w-10 text-emerald-500 hover:text-white hover:bg-emerald-500 rounded-xl shadow-sm border border-emerald-100" title="Approuver" onClick={() => handleApprove(listing.id)}>
                           <Check className="w-5 h-5" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-500 hover:text-white hover:bg-rose-500 rounded-xl shadow-sm border border-rose-100" title="Refuser">
+                        <Button size="icon" variant="ghost" className="h-10 w-10 text-rose-500 hover:text-white hover:bg-rose-500 rounded-xl shadow-sm border border-rose-100" title="Refuser" onClick={() => handleReject(listing.id)}>
                           <X className="w-5 h-5" />
                         </Button>
                       </div>
@@ -274,7 +293,7 @@ export default function AdminDashboard() {
                   </TableRow>
                 ))}
                 
-                {mockPendingListings.length === 0 && (
+                {pendingListings.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="py-16 text-center text-slate-500">
                       <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-emerald-400 opacity-50" />
@@ -448,7 +467,7 @@ export default function AdminDashboard() {
 
       {/* MODALES */}
       <CSVImportModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImport} />
-      <PublishReportModal isOpen={isPublishModalOpen} onClose={() => setIsPublishModalOpen(false)} vehicles={chartVehicles} trendLine={trendLine as any} kpis={kpis} vehicleInfo={vehicleInfo} clients={clients} />
+      <PublishReportModal isOpen={isPublishModalOpen} onClose={() => setIsPublishModalOpen(false)} vehicles={chartVehicles} trendLine={trendLine as any} kpis={kpis} vehicleInfo={vehicleInfo} clients={[]} />
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
     </div>
   );

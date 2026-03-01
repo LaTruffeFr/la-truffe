@@ -8,19 +8,21 @@ import {
   ChevronRight, TrendingUp, X 
 } from "lucide-react";
 
-interface CarData {
+interface ListingData {
   id: string;
-  title: string;
-  price: number;
-  mileage: number;
-  year: number;
+  marque: string;
+  modele: string;
+  prix: number;
+  kilometrage: number;
+  annee: number;
   image_url: string;
-  ai_score: number;
+  score_ia: number;
   ai_tags?: string[];
+  carburant?: string;
 }
 
 export default function Marketplace() {
-  const [cars, setCars] = useState<CarData[]>([]);
+  const [listings, setListings] = useState<ListingData[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filtres
@@ -30,29 +32,31 @@ export default function Marketplace() {
   const [maxMileage, setMaxMileage] = useState("");
 
   useEffect(() => {
-    const fetchCars = async () => {
+    const fetchListings = async () => {
       const { data, error } = await supabase
-        .from("cars")
-        .select("id, title, price, mileage, year, image_url, ai_score, ai_tags")
+        .from("marketplace_listings")
+        .select("id, marque, modele, prix, kilometrage, annee, image_url, score_ia, ai_tags, carburant")
+        .eq("status", "approved")
         .order("created_at", { ascending: false });
 
       if (error) console.error("Erreur de récupération :", error);
-      else setCars(data || []);
+      else setListings((data as ListingData[]) || []);
       setLoading(false);
     };
 
-    fetchCars();
+    fetchListings();
   }, []);
 
-  const filteredCars = useMemo(() => {
-    return cars.filter((car) => {
-      const matchSearch = car.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchMinPrice = minPrice ? car.price >= Number(minPrice) : true;
-      const matchMaxPrice = maxPrice ? car.price <= Number(maxPrice) : true;
-      const matchMaxMileage = maxMileage ? car.mileage <= Number(maxMileage) : true;
+  const filteredListings = useMemo(() => {
+    return listings.filter((l) => {
+      const title = `${l.marque} ${l.modele}`.toLowerCase();
+      const matchSearch = title.includes(searchTerm.toLowerCase());
+      const matchMinPrice = minPrice ? l.prix >= Number(minPrice) : true;
+      const matchMaxPrice = maxPrice ? l.prix <= Number(maxPrice) : true;
+      const matchMaxMileage = maxMileage ? (l.kilometrage || 0) <= Number(maxMileage) : true;
       return matchSearch && matchMinPrice && matchMaxPrice && matchMaxMileage;
     });
-  }, [cars, searchTerm, minPrice, maxPrice, maxMileage]);
+  }, [listings, searchTerm, minPrice, maxPrice, maxMileage]);
 
   const clearFilters = () => {
     setSearchTerm(""); setMinPrice(""); setMaxPrice(""); setMaxMileage("");
@@ -169,7 +173,7 @@ export default function Marketplace() {
           <div className="w-full lg:w-3/4 pt-4 lg:pt-0">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-800">
-                {filteredCars.length} {filteredCars.length > 1 ? 'Annonces disponibles' : 'Annonce disponible'}
+                {filteredListings.length} {filteredListings.length > 1 ? 'Annonces disponibles' : 'Annonce disponible'}
               </h3>
             </div>
 
@@ -177,7 +181,7 @@ export default function Marketplace() {
               <div className="flex justify-center items-center py-32">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-indigo-600"></div>
               </div>
-            ) : filteredCars.length === 0 ? (
+            ) : filteredListings.length === 0 ? (
               <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-16 text-center">
                 <CarIcon className="w-16 h-16 text-slate-200 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-slate-800">Aucun véhicule ne correspond</h3>
@@ -188,33 +192,34 @@ export default function Marketplace() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredCars.map((car) => {
-                  const scoreStyle = getScoreDesign(car.ai_score);
+                {filteredListings.map((listing) => {
+                  const scoreStyle = getScoreDesign(listing.score_ia || 0);
+                  const title = `${listing.marque} ${listing.modele}`;
                   
                   return (
                     <Link 
-                      key={car.id} 
-                      to={`/listing/${car.id}`}
+                      key={listing.id} 
+                      to={`/annonce/${listing.id}`}
                       className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 hover:-translate-y-1"
                     >
                       <div className="relative h-56 w-full bg-slate-900 overflow-hidden">
                         <img 
-                          src={car.image_url || "/placeholder.svg"} 
-                          alt={car.title}
+                          src={listing.image_url || "/placeholder.svg"} 
+                          alt={title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
                         
-                        {car.ai_score && (
+                        {listing.score_ia && (
                           <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-lg border flex items-center gap-1.5 font-bold shadow-lg backdrop-blur-md ${scoreStyle.bg} ${scoreStyle.text} ${scoreStyle.border}`}>
                             {scoreStyle.icon}
-                            <span>{car.ai_score}/100</span>
+                            <span>{listing.score_ia}/100</span>
                           </div>
                         )}
 
                         <div className="absolute bottom-4 left-4 right-4">
                           <h3 className="text-xl font-extrabold text-white line-clamp-1 drop-shadow-md">
-                            {car.title}
+                            {title}
                           </h3>
                         </div>
                       </div>
@@ -224,11 +229,11 @@ export default function Marketplace() {
                           <div className="flex items-center gap-4 text-sm font-semibold text-slate-600">
                             <div className="flex items-center gap-1.5">
                               <Calendar className="w-4 h-4 text-slate-400" />
-                              {car.year}
+                              {listing.annee}
                             </div>
                             <div className="flex items-center gap-1.5">
                               <Gauge className="w-4 h-4 text-slate-400" />
-                              {car.mileage.toLocaleString('fr-FR')} km
+                              {(listing.kilometrage || 0).toLocaleString('fr-FR')} km
                             </div>
                           </div>
                         </div>
@@ -237,7 +242,7 @@ export default function Marketplace() {
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Prix demandé</span>
                             <span className="text-2xl font-black text-slate-900">
-                              {car.price.toLocaleString('fr-FR')} €
+                              {listing.prix.toLocaleString('fr-FR')} €
                             </span>
                           </div>
                           
