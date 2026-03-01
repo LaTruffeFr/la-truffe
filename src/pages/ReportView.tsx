@@ -26,7 +26,6 @@ const safeNum = (value: any): string => {
   return Number(value).toLocaleString('fr-FR');
 };
 
-// --- FONCTION POUR LES ICÔNES DES OPTIONS (Celle qui manquait !) ---
 const getOptionIcon = (opt: string) => {
   const text = opt.toLowerCase();
   if (text.includes('pompe') || text.includes('clim')) return <Snowflake className="w-4 h-4 text-blue-500" />;
@@ -36,7 +35,6 @@ const getOptionIcon = (opt: string) => {
   return <Settings2 className="w-4 h-4 text-slate-500" />;
 };
 
-// --- CALCUL DE LA COURBE DE TENDANCE ---
 function calculateLogTrendLine(data: any[]): { type: string; a: number; b: number } {
   if (!data || data.length < 2) return { type: 'log', a: 0, b: 0 };
   let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0; let count = 0;
@@ -52,7 +50,6 @@ function calculateLogTrendLine(data: any[]): { type: string; a: number; b: numbe
   return { type: 'log', a: intercept, b: slope };
 }
 
-// --- JAUGE PREMIUM ---
 const ScoreCircularGauge = ({ score }: { score: number }) => {
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
@@ -178,7 +175,6 @@ const ReportView = () => {
     </div>
   );
 
-  // --- VUE CHARGEMENT (Premium Clean) ---
   if (report?.status === 'in_progress' || report?.status === 'pending') {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 font-sans">
@@ -229,7 +225,7 @@ const ReportView = () => {
         </div>
       </header>
 
-      <main id="report-content" className="flex-1 container mx-auto px-4 py-10 max-w-6xl space-y-10">
+      <main id="report-content" className="flex-1 container mx-auto px-4 py-10 max-w-6xl space-y-8">
         
         {/* --- HERO : LE CHARME RETROUVÉ --- */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-8 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
@@ -261,7 +257,7 @@ const ReportView = () => {
           </div>
         </div>
 
-        {/* --- LA TRINITÉ (SCORE, PRIX, IA) --- */}
+        {/* --- LA TRINITÉ (SCORE, PRIX) --- */}
         <div className="grid lg:grid-cols-3 gap-6">
           
           {/* Card Score */}
@@ -310,28 +306,30 @@ const ReportView = () => {
           </Card>
         </div>
 
-        {/* --- VERDICT IA --- */}
-        <div className="bg-indigo-600 rounded-[2.5rem] p-8 md:p-10 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
-          <div className="bg-white/10 p-5 rounded-3xl backdrop-blur-md border border-white/20 shrink-0">
-            <BrainCircuit className="w-10 h-10 text-white" />
+        {/* --- VERDICT IA (Plus fin et plus élégant) --- */}
+        <div className="bg-indigo-600 rounded-[2rem] p-6 text-white shadow-lg flex flex-col sm:flex-row items-start gap-5">
+          <div className="bg-white/10 p-3 rounded-2xl border border-white/20 shrink-0">
+            <BrainCircuit className="w-6 h-6 text-white" />
           </div>
-          <div className="flex-1 space-y-4 text-center md:text-left">
-            <h2 className="text-lg font-black uppercase tracking-widest opacity-80">Verdict du Cerveau Hybride</h2>
-            <p className="text-xl md:text-2xl font-medium italic font-serif leading-snug">
+          <div className="flex-1 space-y-2">
+            <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Verdict du Cerveau Hybride</h2>
+            <p className="text-lg font-medium italic font-serif leading-relaxed">
               "{report.expert_opinion ? report.expert_opinion.split('|||DATA|||')[0] : "Analyse du profil en cours d'écriture..."}"
             </p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-2">
-              {signaux.map((s: any, i: number) => (
-                <Badge key={i} className={`font-bold text-[10px] px-3 py-1 border-0 ${s.type === 'destructive' ? 'bg-rose-500' : 'bg-emerald-500'} text-white`}>
-                  {s.label}
-                </Badge>
-              ))}
-            </div>
+            {signaux.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {signaux.map((s: any, i: number) => (
+                  <Badge key={i} className={`font-bold text-[10px] px-2.5 py-0.5 border-0 ${s.type === 'destructive' ? 'bg-rose-500' : 'bg-emerald-500'} text-white`}>
+                    {s.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* --- SECTION DÉTAILS : PLAYBOOK & DEVIS --- */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-8 pt-4">
           
           {/* Colonne Gauche : Diagnostic & SMS */}
           <div className="lg:col-span-2 space-y-8">
