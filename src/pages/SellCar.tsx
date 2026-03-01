@@ -17,7 +17,7 @@ import {
   Car, Gauge, Calendar, Euro, Fuel, Phone,
   Camera, UploadCloud, X, ArrowRight, ShieldCheck, 
   CheckCircle2, Lock, Settings2, FileText, Zap, Trophy,
-  AlertCircle, Sparkles, Info, Loader2, CheckCircle
+  AlertCircle, Sparkles, Info, Loader2, CheckCircle, BrainCircuit
 } from 'lucide-react';
 
 export default function SellCar() {
