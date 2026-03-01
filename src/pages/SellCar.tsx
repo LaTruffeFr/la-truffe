@@ -20,7 +20,7 @@ import {
   AlertCircle, Sparkles, Info, Loader2, CheckCircle
 } from 'lucide-react';
 
-export default function Vendre() {
+export default function SellCar() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
