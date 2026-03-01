@@ -74,11 +74,11 @@ const ScoreCircularGauge = ({ score }: { score: number }) => {
 };
 
 const PROGRESS_STEPS = [
-  { time: 1000, label: "Collecte des données de l'annonce...", icon: ScanSearch },
-  { time: 3500, label: "Analyse des spécifications techniques...", icon: Microscope },
-  { time: 7000, label: "Consultation du Cerveau Hybride V12...", icon: Brain },
-  { time: 10000, label: "Calcul de la cote de marché réelle...", icon: Calculator },
-  { time: 13000, label: "Finalisation de votre rapport d'expertise...", icon: FileCheck },
+  { time: 1000, label: "Extraction sécurisée des données de l'annonce...", icon: ScanSearch },
+  { time: 3500, label: "Identification du bloc moteur & spécifications...", icon: Cpu },
+  { time: 7000, label: "Recherche d'incohérences et vices cachés...", icon: ShieldAlert },
+  { time: 10000, label: "Analyse financière et calcul de la vraie cote...", icon: Calculator },
+  { time: 13000, label: "Édition de votre rapport d'expertise...", icon: FileCheck },
 ];
 
 const ReportView = () => {
@@ -183,8 +183,8 @@ const ReportView = () => {
             <Activity className="w-10 h-10 text-indigo-600 animate-pulse" />
           </div>
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Expertise en cours</h2>
-            <p className="text-slate-500 font-medium">Le Cerveau Hybride analyse l'annonce...</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Audit en cours</h2>
+            <p className="text-slate-500 font-medium">Notre IA traque la moindre faille sur ce véhicule...</p>
           </div>
           <div className="space-y-4 bg-white p-8 rounded-[2rem] shadow-lg border border-slate-100">
             <Progress value={progressPercent} className="h-1.5 bg-slate-100 [&>div]:bg-indigo-600" />
