@@ -113,23 +113,25 @@ export default function SellCar() {
 
       setLoadingStep("📝 Création de l'annonce certifiée...");
       
-      // 👇 SAUVEGARDE EN BASE DE DONNÉES
-      const { error: dbError } = await supabase.from('cars').insert({
-        title: `${formData.marque} ${formData.modele} ${formData.motorisation}`, // Le titre devient ultra précis
-        description: `Carburant : ${formData.carburant} | Couleur : ${formData.couleur}\n\n${formData.description}`,
-        price: Number(formData.price),
-        mileage: Number(formData.mileage),
-        year: Number(formData.year),
+      // 👇 SAUVEGARDE DANS marketplace_listings avec status 'pending'
+      const { error: dbError } = await supabase.from('marketplace_listings').insert({
+        marque: formData.marque,
+        modele: `${formData.modele} ${formData.motorisation}`,
+        annee: Number(formData.year),
+        kilometrage: Number(formData.mileage),
+        prix: Number(formData.price),
+        carburant: formData.carburant,
+        description: `Couleur : ${formData.couleur}\n\n${formData.description}`,
         image_url: publicUrlData.publicUrl,
         seller_contact: formData.contact,
-        is_user_listing: true,
-        ai_score: aiResult.score,
+        status: 'pending',
+        score_ia: aiResult.score,
         ai_avis: aiResult.avis,
         ai_tags: aiResult.tags,
         ai_arguments: aiResult.arguments,
         ai_devis: aiResult.devis,
         user_id: user.id,
-      });
+      } as any);
 
       if (dbError) throw dbError;
       setStep(3); 
@@ -343,8 +345,8 @@ export default function SellCar() {
                       <CheckCircle className="w-16 h-16 text-green-600" />
                     </div>
                     
-                    <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Annonce Certifiée !</h2>
-                    <p className="text-lg text-slate-600 mb-10">Votre véhicule a été analysé et validé par LaTruffe.</p>
+                    <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Annonce envoyée en modération !</h2>
+                    <p className="text-lg text-slate-600 mb-10">Votre véhicule a été analysé par LaTruffe. Un admin validera sa publication prochainement.</p>
 
                     <div className="grid md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                       

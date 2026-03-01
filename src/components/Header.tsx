@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
-  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'cote' | 'pricing';
+  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'cote' | 'pricing' | 'about' | 'contact' | 'why-us';
 }
 
 export const Header = ({ activeLink }: HeaderProps) => {

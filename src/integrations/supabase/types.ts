@@ -189,6 +189,72 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_listings: {
+        Row: {
+          ai_arguments: Json | null
+          ai_avis: string | null
+          ai_devis: Json | null
+          ai_tags: string[] | null
+          annee: number | null
+          carburant: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          kilometrage: number | null
+          marque: string
+          modele: string
+          prix: number
+          score_ia: number | null
+          seller_contact: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_arguments?: Json | null
+          ai_avis?: string | null
+          ai_devis?: Json | null
+          ai_tags?: string[] | null
+          annee?: number | null
+          carburant?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          kilometrage?: number | null
+          marque: string
+          modele: string
+          prix: number
+          score_ia?: number | null
+          seller_contact?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_arguments?: Json | null
+          ai_avis?: string | null
+          ai_devis?: Json | null
+          ai_tags?: string[] | null
+          annee?: number | null
+          carburant?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          kilometrage?: number | null
+          marque?: string
+          modele?: string
+          prix?: number
+          score_ia?: number | null
+          seller_contact?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processed_payments: {
         Row: {
           credits: number
