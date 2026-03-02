@@ -6,7 +6,7 @@ ADD COLUMN IF NOT EXISTS promotion_type TEXT; -- 'none', 'featured', 'premium', 
 
 -- Index for featured listings queries (important for marketplace sorting)
 CREATE INDEX IF NOT EXISTS idx_cars_featured ON public.cars(is_featured, featured_until)
-WHERE is_featured = true AND (featured_until IS NULL OR featured_until > now());
+WHERE is_featured = true;
 
 -- Function to automatically unfeature listings when promotion expires
 CREATE OR REPLACE FUNCTION unfeature_expired_promotions()
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS public.listing_promotions (
 
 -- Indexes for promotion queries
 CREATE INDEX idx_listing_promotions_listing_id ON public.listing_promotions(listing_id);
-CREATE INDEX idx_listing_promotions_active ON public.listing_promotions(ends_at DESC)
-WHERE ends_at > now();
+CREATE INDEX idx_listing_promotions_active ON public.listing_promotions(ends_at DESC);
+
 
 -- Enable RLS
 ALTER TABLE public.listing_promotions ENABLE ROW LEVEL SECURITY;
@@ -61,11 +61,6 @@ ON public.listing_promotions FOR UPDATE
 WITH CHECK (true);
 
 -- Admins can view all promotions
-CREATE POLICY "Admins view all promotions"
-ON public.listing_promotions FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles 
-    WHERE id = auth.uid() AND is_admin = true
-  )
-);
+CREATE POLICY "Admins view all promotions"              
+ON public.listing_promotions FOR SELECT                 
+USING (public.is_admin(auth.uid()));

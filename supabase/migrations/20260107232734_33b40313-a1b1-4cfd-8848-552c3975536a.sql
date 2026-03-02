@@ -76,7 +76,8 @@ EXECUTE FUNCTION public.update_reports_updated_at();
 
 -- Create storage bucket for report PDFs
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('reports', 'reports', false);
+VALUES ('reports', 'reports', false)
+ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies for reports bucket
 CREATE POLICY "Users can view their own report files"
