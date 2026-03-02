@@ -50,6 +50,30 @@ serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return new Response(JSON.stringify({ error: "Authentification invalide" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    // === VÉRIFICATION DES CRÉDITS ===
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    
+    // Check if user is VIP (unlimited credits)
+    const { data: isVip } = await supabaseAdmin.rpc('is_vip', { _user_id: user.id });
+    
+    let userCredits = 0;
+    if (!isVip) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('credits')
+        .eq('user_id', user.id)
+        .single();
+      
+      userCredits = profile?.credits ?? 0;
+      
+      if (userCredits < 1) {
+        return new Response(JSON.stringify({ error: "Crédits insuffisants. Rechargez votre compte pour continuer." }), { 
+          status: 402, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        });
+      }
+    }
+
     const { url } = await req.json();
     if (!url || !isValidListingUrl(url)) return new Response(JSON.stringify({ error: "URL invalide." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -57,13 +81,13 @@ serve(async (req: Request) => {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!FIRECRAWL_API_KEY || !GEMINI_API_KEY) throw new Error("API Keys manquantes");
 
-    // === ÉTAPE 1 : SCRAPING ===
+    // === ÉTAPE 1 : EXTRACTION SÉCURISÉE ===
     const scrapeResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST", headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ url, formats: ["markdown", "html", "screenshot"], onlyMainContent: false, waitFor: 8000 }),
     });
 
-    if (!scrapeResponse.ok) throw new Error("Impossible de scraper l'annonce.");
+    if (!scrapeResponse.ok) throw new Error("Impossible d'extraire les données de l'annonce.");
     const scrapeData = await scrapeResponse.json();
     const html = scrapeData?.data?.html || scrapeData?.html || "";
     const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || html;
@@ -74,7 +98,7 @@ serve(async (req: Request) => {
       if (imgMatch) imageUrl = imgMatch[1];
     }
 
-    // === ÉTAPE 2 : EXTRACTION IA (GOD MODE) ===
+    // === ÉTAPE 2 : ANALYSE IA APPROFONDIE ===
     const extractPrompt = `Tu es un extracteur de données expert en automobile. Lis cette annonce :
     ${markdown}
     
@@ -113,7 +137,7 @@ serve(async (req: Request) => {
 
     const prix_truffe = Math.round(prixEstime * 0.95);
 
-    // === ÉTAPE 4 : RÉDACTION IA (LA TRUFFE V9 — EXPERT COURTOIS) ===
+    // === ÉTAPE 4 : RÉDACTION IA (DIAGNOSTIC LA TRUFFE) ===
     const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Ton but est de fournir un audit de confiance pour un acheteur potentiel.
 
     VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix : ${rawCarData.prix_affiche}€.
@@ -178,6 +202,11 @@ serve(async (req: Request) => {
 
     const { data: report, error: insertError } = await supabase.from("reports").insert(reportData).select("id").single();
     if (insertError) throw new Error("Erreur BDD.");
+
+    // === ÉTAPE 6 : DÉDUCTION DU CRÉDIT (atomique, après succès) ===
+    if (!isVip) {
+      await supabaseAdmin.rpc('deduct_credit', { _user_id: user.id });
+    }
 
     return new Response(JSON.stringify({ reportId: report.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {

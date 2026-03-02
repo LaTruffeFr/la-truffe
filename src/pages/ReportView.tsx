@@ -10,8 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, Download, CheckCircle2, TrendingDown, Calendar, Gauge, Fuel, 
   Euro, ShieldCheck, Loader2, History,
-  Brain, Calculator, FileCheck, Copy, Check, Settings2, BrainCircuit, 
-  MessageSquareWarning, Zap, Cpu, ScanSearch, Microscope, Activity, Receipt, 
+  Calculator, FileCheck, Copy, Check, Settings2, 
+  MessageSquareWarning, Zap, Cpu, ScanSearch, Activity, Receipt, 
   Hash, ShieldAlert, GaugeCircle, Sparkles, Snowflake, Flame, CircleDashed
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -309,10 +309,10 @@ const ReportView = () => {
         {/* --- VERDICT IA (Plus fin et plus élégant) --- */}
         <div className="bg-indigo-600 rounded-[2rem] p-6 text-white shadow-lg flex flex-col sm:flex-row items-start gap-5">
           <div className="bg-white/10 p-3 rounded-2xl border border-white/20 shrink-0">
-            <BrainCircuit className="w-6 h-6 text-white" />
+            <ShieldCheck className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 space-y-2">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Verdict du Cerveau Hybride</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Diagnostic La Truffe</h2>
             <p className="text-lg font-medium italic font-serif leading-relaxed">
               "{report.expert_opinion ? report.expert_opinion.split('|||DATA|||')[0] : "Analyse du profil en cours d'écriture..."}"
             </p>
@@ -427,7 +427,7 @@ const ReportView = () => {
           <div className="pt-12 border-t border-slate-200 space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-end gap-4">
               <div>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Radar Sniper</h2>
+                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Analyse de Marché</h2>
                 <p className="text-slate-500 font-bold mt-1">Positionnement de l'offre sur {stats.totalVehicules} annonces.</p>
               </div>
               <Badge className="bg-slate-900 text-white font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest border-0">Data Live</Badge>

@@ -17,7 +17,7 @@ import {
   Car, Gauge, Calendar, Euro, Fuel, Phone,
   Camera, UploadCloud, X, ArrowRight, ShieldCheck, 
   CheckCircle2, Lock, Settings2, FileText, Zap, Trophy,
-  AlertCircle, Sparkles, Info, Loader2, CheckCircle, BrainCircuit
+  AlertCircle, Sparkles, Info, Loader2, CheckCircle, Search
 } from 'lucide-react';
 
 export default function SellCar() {
@@ -495,7 +495,7 @@ export default function SellCar() {
 
                       <div className="flex gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
-                          <BrainCircuit className="w-6 h-6 text-indigo-400" />
+                          <Sparkles className="w-6 h-6 text-indigo-400" />
                         </div>
                         <div>
                           <h4 className="font-black text-base">Génération par IA</h4>

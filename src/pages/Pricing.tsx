@@ -208,7 +208,7 @@ const Pricing = () => {
             <AccordionItem value="item-2" className="border-b-slate-100">
               <AccordionTrigger className="text-slate-900 font-black text-lg hover:text-indigo-600 transition-colors">Quels sites sont compatibles ?</AccordionTrigger>
               <AccordionContent className="text-slate-600 font-medium text-base leading-relaxed">
-                Notre Cerveau Hybride est actuellement entraîné pour lire et comprendre à 100% les annonces de <strong>Leboncoin</strong> et <strong>La Centrale</strong>. De nouvelles plateformes seront ajoutées prochainement.
+                Notre algorithme d'expertise est actuellement entraîné pour analyser les annonces de <strong>Leboncoin</strong> et <strong>La Centrale</strong>. De nouvelles plateformes seront ajoutées prochainement.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3" className="border-b-slate-100">

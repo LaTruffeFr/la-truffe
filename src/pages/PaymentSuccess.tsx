@@ -127,7 +127,7 @@ const PaymentSuccess = () => {
                 <Button 
                   size="lg" 
                   className="w-full gap-2"
-                  onClick={() => navigate('/client-dashboard')}
+                  onClick={() => navigate('/client')}
                 >
                   Accéder à mes audits
                   <ArrowRight className="w-4 h-4" />
