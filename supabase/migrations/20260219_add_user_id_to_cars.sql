@@ -33,6 +33,15 @@ ON public.cars FOR DELETE
 USING (auth.uid() = user_id);
 
 -- Admins can manage everything (requires is_admin function)
-CREATE POLICY "Admins manage all listings"                  
-ON public.cars FOR ALL                                      
-USING (public.is_admin(auth.uid()));;
+CREATE POLICY "Admins manage all listings"
+ON public.cars FOR ALL
+USING (
+  CASE 
+    WHEN auth.uid() IS NULL THEN false
+    WHEN EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = auth.uid() AND is_admin = true
+    ) THEN true
+    ELSE false
+  END
+);

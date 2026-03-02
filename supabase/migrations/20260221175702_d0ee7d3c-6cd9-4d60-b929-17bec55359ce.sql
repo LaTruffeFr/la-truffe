@@ -1,3 +1,7 @@
+
+-- Add user_id column to cars table
+ALTER TABLE public.cars ADD COLUMN user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE;
+
 -- Add RLS policy: owners can update their own listings
 CREATE POLICY "Owners can update their listings"
 ON public.cars
