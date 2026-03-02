@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Link as LinkIcon, Loader2, BrainCircuit, 
+  Link as LinkIcon, Loader2, Activity, 
   Receipt, CheckCircle2, Zap, Sparkles,
   ShieldCheck, ExternalLink, AlertCircle
 } from "lucide-react";
@@ -126,7 +126,7 @@ export default function AuditPage() {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white font-sans px-4">
         <div className="relative mb-8">
-          <BrainCircuit className="w-24 h-24 text-indigo-500 animate-pulse relative z-10" />
+          <Activity className="w-24 h-24 text-indigo-500 animate-pulse relative z-10" />
           <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-50 animate-pulse"></div>
         </div>
         <h2 className="text-3xl font-extrabold mb-4 tracking-tight text-center">Analyse de l'annonce en cours...</h2>

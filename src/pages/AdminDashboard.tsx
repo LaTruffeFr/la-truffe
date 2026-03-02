@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { VehicleWithScore } from '@/lib/csvParser';
-// 👇 IMPORT CRUCIAL : On ajoute VehicleDataProvider pour corriger l'erreur
 import { useVehicleData, VehicleDataProvider } from '@/contexts/VehicleDataContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -22,7 +21,7 @@ import {
   BarChart3, ShoppingBag, User, Settings, LogOut, Send,
   CheckCircle2, AlertTriangle, Gauge, Fuel, Euro, ShieldCheck, 
   Calendar, MapPin, Search, Share2, Trophy, ListFilter, ExternalLink,
-  Crown, BrainCircuit, ShieldAlert, Check, X, Eye, Trash2
+  Crown, ShieldAlert, Check, X, Eye, Trash2, Users, CreditCard, FileText, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,7 +76,16 @@ interface PendingListing {
   description: string;
   score_ia: number;
   seller_contact: string;
+  carburant: string;
 }
+
+interface AdminUser {
+  user_id: string;
+  email: string;
+  credits: number;
+  created_at: string;
+}
+
 
 // ============================================================================
 // 1. LE COMPOSANT INTERNE (Qui a besoin du Provider)
@@ -96,10 +104,18 @@ function AdminDashboardInner() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('moderation'); // Par défaut sur la modération
+  const [activeTab, setActiveTab] = useState('moderation');
   const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
   const [showAllVehicles, setShowAllVehicles] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
+  
+  // CRM State
+  const [allUsers, setAllUsers] = useState<AdminUser[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [userReports, setUserReports] = useState<any[]>([]);
+  const [userListings, setUserListings] = useState<any[]>([]);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   const fetchPendingListings = async () => {
     const { data, error } = await supabase
@@ -111,9 +127,31 @@ function AdminDashboardInner() {
     else setPendingListings([]);
   };
 
+  const fetchAllUsers = async () => {
+    setIsLoadingUsers(true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('user_id, email, credits, created_at')
+      .order('created_at', { ascending: false });
+    if (!error && data) setAllUsers(data as AdminUser[]);
+    setIsLoadingUsers(false);
+  };
+
+  const fetchUserHistory = async (userId: string) => {
+    setSelectedUserId(userId);
+    setIsUserModalOpen(true);
+    const [reportsRes, listingsRes] = await Promise.all([
+      supabase.from('reports').select('id, marque, modele, status, created_at').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('marketplace_listings').select('id, marque, modele, status, created_at, prix').eq('user_id', userId).order('created_at', { ascending: false }),
+    ]);
+    setUserReports(reportsRes.data || []);
+    setUserListings(listingsRes.data || []);
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       fetchPendingListings();
+      fetchAllUsers();
     } else if (!authLoading && !user) {
       navigate('/');
     }
@@ -224,6 +262,10 @@ function AdminDashboardInner() {
 
             <TabsTrigger value="vip" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
               <Crown className="w-5 h-5 mr-2" /> Gestion VIP
+            </TabsTrigger>
+
+            <TabsTrigger value="crm" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
+              <Users className="w-5 h-5 mr-2" /> CRM & Utilisateurs
             </TabsTrigger>
           </TabsList>
         </div>
@@ -475,6 +517,140 @@ function AdminDashboardInner() {
         <TabsContent value="vip" className="flex-1 m-0 p-6 max-w-4xl mx-auto w-full space-y-8 animate-in fade-in">
           <WaitlistPanel />
           <VipManagementPanel />
+        </TabsContent>
+
+        {/* ------------------------------------- */}
+        {/* ONGLET 5 : CRM & UTILISATEURS */}
+        {/* ------------------------------------- */}
+        <TabsContent value="crm" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <div>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <Users className="w-8 h-8 text-indigo-500" />
+                CRM & Utilisateurs
+              </h2>
+              <p className="text-slate-500 font-medium mt-2">Vue d'ensemble de votre base clients.</p>
+            </div>
+          </div>
+
+          {/* KPIs */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="rounded-2xl border-slate-100 shadow-lg bg-white">
+              <CardContent className="p-6 text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Comptes créés</p>
+                <p className="text-4xl font-black text-slate-900">{allUsers.length}</p>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-slate-100 shadow-lg bg-white">
+              <CardContent className="p-6 text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Utilisateurs actifs</p>
+                <p className="text-4xl font-black text-indigo-600">{allUsers.filter(u => u.credits !== 1 || new Date(u.created_at) > new Date(Date.now() - 7 * 86400000)).length}</p>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-slate-100 shadow-lg bg-white">
+              <CardContent className="p-6 text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Crédits en circulation</p>
+                <p className="text-4xl font-black text-emerald-600">{allUsers.reduce((s, u) => s + u.credits, 0)}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Users Table */}
+          {isLoadingUsers ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>
+          ) : (
+            <Card className="overflow-hidden border-slate-100 shadow-2xl rounded-[2.5rem] bg-white">
+              <Table>
+                <TableHeader className="bg-slate-50 border-b border-slate-100">
+                  <TableRow>
+                    <TableHead className="font-black text-slate-500 uppercase tracking-widest text-[10px] py-5 pl-8">Email</TableHead>
+                    <TableHead className="font-black text-slate-500 uppercase tracking-widest text-[10px] py-5">Crédits</TableHead>
+                    <TableHead className="font-black text-slate-500 uppercase tracking-widest text-[10px] py-5">Inscription</TableHead>
+                    <TableHead className="text-right font-black text-slate-500 uppercase tracking-widest text-[10px] py-5 pr-8">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allUsers.map((u) => (
+                    <TableRow key={u.user_id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
+                      <TableCell className="pl-8 py-4 font-bold text-slate-900">{u.email}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-indigo-50 text-indigo-700 border-0 font-black">{u.credits}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-500 font-medium">
+                        {new Date(u.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </TableCell>
+                      <TableCell className="text-right pr-8">
+                        <Button size="sm" variant="outline" onClick={() => fetchUserHistory(u.user_id)} className="font-bold rounded-xl border-slate-200">
+                          <Eye className="w-4 h-4 mr-2" /> Historique
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
+
+          {/* User History Modal */}
+          {isUserModalOpen && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setIsUserModalOpen(false)}>
+              <div className="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-black text-slate-900">Historique Client</h3>
+                  <Button variant="ghost" size="sm" onClick={() => setIsUserModalOpen(false)}><X className="w-5 h-5" /></Button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-black text-slate-700 text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <FileText className="w-4 h-4" /> Rapports d'audit ({userReports.length})
+                    </h4>
+                    {userReports.length === 0 ? <p className="text-slate-400 text-sm">Aucun rapport</p> : (
+                      <div className="space-y-2">
+                        {userReports.map((r: any) => (
+                          <div key={r.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div>
+                              <p className="font-bold text-slate-900">{r.marque} {r.modele}</p>
+                              <p className="text-xs text-slate-500">{new Date(r.created_at).toLocaleDateString('fr-FR')}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className={r.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-0' : 'bg-amber-50 text-amber-700 border-0'}>{r.status}</Badge>
+                              {r.status === 'completed' && (
+                                <Button size="sm" variant="ghost" onClick={() => navigate(`/report/${r.id}`)} className="text-indigo-600">
+                                  <ExternalLink className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="font-black text-slate-700 text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4" /> Annonces Marketplace ({userListings.length})
+                    </h4>
+                    {userListings.length === 0 ? <p className="text-slate-400 text-sm">Aucune annonce</p> : (
+                      <div className="space-y-2">
+                        {userListings.map((l: any) => (
+                          <div key={l.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div>
+                              <p className="font-bold text-slate-900">{l.marque} {l.modele}</p>
+                              <p className="text-xs text-slate-500">{Number(l.prix).toLocaleString('fr-FR')}€ • {new Date(l.created_at).toLocaleDateString('fr-FR')}</p>
+                            </div>
+                            <Badge className={l.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-0' : l.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-0' : 'bg-amber-50 text-amber-700 border-0'}>{l.status}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
       </Tabs>

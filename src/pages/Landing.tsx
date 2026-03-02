@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { 
-  ShieldCheck, Search, Car as CarIcon, BrainCircuit, 
+  ShieldCheck, Search, Car as CarIcon, 
   ArrowRight, LineChart, Wrench, CheckCircle2, Zap, AlertTriangle, PlayCircle, Star
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ export default function Landing() {
         
         <div className="relative max-w-7xl mx-auto z-10 text-center">
           <Badge className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 px-4 py-1.5 mb-8 rounded-full font-bold uppercase tracking-widest text-xs backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-700 flex items-center gap-2 mx-auto w-fit">
-            <BrainCircuit className="w-4 h-4" /> La 1ère IA experte en mécanique
+            <ShieldCheck className="w-4 h-4" /> La 1ère IA experte en mécanique
           </Badge>
           
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 leading-[1.1]">
@@ -114,7 +114,7 @@ export default function Landing() {
       {/* --- EXEMPLE VISUEL (AVANT / APRÈS L'IA) --- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32">
         <div className="bg-slate-900 rounded-[3rem] p-8 md:p-12 lg:p-16 shadow-2xl relative overflow-hidden border border-slate-800">
-          <div className="absolute top-0 right-0 p-8 opacity-5"><BrainCircuit className="w-64 h-64" /></div>
+          <div className="absolute top-0 right-0 p-8 opacity-5"><ShieldCheck className="w-64 h-64" /></div>
           
           <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
             <div>

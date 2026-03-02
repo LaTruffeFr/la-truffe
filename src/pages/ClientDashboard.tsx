@@ -16,9 +16,9 @@ import { Footer } from '@/components/landing';
 import { SellerListings } from '@/components/SellerListings';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
-  Plus, FileText, FolderOpen, User, Shield,
+  Plus, FileText, FolderOpen, User, Shield, Search,
   Loader2, Clock, CheckCircle, Eye, Car, ArrowRight,
-  BrainCircuit, Zap, Lock, Bell, Receipt, Download
+  ShieldCheck, Zap, Lock, Bell, Receipt, Download
 } from 'lucide-react';
 
 interface Report {
@@ -85,7 +85,7 @@ const ClientDashboard = () => {
     } else {
       toast({
         title: "Analyse en cours",
-        description: "Le Cerveau Hybride travaille encore sur ce rapport. Revenez dans quelques minutes.",
+        description: "Notre algorithme d'expertise travaille encore sur ce rapport. Revenez dans quelques minutes.",
       });
     }
   };
@@ -124,7 +124,7 @@ const ClientDashboard = () => {
               
               {/* Wallet & Profil */}
               <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><BrainCircuit className="w-24 h-24 text-white" /></div>
+                <div className="absolute top-0 right-0 p-4 opacity-10"><ShieldCheck className="w-24 h-24 text-white" /></div>
                 <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 backdrop-blur-sm relative z-10 shadow-inner">
                   <User className="w-10 h-10 text-white" />
                 </div>
@@ -232,7 +232,7 @@ const ClientDashboard = () => {
                       Commencez par coller l'URL d'une annonce Leboncoin ou La Centrale pour que l'IA traque les vices cachés.
                     </p>
                     <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
-                      <BrainCircuit className="w-5 h-5 mr-2" /> Lancer ma première analyse
+                      <Search className="w-5 h-5 mr-2" /> Lancer ma première analyse
                     </Button>
                   </Card>
                 ) : (
