@@ -240,9 +240,15 @@ const ReportView = () => {
             <div className="flex items-center justify-center md:justify-start gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest mb-3">
               <Hash className="w-3 h-3" /> Dossier {report.id.slice(0,8)} • <History className="w-3 h-3 ml-2" /> {new Date(report.created_at).toLocaleDateString()}
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none mb-6">
-              {report.marque} <span className="text-indigo-600">{report.modele}</span>
-            </h1>
+            {report.market_data?.original_title ? (
+              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight mb-6">
+                {report.market_data.original_title}
+              </h1>
+            ) : (
+              <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none mb-6">
+                {report.marque} <span className="text-indigo-600">{report.modele}</span>
+              </h1>
+            )}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-700 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-indigo-500" /> {report.annee}
