@@ -12,7 +12,7 @@ import Auth from "./pages/Auth";
 import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
-import Cote from "./pages/Cote";
+import Guides from "./pages/Guides";
 import Audit from "./pages/Audit"; 
 import Marketplace from "./pages/Marketplace"; 
 import Vendre from "./pages/SellCar";
@@ -37,7 +37,8 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
-              <Route path="/cote" element={<Cote />} />
+              <Route path="/guides" element={<Guides />} />
+              <Route path="/cote" element={<Navigate to="/guides" replace />} />
               <Route path="/audit" element={<Audit />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/vendre" element={<Vendre />} />

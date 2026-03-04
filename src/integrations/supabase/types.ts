@@ -255,6 +255,30 @@ export type Database = {
         }
         Relationships: []
       }
+      model_guides: {
+        Row: {
+          brand: string
+          content: Json
+          created_at: string
+          id: string
+          model: string
+        }
+        Insert: {
+          brand: string
+          content?: Json
+          created_at?: string
+          id?: string
+          model: string
+        }
+        Update: {
+          brand?: string
+          content?: Json
+          created_at?: string
+          id?: string
+          model?: string
+        }
+        Relationships: []
+      }
       processed_payments: {
         Row: {
           credits: number
