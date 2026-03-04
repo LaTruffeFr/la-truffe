@@ -12,7 +12,8 @@ import {
   Euro, ShieldCheck, Loader2, History,
   Calculator, FileCheck, Copy, Check, Settings2, 
   MessageSquareWarning, Zap, Cpu, ScanSearch, Activity, Receipt, 
-  Hash, ShieldAlert, GaugeCircle, Sparkles, Snowflake, Flame, CircleDashed
+  Hash, ShieldAlert, GaugeCircle, Sparkles, Snowflake, Flame, CircleDashed,
+  AlertTriangle, HeartPulse, Target
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SniperChart } from '@/components/trading/SniperChart';
