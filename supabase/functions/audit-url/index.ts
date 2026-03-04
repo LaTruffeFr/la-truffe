@@ -30,9 +30,9 @@ RÈGLES D'ATTRIBUTION DES TAGS (AVEC LEUR SCORE) :
 - '🛡️ GARANTIE' (+4)
 - '✅ CT OK' (+3)
 - '🔧 GROS ENTRETIEN FAIT' (+3)
-=== TUNING (négatifs - modifications) ===
-- '⚠️ MODIFIÉE' (-15) : Cherche les mots "decata", "défap", "stage", "cartographie", "ligne inox".
-- '⚠️ NON HOMOLOGUÉ' (-30) : Si 'décata', 'défap', 'reprog', 'stage 1/2', 'ligne inox non homologuée' sont détectés.
+=== TUNING / PRÉPARATION ===
+- '🔩 PRÉPARÉE' (+0 à -10) : Stage 1/2, reprog, ligne inox, décata. Score neutre si pièces reconnues (Akrapovic, MHD, Wagner, etc.), sinon malus.
+- '⚠️ NON HOMOLOGUÉ' (-15) : Si décata, défap, ou pièces non homologuées détectées. Avertissement légal obligatoire mais PAS de chiffrage du rachat catalyseur.
 === DANGERS (très négatifs) ===
 - '💀 MOTEUR HS' (-100)
 - '💀 ACCIDENT GRAVE' (-100)
@@ -130,8 +130,8 @@ serve(async (req: Request) => {
     RÈGLES STRICTES :
     1. TITRE ORIGINAL : Tu DOIS extraire le titre EXACT et complet de l'annonce d'origine et le placer dans le champ "original_title". Ne te contente pas de concaténer la marque et le modèle.
     2. RIGUEUR MÉCANIQUE ABSOLUE (Anti-Hallucination) : Tu es un expert automobile intraitable. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. Par exemple, une Renault Clio 4 RS de 200ch est OBLIGATOIREMENT équipée du 1.6 Turbo (M5M), et SURTOUT PAS du 1.3 TCe (apparu plus tard). En cas de doute, mentionne uniquement la cylindrée standard.
-    3. DÉTECTEUR DE MODIFICATIONS (Tuning) : Traque IMPÉRATIVEMENT toute mention de préparation moteur, ligne d'échappement (ex: Akrapovic, Milltek, tube afrique, suppression intermédiaire), ressorts courts, combinés filetés ou reprogrammation (Stage 1/2). Avertis systématiquement des risques d'usure prématurée, de refus au contrôle technique et d'illégalité, et impacte sévèrement le score.
-    4. PRIX FERME : Si le texte mentionne "Prix ferme" ou "Non négociable", note-le dans le champ "prix_ferme": true.
+     3. DÉTECTEUR DE MODIFICATIONS (Tuning) : Traque IMPÉRATIVEMENT toute mention de préparation moteur, ligne d'échappement (ex: Akrapovic, Milltek, tube afrique, suppression intermédiaire), ressorts courts, combinés filetés ou reprogrammation (Stage 1/2). Liste-les TOUTES dans "modifications_tuning". Distingue les pièces de marques reconnues (Akrapovic, KW, Wagner, Eventuri, MHD) des modifications artisanales.
+     4. PRIX FERME : Si le texte mentionne "Prix ferme" ou "Non négociable", note-le dans le champ "prix_ferme": true.
     
     Format JSON attendu (Sois ultra précis) :
     { 
@@ -185,44 +185,62 @@ serve(async (req: Request) => {
     const prix_truffe = Math.round(prixEstime * 0.95);
     const isPrixFerme = rawCarData.prix_ferme === true;
 
-    // === ÉTAPE 4 : RÉDACTION IA (DIAGNOSTIC LA TRUFFE) ===
-    const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Ton but est de fournir un audit de confiance pour un acheteur potentiel.
+    // === ÉTAPE 4 : RÉDACTION IA (DIAGNOSTIC LA TRUFFE V10) ===
+    const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Tu t'adresses à des passionnés ET des néophytes.
 
-    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix : ${rawCarData.prix_affiche}€.
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix affiché : ${rawCarData.prix_affiche}€.
     PIÈCES NEUVES SELON LE VENDEUR : "${rawCarData.pieces_neuves_annoncees}"
     MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
+    OPTIONS PREMIUM : ${JSON.stringify(rawCarData.options_premium || [])}
     PRIX FERME DÉTECTÉ : ${isPrixFerme ? "OUI" : "NON"}
 
-    CONSIGNES DE LECTURE CRITIQUES :
+    === RÈGLE 1 : ÉVALUATION DU PRIX (LE JUSTE PRIX DU MARCHÉ) ===
+    N'utilise JAMAIS le prix du vendeur comme base absolue. Estime d'abord la vraie valeur de CE véhicule d'ORIGINE sur le marché français (selon modèle exact, année, kilométrage, motorisation). Compare ensuite le prix affiché à cette estimation. Indique clairement si le prix est au-dessus, en-dessous ou au niveau du marché.
+
+    === RÈGLE 2 : GESTION DU TUNING (VALORISATION PASSIONNÉ) ===
+    Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
+
+    === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
+    Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
+    - Vidange boîte auto (ex: ZF8, DSG, DCT) si applicable
+    - Bougies et bobines d'allumage
+    - Fiabilisation spécifique au modèle (ex: charge pipe alu pour N55/B58 BMW, chaîne de distribution pour EA888, etc.)
+    - Liquide de frein + purge (surtout si usage circuit mentionné)
+
+    === RÈGLE 4 : LÉGALITÉ (DISCOURS PASSIONNÉ) ===
+    Si des modifications non homologuées sont détectées (décata, défap, ligne non homologuée) :
+    - Avertis l'acheteur des risques RÉELS : refus CT, problème assurance en cas de sinistre
+    - Adapte le discours pour un passionné : reste factuel, pas moralisateur
+    - NE CHIFFRE PAS le rachat d'un catalyseur neuf ou d'une remise en conformité dans le devis
+    - Mentionne simplement le risque comme note informative
+
+    CONSIGNES DE LECTURE :
     1. Lecture Intégrale : Tu as lu CHAQUE LIGNE de la description. Ne saute aucun détail.
     2. Détection de Frais Récents : Si le vendeur mentionne une pièce comme 'neuve', 'récente', 'changée' ou avec 'facture', tu ne DOIS PAS l'inclure dans le devis.
-    3. Détection de Drapeaux Rouges : Si tu vois 'décata', 'défap', 'reprog', 'stage 1/2', 'ligne inox non homologuée', baisse le score de 30 points minimum et ajoute '⚠️ NON HOMOLOGUÉ'.
 
     TON ET COMPORTEMENT :
-    - Professionnel mais simple : Cite les codes moteurs (${rawCarData.code_moteur_estime}) mais explique simplement pour un néophyte.
-    - Courtois et Positif : Reste poli. Même si la voiture est risquée, explique-le avec calme et expertise.
-    - Incorruptible : Tu es là pour protéger l'acheteur.
+    - Expert passionné : Tu parles comme un mécano qui aime les belles voitures. Cite les codes moteurs mais explique simplement.
+    - Courtois et honnête : Même si la voiture est risquée, explique-le avec calme.
+    - Incorruptible : Tu protèges l'acheteur tout en respectant le travail du préparateur.
 
     RÈGLES MÉCANIQUES ABSOLUES (ANTI-HALLUCINATION) :
     1. Base-toi UNIQUEMENT sur le code moteur (${rawCarData.code_moteur_estime}). Ne cite que les maladies documentées de CE bloc précis.
     2. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. En cas de doute, mentionne uniquement la cylindrée standard.
-    3. Si modifications tuning/décata détectées, préviens du risque légal (contrôle technique, pollution, assurance).
-    4. DEVIS : Calcul mathématique strict. Inclus uniquement ce qui est statistiquement nécessaire au kilométrage actuel et que le vendeur n'a PAS déclaré comme fait.
 
-    STRATÉGIE DE NÉGOCIATION & PRIX FERME :
+    STRATÉGIE DE NÉGOCIATION :
     ${isPrixFerme 
-      ? `L'annonce mentionne "Prix ferme". Le SMS de négociation doit être TRÈS diplomatique. Ne propose PAS une baisse de prix agressive de but en blanc. Justifie ton budget maximum uniquement par les frais de remise en conformité ou les entretiens majeurs à venir. Montre de l'intérêt sincère pour le véhicule avant d'aborder le prix.`
-      : `Rédige un SMS poli mais assertif avec une offre ferme autour de ${prix_truffe}€.`
+      ? `L'annonce mentionne "Prix ferme". Le SMS de négociation doit être TRÈS diplomatique. Justifie uniquement par les frais d'entretien préventif à venir. Montre de l'intérêt sincère avant d'aborder le prix.`
+      : `Rédige un SMS poli mais assertif avec une offre autour de ${prix_truffe}€, justifiée par les frais d'entretien identifiés.`
     }
 
     STRUCTURE DE RÉPONSE :
-    - "expert_opinion" : Ton avis global en 3-4 phrases. Commence par saluer l'utilisateur. Sois factuel sur l'état et le prix.
+    - "expert_opinion" : Ton avis global en 3-4 phrases. Commence par saluer l'utilisateur. Inclus ton estimation de la valeur marché d'origine et compare au prix affiché.
     - "negotiation_arguments" : 3 points précis :
-      * Point 1 (Titre: "Stratégie d'approche") : Rédige un SMS poli avec une offre autour de ${prix_truffe}€.
-      * Point 2 (Titre: "Mécanique et Historique") : Argument mécanique basé sur l'entretien manquant pour ce moteur.
-      * Point 3 (Titre: "Inspection sous le capot") : Points d'inspection visuelle à vérifier sur place.
-    - "devis_estime" : Liste des interventions nécessaires avec coûts.
-    - "tags" : Maximum 5 tags percutants (ex: '🔧 DSG À VIDANGER', '💎 TRÈS PROPRE').
+      * Point 1 (Titre: "Stratégie d'approche") : SMS de négociation adapté.
+      * Point 2 (Titre: "Mécanique et Historique") : Maladies connues de CE moteur + commentaire entretien.
+      * Point 3 (Titre: "Inspection sous le capot") : Points d'inspection à vérifier sur place.
+    - "devis_estime" : UNIQUEMENT les interventions d'entretien/fiabilisation nécessaires. PAS de remise en conformité légale.
+    - "tags" : Maximum 5 tags percutants.
 
     Retourne CE JSON EXACT : 
     { 
