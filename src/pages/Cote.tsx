@@ -201,7 +201,7 @@ export default function Cote() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
-      <Header activeLink="cote" />
+      <Header activeLink="guides" />
 
       <main className="flex-1 flex flex-col">
         {step === "form" && (

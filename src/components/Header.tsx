@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
-  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'cote' | 'pricing' | 'about' | 'contact' | 'why-us';
+  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us';
 }
 
 export const Header = ({ activeLink }: HeaderProps) => {
@@ -26,7 +26,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
   const navLinks = [
     { name: 'Scanner une annonce', path: '/audit', id: 'audit' },
     { name: 'Marketplace', path: '/marketplace', id: 'marketplace' },
-    { name: 'Cote Auto', path: '/cote', id: 'cote' },
+    { name: 'Guide Fiabilité', path: '/guides', id: 'guides' },
     { name: 'Vendre', path: '/vendre', id: 'vendre' },
     { name: 'Tarifs', path: '/pricing', id: 'pricing' },
   ];
