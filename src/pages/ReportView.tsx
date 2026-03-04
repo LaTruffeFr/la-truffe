@@ -415,7 +415,7 @@ const ReportView = () => {
             <div className="space-y-4">
               <h3 className="text-xl font-black text-slate-900 flex items-center gap-2"><Cpu className="text-indigo-500" /> Équipements Clés</h3>
               <div className="grid gap-3">
-                {(singleAuditData?.options || []).map((opt: string, i: number) => (
+                {(Array.isArray(singleAuditData?.options) ? singleAuditData.options : []).map((opt: string, i: number) => (
                   <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
                       {getOptionIcon(opt)}
