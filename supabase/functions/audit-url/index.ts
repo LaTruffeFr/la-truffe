@@ -142,6 +142,9 @@ serve(async (req: Request) => {
       "pieces_neuves_annoncees": "Liste TOUT ce que le vendeur dit avoir changé ou mis à neuf. Si rien, écris 'Aucune'.",
       "modifications_tuning": "Liste les modifs illégales ou tuning (ex: decata, stage 1, defap). Si aucune, écris 'Aucune'.",
       "prix_ferme": false,
+      "market_range": "Fourchette de prix réaliste sur le marché de l'occasion pour ce modèle/année/km (ex: '32 000 € - 34 000 €')",
+      "reliability_score": 7,
+      "known_issues": ["Maladie chronique 1", "Maladie chronique 2", "Maladie chronique 3"],
       "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] 
     }`;
 
@@ -303,6 +306,9 @@ serve(async (req: Request) => {
         screenshot: screenshot,
         prix_ferme: isPrixFerme,
         code_moteur: rawCarData.code_moteur_estime || null,
+        market_range: rawCarData.market_range || null,
+        reliability_score: rawCarData.reliability_score || null,
+        known_issues: rawCarData.known_issues || [],
         modifications_tuning: rawCarData.modifications_tuning || null,
       },
     };
