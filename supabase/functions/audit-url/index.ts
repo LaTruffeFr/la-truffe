@@ -10,7 +10,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SUPPORTED_DOMAINS = ["leboncoin.fr", "lacentrale.fr", "autoscout24.fr", "autoscout24.com"];
+const SUPPORTED_DOMAINS = ["leboncoin.fr", "lacentrale.fr", "autoscout24.", "mobile.de"];
 
 function isValidListingUrl(url: string): boolean {
   try {
