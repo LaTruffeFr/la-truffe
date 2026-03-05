@@ -1,19 +1,12 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { Crown, Trash2, UserPlus, Loader2 } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { Crown, Trash2, UserPlus, Loader2, ShieldCheck } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,93 +19,83 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface VipUser {
+interface RoleUser {
   id: string;
   user_id: string;
   email: string;
   created_at: string;
+  role: "vip" | "admin";
 }
 
 export function VipManagementPanel() {
-  const [vipUsers, setVipUsers] = useState<VipUser[]>([]);
-  const [newVipEmail, setNewVipEmail] = useState('');
+  const [roleUsers, setRoleUsers] = useState<RoleUser[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const { toast } = useToast();
 
-  const fetchVipUsers = async () => {
+  const fetchRoleUsers = async () => {
     setIsLoading(true);
     try {
-      // Get all VIP roles with user info from profiles
-      const { data: vipRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('id, user_id, created_at')
-        .eq('role', 'vip');
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("id, user_id, role, created_at")
+        .in("role", ["vip", "admin"]); // On récupère VIP ET Admins
 
       if (rolesError) throw rolesError;
-
-      if (!vipRoles || vipRoles.length === 0) {
-        setVipUsers([]);
+      if (!roles || roles.length === 0) {
+        setRoleUsers([]);
+        setIsLoading(false);
         return;
       }
 
-      // Get emails from profiles
-      const userIds = vipRoles.map(r => r.user_id);
+      const userIds = roles.map((r) => r.user_id);
       const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, email')
-        .in('user_id', userIds);
+        .from("profiles")
+        .select("user_id, email")
+        .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
 
-      const vipList: VipUser[] = vipRoles.map(role => {
-        const profile = profiles?.find(p => p.user_id === role.user_id);
+      const userList: RoleUser[] = roles.map((role) => {
+        const profile = profiles?.find((p) => p.user_id === role.user_id);
         return {
           id: role.id,
           user_id: role.user_id,
-          email: profile?.email || 'Email inconnu',
+          email: profile?.email || "Email inconnu",
           created_at: role.created_at,
+          role: role.role as "vip" | "admin",
         };
       });
 
-      setVipUsers(vipList);
+      setRoleUsers(userList);
     } catch (error) {
-      console.error('Error fetching VIP users:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les utilisateurs VIP",
-        variant: "destructive",
-      });
+      console.error("Error fetching users:", error);
+      toast({ title: "Erreur", description: "Impossible de charger les utilisateurs", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchVipUsers();
+    fetchRoleUsers();
   }, []);
 
-  const addVipUser = async () => {
-    if (!newVipEmail.trim()) {
-      toast({
-        title: "Email requis",
-        description: "Veuillez entrer une adresse email",
-        variant: "destructive",
-      });
+  const addUserRole = async (targetRole: "vip" | "admin") => {
+    if (!newUserEmail.trim()) {
+      toast({ title: "Email requis", description: "Veuillez entrer une adresse email", variant: "destructive" });
       return;
     }
 
     setIsAdding(true);
     try {
-      // Find user by email in profiles
       const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('email', newVipEmail.trim().toLowerCase())
+        .from("profiles")
+        .select("user_id")
+        .eq("email", newUserEmail.trim().toLowerCase())
         .maybeSingle();
 
       if (profileError) throw profileError;
-
       if (!profile) {
         toast({
           title: "Utilisateur non trouvé",
@@ -122,74 +105,48 @@ export function VipManagementPanel() {
         return;
       }
 
-      // Check if already VIP
       const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', profile.user_id)
-        .eq('role', 'vip')
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", profile.user_id)
+        .in("role", ["vip", "admin"])
         .maybeSingle();
 
       if (existingRole) {
         toast({
-          title: "Déjà VIP",
-          description: "Cet utilisateur est déjà VIP",
+          title: "Déjà attribué",
+          description: `Cet utilisateur est déjà ${existingRole.role.toUpperCase()}`,
           variant: "default",
         });
         return;
       }
 
-      // Add VIP role
       const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: profile.user_id,
-          role: 'vip',
-        });
+        .from("user_roles")
+        .insert({ user_id: profile.user_id, role: targetRole });
 
       if (insertError) throw insertError;
 
-      toast({
-        title: "VIP ajouté ✓",
-        description: `${newVipEmail} a maintenant un accès VIP illimité`,
-      });
-
-      setNewVipEmail('');
-      fetchVipUsers();
+      toast({ title: "Rôle ajouté ✓", description: `${newUserEmail} est maintenant ${targetRole.toUpperCase()}` });
+      setNewUserEmail("");
+      fetchRoleUsers();
     } catch (error) {
-      console.error('Error adding VIP:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter l'utilisateur VIP",
-        variant: "destructive",
-      });
+      console.error("Error adding role:", error);
+      toast({ title: "Erreur", description: "Impossible d'ajouter le rôle", variant: "destructive" });
     } finally {
       setIsAdding(false);
     }
   };
 
-  const removeVipUser = async (roleId: string, email: string) => {
+  const removeUserRole = async (roleId: string, email: string) => {
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('id', roleId);
-
+      const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
       if (error) throw error;
-
-      toast({
-        title: "VIP retiré",
-        description: `${email} n'a plus l'accès VIP`,
-      });
-
-      fetchVipUsers();
+      toast({ title: "Accès retiré", description: `${email} a perdu son accès privilégié` });
+      fetchRoleUsers();
     } catch (error) {
-      console.error('Error removing VIP:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de retirer l'accès VIP",
-        variant: "destructive",
-      });
+      console.error("Error removing role:", error);
+      toast({ title: "Erreur", description: "Impossible de retirer l'accès", variant: "destructive" });
     }
   };
 
@@ -197,49 +154,59 @@ export function VipManagementPanel() {
     <Card className="border-slate-200">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-xl">
-          <Crown className="w-5 h-5 text-yellow-500" />
-          Gestion des comptes VIP
+          <Crown className="w-5 h-5 text-indigo-500" />
+          Gestion des privilèges (VIP & Admins)
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Les utilisateurs VIP ont des crédits illimités et un accès complet aux fonctionnalités
+          Attribuez des accès illimités (VIP) ou des droits d'administration complets (Admin).
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Add VIP form */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Input
-            placeholder="Email de l'utilisateur à ajouter..."
-            value={newVipEmail}
-            onChange={(e) => setNewVipEmail(e.target.value)}
+            placeholder="Email de l'utilisateur..."
+            value={newUserEmail}
+            onChange={(e) => setNewUserEmail(e.target.value)}
             className="flex-1"
-            onKeyDown={(e) => e.key === 'Enter' && addVipUser()}
           />
-          <Button 
-            onClick={addVipUser} 
-            disabled={isAdding}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white"
-          >
-            {isAdding ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <UserPlus className="w-4 h-4 mr-2" />
-                Ajouter VIP
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => addUserRole("vip")}
+              disabled={isAdding}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white min-w-[140px]"
+            >
+              {isAdding ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4 mr-2" /> Ajouter VIP
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={() => addUserRole("admin")}
+              disabled={isAdding}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
+            >
+              {isAdding ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4 mr-2" /> Ajouter Admin
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-        {/* VIP users list */}
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : vipUsers.length === 0 ? (
+        ) : roleUsers.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Crown className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p>Aucun utilisateur VIP pour le moment</p>
-            <p className="text-sm">Ajoutez un email ci-dessus pour donner l'accès VIP</p>
+            <p>Aucun utilisateur privilégié pour le moment</p>
           </div>
         ) : (
           <Table>
@@ -251,19 +218,30 @@ export function VipManagementPanel() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vipUsers.map((vip) => (
-                <TableRow key={vip.id}>
+              {roleUsers.map((u) => (
+                <TableRow key={u.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                        <Crown className="w-3 h-3 mr-1" />
-                        VIP
-                      </Badge>
-                      {vip.email}
+                      {u.role === "admin" ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-indigo-50 text-indigo-700 border-indigo-200 uppercase tracking-widest text-[10px] font-black"
+                        >
+                          <ShieldCheck className="w-3 h-3 mr-1" /> Admin
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="bg-yellow-50 text-yellow-700 border-yellow-200 uppercase tracking-widest text-[10px] font-black"
+                        >
+                          <Crown className="w-3 h-3 mr-1" /> VIP
+                        </Badge>
+                      )}
+                      {u.email}
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(vip.created_at).toLocaleDateString('fr-FR')}
+                    {new Date(u.created_at).toLocaleDateString("fr-FR")}
                   </TableCell>
                   <TableCell className="text-right">
                     <AlertDialog>
@@ -274,18 +252,19 @@ export function VipManagementPanel() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Retirer l'accès VIP ?</AlertDialogTitle>
+                          <AlertDialogTitle>Retirer les accès de {u.email} ?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            {vip.email} n'aura plus accès aux fonctionnalités VIP et devra payer pour utiliser le service.
+                            Cet utilisateur perdra ses privilèges ({u.role.toUpperCase()}) et redeviendra un client
+                            standard.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Annuler</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => removeVipUser(vip.id, vip.email)}
+                          <AlertDialogAction
+                            onClick={() => removeUserRole(u.id, u.email)}
                             className="bg-red-600 hover:bg-red-700"
                           >
-                            Retirer VIP
+                            Confirmer
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
