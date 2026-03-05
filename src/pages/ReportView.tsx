@@ -229,7 +229,7 @@ const ReportView = () => {
       <main id="report-content" className="flex-1 container mx-auto px-4 py-10 max-w-6xl space-y-8">
         
         {/* --- HERO : LE CHARME RETROUVÉ --- */}
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-8 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
+        <div className="pdf-section flex flex-col md:flex-row items-center md:items-start gap-8 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
           <div className="w-48 h-48 sm:w-56 sm:h-56 shrink-0 rounded-[2rem] overflow-hidden shadow-inner border-4 border-slate-50 relative group">
             <img src={imageCover} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Vehicule" />
             <div className="absolute top-3 left-3">
@@ -265,7 +265,7 @@ const ReportView = () => {
         </div>
 
         {/* --- LA TRINITÉ (SCORE, PRIX) --- */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="pdf-section grid lg:grid-cols-3 gap-6">
           
           {/* Card Score */}
           <Card className="rounded-[2.5rem] border-slate-100 shadow-xl bg-white overflow-hidden flex flex-col justify-center p-6 relative">
@@ -314,7 +314,7 @@ const ReportView = () => {
         </div>
 
         {/* --- VERDICT IA (Plus fin et plus élégant) --- */}
-        <div className="bg-indigo-600 rounded-[2rem] p-6 text-white shadow-lg flex flex-col sm:flex-row items-start gap-5">
+        <div className="pdf-section bg-indigo-600 rounded-[2rem] p-6 text-white shadow-lg flex flex-col sm:flex-row items-start gap-5">
           <div className="bg-white/10 p-3 rounded-2xl border border-white/20 shrink-0">
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
@@ -336,7 +336,7 @@ const ReportView = () => {
         </div>
 
         {/* --- SECTION DÉTAILS : PLAYBOOK & DEVIS --- */}
-        <div className="grid lg:grid-cols-3 gap-8 pt-4">
+        <div className="pdf-section grid lg:grid-cols-3 gap-8 pt-4">
           
           {/* Colonne Gauche : Diagnostic & SMS */}
           <div className="lg:col-span-2 space-y-8">
@@ -350,7 +350,7 @@ const ReportView = () => {
                 const smsText = smsMatch ? smsMatch[1].trim() : null;
                 
                 return (
-                  <Card key={i} className="border-slate-100 shadow-md rounded-[2rem] overflow-hidden">
+                  <Card key={i} className="border-slate-100 shadow-md rounded-[2rem] overflow-hidden break-inside-avoid">
                     <CardContent className="p-6 md:p-8">
                       <div className="flex gap-4">
                         <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-black text-lg shrink-0">
@@ -392,7 +392,7 @@ const ReportView = () => {
               return (
                 <div className="space-y-4">
                   <h3 className="text-xl font-black text-slate-900 flex items-center gap-2"><Receipt className="text-slate-400" /> Facture Prévisionnelle</h3>
-                  <Card className="rounded-[2rem] border-slate-200 shadow-lg overflow-hidden bg-white">
+                  <Card className="rounded-[2rem] border-slate-200 shadow-lg overflow-hidden bg-white break-inside-avoid">
                     <div className="bg-slate-50 px-6 py-4 border-b border-slate-100">
                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Frais immédiats à prévoir</p>
                     </div>
