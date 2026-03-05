@@ -87,16 +87,40 @@ serve(async (req: Request) => {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!FIRECRAWL_API_KEY || !GEMINI_API_KEY) return jsonResponse({ error: "Configuration serveur incomplète (clés API manquantes)." }, 500);
 
-    // === ÉTAPE 1 : EXTRACTION SÉCURISÉE (avec timeout) ===
+    // === ÉTAPE 1 : EXTRACTION SÉCURISÉE (avec timeout et params adaptés par site) ===
     const scrapeController = new AbortController();
-    const scrapeTimeout = setTimeout(() => scrapeController.abort(), 30000);
+    const scrapeTimeout = setTimeout(() => scrapeController.abort(), 45000);
+
+    // Detect platform for optimized scraping
+    const parsedUrl = new URL(url);
+    const isLeBonCoin = parsedUrl.hostname.includes('leboncoin.fr');
+    const isLaCentrale = parsedUrl.hostname.includes('lacentrale.fr');
+    const isAutoScout = parsedUrl.hostname.includes('autoscout24');
+    const isMobileDe = parsedUrl.hostname.includes('mobile.de');
+
+    // Longer wait for JS-heavy sites
+    const waitTime = isLeBonCoin ? 8000 : 15000;
 
     let scrapeData: any;
     try {
+      const scrapeBody: any = {
+        url,
+        formats: ["markdown", "html", "screenshot"],
+        onlyMainContent: false,
+        waitFor: waitTime,
+      };
+
+      // For non-LBC sites, add location to avoid geo-blocking
+      if (isMobileDe) {
+        scrapeBody.location = { country: "DE", languages: ["de", "fr"] };
+      } else if (isAutoScout && !parsedUrl.hostname.includes('.fr')) {
+        scrapeBody.location = { country: "DE", languages: ["de", "fr"] };
+      }
+
       const scrapeResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
         method: "POST",
         headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ url, formats: ["markdown", "html", "screenshot"], onlyMainContent: false, waitFor: 8000 }),
+        body: JSON.stringify(scrapeBody),
         signal: scrapeController.signal,
       });
       clearTimeout(scrapeTimeout);
@@ -110,7 +134,7 @@ serve(async (req: Request) => {
     } catch (fetchErr: any) {
       clearTimeout(scrapeTimeout);
       if (fetchErr.name === 'AbortError') {
-        return jsonResponse({ error: "L'extraction de l'annonce a pris trop de temps (timeout 30s). Réessayez." }, 504);
+        return jsonResponse({ error: "L'extraction de l'annonce a pris trop de temps (timeout 45s). Réessayez." }, 504);
       }
       throw fetchErr;
     }
@@ -118,32 +142,60 @@ serve(async (req: Request) => {
     const html = scrapeData?.data?.html || scrapeData?.html || "";
     const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || html;
     const screenshot = scrapeData?.data?.screenshot || scrapeData?.screenshot || null;
-    let imageUrl = scrapeData?.data?.metadata?.ogImage || null;
+    const metadataTitle = scrapeData?.data?.metadata?.title || scrapeData?.metadata?.title || "";
+    const metadataDesc = scrapeData?.data?.metadata?.description || scrapeData?.metadata?.description || "";
+
+    // Image extraction with site-specific patterns
+    let imageUrl = scrapeData?.data?.metadata?.ogImage || scrapeData?.metadata?.ogImage || null;
     if (!imageUrl && html) {
-      const imgMatch = html.match(/<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic|autosc|lacentrale)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i);
-      if (imgMatch) imageUrl = imgMatch[1];
+      const imgPatterns = [
+        /<img[^>]+src=["']([^"']*(?:leboncoin|lbc|slatic)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i,
+        /<img[^>]+src=["']([^"']*(?:lacentrale|lfrmedias)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i,
+        /<img[^>]+src=["']([^"']*(?:autoscout24|as24)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i,
+        /<img[^>]+src=["']([^"']*(?:mobile\.de|img\.classistatic)[^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)["']/i,
+        /<img[^>]+src=["'](https?:\/\/[^"']*(?:\.jpg|\.jpeg|\.png|\.webp))[^"']*["']/i,
+      ];
+      for (const pattern of imgPatterns) {
+        const match = html.match(pattern);
+        if (match) { imageUrl = match[1]; break; }
+      }
     }
 
-    if (!markdown || markdown.length < 50) {
+    // Combine all available text for better extraction
+    const fullContent = [markdown, metadataTitle, metadataDesc].filter(Boolean).join("\n\n");
+    console.log(`Scrape result for ${parsedUrl.hostname}: markdown=${markdown?.length || 0} chars, html=${html?.length || 0} chars, meta_title="${metadataTitle}"`);
+
+    if (!fullContent || fullContent.length < 30) {
       return jsonResponse({ error: "L'annonce n'a pas pu être lue correctement. Vérifiez le lien et réessayez." }, 422);
     }
 
     // === ÉTAPE 2 : ANALYSE IA APPROFONDIE ===
-    const extractPrompt = `Tu es un extracteur de données expert en automobile. Lis cette annonce :
-    ${markdown}
+    const platformHint = isLaCentrale ? "La Centrale (France)" 
+      : isAutoScout ? "AutoScout24 (Europe)" 
+      : isMobileDe ? "Mobile.de (Allemagne — le texte peut être en allemand, traduis tout en français)"
+      : "LeBonCoin (France)";
+
+    const extractPrompt = `Tu es un extracteur de données expert en automobile. Cette annonce provient de ${platformHint}.
+
+    CONTENU DE L'ANNONCE :
+    ${fullContent}
     
     ${RULEBOOK}
 
     RÈGLES STRICTES :
     1. TITRE ORIGINAL : Tu DOIS extraire le titre EXACT et complet de l'annonce d'origine et le placer dans le champ "original_title". Ne te contente pas de concaténer la marque et le modèle.
-    2. RIGUEUR MÉCANIQUE ABSOLUE (Anti-Hallucination) : Tu es un expert automobile intraitable. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. Par exemple, une Renault Clio 4 RS de 200ch est OBLIGATOIREMENT équipée du 1.6 Turbo (M5M), et SURTOUT PAS du 1.3 TCe (apparu plus tard). En cas de doute, mentionne uniquement la cylindrée standard.
-     3. DÉTECTEUR DE MODIFICATIONS (Tuning) : Traque IMPÉRATIVEMENT toute mention de préparation moteur, ligne d'échappement (ex: Akrapovic, Milltek, tube afrique, suppression intermédiaire), ressorts courts, combinés filetés ou reprogrammation (Stage 1/2). Liste-les TOUTES dans "modifications_tuning". Distingue les pièces de marques reconnues (Akrapovic, KW, Wagner, Eventuri, MHD) des modifications artisanales.
-     4. PRIX FERME : Si le texte mentionne "Prix ferme" ou "Non négociable", note-le dans le champ "prix_ferme": true.
+    2. MULTI-PLATEFORME : L'annonce peut provenir de LeBonCoin, La Centrale, AutoScout24 ou Mobile.de. Elle peut être en français, allemand, italien, etc. TRADUIS et EXTRAIS toutes les informations en français. Les prix peuvent être en EUR (€). Les kilométrages peuvent être en "km" ou "Kilometerstand".
+    3. RIGUEUR MÉCANIQUE ABSOLUE (Anti-Hallucination) : Tu es un expert automobile intraitable. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. Par exemple, une Renault Clio 4 RS de 200ch est OBLIGATOIREMENT équipée du 1.6 Turbo (M5M), et SURTOUT PAS du 1.3 TCe (apparu plus tard). En cas de doute, mentionne uniquement la cylindrée standard.
+    4. DÉTECTEUR DE MODIFICATIONS (Tuning) : Traque IMPÉRATIVEMENT toute mention de préparation moteur, ligne d'échappement (ex: Akrapovic, Milltek, tube afrique, suppression intermédiaire), ressorts courts, combinés filetés ou reprogrammation (Stage 1/2). Liste-les TOUTES dans "modifications_tuning". Distingue les pièces de marques reconnues (Akrapovic, KW, Wagner, Eventuri, MHD) des modifications artisanales.
+    5. PRIX FERME : Si le texte mentionne "Prix ferme", "Non négociable" ou "Festpreis", note-le dans le champ "prix_ferme": true.
+    6. OBLIGATION DE RÉSULTAT : Tu DOIS ABSOLUMENT remplir les champs "marque" et "modele" même si l'annonce est partiellement lisible. Déduis-les du titre, de l'URL, ou des caractéristiques techniques. Ne renvoie JAMAIS une marque ou un modèle vide.
     
     Format JSON attendu (Sois ultra précis) :
     { 
       "original_title": "Le titre exact copié depuis l'annonce",
-      "marque": "", "modele": "", "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", 
+      "marque": "MARQUE EN MAJUSCULES (ex: BMW, VOLKSWAGEN, AUDI)", 
+      "modele": "Modèle précis (ex: Golf GTI, M4 Competition, RS3)", 
+      "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", 
       "code_moteur_estime": "Devine le code moteur exact (ex: S55, MR16DDT, 2.0 TFSI DAZA). C'est CRUCIAL.",
       "options_premium": ["Carbone", "Harman Kardon", "Recaro"], 
       "pieces_neuves_annoncees": "Liste TOUT ce que le vendeur dit avoir changé ou mis à neuf. Si rien, écris 'Aucune'.",
@@ -179,18 +231,45 @@ serve(async (req: Request) => {
       return jsonResponse({ error: "L'IA a renvoyé une réponse mal formatée. Réessayez." }, 422);
     }
 
-    // === ÉTAPE 3 : SCORING ===
+    // Fallback: try to extract marque/modele from URL if Gemini returned empty
+    if (!rawCarData.marque || !rawCarData.modele) {
+      console.warn("Gemini failed to extract marque/modele, attempting URL fallback");
+      // AutoScout24 URLs contain brand-model: /offres/volkswagen-golf-gti-...
+      const urlPath = parsedUrl.pathname.toLowerCase();
+      const autoScoutMatch = urlPath.match(/\/offres\/([a-z-]+?)-([\w-]+?)(?:-essence|-diesel|-electrique|-hybride)/);
+      if (autoScoutMatch) {
+        if (!rawCarData.marque) rawCarData.marque = autoScoutMatch[1].replace(/-/g, ' ').toUpperCase();
+        if (!rawCarData.modele) rawCarData.modele = autoScoutMatch[2].replace(/-/g, ' ');
+      }
+      // Mobile.de - extract from meta title
+      if ((!rawCarData.marque || !rawCarData.modele) && metadataTitle) {
+        const titleParts = metadataTitle.split(/[-–|]/);
+        if (titleParts.length > 0) {
+          const firstPart = titleParts[0].trim();
+          const words = firstPart.split(/\s+/);
+          if (words.length >= 2 && !rawCarData.marque) {
+            rawCarData.marque = words[0].toUpperCase();
+            rawCarData.modele = words.slice(1).join(' ');
+          }
+        }
+      }
+    }
+
+    console.log("Extracted car data:", JSON.stringify({ marque: rawCarData.marque, modele: rawCarData.modele, prix: rawCarData.prix_affiche, km: rawCarData.kilometrage }));
+
     let scoreMod = 0; const finalTagsList: string[] = []; let isKiller = false;
     for (const item of (rawCarData.tags_detectes || [])) {
       scoreMod += item.score; finalTagsList.push(item.tag);
       if (item.score <= -50) isKiller = true;
     }
-    let finalScore = isKiller ? 0 : Math.max(0, Math.min(99, Math.round(60 + scoreMod)));
-    let prixEstime = rawCarData.prix_affiche;
-    if (finalScore >= 90) prixEstime = Math.round(rawCarData.prix_affiche * 1.15);
-    else if (finalScore > 80) prixEstime = Math.round(rawCarData.prix_affiche * 1.08);
-    else if (finalScore < 50) prixEstime = Math.round(rawCarData.prix_affiche * 0.85);
-    else prixEstime = Math.round(rawCarData.prix_affiche * 0.95);
+    let prixAffiche = Number(rawCarData.prix_affiche) || 0;
+    let prixEstime = prixAffiche;
+    if (prixAffiche > 0) {
+      if (finalScore >= 90) prixEstime = Math.round(prixAffiche * 1.15);
+      else if (finalScore > 80) prixEstime = Math.round(prixAffiche * 1.08);
+      else if (finalScore < 50) prixEstime = Math.round(prixAffiche * 0.85);
+      else prixEstime = Math.round(prixAffiche * 0.95);
+    }
 
     const prix_truffe = Math.round(prixEstime * 0.95);
     const isPrixFerme = rawCarData.prix_ferme === true;
@@ -198,7 +277,7 @@ serve(async (req: Request) => {
     // === ÉTAPE 4 : RÉDACTION IA (DIAGNOSTIC LA TRUFFE V10) ===
     const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Tu t'adresses à des passionnés ET des néophytes.
 
-    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix affiché : ${rawCarData.prix_affiche}€.
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix affiché : ${prixAffiche}€.
     PIÈCES NEUVES SELON LE VENDEUR : "${rawCarData.pieces_neuves_annoncees}"
     MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
     OPTIONS PREMIUM : ${JSON.stringify(rawCarData.options_premium || [])}
@@ -289,9 +368,9 @@ serve(async (req: Request) => {
       modele: rawCarData.modele || "Inconnu",
       annee: rawCarData.annee || null,
       kilometrage: rawCarData.kilometrage || null,
-      prix_affiche: rawCarData.prix_affiche || null,
-      prix_estime: prixEstime,
-      prix_truffe: prix_truffe,
+      prix_affiche: prixAffiche || null,
+      prix_estime: prixEstime || null,
+      prix_truffe: prix_truffe || null,
       lien_annonce: url,
       carburant: rawCarData.carburant || null,
       transmission: rawCarData.transmission || null,
