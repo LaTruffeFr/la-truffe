@@ -287,11 +287,13 @@ serve(async (req: Request) => {
 
     === RÈGLE 1 : ÉVALUATION DU PRIX (LE JUSTE PRIX DU MARCHÉ) ===
     N'utilise JAMAIS le prix du vendeur comme base absolue. Estime d'abord la vraie valeur de CE véhicule d'ORIGINE sur le marché français (selon modèle exact, année, kilométrage, motorisation). Compare ensuite le prix affiché à cette estimation. Indique clairement si le prix est au-dessus, en-dessous ou au niveau du marché.
+    - "Préparation" : Si l'annonce vient d'un professionnel ("nos équipes", "nos engagements", "frais de mise en route") et parle de véhicule "préparé", il s'agit d'une préparation ESTHÉTIQUE ou d'une révision avant-vente, PAS d'une reprogrammation moteur. Ne parle de préparation moteur (Stage 1, cartographie) QUE si la puissance (ch/cv) est explicitement supérieure à l'origine ou si le mot 'Stage' est utilisé.
 
     === RÈGLE 2 : GESTION DU TUNING (VALORISATION PASSIONNÉ) ===
     Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
+    - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
     - Bougies et bobines d'allumage
