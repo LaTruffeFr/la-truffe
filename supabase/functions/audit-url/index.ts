@@ -265,15 +265,6 @@ serve(async (req: Request) => {
     }
     let finalScore = isKiller ? 0 : Math.max(0, Math.min(99, Math.round(68 + scoreMod)));
     let prixAffiche = Number(rawCarData.prix_affiche) || 0;
-    let prixEstime = prixAffiche;
-    if (prixAffiche > 0) {
-      if (finalScore >= 90) prixEstime = Math.round(prixAffiche * 1.15);
-      else if (finalScore > 80) prixEstime = Math.round(prixAffiche * 1.08);
-      else if (finalScore < 50) prixEstime = Math.round(prixAffiche * 0.85);
-      else prixEstime = Math.round(prixAffiche * 0.95);
-    }
-
-    const prix_truffe = Math.round(prixEstime * 0.95);
     const isPrixFerme = rawCarData.prix_ferme === true;
 
     // === ÉTAPE 4 : RÉDACTION IA (DIAGNOSTIC LA TRUFFE V10) ===
@@ -320,11 +311,20 @@ serve(async (req: Request) => {
     1. Base-toi UNIQUEMENT sur le code moteur (${rawCarData.code_moteur_estime}). Ne cite que les maladies documentées de CE bloc précis.
     2. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. En cas de doute, mentionne uniquement la cylindrée standard.
 
+    === RÈGLE 6 : CALCUL DE LA VRAIE COTE ET DU PRIX ESTIMÉ ===
+    - Oublie le prix affiché par le vendeur pour faire ton calcul.
+    - ÉTAPE 1 : Utilise tes connaissances du marché automobile européen pour déterminer la COTE MARCHÉ RÉELLE de ce véhicule précis (selon sa marque, son modèle, son année, sa finition et son kilométrage).
+    - ÉTAPE 2 : Prends cette COTE MARCHÉ RÉELLE et SOUSTRAIS le total exact de la facture prévisionnelle (le tableau 'devis_estime').
+    - Le résultat final est le "prix_estime".
+    - Ainsi, si le vendeur affiche 60000€, mais que tu sais que la cote réelle est de 56000€, et qu'il y a 1500€ de frais, ton "prix_estime" DOIT être de 54500€.
+    - Sois un véritable expert automobile, précis et objectif.
+    - Calcule aussi "prix_truffe" = prix_estime arrondi à -5% supplémentaire (marge de négo).
+
     STRATÉGIE DE NÉGOCIATION :
     - Analyse le profil du vendeur. S'il se dit "passionné", "minutieux" ou refuse les "pros", rédige le SMS d'approche (Stratégie d'approche) sur un ton amical, de passionné à passionné, en le rassurant sur le fait que la voiture sera entre de bonnes mains, tout en justifiant fermement la baisse de prix par la mécanique.
     ${isPrixFerme 
       ? `- L'annonce mentionne "Prix ferme". Le SMS de négociation doit être TRÈS diplomatique. Justifie uniquement par les frais d'entretien préventif à venir. Montre de l'intérêt sincère avant d'aborder le prix.`
-      : `- Rédige un SMS poli mais assertif avec une offre autour de ${prix_truffe}€, justifiée par les frais d'entretien identifiés.`
+      : `- Rédige un SMS poli mais assertif avec une offre justifiée par les frais d'entretien identifiés.`
     }
 
     STRUCTURE DE RÉPONSE :
@@ -341,6 +341,8 @@ serve(async (req: Request) => {
       "expert_opinion": "string", 
       "negotiation_arguments": [{"titre": "...", "desc": "..."}],
       "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}],
+      "prix_estime": 54500,
+      "prix_truffe": 51800,
       "tags": ["tag1", "tag2"]
     }`;
 
@@ -366,7 +368,11 @@ serve(async (req: Request) => {
       return jsonResponse({ error: "Réponse IA mal formatée lors de la rédaction. Réessayez." }, 422);
     }
 
-    // === ÉTAPE 5 : SAUVEGARDE (via service_role pour bypasser RLS) ===
+    // === ÉTAPE 5 : EXTRACTION DES PRIX IA ===
+    const prixEstime = finalReview.prix_estime || prixAffiche;
+    const prix_truffe = finalReview.prix_truffe || Math.round(prixEstime * 0.95);
+
+    // === ÉTAPE 6 : SAUVEGARDE (via service_role pour bypasser RLS) ===
     const reportData: Record<string, any> = {
       user_id: user.id,
       marque: rawCarData.marque || "Inconnue",
