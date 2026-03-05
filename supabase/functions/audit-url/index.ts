@@ -262,6 +262,7 @@ serve(async (req: Request) => {
       scoreMod += item.score; finalTagsList.push(item.tag);
       if (item.score <= -50) isKiller = true;
     }
+    let finalScore = isKiller ? 0 : Math.max(0, Math.min(99, Math.round(60 + scoreMod)));
     let prixAffiche = Number(rawCarData.prix_affiche) || 0;
     let prixEstime = prixAffiche;
     if (prixAffiche > 0) {
