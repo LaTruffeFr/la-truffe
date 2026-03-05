@@ -22,14 +22,14 @@ function isValidListingUrl(url: string): boolean {
 const RULEBOOK = `
 RÈGLES D'ATTRIBUTION DES TAGS (AVEC LEUR SCORE) :
 === BOOSTERS (positifs) ===
-- '💎 1ÈRE MAIN' (+5)
+- '💎 1ÈRE MAIN' (+10)
 - '🇫🇷 ORIGINE FR' (+5)
-- '📘 HISTORIQUE PREMIUM' (+5)
-- '📘 HISTORIQUE' (+4)
-- '💶 TAXE OK' (+8)
-- '🛡️ GARANTIE' (+4)
-- '✅ CT OK' (+3)
-- '🔧 GROS ENTRETIEN FAIT' (+3)
+- '📘 HISTORIQUE PREMIUM' (+12)
+- '📘 HISTORIQUE' (+6)
+- '💶 TAXE OK' (+5)
+- '🛡️ GARANTIE' (+8)
+- '✅ CT OK' (+5)
+- '🔧 GROS ENTRETIEN FAIT' (+8)
 === TUNING / PRÉPARATION ===
 - '🔩 PRÉPARÉE' (+0 à -10) : Stage 1/2, reprog, ligne inox, décata. Score neutre si pièces reconnues (Akrapovic, MHD, Wagner, etc.), sinon malus.
 - '⚠️ NON HOMOLOGUÉ' (-15) : Si décata, défap, ou pièces non homologuées détectées. Avertissement légal obligatoire mais PAS de chiffrage du rachat catalyseur.
@@ -263,7 +263,7 @@ serve(async (req: Request) => {
       scoreMod += item.score; finalTagsList.push(item.tag);
       if (item.score <= -50) isKiller = true;
     }
-    let finalScore = isKiller ? 0 : Math.max(0, Math.min(99, Math.round(60 + scoreMod)));
+    let finalScore = isKiller ? 0 : Math.max(0, Math.min(99, Math.round(68 + scoreMod)));
     let prixAffiche = Number(rawCarData.prix_affiche) || 0;
     let prixEstime = prixAffiche;
     if (prixAffiche > 0) {
