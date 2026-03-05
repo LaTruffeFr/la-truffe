@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useVipAccess } from '@/hooks/useVipAccess';
 
 interface HeaderProps {
   activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us';
@@ -11,7 +12,8 @@ interface HeaderProps {
 export const Header = ({ activeLink }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, isAdmin, credits } = useAuth();
+  const { hasUnlimitedCredits } = useVipAccess();
   const navigate = useNavigate();
 
   // Effet pour rendre le header légèrement transparent au scroll
@@ -71,12 +73,17 @@ export const Header = ({ activeLink }: HeaderProps) => {
           {/* AUTH BUTTONS (DESKTOP) */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Button 
-                onClick={() => navigate('/client')} 
-                className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-10 px-5"
-              >
-                <User className="w-4 h-4 mr-2" /> Mon Espace
-              </Button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-slate-500">
+                  {hasUnlimitedCredits ? 'Crédits : Illimités 👑' : `Crédits : ${credits}`}
+                </span>
+                <Button 
+                  onClick={() => navigate('/client')} 
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-10 px-5"
+                >
+                  <User className="w-4 h-4 mr-2" /> Mon Espace
+                </Button>
+              </div>
             ) : (
               <Button 
                 onClick={() => navigate('/auth')} 

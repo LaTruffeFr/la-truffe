@@ -22,7 +22,7 @@ const AUDIT_STEPS = [
 ];
 
 export default function AuditPage() {
-  const { user, isLoading: authLoading, credits, refreshCredits } = useAuth();
+  const { user, isLoading: authLoading, credits, refreshCredits, isAdmin } = useAuth();
   const { hasUnlimitedCredits } = useVipAccess();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -162,7 +162,7 @@ export default function AuditPage() {
               <LinkIcon className="w-6 h-6 text-slate-400" />
               <input
                 type="url"
-                placeholder="Collez l'URL Leboncoin, La Centrale ou AutoScout24..."
+                placeholder="Collez l'URL Leboncoin, La Centrale, AutoScout24 ou Mobile.de..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="w-full pl-3 pr-4 py-4 text-lg text-slate-900 outline-none placeholder:text-slate-400"
@@ -192,7 +192,10 @@ export default function AuditPage() {
 
           <p className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
             <AlertCircle className="w-3 h-3" /> L'analyse IA prend environ 15 secondes. 
-            {!hasUnlimitedCredits && <span className="ml-1">Crédits restants : <strong className="text-white">{credits}</strong></span>}
+            {hasUnlimitedCredits 
+              ? <span className="ml-1">Crédits : <strong className="text-white">Illimités 👑</strong></span>
+              : <span className="ml-1">Crédits restants : <strong className="text-white">{credits}</strong></span>
+            }
           </p>
         </div>
       </div>
