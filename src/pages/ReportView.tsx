@@ -13,7 +13,7 @@ import {
   Calculator, FileCheck, Copy, Check, Settings2, 
   MessageSquareWarning, Zap, Cpu, ScanSearch, Activity, Receipt, 
   Hash, ShieldAlert, GaugeCircle, Sparkles, Snowflake, Flame, CircleDashed,
-  AlertTriangle, HeartPulse, Target
+  AlertTriangle, HeartPulse, Target, ExternalLink
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SniperChart } from '@/components/trading/SniperChart';
@@ -260,6 +260,17 @@ const ReportView = () => {
               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-700 flex items-center gap-2 capitalize">
                 <Fuel className="w-4 h-4 text-amber-500" /> {report.carburant || 'Essence'}
               </div>
+              {report.lien_annonce && (
+            <a 
+              href={report.lien_annonce} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ml-0 md:ml-2"
+            >
+              <ExternalLink className="w-4 h-4" /> Voir l'annonce
+            </a>
+          )}
+        </div>
             </div>
           </div>
         </div>
