@@ -188,7 +188,7 @@ serve(async (req: Request) => {
     3. RIGUEUR MÉCANIQUE ABSOLUE (Anti-Hallucination) : Tu es un expert automobile intraitable. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. Par exemple, une Renault Clio 4 RS de 200ch est OBLIGATOIREMENT équipée du 1.6 Turbo (M5M), et SURTOUT PAS du 1.3 TCe (apparu plus tard). En cas de doute, mentionne uniquement la cylindrée standard.
     4. DÉTECTEUR DE MODIFICATIONS (Tuning) : Traque IMPÉRATIVEMENT toute mention de préparation moteur, ligne d'échappement (ex: Akrapovic, Milltek, tube afrique, suppression intermédiaire), ressorts courts, combinés filetés ou reprogrammation (Stage 1/2). Liste-les TOUTES dans "modifications_tuning". Distingue les pièces de marques reconnues (Akrapovic, KW, Wagner, Eventuri, MHD) des modifications artisanales.
     5. PRIX FERME : Si le texte mentionne "Prix ferme", "Non négociable" ou "Festpreis", note-le dans le champ "prix_ferme": true.
-    6. ÉQUIPEMENTS CLÉS : Dans le tableau "options_premium", tu DOIS lister la finition du véhicule (ex: S-line, M Sport), les options d'usine (ex: Cuir, Xénon) ET toutes les modifications esthétiques ou mécaniques (ex: Jantes noires, Silencieux, Vitres teintées).
+    6. ÉQUIPEMENTS CLÉS : Dans le tableau "options_premium", tu DOIS lister la finition (ex: S-line), les options d'usine (ex: Cuir, Toit ouvrant), les modifications esthétiques/mécaniques (ex: Silencieux, Jantes) ET les ajouts technologiques (ex: Apple CarPlay, Écran Android, Caméra de recul).
     7. OBLIGATION DE RÉSULTAT : Tu DOIS ABSOLUMENT remplir les champs "marque" et "modele" même si l'annonce est partiellement lisible. Déduis-les du titre, de l'URL, ou des caractéristiques techniques. Ne renvoie JAMAIS une marque ou un modèle vide.
     
     Format JSON attendu (Sois ultra précis) :
@@ -319,9 +319,10 @@ serve(async (req: Request) => {
     2. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. En cas de doute, mentionne uniquement la cylindrée standard.
 
     STRATÉGIE DE NÉGOCIATION :
+    - Analyse le profil du vendeur. S'il se dit "passionné", "minutieux" ou refuse les "pros", rédige le SMS d'approche (Stratégie d'approche) sur un ton amical, de passionné à passionné, en le rassurant sur le fait que la voiture sera entre de bonnes mains, tout en justifiant fermement la baisse de prix par la mécanique.
     ${isPrixFerme 
-      ? `L'annonce mentionne "Prix ferme". Le SMS de négociation doit être TRÈS diplomatique. Justifie uniquement par les frais d'entretien préventif à venir. Montre de l'intérêt sincère avant d'aborder le prix.`
-      : `Rédige un SMS poli mais assertif avec une offre autour de ${prix_truffe}€, justifiée par les frais d'entretien identifiés.`
+      ? `- L'annonce mentionne "Prix ferme". Le SMS de négociation doit être TRÈS diplomatique. Justifie uniquement par les frais d'entretien préventif à venir. Montre de l'intérêt sincère avant d'aborder le prix.`
+      : `- Rédige un SMS poli mais assertif avec une offre autour de ${prix_truffe}€, justifiée par les frais d'entretien identifiés.`
     }
 
     STRUCTURE DE RÉPONSE :
