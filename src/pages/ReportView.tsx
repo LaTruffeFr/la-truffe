@@ -11,7 +11,7 @@ import {
   ArrowLeft, Download, CheckCircle2, TrendingDown, Calendar, Gauge, Fuel, 
   Euro, ShieldCheck, Loader2, History,
   Calculator, FileCheck, Copy, Check, Settings2, 
-  MessageSquareWarning, Zap, Cpu, ScanSearch, Activity, Receipt, 
+  MessageSquareWarning, Zap, Cpu, ScanSearch, Activity, Receipt,  
   Hash, ShieldAlert, GaugeCircle, Sparkles, Snowflake, Flame, CircleDashed,
   AlertTriangle, HeartPulse, Target, ExternalLink
 } from "lucide-react";
