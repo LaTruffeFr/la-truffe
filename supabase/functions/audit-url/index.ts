@@ -188,7 +188,8 @@ serve(async (req: Request) => {
     3. RIGUEUR MÉCANIQUE ABSOLUE (Anti-Hallucination) : Tu es un expert automobile intraitable. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. Par exemple, une Renault Clio 4 RS de 200ch est OBLIGATOIREMENT équipée du 1.6 Turbo (M5M), et SURTOUT PAS du 1.3 TCe (apparu plus tard). En cas de doute, mentionne uniquement la cylindrée standard.
     4. DÉTECTEUR DE MODIFICATIONS (Tuning) : Traque IMPÉRATIVEMENT toute mention de préparation moteur, ligne d'échappement (ex: Akrapovic, Milltek, tube afrique, suppression intermédiaire), ressorts courts, combinés filetés ou reprogrammation (Stage 1/2). Liste-les TOUTES dans "modifications_tuning". Distingue les pièces de marques reconnues (Akrapovic, KW, Wagner, Eventuri, MHD) des modifications artisanales.
     5. PRIX FERME : Si le texte mentionne "Prix ferme", "Non négociable" ou "Festpreis", note-le dans le champ "prix_ferme": true.
-    6. OBLIGATION DE RÉSULTAT : Tu DOIS ABSOLUMENT remplir les champs "marque" et "modele" même si l'annonce est partiellement lisible. Déduis-les du titre, de l'URL, ou des caractéristiques techniques. Ne renvoie JAMAIS une marque ou un modèle vide.
+    6. ÉQUIPEMENTS CLÉS : Dans le tableau "options_premium", tu DOIS lister la finition du véhicule (ex: S-line, M Sport), les options d'usine (ex: Cuir, Xénon) ET toutes les modifications esthétiques ou mécaniques (ex: Jantes noires, Silencieux, Vitres teintées).
+    7. OBLIGATION DE RÉSULTAT : Tu DOIS ABSOLUMENT remplir les champs "marque" et "modele" même si l'annonce est partiellement lisible. Déduis-les du titre, de l'URL, ou des caractéristiques techniques. Ne renvoie JAMAIS une marque ou un modèle vide.
     
     Format JSON attendu (Sois ultra précis) :
     { 
@@ -197,7 +198,7 @@ serve(async (req: Request) => {
       "modele": "Modèle précis (ex: Golf GTI, M4 Competition, RS3)", 
       "annee": 2020, "kilometrage": 50000, "prix_affiche": 25000, "carburant": "", "transmission": "", "localisation": "", 
       "code_moteur_estime": "Devine le code moteur exact (ex: S55, MR16DDT, 2.0 TFSI DAZA). C'est CRUCIAL.",
-      "options_premium": ["Carbone", "Harman Kardon", "Recaro"], 
+      "options_premium": ["Finition S-line", "Silencieux sport", "Jantes noires", "Vitres teintées"], 
       "pieces_neuves_annoncees": "Liste TOUT ce que le vendeur dit avoir changé ou mis à neuf. Si rien, écris 'Aucune'.",
       "modifications_tuning": "Liste les modifs illégales ou tuning (ex: decata, stage 1, defap). Si aucune, écris 'Aucune'.",
       "prix_ferme": false,
