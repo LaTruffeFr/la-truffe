@@ -32,7 +32,7 @@ const getOptionIcon = (opt: string) => {
   if (text.includes('pompe') || text.includes('clim')) return <Snowflake className="w-4 h-4 text-blue-500" />;
   if (text.includes('siège') || text.includes('chauffant')) return <Flame className="w-4 h-4 text-orange-500" />;
   if (text.includes('jante')) return <CircleDashed className="w-4 h-4 text-slate-700" />;
-  if (text.includes('auto') || text.includes('caméra') || text.includes('radar')) return <Cpu className="w-4 h-4 text-purple-500" />;
+  if (text.includes('auto') || text.includes('caméra') || text.includes('radar') || text.includes('carplay') || text.includes('écran')) return <Cpu className="w-4 h-4 text-purple-500" />;
   return <Settings2 className="w-4 h-4 text-slate-500" />;
 };
 
@@ -314,7 +314,6 @@ const ReportView = () => {
               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-700 flex items-center gap-2 capitalize">
                 <Fuel className="w-4 h-4 text-amber-500" /> {report.carburant || 'Essence'}
               </div>
-              {/* NOUVEAU: BADGE TRANSMISSION */}
               {report.transmission && (
                 <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-700 flex items-center gap-2 capitalize">
                   <Settings2 className="w-4 h-4 text-slate-500" /> {report.transmission}
@@ -483,23 +482,30 @@ const ReportView = () => {
               );
             })()}
 
-            <div className="space-y-4">
-              <h3 className="text-xl font-black text-slate-900 flex items-center gap-2"><Cpu className="text-indigo-500" /> Équipements Clés</h3>
+            {/* SECTION ÉQUIPEMENTS CLÉS RÉPARÉE */}
+            <div className="space-y-4 break-inside-avoid">
+              <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                <Cpu className="text-indigo-500" /> Équipements Clés
+              </h3>
               <div className="grid gap-3">
                 {Array.isArray(singleAuditData?.options) && singleAuditData.options.length > 0 ? (
                   singleAuditData.options.map((opt: string, i: number) => (
-                    <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                      <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+                    <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                      <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600 shrink-0">
                         {getOptionIcon(opt)}
                       </div>
-                      <span className="font-bold text-slate-700 text-sm">{opt}</span>
+                      <span className="font-bold text-slate-700 text-sm leading-tight">{opt}</span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 italic text-sm py-4 px-2">Aucun équipement spécifique ou modification détecté.</p>
+                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <p className="text-slate-500 italic text-sm">Aucun équipement spécifique ou modification détecté.</p>
+                  </div>
                 )}
               </div>
             </div>
+            {/* FIN SECTION ÉQUIPEMENTS CLÉS */}
+
           </div>
         </div>
 
