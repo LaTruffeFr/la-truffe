@@ -59,9 +59,16 @@ serve(async (req: Request) => {
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     // === VÉRIFICATION DES CRÉDITS ===
-    const { data: isVip } = await supabaseAdmin.rpc('is_vip', { _user_id: user.id });
+    const { data: rolesData } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'vip']);
 
-    if (!isVip) {
+    const userRoles = (rolesData || []).map((r: any) => r.role);
+    const hasUnlimitedCredits = userRoles.includes('admin') || userRoles.includes('vip');
+
+    if (!hasUnlimitedCredits) {
       const { data: profile } = await supabaseAdmin
         .from('profiles')
         .select('credits')
@@ -74,7 +81,7 @@ serve(async (req: Request) => {
     }
 
     const { url } = await req.json();
-    if (!url || !isValidListingUrl(url)) return jsonResponse({ error: "URL invalide. Seuls LeBonCoin, La Centrale et AutoScout24 sont supportés." }, 400);
+    if (!url || !isValidListingUrl(url)) return jsonResponse({ error: "URL invalide. Seuls LeBonCoin, La Centrale, AutoScout24 et Mobile.de sont supportés." }, 400);
 
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -325,7 +332,7 @@ serve(async (req: Request) => {
     }
 
     // === ÉTAPE 6 : DÉDUCTION DU CRÉDIT (atomique, via service_role) ===
-    if (!isVip) {
+    if (!hasUnlimitedCredits) {
       const { data: deducted, error: deductErr } = await supabaseAdmin.rpc('deduct_credit', { _user_id: user.id });
       if (deductErr) console.error("Credit deduction error:", deductErr);
     }
