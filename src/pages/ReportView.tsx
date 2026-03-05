@@ -486,14 +486,18 @@ const ReportView = () => {
             <div className="space-y-4">
               <h3 className="text-xl font-black text-slate-900 flex items-center gap-2"><Cpu className="text-indigo-500" /> Équipements Clés</h3>
               <div className="grid gap-3">
-                {(Array.isArray(singleAuditData?.options) ? singleAuditData.options : []).map((opt: string, i: number) => (
-                  <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
-                      {getOptionIcon(opt)}
+                {Array.isArray(singleAuditData?.options) && singleAuditData.options.length > 0 ? (
+                  singleAuditData.options.map((opt: string, i: number) => (
+                    <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                      <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+                        {getOptionIcon(opt)}
+                      </div>
+                      <span className="font-bold text-slate-700 text-sm">{opt}</span>
                     </div>
-                    <span className="font-bold text-slate-700 text-sm">{opt}</span>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-slate-500 italic text-sm py-4 px-2">Aucun équipement spécifique ou modification détecté.</p>
+                )}
               </div>
             </div>
           </div>
