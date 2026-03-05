@@ -278,7 +278,7 @@ serve(async (req: Request) => {
     // === ÉTAPE 4 : RÉDACTION IA (DIAGNOSTIC LA TRUFFE V10) ===
     const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Tu t'adresses à des passionnés ET des néophytes.
 
-    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix affiché : ${prixAffiche}€.
+    VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | BOÎTE : ${rawCarData.transmission || 'Inconnue'} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix affiché : ${prixAffiche}€.
     PIÈCES NEUVES SELON LE VENDEUR : "${rawCarData.pieces_neuves_annoncees}"
     MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
     OPTIONS PREMIUM : ${JSON.stringify(rawCarData.options_premium || [])}
@@ -292,7 +292,7 @@ serve(async (req: Request) => {
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
-    - Vidange boîte auto (ex: ZF8, DSG, DCT) si applicable
+    - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
     - Bougies et bobines d'allumage
     - Fiabilisation spécifique au modèle (ex: charge pipe alu pour N55/B58 BMW, chaîne de distribution pour EA888, etc.)
     - Liquide de frein + purge (surtout si usage circuit mentionné)
