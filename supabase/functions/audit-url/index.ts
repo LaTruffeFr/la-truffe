@@ -285,8 +285,8 @@ serve(async (req: Request) => {
     // === ÉTAPE 5 : SAUVEGARDE (via service_role pour bypasser RLS) ===
     const reportData: Record<string, any> = {
       user_id: user.id,
-      marque: rawCarData.marque || null,
-      modele: rawCarData.modele || null,
+      marque: rawCarData.marque || "Inconnue",
+      modele: rawCarData.modele || "Inconnu",
       annee: rawCarData.annee || null,
       kilometrage: rawCarData.kilometrage || null,
       prix_affiche: rawCarData.prix_affiche || null,
