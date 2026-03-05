@@ -82,6 +82,60 @@ const PROGRESS_STEPS = [
   { time: 13000, label: "Édition de votre rapport d'expertise...", icon: FileCheck },
 ];
 
+const formatText = (text: string) => {
+  if (!text) return null;
+  // On sépare le texte s'il y a des tirets suivis de ** (les listes générées par l'IA)
+  const formattedLines = text.replace(/(?:\n- |- )(?=\*\*)/g, '||BULLET||**').split('||BULLET||');
+  
+  const intro = formattedLines[0];
+  const bullets = formattedLines.slice(1);
+
+  // S'il n'y a pas de liste, on formate juste les retours à la ligne et le texte en gras
+  if (bullets.length === 0) {
+    return (
+      <div className="space-y-3">
+        {text.split('\n').map((line, i) => {
+          if (!line.trim()) return null;
+          const parts = line.split(/(\*\*.*?\*\*)/g);
+          return (
+            <p key={i} className="text-slate-600 font-medium leading-relaxed">
+              {parts.map((p, j) => 
+                p.startsWith('**') && p.endsWith('**') 
+                  ? <strong key={j} className="text-slate-900 font-black">{p.slice(2, -2)}</strong> 
+                  : p
+              )}
+            </p>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // S'il y a une liste, on crée une belle UI avec des puces
+  return (
+    <div className="text-slate-600 font-medium leading-relaxed space-y-4">
+      {intro && <p>{intro.trim()}</p>}
+      <ul className="space-y-3">
+        {bullets.map((bullet, i) => {
+          const parts = bullet.split(/(\*\*.*?\*\*)/g);
+          return (
+            <li key={i} className="flex items-start gap-3">
+              <div className="mt-2 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <div className="flex-1">
+                {parts.map((p, j) => 
+                  p.startsWith('**') && p.endsWith('**') 
+                    ? <strong key={j} className="text-slate-900 font-black">{p.slice(2, -2)}</strong> 
+                    : p
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
+
 const ReportView = () => {
   const { id } = useParams<{ id: string }>();
   const { isLoading: authLoading } = useAuth();
@@ -260,6 +314,12 @@ const ReportView = () => {
               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-700 flex items-center gap-2 capitalize">
                 <Fuel className="w-4 h-4 text-amber-500" /> {report.carburant || 'Essence'}
               </div>
+              {/* NOUVEAU: BADGE TRANSMISSION */}
+              {report.transmission && (
+                <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-700 flex items-center gap-2 capitalize">
+                  <Settings2 className="w-4 h-4 text-slate-500" /> {report.transmission}
+                </div>
+              )}
               {report.lien_annonce && (
                 <a 
                   href={report.lien_annonce} 
@@ -323,20 +383,20 @@ const ReportView = () => {
           </Card>
         </div>
 
-        {/* --- VERDICT IA (Plus fin et plus élégant) --- */}
-        <div className="pdf-section bg-indigo-600 rounded-[2rem] p-6 text-white shadow-lg flex flex-col sm:flex-row items-start gap-5">
-          <div className="bg-white/10 p-3 rounded-2xl border border-white/20 shrink-0">
-            <ShieldCheck className="w-6 h-6 text-white" />
+        {/* --- VERDICT IA (Nouveau design épuré) --- */}
+        <div className="pdf-section bg-white border border-indigo-100 rounded-[2rem] p-6 shadow-md flex flex-col sm:flex-row items-start gap-5">
+          <div className="bg-indigo-50 p-3 rounded-2xl border border-indigo-100 shrink-0">
+            <Sparkles className="w-6 h-6 text-indigo-600" />
           </div>
-          <div className="flex-1 space-y-2">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Diagnostic La Truffe</h2>
-            <p className="text-lg font-medium italic font-serif leading-relaxed">
-              "{report.expert_opinion ? report.expert_opinion.split('|||DATA|||')[0] : "Analyse du profil en cours d'écriture..."}"
+          <div className="flex-1 space-y-3">
+            <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Diagnostic La Truffe</h2>
+            <p className="text-base font-medium text-slate-700 leading-relaxed">
+              {report.expert_opinion ? report.expert_opinion.split('|||DATA|||')[0] : "Analyse du profil en cours d'écriture..."}
             </p>
             {signaux.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-2">
                 {signaux.map((s: any, i: number) => (
-                  <Badge key={i} className={`font-bold text-[10px] px-2.5 py-0.5 border-0 ${s.type === 'destructive' ? 'bg-rose-500' : 'bg-emerald-500'} text-white`}>
+                  <Badge key={i} className={`font-bold text-[10px] px-2.5 py-0.5 border-0 ${s.type === 'destructive' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
                     {s.label}
                   </Badge>
                 ))}
@@ -371,8 +431,8 @@ const ReportView = () => {
                           
                           {smsText ? (
                             <>
-                              <p className="text-slate-600 font-medium leading-relaxed">{nego.desc.split(smsMatch[0])[0]}</p>
-                              <div className="bg-[#007AFF] text-white p-6 rounded-[2rem] rounded-bl-md shadow-lg relative group max-w-lg mt-4">
+                              {formatText(nego.desc.split(smsMatch[0])[0])}
+                              <div className="bg-[#007AFF] text-white p-6 rounded-[2rem] rounded-bl-md shadow-lg relative group max-w-lg mt-4 break-inside-avoid">
                                  <p className="text-base font-medium italic">"{smsText}"</p>
                                  <Button onClick={() => handleCopySMS(smsText)} className="absolute -bottom-4 -right-4 w-12 h-12 rounded-2xl bg-slate-900 shadow-xl border-4 border-white hover:bg-slate-800 transition-transform active:scale-95 p-0">
                                    {isCopied ? <Check className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5" />}
@@ -380,7 +440,7 @@ const ReportView = () => {
                               </div>
                             </>
                           ) : (
-                            <p className="text-slate-600 font-medium leading-relaxed">{nego.desc}</p>
+                            formatText(nego.desc)
                           )}
                         </div>
                       </div>
