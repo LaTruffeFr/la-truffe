@@ -70,11 +70,11 @@ export default function AuditPage() {
     }
 
     // Validate URL domain
-    const supportedDomains = ['leboncoin.fr', 'lacentrale.fr', 'autoscout24.fr', 'autoscout24.com'];
+    const supportedDomains = ['leboncoin.fr', 'lacentrale.fr', 'autoscout24.', 'mobile.de'];
     try {
       const parsed = new URL(trimmedUrl);
       if (!supportedDomains.some(d => parsed.hostname.includes(d))) {
-        toast({ variant: "destructive", title: "Site non supporté", description: "Seuls LeBonCoin, La Centrale et AutoScout24 sont supportés." });
+        toast({ variant: "destructive", title: "Site non supporté", description: "Seuls LeBonCoin, La Centrale, AutoScout24 et Mobile.de sont supportés." });
         return;
       }
     } catch {
@@ -185,9 +185,12 @@ export default function AuditPage() {
             <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">LeBonCoin</Badge>
             <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">La Centrale</Badge>
             <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">AutoScout24</Badge>
+            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">Mobile.de</Badge>
           </div>
 
-          <p className="text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
+          <p className="text-xs text-slate-400/60 mt-2 text-center">🌍 L'IA traduit et analyse automatiquement les annonces étrangères.</p>
+
+          <p className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
             <AlertCircle className="w-3 h-3" /> L'analyse IA prend environ 15 secondes. 
             {!hasUnlimitedCredits && <span className="ml-1">Crédits restants : <strong className="text-white">{credits}</strong></span>}
           </p>
