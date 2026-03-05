@@ -11,7 +11,7 @@ import {
   ArrowLeft, Download, CheckCircle2, TrendingDown, Calendar, Gauge, Fuel, 
   Euro, ShieldCheck, Loader2, History,
   Calculator, FileCheck, Copy, Check, Settings2, 
-  MessageSquareWarning, Zap, Cpu, ScanSearch, Activity, Receipt,  
+  MessageSquareWarning, Zap, Cpu, ScanSearch, Activity, Receipt, 
   Hash, ShieldAlert, GaugeCircle, Sparkles, Snowflake, Flame, CircleDashed,
   AlertTriangle, HeartPulse, Target, ExternalLink
 } from "lucide-react";
@@ -261,16 +261,15 @@ const ReportView = () => {
                 <Fuel className="w-4 h-4 text-amber-500" /> {report.carburant || 'Essence'}
               </div>
               {report.lien_annonce && (
-            <a 
-              href={report.lien_annonce} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ml-0 md:ml-2"
-            >
-              <ExternalLink className="w-4 h-4" /> Voir l'annonce
-            </a>
-          )}
-        </div>
+                <a 
+                  href={report.lien_annonce} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ml-0 md:ml-2"
+                >
+                  <ExternalLink className="w-4 h-4" /> Voir l'annonce
+                </a>
+              )}
             </div>
           </div>
         </div>
