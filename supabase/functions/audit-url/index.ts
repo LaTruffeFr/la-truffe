@@ -80,7 +80,7 @@ serve(async (req: Request) => {
       }
     }
 
-    const { url } = await req.json();
+    const { url, manualDescription } = await req.json();
     if (!url || !isValidListingUrl(url)) return jsonResponse({ error: "URL invalide. Seuls LeBonCoin, La Centrale, AutoScout24 et Mobile.de sont supportés." }, 400);
 
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
@@ -161,8 +161,8 @@ serve(async (req: Request) => {
       }
     }
 
-    // Combine all available text for better extraction
-    const fullContent = [markdown, metadataTitle, metadataDesc].filter(Boolean).join("\n\n");
+    // Combine all available text for better extraction — manual description has absolute priority
+    const fullContent = [manualDescription ? "DESCRIPTION FOURNIE PAR L'UTILISATEUR: " + manualDescription : "", markdown, metadataTitle, metadataDesc].filter(Boolean).join("\n\n");
     console.log(`Scrape result for ${parsedUrl.hostname}: markdown=${markdown?.length || 0} chars, html=${html?.length || 0} chars, meta_title="${metadataTitle}"`);
 
     if (!fullContent || fullContent.length < 30) {
