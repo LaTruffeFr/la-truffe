@@ -272,10 +272,15 @@ serve(async (req: Request) => {
     const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Tu t'adresses à des passionnés ET des néophytes.
 
     VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | BOÎTE : ${rawCarData.transmission || 'Inconnue'} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix affiché : ${prixAffiche}€.
-    PIÈCES NEUVES SELON LE VENDEUR : "${rawCarData.pieces_neuves_annoncees}"
+    ENTRETIENS RÉCENTS IDENTIFIÉS : ${JSON.stringify(rawCarData.entretiens_recents || [])} (ainsi que : ${rawCarData.pieces_neuves_annoncees})
     MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
     OPTIONS PREMIUM : ${JSON.stringify(rawCarData.options_premium || [])}
     PRIX FERME DÉTECTÉ : ${isPrixFerme ? "OUI" : "NON"}
+
+    === RÈGLE 0 : LECTURE DE L'ANNONCE OBLIGATOIRE ===
+    Voici le texte brut de l'annonce d'origine. Tu DOIS le lire intégralement AVANT de faire ton devis. Si une pièce est mentionnée comme changée, neuve ou contrôlée ici (comme une chaîne de distribution, vidange, etc.), TU AS L'INTERDICTION de la mettre dans "devis_estime". Mets-la uniquement dans "entretiens_recents" !
+    TEXTE DE L'ANNONCE :
+    """${fullContent}"""
 
     === RÈGLE 1 : ÉVALUATION DU PRIX (LE JUSTE PRIX DU MARCHÉ) ===
     N'utilise JAMAIS le prix du vendeur comme base absolue. Estime d'abord la vraie valeur de CE véhicule d'ORIGINE sur le marché français (selon modèle exact, année, kilométrage, motorisation). Compare ensuite le prix affiché à cette estimation. Indique clairement si le prix est au-dessus, en-dessous ou au niveau du marché.
