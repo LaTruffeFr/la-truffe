@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useVipAccess } from "@/hooks/useVipAccess";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Link as LinkIcon, Loader2, Activity, 
@@ -28,10 +29,13 @@ export default function AuditPage() {
   const { toast } = useToast();
   
   const [url, setUrl] = useState("");
+  const [manualDescription, setManualDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingStep, setLoadingStep] = useState("");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+
+  const isLeboncoin = useMemo(() => url.toLowerCase().includes('leboncoin'), [url]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -88,7 +92,7 @@ export default function AuditPage() {
 
     try {
       const { data, error } = await supabase.functions.invoke('audit-url', {
-        body: { url: trimmedUrl },
+        body: { url: trimmedUrl, manualDescription: manualDescription.trim() || undefined },
       });
 
       if (error) throw new Error(error.message || "Erreur lors de l'appel à l'audit");
@@ -101,6 +105,7 @@ export default function AuditPage() {
       });
 
       setUrl('');
+      setManualDescription('');
       await refreshCredits();
 
       if (data?.reportId) {
@@ -180,6 +185,18 @@ export default function AuditPage() {
               </span>
             </button>
           </form>
+
+          {/* Textarea Leboncoin fallback */}
+          {isLeboncoin && !isAnalyzing && (
+            <div className="max-w-3xl mx-auto mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <Textarea
+                placeholder="Leboncoin bloque parfois La Truffe. Pour une expertise parfaite, copiez-collez la description de l'annonce ici (Optionnel)"
+                value={manualDescription}
+                onChange={(e) => setManualDescription(e.target.value)}
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 min-h-[100px] rounded-xl backdrop-blur-sm focus:border-indigo-400"
+              />
+            </div>
+          )}
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
             <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">LeBonCoin</Badge>

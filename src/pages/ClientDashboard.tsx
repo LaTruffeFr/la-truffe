@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Footer } from '@/components/landing';
 import { SellerListings } from '@/components/SellerListings';
+import WelcomeModal from '@/components/WelcomeModal';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Shield, Search,
@@ -50,6 +51,7 @@ const ClientDashboard = () => {
   const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'settings' | 'billing'>('reports');
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const fetchReports = async () => {
     if (!user) return;
@@ -71,7 +73,13 @@ const ClientDashboard = () => {
       return;
     }
     fetchReports();
-  }, [user, navigate]);
+
+    // Show welcome modal for new users (1 credit, never seen before)
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+    if (!hasSeenWelcome && credits === 1) {
+      setShowWelcome(true);
+    }
+  }, [user, navigate, credits]);
 
   const handleLogout = async () => {
     await signOut();
@@ -90,10 +98,16 @@ const ClientDashboard = () => {
     }
   };
 
+  const handleCloseWelcome = () => {
+    setShowWelcome(false);
+    localStorage.setItem('hasSeenWelcome', 'true');
+  };
+
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
+      <WelcomeModal open={showWelcome} onClose={handleCloseWelcome} />
       
       {/* --- HEADER CLIENT PREMIUM --- */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
