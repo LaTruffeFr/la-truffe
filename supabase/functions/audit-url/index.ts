@@ -278,7 +278,7 @@ serve(async (req: Request) => {
     PRIX FERME DÉTECTÉ : ${isPrixFerme ? "OUI" : "NON"}
 
     === RÈGLE 0 : LECTURE DE L'ANNONCE OBLIGATOIRE ===
-    Voici le texte brut de l'annonce d'origine. Tu DOIS le lire intégralement AVANT de faire ton devis. Si une pièce est mentionnée comme changée, neuve ou contrôlée ici (comme une chaîne de distribution, vidange, etc.), TU AS L'INTERDICTION de la mettre dans "devis_estime". Mets-la uniquement dans "entretiens_recents" !
+    Voici le texte brut de l'annonce d'origine. Tu DOIS le lire intégralement AVANT de faire ton devis. Si une pièce est mentionnée comme changée, neuve ou contrôlée ici, tu DOIS quand même la lister dans "devis_estime" avec son vrai prix MAIS avec "deja_fait": true.
     TEXTE DE L'ANNONCE :
     """${fullContent}"""
 
@@ -290,8 +290,9 @@ serve(async (req: Request) => {
     Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
-    - VÉRIFICATION OBLIGATOIRE : Lis attentivement l'annonce. Si le vendeur mentionne des pièces neuves ou des interventions récentes (ex: 'vidange faite', 'chaîne contrôlée', 'batterie neuve'), TU NE DOIS ABSOLUMENT PAS les facturer dans le devis ('devis_estime'). À la place, tu dois les lister explicitement dans le nouveau tableau JSON "entretiens_recents".
-    - INTERDICTION ABSOLUE DE FACTURER UNE CHAÎNE DE DISTRIBUTION, UNE VIDANGE OU AUTRE SI L'ANNONCE PRÉCISE QUE ÇA A ÉTÉ FAIT OU CONTRÔLÉ (EX: "110 POINTS CONTRÔLÉS DONT CHAÎNE"). METS-LES UNIQUEMENT DANS LE TABLEAU "entretiens_recents".
+    - Tu DOIS lister les maladies chroniques (ex: chaîne N47) ou les entretiens normaux dans le devis avec leur VRAI PRIX.
+    - MAIS (TRÈS IMPORTANT) : Si le vendeur mentionne dans l'annonce que cette pièce est neuve, contrôlée, ou que l'entretien a été fait, tu DOIS ABSOLUMENT mettre la valeur "deja_fait": true pour cette ligne.
+    - Si l'entretien reste à faire, mets "deja_fait": false.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
@@ -322,7 +323,7 @@ serve(async (req: Request) => {
     === RÈGLE 6 : CALCUL DE LA VRAIE COTE ET DU PRIX ESTIMÉ ===
     - Oublie le prix affiché par le vendeur pour faire ton calcul.
     - ÉTAPE 1 : Utilise tes connaissances du marché automobile européen pour déterminer la COTE MARCHÉ RÉELLE de ce véhicule précis (selon sa marque, son modèle, son année, sa finition et son kilométrage).
-    - ÉTAPE 2 : Prends cette COTE MARCHÉ RÉELLE et SOUSTRAIS le total exact de la facture prévisionnelle (le tableau 'devis_estime').
+    - ÉTAPE 2 : Prends cette COTE MARCHÉ RÉELLE et SOUSTRAIS UNIQUEMENT les lignes du devis où "deja_fait" est false. Les lignes "deja_fait": true ne doivent PAS être déduites du prix.
     - Le résultat final est le "prix_estime".
     - Ainsi, si le vendeur affiche 60000€, mais que tu sais que la cote réelle est de 56000€, et qu'il y a 1500€ de frais, ton "prix_estime" DOIT être de 54500€.
     - Sois un véritable expert automobile, précis et objectif.
@@ -348,7 +349,7 @@ serve(async (req: Request) => {
     { 
       "expert_opinion": "string", 
       "negotiation_arguments": [{"titre": "...", "desc": "..."}],
-      "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}],
+      "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250, "deja_fait": false}],
       "entretiens_recents": ["Vidange faite récemment", "Batterie neuve", "Chaîne de distribution contrôlée"],
       "prix_estime": 54500,
       "prix_truffe": 51800,
