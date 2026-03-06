@@ -35,3 +35,4 @@ verify_jwt = false
 [functions.analyze-manual-listing]
 # Manual listing AI analysis - auth checked in code
 verify_jwt = false
+
