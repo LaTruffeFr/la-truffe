@@ -478,7 +478,7 @@ const ReportView = () => {
               let devisItems: any[] = [];
               try { devisItems = JSON.parse(report.notes || '[]'); } catch {}
               if (devisItems.length === 0) return null;
-              const total = devisItems.reduce((s, d) => s + (d.cout_euros || 0), 0);
+              const total = devisItems.filter((d: any) => !d.deja_fait).reduce((s: number, d: any) => s + (d.cout_euros || 0), 0);
               
               return (
                 <div className="space-y-4">
@@ -490,12 +490,24 @@ const ReportView = () => {
                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Frais immédiats à prévoir</p>
                     </div>
                     <div className="divide-y divide-dashed divide-slate-200">
-                      {devisItems.map((item, i) => (
-                        <div key={i} className="flex justify-between items-center px-6 py-4">
-                          <span className="text-slate-600 font-bold text-sm pr-4 leading-tight">{item.piece}</span>
-                          <span className="text-slate-900 font-black whitespace-nowrap">+{safeNum(item.cout_euros)} €</span>
-                        </div>
-                      ))}
+                      {devisItems.map((item: any, i: number) => {
+                        const isDone = item.deja_fait === true;
+                        return (
+                          <div key={i} className={`flex justify-between items-center px-6 py-4 ${isDone ? 'bg-emerald-50/50' : ''}`}>
+                            <span className={`font-bold text-sm pr-4 leading-tight flex items-center gap-2 ${isDone ? 'line-through text-slate-400' : 'text-slate-600'}`}>
+                              {item.piece}
+                              {isDone && (
+                                <span className="no-underline inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />Déjà fait
+                                </span>
+                              )}
+                            </span>
+                            <span className={`font-black whitespace-nowrap ${isDone ? 'text-emerald-600' : 'text-slate-900'}`}>
+                              {isDone ? '+0 €' : `+${safeNum(item.cout_euros)} €`}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="bg-rose-50 px-6 py-6 flex justify-between items-center border-t-2 border-rose-200 shadow-inner">
                       <span className="font-black text-rose-900 uppercase text-xs tracking-widest">Total Malus</span>
