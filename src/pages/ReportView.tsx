@@ -508,27 +508,27 @@ const ReportView = () => {
               );
             })()}
 
-            {/* SECTION ÉQUIPEMENTS CLÉS RÉPARÉE */}
+            {/* SECTION ÉQUIPEMENTS CLÉS (DESIGN COMPACT) */}
             <div className="space-y-4 break-inside-avoid">
               <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <Cpu className="text-indigo-500" /> Équipements Clés
+                <Sparkles className="text-indigo-500 w-5 h-5" /> Équipements & Options
               </h3>
-              <div className="grid gap-3">
+              <Card className="rounded-[2rem] border-slate-200 shadow-lg overflow-hidden bg-white p-6">
                 {Array.isArray(singleAuditData?.options) && singleAuditData.options.length > 0 ? (
-                  singleAuditData.options.map((opt: string, i: number) => (
-                    <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                      <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600 shrink-0">
-                        {getOptionIcon(opt)}
+                  <div className="flex flex-wrap gap-2.5">
+                    {singleAuditData.options.map((opt: string, i: number) => (
+                      <div key={i} className="inline-flex items-center gap-2 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 px-3 py-2 rounded-xl transition-colors group">
+                        <div className="text-slate-400 group-hover:text-indigo-500 transition-colors">
+                          {getOptionIcon(opt)}
+                        </div>
+                        <span className="font-bold text-slate-700 text-xs leading-tight">{opt}</span>
                       </div>
-                      <span className="font-bold text-slate-700 text-sm leading-tight">{opt}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
-                    <p className="text-slate-500 italic text-sm">Aucun équipement spécifique ou modification détecté.</p>
+                    ))}
                   </div>
+                ) : (
+                  <p className="text-slate-500 italic text-sm text-center py-4">Aucun équipement spécifique détecté.</p>
                 )}
-              </div>
+              </Card>
             </div>
             {/* FIN SECTION ÉQUIPEMENTS CLÉS */}
 
