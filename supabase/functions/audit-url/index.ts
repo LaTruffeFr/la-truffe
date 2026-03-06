@@ -205,7 +205,8 @@ serve(async (req: Request) => {
       "market_range": "Fourchette de prix réaliste sur le marché de l'occasion pour ce modèle/année/km (ex: '32 000 € - 34 000 €')",
       "reliability_score": 7,
       "known_issues": ["Maladie chronique 1", "Maladie chronique 2", "Maladie chronique 3"],
-      "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] 
+      "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }],
+      "entretiens_recents": ["liste des frais récents", "ex: Chaîne contrôlée", "ex: Batterie neuve"]
     }`;
 
     const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -285,6 +286,7 @@ serve(async (req: Request) => {
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
     - VÉRIFICATION OBLIGATOIRE : Lis attentivement l'annonce. Si le vendeur mentionne des pièces neuves ou des interventions récentes (ex: 'vidange faite', 'chaîne contrôlée', 'batterie neuve'), TU NE DOIS ABSOLUMENT PAS les facturer dans le devis ('devis_estime'). À la place, tu dois les lister explicitement dans le nouveau tableau JSON "entretiens_recents".
+    - INTERDICTION ABSOLUE DE FACTURER UNE CHAÎNE DE DISTRIBUTION, UNE VIDANGE OU AUTRE SI L'ANNONCE PRÉCISE QUE ÇA A ÉTÉ FAIT OU CONTRÔLÉ (EX: "110 POINTS CONTRÔLÉS DONT CHAÎNE"). METS-LES UNIQUEMENT DANS LE TABLEAU "entretiens_recents".
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
