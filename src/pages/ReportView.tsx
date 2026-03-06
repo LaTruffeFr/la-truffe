@@ -452,6 +452,26 @@ const ReportView = () => {
 
           {/* Colonne Droite : Devis & Options */}
           <div className="space-y-8">
+            {/* ENTRETIENS RÉCENTS */}
+            {isSingleAudit && Array.isArray(singleAuditData?.entretiens_recents) && singleAuditData.entretiens_recents.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2"><CheckCircle2 className="text-emerald-500" /> Entretiens Récents</h3>
+                <Card className="rounded-[2rem] border-emerald-200 shadow-lg overflow-hidden bg-emerald-50/50 break-inside-avoid">
+                  <div className="bg-emerald-100/60 px-6 py-4 border-b border-emerald-200">
+                    <p className="text-[10px] font-black uppercase text-emerald-700 tracking-widest">Travaux déjà réalisés par le vendeur</p>
+                  </div>
+                  <div className="divide-y divide-emerald-100">
+                    {singleAuditData.entretiens_recents.map((item: string, i: number) => (
+                      <div key={i} className="flex items-center gap-3 px-6 py-4">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span className="text-emerald-900 font-bold text-sm">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            )}
+
             {isSingleAudit && (() => {
               let devisItems: any[] = [];
               try { devisItems = JSON.parse(report.notes || '[]'); } catch {}

@@ -162,7 +162,7 @@ serve(async (req: Request) => {
     }
 
     // Combine all available text for better extraction — manual description has absolute priority
-    const fullContent = [manualDescription ? "DESCRIPTION FOURNIE PAR L'UTILISATEUR: " + manualDescription : "", markdown, metadataTitle, metadataDesc].filter(Boolean).join("\n\n");
+    const fullContent = [manualDescription ? "DESCRIPTION MANUELLE : " + manualDescription : "", markdown, metadataTitle, metadataDesc].filter(Boolean).join("\n\n");
     console.log(`Scrape result for ${parsedUrl.hostname}: markdown=${markdown?.length || 0} chars, html=${html?.length || 0} chars, meta_title="${metadataTitle}"`);
 
     if (!fullContent || fullContent.length < 30) {
@@ -205,7 +205,8 @@ serve(async (req: Request) => {
       "market_range": "Fourchette de prix réaliste sur le marché de l'occasion pour ce modèle/année/km (ex: '32 000 € - 34 000 €')",
       "reliability_score": 7,
       "known_issues": ["Maladie chronique 1", "Maladie chronique 2", "Maladie chronique 3"],
-      "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }] 
+      "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }],
+      "entretiens_recents": ["liste des réparations déjà faites", "ex: Chaîne remplacée"]
     }`;
 
     const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -284,6 +285,7 @@ serve(async (req: Request) => {
     Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
+    INTERDICTION DE FACTURER UNE PIÈCE DÉJÀ CHANGÉE : SI LE VENDEUR INDIQUE QU'UNE PIÈCE EST NEUVE OU QU'UN ENTRETIEN A ÉTÉ FAIT (EX: CHAÎNE DE DISTRIBUTION CONTRÔLÉE, EMBRAYAGE NEUF, VIDANGE RÉCENTE), NE LA METS PAS DANS 'devis_estime'. METS-LA UNIQUEMENT DANS LE TABLEAU 'entretiens_recents'.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
@@ -341,6 +343,7 @@ serve(async (req: Request) => {
       "expert_opinion": "string", 
       "negotiation_arguments": [{"titre": "...", "desc": "..."}],
       "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}],
+      "entretiens_recents": ["Chaîne de distribution remplacée", "Vidange boîte effectuée"],
       "prix_estime": 54500,
       "prix_truffe": 51800,
       "tags": ["tag1", "tag2"]
@@ -407,6 +410,7 @@ serve(async (req: Request) => {
         reliability_score: rawCarData.reliability_score || null,
         known_issues: rawCarData.known_issues || [],
         modifications_tuning: rawCarData.modifications_tuning || null,
+        entretiens_recents: finalReview.entretiens_recents || rawCarData.entretiens_recents || [],
       },
     };
 
