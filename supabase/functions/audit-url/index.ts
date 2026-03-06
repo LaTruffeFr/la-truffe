@@ -206,7 +206,7 @@ serve(async (req: Request) => {
       "reliability_score": 7,
       "known_issues": ["Maladie chronique 1", "Maladie chronique 2", "Maladie chronique 3"],
       "tags_detectes": [{ "tag": "💎 1ÈRE MAIN", "score": 5 }],
-      "entretiens_recents": ["liste des frais récents", "ex: Chaîne contrôlée", "ex: Batterie neuve"]
+      "entretiens_recents": ["UNIQUEMENT des travaux MÉCANIQUES récents déclarés par le vendeur. Ex: 'Chaîne de distribution contrôlée', 'Batterie neuve', 'Vidange moteur et boîte faite'. NE METS PAS d'éléments administratifs comme 'CT OK', 'Carte grise à jour', 'Double des clés', 'Factures disponibles', 'Véhicule non fumeur'. Ce champ ne doit contenir QUE des interventions mécaniques concrètes."]
     }`;
 
     const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -292,7 +292,7 @@ serve(async (req: Request) => {
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
     - INTERDICTION FORMELLE DE FACTURER AU HASARD : Tu n'as PAS LE DROIT d'ajouter des frais conditionnels comme "Amortisseurs (si nécessaire)" ou "Pneus (si usés)". Si l'annonce ne dit pas que c'est mort, tu pars du principe que c'est BON. Ne facture QUE les maladies chroniques prouvées (ex: chaîne N47) ou l'entretien kilométrique strict.
     - Tu DOIS lister les maladies chroniques ou les entretiens normaux dans le devis avec leur VRAI PRIX.
-    - RÈGLE DU "DEJA_FAIT" : Si tu ajoutes une maladie chronique (ex: chaîne) MAIS que le vendeur mentionne dans l'annonce l'avoir fait, contrôlé, ou mis à neuf, tu DOIS ABSOLUMENT mettre "deja_fait": true. Sinon, mets "deja_fait": false.
+    - RÈGLE DU "DEJA_FAIT" (CRITIQUE — ZÉRO TOLÉRANCE) : Avant de mettre "deja_fait": false sur une ligne du devis, tu DOIS RELIRE le texte brut de l'annonce ci-dessus. Si le vendeur mentionne EXPLICITEMENT que cette pièce ou cet entretien a été "fait", "changé", "neuf", "contrôlé", "vérifié", "révisé", ou "remplacé", tu DOIS mettre "deja_fait": true. Exemples concrets : si l'annonce dit "chaîne de distribution contrôlée" → deja_fait: true. Si l'annonce dit "vidange du moteur et de la boîte" → deja_fait: true pour CHACUNE de ces deux lignes. Si l'annonce dit "batterie neuve" → deja_fait: true. NE FACTURE PAS ce que le vendeur a déjà payé.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
