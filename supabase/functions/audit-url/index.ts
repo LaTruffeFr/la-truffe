@@ -276,6 +276,11 @@ serve(async (req: Request) => {
     MODIFICATIONS DÉTECTÉES : "${rawCarData.modifications_tuning}"
     OPTIONS PREMIUM : ${JSON.stringify(rawCarData.options_premium || [])}
     PRIX FERME DÉTECTÉ : ${isPrixFerme ? "OUI" : "NON"}
+    ENTRETIENS DÉJÀ IDENTIFIÉS : ${JSON.stringify(rawCarData.entretiens_recents || [])}
+
+    === TEXTE INTÉGRAL DE L'ANNONCE (INCLUANT DESCRIPTION MANUELLE) ===
+    ${fullContent}
+    ===================================================================
 
     === RÈGLE 1 : ÉVALUATION DU PRIX (LE JUSTE PRIX DU MARCHÉ) ===
     N'utilise JAMAIS le prix du vendeur comme base absolue. Estime d'abord la vraie valeur de CE véhicule d'ORIGINE sur le marché français (selon modèle exact, année, kilométrage, motorisation). Compare ensuite le prix affiché à cette estimation. Indique clairement si le prix est au-dessus, en-dessous ou au niveau du marché.
@@ -285,7 +290,7 @@ serve(async (req: Request) => {
     Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
-    INTERDICTION ABSOLUE : Si une pièce est mentionnée comme neuve, changée ou contrôlée (ex: chaîne), mets-la UNIQUEMENT dans 'entretiens_recents' et JAMAIS dans 'devis_estime'.
+    INTERDICTION ABSOLUE : Lis le TEXTE INTÉGRAL DE L'ANNONCE ci-dessus. Si une pièce est mentionnée comme neuve, changée ou contrôlée (ex: chaîne de distribution), tu as l'INTERDICTION de la mettre dans 'devis_estime'. Mets-la UNIQUEMENT dans 'entretiens_recents'.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
