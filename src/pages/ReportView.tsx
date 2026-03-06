@@ -450,8 +450,35 @@ const ReportView = () => {
             </div>
           </div>
 
-          {/* Colonne Droite : Devis & Options */}
+          {/* Colonne Droite : Entretiens Récents, Devis & Options */}
           <div className="space-y-8">
+            
+            {/* SECTION ENTRETIENS RÉCENTS */}
+            {isSingleAudit && (() => {
+              const entretiens = singleAuditData?.entretiens_recents || (report?.market_data?.entretiens_recents);
+              if (!Array.isArray(entretiens) || entretiens.length === 0) return null;
+              return (
+                <div className="space-y-4 break-inside-avoid">
+                  <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                    <CheckCircle2 className="text-emerald-500" /> Entretiens Récents
+                  </h3>
+                  <Card className="rounded-[2rem] border-emerald-200 shadow-lg overflow-hidden bg-emerald-50/50">
+                    <div className="bg-emerald-50 px-6 py-4 border-b border-emerald-100">
+                      <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Travaux déclarés par le vendeur</p>
+                    </div>
+                    <div className="divide-y divide-emerald-100">
+                      {entretiens.map((item: string, i: number) => (
+                        <div key={i} className="flex items-center gap-3 px-6 py-4">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span className="text-slate-700 font-bold text-sm">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+              );
+            })()}
+
             {isSingleAudit && (() => {
               let devisItems: any[] = [];
               try { devisItems = JSON.parse(report.notes || '[]'); } catch {}

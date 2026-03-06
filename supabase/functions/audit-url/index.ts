@@ -188,7 +188,7 @@ serve(async (req: Request) => {
     3. RIGUEUR MÉCANIQUE ABSOLUE (Anti-Hallucination) : Tu es un expert automobile intraitable. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. Par exemple, une Renault Clio 4 RS de 200ch est OBLIGATOIREMENT équipée du 1.6 Turbo (M5M), et SURTOUT PAS du 1.3 TCe (apparu plus tard). En cas de doute, mentionne uniquement la cylindrée standard.
     4. DÉTECTEUR DE MODIFICATIONS (Tuning) : Traque IMPÉRATIVEMENT toute mention de préparation moteur, ligne d'échappement (ex: Akrapovic, Milltek, tube afrique, suppression intermédiaire), ressorts courts, combinés filetés ou reprogrammation (Stage 1/2). Liste-les TOUTES dans "modifications_tuning". Distingue les pièces de marques reconnues (Akrapovic, KW, Wagner, Eventuri, MHD) des modifications artisanales.
     5. PRIX FERME : Si le texte mentionne "Prix ferme", "Non négociable" ou "Festpreis", note-le dans le champ "prix_ferme": true.
-    6. ÉQUIPEMENTS CLÉS : Dans le tableau "options_premium", tu DOIS lister la finition (ex: S-line), les options d'usine (ex: Cuir, Toit ouvrant), les modifications esthétiques/mécaniques (ex: Silencieux, Jantes) ET les ajouts technologiques (ex: Apple CarPlay, Écran Android, Caméra de recul).
+    6. ÉQUIPEMENTS CLÉS : Dans le tableau "options_premium", tu DOIS lister la finition (ex: S-line), les options d'usine (ex: Cuir, Toit ouvrant), les modifications esthétiques/mécaniques (ex: Silencieux, Jantes) ET les ajouts technologiques (ex: Apple CarPlay, Écran Android, Caméra de recul, Dashcam). Assure-toi de lire le texte libre de l'annonce pour y trouver ces ajouts.
     7. OBLIGATION DE RÉSULTAT : Tu DOIS ABSOLUMENT remplir les champs "marque" et "modele" même si l'annonce est partiellement lisible. Déduis-les du titre, de l'URL, ou des caractéristiques techniques. Ne renvoie JAMAIS une marque ou un modèle vide.
     
     Format JSON attendu (Sois ultra précis) :
@@ -284,6 +284,7 @@ serve(async (req: Request) => {
     Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
+    - VÉRIFICATION OBLIGATOIRE : Lis attentivement l'annonce. Si le vendeur mentionne des pièces neuves ou des interventions récentes (ex: 'vidange faite', 'chaîne contrôlée', 'batterie neuve'), TU NE DOIS ABSOLUMENT PAS les facturer dans le devis ('devis_estime'). À la place, tu dois les lister explicitement dans le nouveau tableau JSON "entretiens_recents".
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
@@ -341,6 +342,7 @@ serve(async (req: Request) => {
       "expert_opinion": "string", 
       "negotiation_arguments": [{"titre": "...", "desc": "..."}],
       "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}],
+      "entretiens_recents": ["Vidange faite récemment", "Batterie neuve", "Chaîne de distribution contrôlée"],
       "prix_estime": 54500,
       "prix_truffe": 51800,
       "tags": ["tag1", "tag2"]
@@ -394,6 +396,7 @@ serve(async (req: Request) => {
         type: "single_audit",
         original_title: rawCarData.original_title || `${rawCarData.marque} ${rawCarData.modele}`,
         options: rawCarData.options_premium || [],
+        entretiens_recents: finalReview.entretiens_recents || [],
         etat: finalScore > 75 ? "Excellent" : (finalScore > 50 ? "Bon" : "Moyen"),
         points_forts: finalTagsList.filter((t: string) => !t.includes('⚠️') && !t.includes('💀')),
         points_faibles: finalTagsList.filter((t: string) => t.includes('⚠️') || t.includes('💀')),
