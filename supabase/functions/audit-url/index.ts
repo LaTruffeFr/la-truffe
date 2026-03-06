@@ -285,7 +285,7 @@ serve(async (req: Request) => {
     Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
-    INTERDICTION DE FACTURER UNE PIÈCE DÉJÀ CHANGÉE : SI LE VENDEUR INDIQUE QU'UNE PIÈCE EST NEUVE OU QU'UN ENTRETIEN A ÉTÉ FAIT (EX: CHAÎNE DE DISTRIBUTION CONTRÔLÉE, EMBRAYAGE NEUF, VIDANGE RÉCENTE), NE LA METS PAS DANS 'devis_estime'. METS-LA UNIQUEMENT DANS LE TABLEAU 'entretiens_recents'.
+    INTERDICTION ABSOLUE : Si une pièce est mentionnée comme neuve, changée ou contrôlée (ex: chaîne), mets-la UNIQUEMENT dans 'entretiens_recents' et JAMAIS dans 'devis_estime'.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
@@ -342,8 +342,8 @@ serve(async (req: Request) => {
     { 
       "expert_opinion": "string", 
       "negotiation_arguments": [{"titre": "...", "desc": "..."}],
-      "devis_estime": [{"piece": "Nom de l'intervention", "cout_euros": 250}],
-      "entretiens_recents": ["Chaîne de distribution remplacée", "Vidange boîte effectuée"],
+      "devis_estime": [{"piece": "Nom", "cout_euros": 250}],
+      "entretiens_recents": ["Vidange faite", "Chaîne de distribution contrôlée", "Batterie neuve"],
       "prix_estime": 54500,
       "prix_truffe": 51800,
       "tags": ["tag1", "tag2"]
