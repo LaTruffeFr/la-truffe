@@ -290,9 +290,9 @@ serve(async (req: Request) => {
     Si la voiture possède des pièces de performance RECONNUES (Akrapovic, Wagner, Eventuri, combinés filetés KW/Bilstein/Öhlins, Stage MHD/Bootmod3, intercooler upgraded, charge pipe alu, ligne Milltek/Scorpion), NE CALCULE PAS de frais de remise à l'origine dans le devis. Considère-les comme une PLUS-VALUE pour un passionné et mentionne leur valeur ajoutée. Le devis ne doit contenir QUE les interventions d'entretien/fiabilisation nécessaires.
 
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
-    - Tu DOIS lister les maladies chroniques (ex: chaîne N47) ou les entretiens normaux dans le devis avec leur VRAI PRIX.
-    - MAIS (TRÈS IMPORTANT) : Si le vendeur mentionne dans l'annonce que cette pièce est neuve, contrôlée, ou que l'entretien a été fait, tu DOIS ABSOLUMENT mettre la valeur "deja_fait": true pour cette ligne.
-    - Si l'entretien reste à faire, mets "deja_fait": false.
+    - INTERDICTION FORMELLE DE FACTURER AU HASARD : Tu n'as PAS LE DROIT d'ajouter des frais conditionnels comme "Amortisseurs (si nécessaire)" ou "Pneus (si usés)". Si l'annonce ne dit pas que c'est mort, tu pars du principe que c'est BON. Ne facture QUE les maladies chroniques prouvées (ex: chaîne N47) ou l'entretien kilométrique strict.
+    - Tu DOIS lister les maladies chroniques ou les entretiens normaux dans le devis avec leur VRAI PRIX.
+    - RÈGLE DU "DEJA_FAIT" : Si tu ajoutes une maladie chronique (ex: chaîne) MAIS que le vendeur mentionne dans l'annonce l'avoir fait, contrôlé, ou mis à neuf, tu DOIS ABSOLUMENT mettre "deja_fait": true. Sinon, mets "deja_fait": false.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
     Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
