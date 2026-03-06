@@ -50,10 +50,11 @@ serve(async (req: Request) => {
       .insert({ user_id: newUserId, role: "admin" });
     if (roleError) throw roleError;
 
-    // Create profile with unlimited credits
+    // Update profile credits (trigger already created it)
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
-      .upsert({ user_id: newUserId, email, credits: 9999 });
+      .update({ credits: 9999 })
+      .eq("user_id", newUserId);
     if (profileError) throw profileError;
 
     return new Response(JSON.stringify({ 
