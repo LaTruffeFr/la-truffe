@@ -70,7 +70,7 @@ export default function Landing() {
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-3">Auditer une annonce</h3>
             <p className="text-slate-500 font-medium mb-8 flex-grow leading-relaxed">
-              Collez un lien. L'IA traque les arnaques, les compteurs trafiqués et les frais cachés.
+              Collez un lien. Notre algorithme traque les arnaques, les compteurs trafiqués et les frais cachés.
             </p>
             <div className="flex items-center text-indigo-600 font-bold">
               Lancer l'audit <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
