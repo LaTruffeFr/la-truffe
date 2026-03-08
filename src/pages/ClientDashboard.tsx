@@ -396,10 +396,10 @@ const ClientDashboard = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden">
-                  <div className="bg-rose-50 p-6 border-b border-rose-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-rose-200 flex items-center justify-center">
-                      <LogOut className="w-6 h-6 text-rose-600" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
+                  <div className="bg-rose-50 dark:bg-rose-950/20 p-4 md:p-6 border-b border-rose-100 dark:border-rose-900/30 flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-rose-200 dark:border-rose-900/30 flex items-center justify-center">
+                      <LogOut className="w-5 h-5 md:w-6 md:h-6 text-rose-600" />
                     </div>
                     <div>
                       <h3 className="font-black text-lg text-rose-700">Zone de Danger</h3>
