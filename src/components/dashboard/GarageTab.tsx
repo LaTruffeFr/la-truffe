@@ -321,11 +321,11 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                       render: (r: any) => {
                         const cote = r.prix_truffe || r.prix_estime;
                         return cote
-                        ? <span className={`font-black text-lg ${r.prix_affiche && r.prix_affiche > cote ? 'text-red-500' : 'text-emerald-500'}`}>
-                            {cote.toLocaleString('fr-FR')} €
-                          </span>
-                        : <span className="text-slate-300">—</span>,
-                    },
+                          ? <span className={`font-black text-lg ${r.prix_affiche && r.prix_affiche > cote ? 'text-red-500' : 'text-emerald-500'}`}>
+                              {cote.toLocaleString('fr-FR')} €
+                            </span>
+                          : <span className="text-slate-300">—</span>;
+                      },
                     {
                       label: 'Kilométrage',
                       render: (r: any) => r.kilometrage
