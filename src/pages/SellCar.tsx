@@ -429,7 +429,7 @@ export default function SellCar() {
                               </span>
                             )}
                             <span className="px-4 py-1.5 bg-emerald-100 text-emerald-700 text-xs font-black rounded-lg flex items-center gap-1.5 uppercase">
-                              <ShieldCheck className="w-3 h-3" /> IA Vérifié
+                              <ShieldCheck className="w-3 h-3" /> Certifié La Truffe
                             </span>
                           </div>
                         </div>
