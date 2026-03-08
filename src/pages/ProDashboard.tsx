@@ -42,9 +42,27 @@ export default function ProDashboard() {
         </div>
       </header>
 
-      <div className="flex">
+      {/* Mobile tabs */}
+      <div className="md:hidden flex overflow-x-auto scrollbar-hide border-b border-slate-800 bg-slate-950 px-2 gap-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap flex-shrink-0 border-b-2 transition-all ${
+              activeTab === tab.id
+                ? 'border-amber-500 text-amber-400'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <tab.icon className="w-3.5 h-3.5" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1">
         {/* Sidebar — desktop */}
-        <aside className="hidden md:flex flex-col w-64 border-r border-slate-800 min-h-[calc(100vh-4rem)] bg-slate-950 p-4 gap-1">
+        <aside className="hidden md:flex flex-col w-64 flex-shrink-0 border-r border-slate-800 min-h-[calc(100vh-4rem)] bg-slate-950 p-4 gap-1">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -61,45 +79,26 @@ export default function ProDashboard() {
           ))}
         </aside>
 
-        {/* Mobile tabs */}
-        <div className="md:hidden flex overflow-x-auto scrollbar-hide border-b border-slate-800 bg-slate-950 px-2 gap-1 w-full">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap flex-shrink-0 border-b-2 transition-all ${
-                activeTab === tab.id
-                  ? 'border-amber-500 text-amber-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-8 min-w-0">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
+              {TABS.find(t => t.id === activeTab)?.label}
+            </h1>
+            <p className="text-sm text-slate-400 mt-1">
+              {activeTab === 'overview' && 'Vue d\'ensemble de votre activité'}
+              {activeTab === 'crm' && 'Gérez votre parc automobile en mode Kanban'}
+              {activeTab === 'whitelabel' && 'Personnalisez vos rapports à votre image'}
+              {activeTab === 'billing' && 'Gérez votre abonnement et vos factures'}
+            </p>
+          </div>
+
+          {activeTab === 'overview' && <ProOverview />}
+          {activeTab === 'crm' && <ProKanbanBoard />}
+          {activeTab === 'whitelabel' && <ProWhiteLabel />}
+          {activeTab === 'billing' && <ProBilling />}
+        </main>
       </div>
-
-      {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 md:ml-64">
-        {/* Page Title */}
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-white">
-            {TABS.find(t => t.id === activeTab)?.label}
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            {activeTab === 'overview' && 'Vue d\'ensemble de votre activité'}
-            {activeTab === 'crm' && 'Gérez votre parc automobile en mode Kanban'}
-            {activeTab === 'whitelabel' && 'Personnalisez vos rapports à votre image'}
-            {activeTab === 'billing' && 'Gérez votre abonnement et vos factures'}
-          </p>
-        </div>
-
-        {activeTab === 'overview' && <ProOverview />}
-        {activeTab === 'crm' && <ProKanbanBoard />}
-        {activeTab === 'whitelabel' && <ProWhiteLabel />}
-        {activeTab === 'billing' && <ProBilling />}
-      </main>
     </div>
   );
 }
