@@ -390,7 +390,7 @@ const ReportView = () => {
         
         {/* --- 1. HERO SECTION --- */}
         <div className="pdf-section flex flex-col md:flex-row items-center md:items-start gap-8 bg-card p-6 rounded-[2.5rem] shadow-xl dark:shadow-none border border-border">
-          <div className="w-48 h-48 sm:w-56 sm:h-56 shrink-0 rounded-[2rem] overflow-hidden shadow-inner border-4 border-slate-50 relative group">
+          <div className="w-48 h-48 sm:w-56 sm:h-56 shrink-0 rounded-[2rem] overflow-hidden shadow-inner border-4 border-muted relative group">
             <img src={imageCover} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Vehicule" />
             <div className="absolute top-3 left-3">
                <Badge className="bg-black/60 backdrop-blur-md text-white border-0 shadow-sm">{isSingleAudit ? 'Dossier Premium' : 'Analyse Marché'}</Badge>
