@@ -402,12 +402,12 @@ const ReportView = () => {
               <Hash className="w-3 h-3" /> Dossier {report.id.slice(0,8)} • <History className="w-3 h-3 ml-2" /> {new Date(report.created_at).toLocaleDateString()}
             </div>
             {report.market_data?.original_title ? (
-              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight mb-6">
+              <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tighter leading-tight mb-6">
                 {report.market_data.original_title}
               </h1>
             ) : (
-              <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none mb-6">
-                {report.marque} <span className="text-indigo-600">{report.modele}</span>
+              <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter leading-none mb-6">
+                {report.marque} <span className="text-primary">{report.modele}</span>
               </h1>
             )}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
