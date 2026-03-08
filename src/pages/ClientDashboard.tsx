@@ -282,23 +282,23 @@ const ClientDashboard = () => {
                       return (
                         <Card 
                           key={report.id} 
-                          className="border-slate-100 shadow-sm bg-white hover:shadow-xl hover:border-indigo-200 transition-all cursor-pointer group rounded-2xl overflow-hidden"
+                          className="border-border shadow-sm bg-card hover:shadow-xl dark:hover:shadow-none hover:border-primary/30 transition-all cursor-pointer group rounded-2xl overflow-hidden"
                           onClick={() => handleViewReport(report)}
                         >
                           <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
                             <div className="flex items-center gap-5 min-w-0">
                               {imageUrl ? (
-                                <img src={imageUrl} alt={report.marque} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 shadow-sm border border-slate-100 group-hover:border-indigo-300 transition-colors" />
+                                <img src={imageUrl} alt={report.marque} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 shadow-sm border border-border group-hover:border-primary/30 transition-colors" />
                               ) : (
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-indigo-300 transition-colors">
-                                  <Car className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted rounded-xl flex items-center justify-center shrink-0 border border-border group-hover:border-primary/30 transition-colors">
+                                  <Car className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <h3 className="font-black text-lg text-slate-900 truncate mb-1 group-hover:text-indigo-600 transition-colors">
+                                <h3 className="font-black text-lg text-foreground truncate mb-1 group-hover:text-primary transition-colors">
                                   {report.marque} {report.modele}
                                 </h3>
-                                <p className="text-sm font-medium text-slate-500">
+                                <p className="text-sm font-medium text-muted-foreground">
                                   Expertisé le {new Date(report.created_at).toLocaleDateString('fr-FR', {
                                     day: 'numeric', month: 'long', year: 'numeric'
                                   })}
@@ -311,8 +311,8 @@ const ClientDashboard = () => {
                                 {status.label}
                               </Badge>
                               {report.status === 'completed' && (
-                                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors shrink-0">
-                                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors shrink-0">
+                                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                                 </div>
                               )}
                             </div>
