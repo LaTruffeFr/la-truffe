@@ -35,6 +35,7 @@ export default function AuditPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [showPricing, setShowPricing] = useState(false);
 
   const isLeboncoin = useMemo(() => url.toLowerCase().includes('leboncoin'), [url]);
 
