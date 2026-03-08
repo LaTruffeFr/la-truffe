@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { 
   ShieldCheck, Search, Car as CarIcon, 
@@ -6,7 +7,17 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+// Capture referral code from URL on landing
+function useReferralCapture() {
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) localStorage.setItem('referral_code', ref);
+  }, [searchParams]);
+}
+
 export default function Landing() {
+  useReferralCapture();
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-indigo-500 selection:text-white pb-20">
       <Header />

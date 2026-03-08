@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Footer } from '@/components/landing';
 import { SellerListings } from '@/components/SellerListings';
 import WelcomeModal from '@/components/WelcomeModal';
+import ReferralCard from '@/components/dashboard/ReferralCard';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Shield, Search,
@@ -215,6 +216,9 @@ const ClientDashboard = () => {
                 </div>
               </nav>
             </Card>
+            
+            {/* Referral Card */}
+            <ReferralCard />
           </aside>
 
           {/* --- MAIN CONTENT --- */}

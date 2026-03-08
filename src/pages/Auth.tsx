@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { lovable } from '@/integrations/lovable/index';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -26,6 +27,14 @@ const Auth = () => {
   const redirectUrl = searchParams.get('redirect');
   const messageText = searchParams.get('message');
 
+  // Capturer le code de parrainage depuis l'URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('referral_code', refCode);
+    }
+  }, [searchParams]);
+
   // Redirect based on role when user is logged in and role is resolved
   useEffect(() => {
     if (user && !isRoleLoading) {
@@ -35,7 +44,7 @@ const Auth = () => {
       } else if (isAdmin) {
         navigate('/admin', { replace: true });
       } else {
-        navigate('/client-dashboard', { replace: true });
+        navigate('/client', { replace: true });
       }
     }
   }, [user, isAdmin, isRoleLoading, navigate, redirectUrl]);
@@ -85,9 +94,26 @@ const Auth = () => {
             throw error;
           }
         } else {
+          // Appliquer le parrainage si un code existe
+          const refCode = localStorage.getItem('referral_code');
+          if (refCode) {
+            // On attend que le profil soit créé par le trigger, puis on applique
+            setTimeout(async () => {
+              try {
+                const { data: session } = await supabase.auth.getSession();
+                if (session?.session?.user) {
+                  await supabase.rpc('apply_referral', { 
+                    _new_user_id: session.session.user.id, 
+                    _referrer_id: refCode 
+                  });
+                  localStorage.removeItem('referral_code');
+                }
+              } catch (e) { console.error('Referral error:', e); }
+            }, 2000);
+          }
           toast({
             title: "Compte créé !",
-            description: "Vous pouvez maintenant vous connecter.",
+            description: refCode ? "Vous avez reçu 1 crédit bonus de parrainage ! 🎁" : "Vous pouvez maintenant vous connecter.",
           });
           setIsSignUp(false);
         }
