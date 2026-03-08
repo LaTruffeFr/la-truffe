@@ -44,25 +44,26 @@ export default function AuditPage() {
     }
   }, [user, authLoading, navigate]);
 
-  // Animated loading steps
+  // Animated loading steps - synchronized with AUDIT_STEPS
   useEffect(() => {
-    if (!isAnalyzing) return;
+    if (!isAnalyzing) { setLoadingStepIndex(0); setProgress(0); return; }
+    
+    const startTime = Date.now();
     const interval = setInterval(() => {
-      setLoadingStepIndex(s => (s + 1) % AUDIT_STEPS.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isAnalyzing]);
-
-  useEffect(() => {
-    setLoadingStep(AUDIT_STEPS[loadingStepIndex]);
-  }, [loadingStepIndex]);
-
-  // Progress bar
-  useEffect(() => {
-    if (!isAnalyzing) { setProgress(0); return; }
-    const interval = setInterval(() => {
-      setProgress(p => Math.min(p + 1, 95));
-    }, 160);
+      const elapsed = Date.now() - startTime;
+      
+      let currentStepIndex = 0;
+      for (let i = AUDIT_STEPS.length - 1; i >= 0; i--) {
+        if (elapsed >= AUDIT_STEPS[i].time) {
+          currentStepIndex = i;
+          break;
+        }
+      }
+      
+      setLoadingStepIndex(currentStepIndex);
+      setProgress(AUDIT_STEPS[currentStepIndex].percent);
+    }, 500);
+    
     return () => clearInterval(interval);
   }, [isAnalyzing]);
 
