@@ -392,7 +392,7 @@ export default function SellCar() {
                             {loading ? (
                               <><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /> {loadingStep}</>
                             ) : (
-                              <><CheckCircle2 className="w-6 h-6 text-emerald-400" /> Soumettre l'annonce à l'IA</>
+                              <><CheckCircle2 className="w-6 h-6 text-emerald-400" /> Soumettre l'annonce à l'expertise</>
                             )}
                           </Button>
                         </div>

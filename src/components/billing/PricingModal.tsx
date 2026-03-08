@@ -87,7 +87,7 @@ export const PricingModal = ({ open, onOpenChange }: PricingModalProps) => {
               Rechargez votre flair 🐽
             </DialogTitle>
           </DialogHeader>
-          <p className="text-indigo-200/70 text-sm mt-2">Achetez des crédits pour auditer des annonces avec l'IA La Truffe</p>
+          <p className="text-indigo-200/70 text-sm mt-2">Achetez des crédits pour auditer des annonces avec La Truffe</p>
         </div>
 
         {/* Plans */}

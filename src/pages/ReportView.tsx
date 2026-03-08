@@ -670,7 +670,7 @@ const ReportView = () => {
           <div>
             <h3 className="font-bold text-foreground text-base mb-2">Notre mission : Vous protéger</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              La Truffe a été conçue pour vous accompagner et vous donner l'avantage lors de votre achat. Ce rapport est une aide à la décision générée par Intelligence Artificielle à partir des données fournies par le vendeur. Bien qu'il détecte la majorité des pièges, il ne remplace pas votre vigilance lors de l'essai physique du véhicule. Gardez l'œil ouvert, et bonne route !
+              La Truffe a été conçue pour vous accompagner et vous donner l'avantage lors de votre achat. Ce rapport est une aide à la décision générée par notre moteur d'analyse exclusif à partir des données fournies par le vendeur. Bien qu'il détecte la majorité des pièges, il ne remplace pas votre vigilance lors de l'essai physique du véhicule. Gardez l'œil ouvert, et bonne route !
             </p>
           </div>
         </div>

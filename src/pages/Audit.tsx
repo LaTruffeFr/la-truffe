@@ -271,7 +271,7 @@ export default function AuditPage() {
           <p className="text-xs text-slate-400/60 mt-2 text-center">🌍 Notre algorithme traduit et analyse automatiquement les annonces étrangères.</p>
 
           <p className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
-            <AlertCircle className="w-3 h-3" /> L'analyse IA prend environ 15 secondes. 
+            <AlertCircle className="w-3 h-3" /> L'analyse prend environ 15 secondes. 
             {hasUnlimitedCredits 
               ? <span className="ml-1">Crédits : <strong className="text-white">Illimités 👑</strong></span>
               : <span className="ml-1">Crédits restants : <strong className="text-white">{credits}</strong></span>

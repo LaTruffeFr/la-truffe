@@ -202,7 +202,7 @@ const Pricing = () => {
             <AccordionItem value="item-1" className="border-b-slate-100">
               <AccordionTrigger className="text-slate-900 font-black text-lg hover:text-indigo-600 transition-colors">Pourquoi ce n'est pas 100% gratuit ?</AccordionTrigger>
               <AccordionContent className="text-slate-600 font-medium text-base leading-relaxed">
-                Notre technologie n'est pas une simple calculatrice. Elle interroge des bases de données de centaines de milliers de véhicules et utilise l'Intelligence Artificielle générative la plus puissante du marché (Google Gemini) pour analyser chaque option et chaque maladie moteur. Chaque scan nous coûte de l'argent en puissance de calcul.
+                Notre technologie n'est pas une simple calculatrice. Elle interroge des bases de données de centaines de milliers de véhicules et utilise un algorithme d'analyse avancé propriétaire pour évaluer chaque option et chaque maladie moteur. Chaque scan nous coûte de l'argent en puissance de calcul.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2" className="border-b-slate-100">

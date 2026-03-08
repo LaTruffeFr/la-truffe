@@ -253,7 +253,7 @@ export default function ListingDetails() {
                 )}
                 
                 <p className="text-xs text-slate-400 text-center mt-6">
-                  * Ce devis est une estimation générée par IA et ne remplace pas l'avis d'un mécanicien professionnel sur place.
+                  * Ce devis est une estimation générée par notre moteur d'expertise et ne remplace pas l'avis d'un mécanicien professionnel sur place.
                 </p>
               </div>
             </div>

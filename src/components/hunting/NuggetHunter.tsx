@@ -200,7 +200,7 @@ const NuggetHunter = () => {
               {loadingTexts[loadingStep]}
             </h3>
             <p className="text-slate-500 font-medium max-w-md">
-              L'IA Gemini analyse les annonces Leboncoin pour trouver les meilleures affaires sur {marque} {modele}.
+              Notre moteur d'analyse scanne les annonces Leboncoin pour trouver les meilleures affaires sur {marque} {modele}.
             </p>
             <div className="w-64 bg-slate-100 rounded-full h-2 mt-8 overflow-hidden">
               <div

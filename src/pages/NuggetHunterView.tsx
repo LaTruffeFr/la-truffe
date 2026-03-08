@@ -209,7 +209,7 @@ export default function NuggetHunterView() {
               {loadingTexts[loadingStep]}
             </h3>
             <p className="text-slate-500 font-medium max-w-md text-center mb-8">
-              L'IA analyse les annonces Leboncoin pour <span className="font-bold text-slate-700">{marque} {modele}</span>.
+              Notre moteur d'analyse scanne les annonces Leboncoin pour <span className="font-bold text-slate-700">{marque} {modele}</span>.
             </p>
             <div className="w-72 bg-slate-100 rounded-full h-2.5 overflow-hidden">
               <div

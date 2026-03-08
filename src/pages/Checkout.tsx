@@ -43,7 +43,7 @@ const Checkout = () => {
       id: 'chasseur', 
       name: "Pack Chasseur", 
       price: 9.90, 
-      credits: "10 Crédits IA", 
+      credits: "10 Crédits d'Expertise", 
       desc: "Le choix des acheteurs actifs", 
       tag: "Recommandé",
       icon: Target,
