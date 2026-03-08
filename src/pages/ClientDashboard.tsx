@@ -147,7 +147,7 @@ const ClientDashboard = () => {
           
           {/* --- SIDEBAR MENU --- */}
           <aside className="lg:col-span-3 space-y-6">
-            <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden">
+            <Card className="rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
               
               {/* Wallet & Profil */}
               <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
