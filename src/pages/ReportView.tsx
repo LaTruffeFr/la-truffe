@@ -406,7 +406,7 @@ const ReportView = () => {
                 {report.market_data.original_title}
               </h1>
             ) : (
-              <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter leading-none mb-6">
+              <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tighter leading-none mb-4 md:mb-6">
                 {report.marque} <span className="text-primary">{report.modele}</span>
               </h1>
             )}
