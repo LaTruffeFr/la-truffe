@@ -65,7 +65,7 @@ const Checkout = () => {
 
   // @ts-ignore
   const selectedPack = packs[selectedPlanId] || packs['chasseur'];
-  const priceId = PRICE_IDS[selectedPlanId as keyof typeof PRICE_IDS];
+  const plan = PLANS[selectedPlanId as keyof typeof PLANS];
 
   const handleCheckout = async () => {
     // Validation email pour les invités
