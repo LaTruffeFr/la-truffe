@@ -559,13 +559,13 @@ const ReportView = () => {
                     <div className="divide-y divide-dashed divide-border flex-1 p-2">
                       {devisItems.length > 0 ? devisItems.map((item, i) => (
                         <div key={i} className="flex justify-between items-center px-4 py-3">
-                          <span className={`font-bold text-sm pr-4 leading-tight ${item.deja_fait ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700'}`}>
+                          <span className={`font-bold text-sm pr-4 leading-tight ${item.deja_fait ? 'text-muted-foreground line-through decoration-muted-foreground/50' : 'text-foreground/80'}`}>
                             {item.piece}
                           </span>
                           {item.deja_fait ? (
-                            <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[9px] uppercase tracking-widest px-2 py-0.5 shrink-0 whitespace-nowrap">Déjà fait</Badge>
+                            <Badge className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-0 text-[9px] uppercase tracking-widest px-2 py-0.5 shrink-0 whitespace-nowrap">Déjà fait</Badge>
                           ) : (
-                            <span className="text-slate-900 font-black whitespace-nowrap">+{safeNum(item.cout_euros)} €</span>
+                            <span className="text-foreground font-black whitespace-nowrap">+{safeNum(item.cout_euros)} €</span>
                           )}
                         </div>
                       )) : (
