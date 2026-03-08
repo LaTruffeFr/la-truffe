@@ -130,10 +130,10 @@ export default function Landing() {
           <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
             <div>
               <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 mb-6">Démonstration</Badge>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-6">
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight mb-4 md:mb-6">
                 Le vendeur dit : <br/><span className="text-slate-400 font-medium italic">"Rien à prévoir."</span>
               </h2>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-8">
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight mb-6 md:mb-8">
                 La Truffe répond : <br/><span className="text-emerald-400">"Préparez 1 500€."</span>
               </h2>
               <p className="text-slate-400 text-lg font-medium leading-relaxed mb-8">
