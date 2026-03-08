@@ -132,7 +132,7 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
               const isSelected = selected.includes(report.id);
               const imageUrl = getReportImage(report);
               const prixAnnonce = report.prix_affiche;
-              const coteTruffe = report.prix_estime;
+              const coteTruffe = report.prix_truffe || report.prix_estime;
 
               return (
                 <div
