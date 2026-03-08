@@ -21,7 +21,7 @@ import {
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Shield, Search,
   Loader2, Clock, CheckCircle, Eye, Car, ArrowRight,
-  ShieldCheck, Zap, Lock, Bell, Receipt, Download, Swords
+  ShieldCheck, Zap, Lock, Bell, Receipt, Download, Scale
 } from 'lucide-react';
 
 interface Report {
@@ -31,6 +31,13 @@ interface Report {
   status: 'pending' | 'in_progress' | 'completed';
   created_at: string;
   updated_at: string;
+  prix_affiche: number | null;
+  prix_estime: number | null;
+  kilometrage: number | null;
+  annee: number | null;
+  carburant: string | null;
+  market_data: any;
+  vehicles_data: any;
 }
 
 const statusConfig = {
@@ -63,7 +70,7 @@ const ClientDashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from('reports')
-      .select('id, marque, modele, status, created_at, updated_at')
+      .select('id, marque, modele, status, created_at, updated_at, prix_affiche, prix_estime, kilometrage, annee, carburant, market_data, vehicles_data')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -199,7 +206,7 @@ const ClientDashboard = () => {
                   className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
                   onClick={() => setActiveTab('garage')}
                 >
-                  <Swords className="w-5 h-5 mr-3" /> Mon Garage
+                  <Scale className="w-5 h-5 mr-3" /> Mon Garage
                 </Button>
                 
                 <Button 
@@ -332,7 +339,7 @@ const ClientDashboard = () => {
             {/* ONGLET : MON GARAGE */}
             {/* ------------------------------------- */}
             {activeTab === 'garage' && user && (
-              <GarageTab userId={user.id} />
+              <GarageTab userId={user.id} reports={reports.filter(r => r.status === 'completed')} isLoading={isLoadingReports} />
             )}
 
             {/* ------------------------------------- */}
