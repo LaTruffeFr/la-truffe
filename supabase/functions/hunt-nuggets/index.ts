@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         url: lbcUrl,
         formats: ['markdown'],
-        onlyMainContent: false,
-        waitFor: 3000,
+        onlyMainContent: true,
+        waitFor: 5000,
       }),
     });
 
