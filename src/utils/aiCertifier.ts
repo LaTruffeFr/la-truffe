@@ -19,7 +19,7 @@ FORMAT JSON ATTENDU (Réponds uniquement en JSON) :
 }
 `;
 
-// Fonction de secours (Mock) si l'IA ne répond pas
+// Fonction de secours (Mock) si le moteur ne répond pas
 function getMockCertification(details: any) {
   console.log("⚠️ Passage en mode Simulation (Fallback)");
   return {
