@@ -93,9 +93,26 @@ const Auth = () => {
             throw error;
           }
         } else {
+          // Appliquer le parrainage si un code existe
+          const refCode = localStorage.getItem('referral_code');
+          if (refCode) {
+            // On attend que le profil soit créé par le trigger, puis on applique
+            setTimeout(async () => {
+              try {
+                const { data: session } = await supabase.auth.getSession();
+                if (session?.session?.user) {
+                  await supabase.rpc('apply_referral', { 
+                    _new_user_id: session.session.user.id, 
+                    _referrer_id: refCode 
+                  });
+                  localStorage.removeItem('referral_code');
+                }
+              } catch (e) { console.error('Referral error:', e); }
+            }, 2000);
+          }
           toast({
             title: "Compte créé !",
-            description: "Vous pouvez maintenant vous connecter.",
+            description: refCode ? "Vous avez reçu 1 crédit bonus de parrainage ! 🎁" : "Vous pouvez maintenant vous connecter.",
           });
           setIsSignUp(false);
         }
