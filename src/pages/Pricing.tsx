@@ -166,7 +166,7 @@ const Pricing = () => {
                 <Euro className="w-7 h-7" />
               </div>
               <h4 className="font-black text-xl text-slate-900 mb-3">Devis Instantané</h4>
-              <p className="text-slate-600 font-medium leading-relaxed">Le vendeur dit "Rien à prévoir" ? L'IA calcule immédiatement le coût des révisions oubliées (DSG, Pompe à eau, Distribution).</p>
+              <p className="text-slate-600 font-medium leading-relaxed">Le vendeur dit "Rien à prévoir" ? Notre moteur d'analyse calcule immédiatement le coût des révisions oubliées (DSG, Pompe à eau, Distribution).</p>
             </div>
 
             <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 hover:shadow-lg transition-shadow">
