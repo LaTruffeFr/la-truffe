@@ -11,10 +11,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 // IDs des prix Stripe (vrais price_id) - À METTRE À JOUR AVEC TES ID STRIPE
-const PRICE_IDS: Record<string, string> = {
-  'curieux': 'price_1SqKnwPpNQZ47toNVMJLXVaA',  // 4.90€
-  'chasseur': 'price_1SqKo7PpNQZ47toNWEW27KV7', // 9.90€
-  'vip': 'price_1SqKoHPpNQZ47toNQ3RduPl3',      // 49.00€
+const PLANS: Record<string, { priceId: string; credits: number }> = {
+  'curieux': { priceId: 'price_1T8gzGPpNQZ47toNJaEMNkL9', credits: 1 },
+  'chasseur': { priceId: 'price_1T8gziPpNQZ47toNnH7WXUrx', credits: 3 },
+  'vip': { priceId: 'price_1T8h0XPpNQZ47toNyg0eyJlh', credits: 10 },
 };
 
 const Checkout = () => {
