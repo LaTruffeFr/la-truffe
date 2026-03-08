@@ -389,7 +389,7 @@ const ReportView = () => {
       <main id="report-content" className="flex-1 container mx-auto px-4 py-10 max-w-5xl space-y-10">
         
         {/* --- 1. HERO SECTION --- */}
-        <div className="pdf-section flex flex-col md:flex-row items-center md:items-start gap-8 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
+        <div className="pdf-section flex flex-col md:flex-row items-center md:items-start gap-8 bg-card p-6 rounded-[2.5rem] shadow-xl dark:shadow-none border border-border">
           <div className="w-48 h-48 sm:w-56 sm:h-56 shrink-0 rounded-[2rem] overflow-hidden shadow-inner border-4 border-slate-50 relative group">
             <img src={imageCover} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Vehicule" />
             <div className="absolute top-3 left-3">
