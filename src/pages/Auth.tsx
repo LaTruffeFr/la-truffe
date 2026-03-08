@@ -43,7 +43,7 @@ const Auth = () => {
       } else if (isAdmin) {
         navigate('/admin', { replace: true });
       } else {
-        navigate('/client-dashboard', { replace: true });
+        navigate('/client', { replace: true });
       }
     }
   }, [user, isAdmin, isRoleLoading, navigate, redirectUrl]);
