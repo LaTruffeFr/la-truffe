@@ -17,6 +17,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
   const { user, isAdmin, credits } = useAuth();
   const { hasUnlimitedCredits } = useVipAccess();
   const navigate = useNavigate();
+  const [showPricing, setShowPricing] = useState(false);
 
   // Effet pour rendre le header légèrement transparent au scroll
   useEffect(() => {
