@@ -278,6 +278,7 @@ const ClientDashboard = () => {
                     {reports.map((report) => {
                       const status = statusConfig[report.status];
                       const StatusIcon = status.icon;
+                      const imageUrl = report.market_data?.image_url || (report.vehicles_data?.[0]?.image) || null;
                       return (
                         <Card 
                           key={report.id} 
@@ -286,9 +287,13 @@ const ClientDashboard = () => {
                         >
                           <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
                             <div className="flex items-center gap-5 min-w-0">
-                              <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-600 transition-colors border border-slate-100 group-hover:border-indigo-600">
-                                <FileText className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
-                              </div>
+                              {imageUrl ? (
+                                <img src={imageUrl} alt={report.marque} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 shadow-sm border border-slate-100 group-hover:border-indigo-300 transition-colors" />
+                              ) : (
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-indigo-300 transition-colors">
+                                  <Car className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                </div>
+                              )}
                               <div className="min-w-0">
                                 <h3 className="font-black text-lg text-slate-900 truncate mb-1 group-hover:text-indigo-600 transition-colors">
                                   {report.marque} {report.modele}
