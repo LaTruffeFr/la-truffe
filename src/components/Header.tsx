@@ -52,10 +52,10 @@ export const Header = ({ activeLink }: HeaderProps) => {
           {/* LOGO */}
           <Link 
             to="/" 
-            className="flex items-center gap-2 font-black text-2xl tracking-tighter text-slate-900 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2 font-black text-2xl tracking-tighter text-foreground hover:opacity-80 transition-opacity"
           >
             <img src={logoTruffe} alt="La Truffe" className="w-8 h-8 rounded-lg object-cover" />
-            <span className="font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-950 via-indigo-700 to-indigo-500">La Truffe</span>
+            <span className="font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-950 via-indigo-700 to-indigo-500 dark:from-indigo-300 dark:via-indigo-400 dark:to-indigo-500">La Truffe</span>
           </Link>
 
           {/* DESKTOP NAVIGATION */}
