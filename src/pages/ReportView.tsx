@@ -639,11 +639,11 @@ const ReportView = () => {
 
         {/* --- 6. ÉQUIPEMENTS CLÉS (MODE FICHE TECHNIQUE LARGE) --- */}
         {isSingleAudit && (
-          <div className="pdf-section space-y-6 pt-8 border-t border-slate-200 break-inside-avoid">
-            <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-              <Settings2 className="w-7 h-7 text-slate-400" /> Équipements & Options détectés
+          <div className="pdf-section space-y-6 pt-8 border-t border-border break-inside-avoid">
+            <h3 className="text-2xl font-black text-foreground flex items-center gap-3">
+              <Settings2 className="w-7 h-7 text-muted-foreground" /> Équipements & Options détectés
             </h3>
-            <Card className="rounded-[2rem] border-slate-200 shadow-md bg-white p-6 md:p-8">
+            <Card className="rounded-[2rem] border-border shadow-md dark:shadow-none bg-card p-6 md:p-8">
               {Array.isArray(singleAuditData?.options) && singleAuditData.options.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
                   {singleAuditData.options.map((opt: string, i: number) => (
