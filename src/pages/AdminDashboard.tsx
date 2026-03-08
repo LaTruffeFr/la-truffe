@@ -275,6 +275,11 @@ function AdminDashboardInner() {
           </TabsList>
         </div>
 
+        {/* --- ONGLET VUE D'ENSEMBLE --- */}
+        <TabsContent value="overview" className="flex-1 m-0">
+          <AdminOverviewTab totalUsers={allUsers.length} totalReports={allUsers.length * 3} />
+        </TabsContent>
+
         {/* --- ONGLET MODÉRATION --- */}
         <TabsContent value="moderation" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
