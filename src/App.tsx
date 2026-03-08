@@ -19,6 +19,11 @@ import Vendre from "./pages/SellCar";
 import ReportView from "./pages/ReportView";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Contact from "./pages/Contact";
+import CGV from "./pages/CGV";
+import MentionsLegales from "./pages/MentionsLegales";
+import About from "./pages/About";
+import WhyUs from "./pages/WhyUs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
