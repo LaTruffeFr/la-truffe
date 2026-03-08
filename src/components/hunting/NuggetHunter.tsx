@@ -38,6 +38,7 @@ const NuggetHunter = () => {
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
   const [budget, setBudget] = useState('');
+  const [kmMax, setKmMax] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [nuggets, setNuggets] = useState<Nugget[]>([]);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -51,16 +52,13 @@ const NuggetHunter = () => {
   ];
 
   const handleSearch = async () => {
-    if (!marque.trim() || !modele.trim() || !budget.trim()) {
-      toast({ variant: 'destructive', title: 'Champs requis', description: 'Remplissez tous les champs.' });
+    if (!marque.trim() || !modele.trim()) {
+      toast({ variant: 'destructive', title: 'Champs requis', description: 'Remplissez au moins la marque et le modèle.' });
       return;
     }
 
-    const budgetNum = parseInt(budget);
-    if (isNaN(budgetNum) || budgetNum < 500) {
-      toast({ variant: 'destructive', title: 'Budget invalide', description: 'Entrez un budget minimum de 500€.' });
-      return;
-    }
+    const budgetNum = budget.trim() ? parseInt(budget) : undefined;
+    const kmMaxNum = kmMax.trim() ? parseInt(kmMax) : undefined;
 
     setIsLoading(true);
     setNuggets([]);
@@ -73,7 +71,7 @@ const NuggetHunter = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('hunt-nuggets', {
-        body: { marque: marque.trim(), modele: modele.trim(), budget: budgetNum },
+        body: { marque: marque.trim(), modele: modele.trim(), budget: budgetNum, km_max: kmMaxNum },
       });
 
       clearInterval(interval);
@@ -124,7 +122,7 @@ const NuggetHunter = () => {
         </div>
 
         <CardContent className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="space-y-2">
               <Label className="font-bold text-slate-700 text-sm">Marque</Label>
               <Input
@@ -146,7 +144,7 @@ const NuggetHunter = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 text-sm">Budget Max (€)</Label>
+              <Label className="font-bold text-slate-700 text-sm">Budget Max (€) <span className="text-slate-400 font-normal">optionnel</span></Label>
               <Input
                 type="number"
                 placeholder="ex: 15000"
@@ -154,7 +152,17 @@ const NuggetHunter = () => {
                 onChange={e => setBudget(e.target.value)}
                 className="h-12 font-medium rounded-xl border-slate-200"
                 disabled={isLoading}
-                min={500}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-slate-700 text-sm">Km Max <span className="text-slate-400 font-normal">optionnel</span></Label>
+              <Input
+                type="number"
+                placeholder="ex: 150000"
+                value={kmMax}
+                onChange={e => setKmMax(e.target.value)}
+                className="h-12 font-medium rounded-xl border-slate-200"
+                disabled={isLoading}
               />
             </div>
           </div>
