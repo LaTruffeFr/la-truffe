@@ -586,12 +586,12 @@ const ReportView = () => {
         )}
 
         {/* --- 5. LE PLAYBOOK (ÉTAPE PAR ÉTAPE) --- */}
-        <div className="pdf-section space-y-8 pt-8 border-t border-slate-200">
+        <div className="pdf-section space-y-8 pt-8 border-t border-border">
           <div>
-            <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-              <Target className="w-7 h-7 text-indigo-500" /> Playbook de Négociation
+            <h3 className="text-2xl font-black text-foreground flex items-center gap-3">
+              <Target className="w-7 h-7 text-primary" /> Playbook de Négociation
             </h3>
-            <p className="text-slate-500 font-medium mt-1">Votre stratégie pas-à-pas pour sécuriser cet achat au meilleur prix.</p>
+            <p className="text-muted-foreground font-medium mt-1">Votre stratégie pas-à-pas pour sécuriser cet achat au meilleur prix.</p>
           </div>
           
           <div className="grid gap-6">
