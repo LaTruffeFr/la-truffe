@@ -28,9 +28,10 @@ export default function AuditPage() {
   const { user, isLoading: authLoading, credits, refreshCredits, isAdmin } = useAuth();
   const { hasUnlimitedCredits } = useVipAccess();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(searchParams.get('url') || "");
   const [manualDescription, setManualDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
