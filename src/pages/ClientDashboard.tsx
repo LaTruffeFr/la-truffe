@@ -422,8 +422,8 @@ const ClientDashboard = () => {
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
                 <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-6 md:mb-8">Facturation & Crédits</h2>
                 
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
-                  <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-slate-900 overflow-hidden text-white relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+                  <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl bg-slate-900 overflow-hidden text-white relative">
                     <div className="absolute top-0 right-0 p-6 opacity-10"><Zap className="w-32 h-32" /></div>
                     <CardContent className="p-8 relative z-10">
                       <h3 className="text-indigo-400 font-black text-sm uppercase tracking-widest mb-2">Offre Actuelle</h3>
