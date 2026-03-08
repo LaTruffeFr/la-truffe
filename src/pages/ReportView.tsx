@@ -364,7 +364,7 @@ const ReportView = () => {
   const imageCover = isSingleAudit ? (singleAuditData?.image_url || `data:image/png;base64,${singleAuditData?.screenshot}`) : vehiclesData[0]?.image;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground">
       
       {/* HEADER */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50 h-16 flex items-center px-4 md:px-6 print:hidden">
