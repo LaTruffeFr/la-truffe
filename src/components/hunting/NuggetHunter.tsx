@@ -71,7 +71,7 @@ const NuggetHunter = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('hunt-nuggets', {
-        body: { marque: marque.trim(), modele: modele.trim(), budget: budgetNum },
+        body: { marque: marque.trim(), modele: modele.trim(), budget: budgetNum, km_max: kmMaxNum },
       });
 
       clearInterval(interval);
