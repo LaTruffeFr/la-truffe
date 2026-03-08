@@ -250,26 +250,26 @@ const ClientDashboard = () => {
             {activeTab === 'reports' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Mes Audits IA</h2>
-                  <Button onClick={() => navigate('/audit')} className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-6 rounded-xl font-bold shadow-lg shadow-indigo-200">
+                  <h2 className="text-3xl font-black text-foreground tracking-tight">Mes Audits IA</h2>
+                  <Button onClick={() => navigate('/audit')} className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-6 rounded-xl font-bold shadow-lg shadow-primary/20">
                     <Plus className="w-5 h-5 mr-2" /> Nouveau Scan
                   </Button>
                 </div>
                 
                 {isLoadingReports ? (
                   <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
                   </div>
                 ) : reports.length === 0 ? (
-                  <Card className="border-slate-200 shadow-sm border-dashed rounded-[2rem] min-h-[400px] flex flex-col items-center justify-center text-center p-8 bg-white">
-                    <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                      <FolderOpen className="w-10 h-10 text-indigo-400" />
+                  <Card className="border-border shadow-sm border-dashed rounded-[2rem] min-h-[400px] flex flex-col items-center justify-center text-center p-8 bg-card">
+                    <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                      <FolderOpen className="w-10 h-10 text-primary/60" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Aucun audit pour l'instant</h3>
-                    <p className="text-slate-500 max-w-md mx-auto mb-8 font-medium">
+                    <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Aucun audit pour l'instant</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
                       Commencez par coller l'URL d'une annonce Leboncoin ou La Centrale pour que l'IA traque les vices cachés.
                     </p>
-                    <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
+                    <Button size="lg" className="bg-foreground hover:bg-foreground/90 text-background h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
                       <Search className="w-5 h-5 mr-2" /> Lancer ma première analyse
                     </Button>
                   </Card>
