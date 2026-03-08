@@ -154,12 +154,19 @@ Renvoie un JSON valide : { "top5": [ { "rank": 1, "title": "...", "price": 0, "k
       );
     }
 
+    const parseNumber = (value: unknown): number => {
+      if (typeof value === 'number') return value;
+      if (typeof value !== 'string') return NaN;
+      const cleaned = value.replace(/[^\d]/g, '');
+      return cleaned ? Number(cleaned) : NaN;
+    };
+
     let filtered = parsed.top5
       .map((item, index) => ({
         rank: index + 1,
         title: String(item.title || '').trim(),
-        price: Number(item.price),
-        km: Number(item.km),
+        price: parseNumber(item.price),
+        km: parseNumber(item.km),
         link: String(item.link || '').trim(),
         image_url: item.image_url || null,
         expert_reason: item.expert_reason || 'Annonce filtrée automatiquement selon le budget.',
@@ -167,16 +174,13 @@ Renvoie un JSON valide : { "top5": [ { "rank": 1, "title": "...", "price": 0, "k
       .filter((item) =>
         item.title &&
         Number.isFinite(item.price) &&
-        Number.isFinite(item.km) &&
         /^https:\/\/www\.leboncoin\.fr\/ad\//.test(item.link)
       );
 
-    if (parsedBudget) {
-      filtered = filtered.filter((item) => item.price <= parsedBudget);
-    }
+    filtered = filtered.filter((item) => item.price <= parsedBudget);
 
     if (km_max && Number.isFinite(Number(km_max))) {
-      filtered = filtered.filter((item) => item.km <= Number(km_max));
+      filtered = filtered.filter((item) => !Number.isFinite(item.km) || item.km <= Number(km_max));
     }
 
     filtered = filtered.slice(0, 5).map((item, index) => ({ ...item, rank: index + 1 }));
