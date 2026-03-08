@@ -484,7 +484,7 @@ const ReportView = () => {
           </Card>
         </div>
 
-        {/* --- 3. VERDICT IA --- */}
+        {/* --- 3. VERDICT EXPERT --- */}
         <div className="pdf-section bg-card border border-primary/10 rounded-2xl md:rounded-[2rem] p-4 md:p-8 shadow-lg shadow-primary/5 dark:shadow-none flex flex-col md:flex-row items-start gap-4 md:gap-6 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
           <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20 shrink-0 relative z-10">
@@ -670,7 +670,7 @@ const ReportView = () => {
           <div>
             <h3 className="font-bold text-foreground text-base mb-2">Notre mission : Vous protéger</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              La Truffe a été conçue pour vous accompagner et vous donner l'avantage lors de votre achat. Ce rapport est une aide à la décision générée par Intelligence Artificielle à partir des données fournies par le vendeur. Bien qu'il détecte la majorité des pièges, il ne remplace pas votre vigilance lors de l'essai physique du véhicule. Gardez l'œil ouvert, et bonne route !
+              La Truffe a été conçue pour vous accompagner et vous donner l'avantage lors de votre achat. Ce rapport est une aide à la décision générée par notre moteur d'analyse exclusif à partir des données fournies par le vendeur. Bien qu'il détecte la majorité des pièges, il ne remplace pas votre vigilance lors de l'essai physique du véhicule. Gardez l'œil ouvert, et bonne route !
             </p>
           </div>
         </div>

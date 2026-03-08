@@ -24,11 +24,11 @@ const ReferralCard = () => {
   };
 
   const shareWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`🐕 La Truffe - L'IA qui traque les arnaques auto !\nUtilise mon lien pour obtenir 1 audit gratuit :\n${referralLink}`)}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(`🐕 La Truffe - L'expert qui traque les arnaques auto !\nUtilise mon lien pour obtenir 1 audit gratuit :\n${referralLink}`)}`, '_blank');
   };
 
   const shareTwitter = () => {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Je viens de découvrir La Truffe 🐕 — l'IA qui analyse les annonces auto pour débusquer les arnaques.\n\nUtilise mon lien pour 1 audit gratuit 👇\n${referralLink}`)}`, '_blank');
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Je viens de découvrir La Truffe 🐕 — l'outil qui analyse les annonces auto pour débusquer les arnaques.\n\nUtilise mon lien pour 1 audit gratuit 👇\n${referralLink}`)}`, '_blank');
   };
 
   if (!user) return null;

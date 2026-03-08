@@ -37,7 +37,7 @@ const Pricing = () => {
             Éviter une arnaque coûte <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">moins cher</span> qu'un café.
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed">
-            L'Intelligence Artificielle consomme des ressources pour scanner les vices cachés. Choisissez le pack de crédits adapté à votre recherche.
+            Notre algorithme d'expertise consomme des ressources pour scanner les vices cachés. Choisissez le pack de crédits adapté à votre recherche.
           </p>
         </div>
       </section>
@@ -62,7 +62,7 @@ const Pricing = () => {
                 </div>
 
                 <ul className="space-y-4 text-sm font-bold text-slate-700 mb-8">
-                  <li className="flex items-center gap-3"><Zap className="w-5 h-5 text-indigo-500" /> <span className="text-slate-900 font-black">3 Crédits IA</span> (3 URL)</li>
+                  <li className="flex items-center gap-3"><Zap className="w-5 h-5 text-indigo-500" /> <span className="text-slate-900 font-black">3 Crédits d'Expertise</span> (3 URL)</li>
                   <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Déblocage du Playbook Négociation</li>
                   <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Devis chiffré des réparations</li>
                 </ul>
@@ -95,7 +95,7 @@ const Pricing = () => {
                 </div>
 
                 <ul className="space-y-4 text-sm font-bold text-slate-300 mb-8">
-                  <li className="flex items-center gap-3"><Zap className="w-5 h-5 text-indigo-400" /> <span className="text-white font-black">10 Crédits IA</span> (10 URL)</li>
+                  <li className="flex items-center gap-3"><Zap className="w-5 h-5 text-indigo-400" /> <span className="text-white font-black">10 Crédits d'Expertise</span> (10 URL)</li>
                   <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Déblocage du Playbook Négociation</li>
                   <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Devis chiffré des réparations</li>
                   <li className="flex items-center gap-3"><Shield className="w-5 h-5 text-indigo-400" /> 1 Annonce Vendeur Premium incluse</li>
@@ -157,7 +157,7 @@ const Pricing = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 max-w-2xl mx-auto">
             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4">Investissement immédiat</h2>
-            <p className="text-slate-500 text-lg font-medium">Ne payez plus jamais une voiture au-dessus de sa vraie valeur. L'IA trouve la faille, vous négociez.</p>
+            <p className="text-slate-500 text-lg font-medium">Ne payez plus jamais une voiture au-dessus de sa vraie valeur. Notre algorithme trouve la faille, vous négociez.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -166,7 +166,7 @@ const Pricing = () => {
                 <Euro className="w-7 h-7" />
               </div>
               <h4 className="font-black text-xl text-slate-900 mb-3">Devis Instantané</h4>
-              <p className="text-slate-600 font-medium leading-relaxed">Le vendeur dit "Rien à prévoir" ? L'IA calcule immédiatement le coût des révisions oubliées (DSG, Pompe à eau, Distribution).</p>
+              <p className="text-slate-600 font-medium leading-relaxed">Le vendeur dit "Rien à prévoir" ? Notre moteur d'analyse calcule immédiatement le coût des révisions oubliées (DSG, Pompe à eau, Distribution).</p>
             </div>
 
             <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 hover:shadow-lg transition-shadow">
@@ -202,7 +202,7 @@ const Pricing = () => {
             <AccordionItem value="item-1" className="border-b-slate-100">
               <AccordionTrigger className="text-slate-900 font-black text-lg hover:text-indigo-600 transition-colors">Pourquoi ce n'est pas 100% gratuit ?</AccordionTrigger>
               <AccordionContent className="text-slate-600 font-medium text-base leading-relaxed">
-                Notre technologie n'est pas une simple calculatrice. Elle interroge des bases de données de centaines de milliers de véhicules et utilise l'Intelligence Artificielle générative la plus puissante du marché (Google Gemini) pour analyser chaque option et chaque maladie moteur. Chaque scan nous coûte de l'argent en puissance de calcul.
+                Notre technologie n'est pas une simple calculatrice. Elle interroge des bases de données de centaines de milliers de véhicules et utilise un algorithme d'analyse avancé propriétaire pour évaluer chaque option et chaque maladie moteur. Chaque scan nous coûte de l'argent en puissance de calcul.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2" className="border-b-slate-100">

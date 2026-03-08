@@ -19,13 +19,13 @@ FORMAT JSON ATTENDU (Réponds uniquement en JSON) :
 }
 `;
 
-// Fonction de secours (Mock) si l'IA ne répond pas
+// Fonction de secours (Mock) si le moteur ne répond pas
 function getMockCertification(details: any) {
   console.log("⚠️ Passage en mode Simulation (Fallback)");
   return {
     score: 85,
     verdict: "Très Bonne (Simulé)",
-    avis: `Véhicule ${details.marque} ${details.modele} apparemment en excellent état. Le kilométrage de ${details.mileage}km est cohérent avec l'année ${details.year}. (Note: Analyse simulée suite indisponibilité IA)`,
+    avis: `Véhicule ${details.marque} ${details.modele} apparemment en excellent état. Le kilométrage de ${details.mileage}km est cohérent avec l'année ${details.year}. (Note: Analyse simulée suite indisponibilité du moteur)`,
     tags: ["Dossier Complet", "Prix Cohérent", "Certifié LaTruffe"]
   };
 }
@@ -73,8 +73,8 @@ export async function certifyCar(details: any, imageFile: File) {
     return JSON.parse(text);
 
   } catch (error) {
-    // 2. Si L'IA plante (404, 429, Network Error...), on attrape l'erreur et on simule
-    console.error("❌ Erreur IA (Passage automatique en simulation):", error);
+    // 2. Si le moteur plante (404, 429, Network Error...), on attrape l'erreur et on simule
+    console.error("❌ Erreur moteur (Passage automatique en simulation):", error);
     return getMockCertification(details);
   }
 }

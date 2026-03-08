@@ -183,7 +183,7 @@ export default function ListingDetails() {
                 </div>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">L'avis du Cerveau Hybride</h4>
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">L'avis de l'Expert</h4>
                 <p className="text-slate-700 leading-relaxed font-medium italic">
                   "{car.ai_avis}"
                 </p>
@@ -248,12 +248,12 @@ export default function ListingDetails() {
                 ) : (
                   <div className="text-center py-8">
                     <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                    <p className="text-slate-600 font-medium">Aucun frais majeur à prévoir selon l'IA.</p>
+                    <p className="text-slate-600 font-medium">Aucun frais majeur à prévoir selon notre analyse.</p>
                   </div>
                 )}
                 
                 <p className="text-xs text-slate-400 text-center mt-6">
-                  * Ce devis est une estimation générée par IA et ne remplace pas l'avis d'un mécanicien professionnel sur place.
+                  * Ce devis est une estimation générée par notre moteur d'expertise et ne remplace pas l'avis d'un mécanicien professionnel sur place.
                 </p>
               </div>
             </div>

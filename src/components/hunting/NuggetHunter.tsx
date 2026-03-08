@@ -46,7 +46,7 @@ const NuggetHunter = () => {
   const loadingTexts = [
     'Connexion au radar Leboncoin...',
     'Scan des annonces en cours...',
-    'L\'IA analyse les meilleures offres...',
+    'Analyse algorithmique des meilleures offres...',
     'Classement des pépites...',
     'Finalisation du Top 5...',
   ];
@@ -87,7 +87,7 @@ const NuggetHunter = () => {
 
       if (data?.top5) {
         setNuggets(data.top5);
-        toast({ title: `${data.top5.length} pépites trouvées ! 🏆`, description: 'L\'IA a sélectionné les meilleures offres.' });
+        toast({ title: `${data.top5.length} pépites trouvées ! 🏆`, description: 'Notre algorithme a sélectionné les meilleures offres.' });
       }
     } catch (err: any) {
       console.error('Hunt error:', err);
@@ -116,7 +116,7 @@ const NuggetHunter = () => {
             </div>
             <div>
               <h2 className="text-2xl font-black text-white tracking-tight">Le Chasseur de Pépites</h2>
-              <p className="text-indigo-200 font-medium text-sm">Scan IA gratuit du marché Leboncoin • Top 5 des meilleures affaires</p>
+              <p className="text-indigo-200 font-medium text-sm">Scan gratuit du marché Leboncoin • Top 5 des meilleures affaires</p>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ const NuggetHunter = () => {
               {loadingTexts[loadingStep]}
             </h3>
             <p className="text-slate-500 font-medium max-w-md">
-              L'IA Gemini analyse les annonces Leboncoin pour trouver les meilleures affaires sur {marque} {modele}.
+              Notre moteur d'analyse scanne les annonces Leboncoin pour trouver les meilleures affaires sur {marque} {modele}.
             </p>
             <div className="w-64 bg-slate-100 rounded-full h-2 mt-8 overflow-hidden">
               <div

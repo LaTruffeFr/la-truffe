@@ -14,7 +14,7 @@ const PLANS = [
     price: '4,90€',
     priceId: 'price_1T8gzGPpNQZ47toNJaEMNkL9',
     description: 'Idéal pour tester',
-    features: ['1 audit complet', 'Rapport PDF', 'Score de confiance IA'],
+    features: ['1 audit complet', 'Rapport PDF', 'Score de confiance'],
     popular: false,
   },
   {
@@ -24,7 +24,7 @@ const PLANS = [
     price: '9,90€',
     priceId: 'price_1T8gziPpNQZ47toNnH7WXUrx',
     description: 'Le plus populaire',
-    features: ['3 audits complets', 'Rapport PDF', 'Score de confiance IA', 'Arguments de négo'],
+    features: ['3 audits complets', 'Rapport PDF', 'Score de confiance', 'Arguments de négo'],
     popular: true,
   },
   {
@@ -34,7 +34,7 @@ const PLANS = [
     price: '24,90€',
     priceId: 'price_1T8h0XPpNQZ47toNyg0eyJlh',
     description: 'Pour les pros',
-    features: ['10 audits complets', 'Rapport PDF', 'Score de confiance IA', 'Arguments de négo', 'Priorité d\'analyse'],
+    features: ['10 audits complets', 'Rapport PDF', 'Score de confiance', 'Arguments de négo', 'Priorité d\'analyse'],
     popular: false,
   },
 ];
@@ -87,7 +87,7 @@ export const PricingModal = ({ open, onOpenChange }: PricingModalProps) => {
               Rechargez votre flair 🐽
             </DialogTitle>
           </DialogHeader>
-          <p className="text-indigo-200/70 text-sm mt-2">Achetez des crédits pour auditer des annonces avec l'IA La Truffe</p>
+          <p className="text-indigo-200/70 text-sm mt-2">Achetez des crédits pour auditer des annonces avec La Truffe</p>
         </div>
 
         {/* Plans */}

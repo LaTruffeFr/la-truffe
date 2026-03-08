@@ -21,9 +21,9 @@ export default function SellLanding() {
   const benefits = [
     {
       icon: BarChart3,
-      title: "Analyse de marché IA",
+      title: "Analyse de marché avancée",
       description:
-        "Notre IA analyse les prix du marché en temps réel pour vous proposer le meilleur tarif",
+        "Notre algorithme analyse les prix du marché en temps réel pour vous proposer le meilleur tarif",
     },
     {
       icon: Users,
@@ -67,7 +67,7 @@ export default function SellLanding() {
       number: "2",
       title: "Nous analysons",
       description:
-        "Notre IA génère un rapport détaillé avec prix équitable et points forts",
+        "Notre moteur d'expertise génère un rapport détaillé avec prix équitable et points forts",
     },
     {
       number: "3",
@@ -235,7 +235,7 @@ export default function SellLanding() {
 
           <div className="space-y-4">
             {[
-              "Rapport IA détaillé valorisant votre véhicule",
+              "Rapport d'expertise détaillé valorisant votre véhicule",
               "Photo HD et galerie multi-photos",
               "Statistiques en temps réel (vues, contacts)",
               "Gestion des notifications de contact",

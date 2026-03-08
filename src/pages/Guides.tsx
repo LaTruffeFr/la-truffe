@@ -103,7 +103,7 @@ export default function Guides() {
             Tout savoir avant d'<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">acheter</span>
           </h1>
           <p className="text-lg text-slate-400 font-medium max-w-xl mx-auto mb-10">
-            Maladies chroniques, fiabilité, fourchette de prix : notre IA experte vous dit tout sur le modèle qui vous intéresse.
+            Maladies chroniques, fiabilité, fourchette de prix : notre moteur d'expertise vous dit tout sur le modèle qui vous intéresse.
           </p>
 
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">

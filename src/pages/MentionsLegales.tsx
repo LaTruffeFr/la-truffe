@@ -37,12 +37,12 @@ const MentionsLegales = () => (
 
         <h2 className="text-xl font-bold mt-8 mb-4 text-indigo-900">3. Propriété intellectuelle</h2>
         <p className="text-slate-600 leading-relaxed mb-4">
-          L'ensemble du contenu du site La Truffe (textes, graphismes, images, logos, icônes, logiciels, algorithmes d'Intelligence Artificielle) est la propriété exclusive de l'éditeur ou de ses partenaires. Toute reproduction, représentation ou diffusion, même partielle, est interdite sans autorisation écrite préalable, conformément aux articles L.111-1 et suivants du Code de la Propriété Intellectuelle.
+          L'ensemble du contenu du site La Truffe (textes, graphismes, images, logos, icônes, logiciels, algorithmes d'analyse avancés) est la propriété exclusive de l'éditeur ou de ses partenaires. Toute reproduction, représentation ou diffusion, même partielle, est interdite sans autorisation écrite préalable, conformément aux articles L.111-1 et suivants du Code de la Propriété Intellectuelle.
         </p>
 
         <h2 className="text-xl font-bold mt-8 mb-4 text-indigo-900">4. Responsabilité</h2>
         <p className="text-slate-600 leading-relaxed mb-4">
-          Les informations fournies sur le site le sont à titre indicatif et ne sauraient engager la responsabilité de l'éditeur. Les rapports d'audit générés par Intelligence Artificielle constituent une aide à la décision et ne se substituent ni à un contrôle mécanique professionnel, ni à un essai physique du véhicule. L'éditeur ne pourra être tenu responsable des dommages directs ou indirects résultant de l'utilisation des informations fournies.
+          Les informations fournies sur le site le sont à titre indicatif et ne sauraient engager la responsabilité de l'éditeur. Les rapports d'audit générés par notre moteur d'analyse constituent une aide à la décision et ne se substituent ni à un contrôle mécanique professionnel, ni à un essai physique du véhicule. L'éditeur ne pourra être tenu responsable des dommages directs ou indirects résultant de l'utilisation des informations fournies.
         </p>
 
         <h2 className="text-xl font-bold mt-8 mb-4 text-indigo-900">5. Données personnelles</h2>

@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     question: "Est-ce que ça marche pour toutes les voitures ?",
-    answer: "Oui, tant qu'il y a suffisamment d'annonces comparables sur le marché pour que l'IA puisse travailler."
+    answer: "Oui, tant qu'il y a suffisamment d'annonces comparables sur le marché pour que notre algorithme puisse travailler."
   },
   {
     question: "Pourquoi payer 19€ ?",

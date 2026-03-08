@@ -15,7 +15,7 @@ const features = [
   {
     icon: ShieldCheck,
     title: "L'Avantage La Truffe",
-    description: "Notre IA scanne le marché réel pour vous dire exactement combien négocier."
+    description: "Notre algorithme scanne le marché réel pour vous dire exactement combien négocier."
   }
 ];
 

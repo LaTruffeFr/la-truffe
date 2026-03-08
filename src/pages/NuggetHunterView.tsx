@@ -35,7 +35,7 @@ const rankBadges = [
 
 const loadingTexts = [
   'Connexion au radar Leboncoin...',
-  'Gemini analyse le marché...',
+  'Analyse algorithmique du marché...',
   'Extraction des photos...',
   'Identification des meilleures affaires...',
   'Classement du Top 5...',
@@ -124,7 +124,7 @@ export default function NuggetHunterView() {
             La Sélection
           </h1>
           <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
-            Laissez l'IA traquer les meilleures affaires du marché Leboncoin pour vous.
+            Laissez notre algorithme traquer les meilleures affaires du marché Leboncoin pour vous.
           </p>
         </div>
 
@@ -209,7 +209,7 @@ export default function NuggetHunterView() {
               {loadingTexts[loadingStep]}
             </h3>
             <p className="text-slate-500 font-medium max-w-md text-center mb-8">
-              L'IA analyse les annonces Leboncoin pour <span className="font-bold text-slate-700">{marque} {modele}</span>.
+              Notre moteur d'analyse scanne les annonces Leboncoin pour <span className="font-bold text-slate-700">{marque} {modele}</span>.
             </p>
             <div className="w-72 bg-slate-100 rounded-full h-2.5 overflow-hidden">
               <div

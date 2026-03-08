@@ -121,8 +121,8 @@ export const VehicleDataProvider = ({ children }: { children: React.ReactNode })
         }));
 
         toast({
-          title: "Analyse IA terminée",
-          description: `${data.analyses.length} annonces enrichies par l'IA.`,
+          title: "Analyse terminée",
+          description: `${data.analyses.length} annonces enrichies par notre algorithme.`,
           className: "bg-blue-600 text-white border-0"
         });
       }

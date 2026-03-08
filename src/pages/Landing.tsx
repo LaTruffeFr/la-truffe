@@ -137,7 +137,7 @@ export default function Landing() {
                 La Truffe répond : <br/><span className="text-emerald-400">"Préparez 1 500€."</span>
               </h2>
               <p className="text-slate-400 text-lg font-medium leading-relaxed mb-8">
-                En lisant simplement l'annonce, notre IA détecte le code moteur exact. Elle sait que sur cette version précise, la courroie de distribution et la pompe à eau doivent être changées à 120 000 km. Si ce n'est pas précisé dans l'annonce, c'est pour votre pomme.
+                En lisant simplement l'annonce, notre algorithme détecte le code moteur exact. Il sait que sur cette version précise, la courroie de distribution et la pompe à eau doivent être changées à 120 000 km. Si ce n'est pas précisé dans l'annonce, c'est pour votre pomme.
               </p>
               <ul className="space-y-4 mb-8">
                 <li className="flex items-center gap-3 text-slate-300 font-bold"><CheckCircle2 className="w-6 h-6 text-emerald-500" /> Génération d'un devis prévisionnel</li>
@@ -205,7 +205,7 @@ export default function Landing() {
               </div>
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-4">2. Diagnostic prédictif</h3>
-            <p className="text-slate-600 font-medium leading-relaxed">Boîte EDC fragile, chaîne de distribution qui se décale, surconsommation d'huile... L'IA connaît le talon d'Achille de chaque motorisation.</p>
+            <p className="text-slate-600 font-medium leading-relaxed">Boîte EDC fragile, chaîne de distribution qui se décale, surconsommation d'huile... Notre moteur d'analyse connaît le talon d'Achille de chaque motorisation.</p>
           </div>
           <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg transition-shadow">
             <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6">

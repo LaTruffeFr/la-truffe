@@ -90,11 +90,11 @@ export default function SellCar() {
     setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // --- SOUMISSION À L'IA ET SUPABASE ---
+  // --- SOUMISSION À L'EXPERTISE ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (imageFiles.length === 0) return alert("Une photo est obligatoire pour l'analyse IA !");
+    if (imageFiles.length === 0) return alert("Une photo est obligatoire pour l'analyse !");
     if (!formData.contact) return alert("Indiquez un moyen de contact.");
     if (!formData.motorisation || !formData.carburant) return alert("La motorisation et le carburant sont obligatoires.");
     
@@ -117,8 +117,8 @@ export default function SellCar() {
       });
 
       if (aiError || !aiAnalysis) {
-        console.error("Erreur IA:", aiError);
-        throw new Error("L'IA n'a pas pu analyser votre véhicule. Veuillez réessayer.");
+        console.error("Erreur analyse:", aiError);
+        throw new Error("L'expertise n'a pas pu analyser votre véhicule. Veuillez réessayer.");
       }
       
       const aiResult = { 
@@ -336,7 +336,7 @@ export default function SellCar() {
                             <Label className="font-bold text-slate-700">Description détaillée</Label>
                             <Textarea 
                               name="description" 
-                              placeholder="Soyez transparent. Listez les options, l'état des pneus, les entretiens récents, et les éventuels défauts. L'IA récompensera votre honnêteté par un meilleur score." 
+                              placeholder="Soyez transparent. Listez les options, l'état des pneus, les entretiens récents, et les éventuels défauts. Notre algorithme récompensera votre honnêteté par un meilleur score." 
                               value={formData.description} 
                               onChange={handleChange} 
                               className="min-h-[160px] bg-slate-50 border-slate-200 font-medium text-base resize-y rounded-2xl p-4" 
@@ -392,7 +392,7 @@ export default function SellCar() {
                             {loading ? (
                               <><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /> {loadingStep}</>
                             ) : (
-                              <><CheckCircle2 className="w-6 h-6 text-emerald-400" /> Soumettre l'annonce à l'IA</>
+                              <><CheckCircle2 className="w-6 h-6 text-emerald-400" /> Soumettre l'annonce à l'expertise</>
                             )}
                           </Button>
                         </div>

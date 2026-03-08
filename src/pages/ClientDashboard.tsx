@@ -42,7 +42,7 @@ interface Report {
 
 const statusConfig = {
   pending: { label: 'En file d\'attente', icon: Clock, color: 'bg-amber-50 text-amber-600 border-amber-200' },
-  in_progress: { label: 'Analyse IA', icon: Loader2, color: 'bg-indigo-50 text-indigo-600 border-indigo-200' },
+  in_progress: { label: 'Analyse en cours', icon: Loader2, color: 'bg-indigo-50 text-indigo-600 border-indigo-200' },
   completed: { label: 'Rapport Prêt', icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
 };
 
