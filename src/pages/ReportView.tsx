@@ -648,10 +648,10 @@ const ReportView = () => {
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
                   {singleAuditData.options.map((opt: string, i: number) => (
                     <li key={i} className="flex items-start gap-3 group">
-                      <div className="mt-0.5 text-indigo-400/70 group-hover:text-indigo-600 transition-colors shrink-0">
+                      <div className="mt-0.5 text-primary/70 group-hover:text-primary transition-colors shrink-0">
                         {getOptionIcon(opt)}
                       </div>
-                      <span className="font-bold text-slate-600 group-hover:text-slate-900 transition-colors text-sm leading-snug">{opt}</span>
+                      <span className="font-bold text-muted-foreground group-hover:text-foreground transition-colors text-sm leading-snug">{opt}</span>
                     </li>
                   ))}
                 </ul>
