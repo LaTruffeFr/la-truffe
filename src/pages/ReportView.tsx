@@ -601,17 +601,17 @@ const ReportView = () => {
               const isSMSBlock = !!smsText;
               
               return (
-                <Card key={i} className="border-slate-100 shadow-md rounded-[2rem] overflow-hidden break-inside-avoid bg-white">
+                <Card key={i} className="border-border shadow-md dark:shadow-none rounded-[2rem] overflow-hidden break-inside-avoid bg-card">
                   <div className="flex flex-col md:flex-row">
-                    <div className="bg-slate-50 p-6 md:p-8 flex md:flex-col items-center justify-center md:w-32 shrink-0 border-b md:border-b-0 md:border-r border-slate-100">
-                      <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200 text-indigo-600 flex items-center justify-center font-black text-xl mb-0 md:mb-2 mr-4 md:mr-0">
+                    <div className="bg-muted p-6 md:p-8 flex md:flex-col items-center justify-center md:w-32 shrink-0 border-b md:border-b-0 md:border-r border-border">
+                      <div className="w-12 h-12 rounded-2xl bg-card shadow-sm border border-border text-primary flex items-center justify-center font-black text-xl mb-0 md:mb-2 mr-4 md:mr-0">
                         {i+1}
                       </div>
-                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest hidden md:block text-center">Étape</span>
-                      <span className="font-black text-slate-700 md:hidden">{nego.titre}</span>
+                      <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest hidden md:block text-center">Étape</span>
+                      <span className="font-black text-foreground md:hidden">{nego.titre}</span>
                     </div>
                     <div className="p-6 md:p-8 flex-1">
-                      <h4 className="font-black text-xl text-slate-900 mb-4 hidden md:block">{nego.titre}</h4>
+                      <h4 className="font-black text-xl text-foreground mb-4 hidden md:block">{nego.titre}</h4>
                       {isSMSBlock ? (
                         <div className="space-y-6">
                           {formatText(nego.desc.split(smsMatch[0])[0])}
