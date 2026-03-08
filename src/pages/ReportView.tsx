@@ -690,6 +690,18 @@ const ReportView = () => {
         </div>
 
       </main>
+
+      {/* Sticky mobile share button */}
+      <div className="fixed bottom-4 left-4 right-4 z-50 sm:hidden print:hidden">
+        <Button
+          onClick={handleShareNegotiation}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-14 shadow-2xl shadow-emerald-600/30 text-base gap-2"
+        >
+          {isShareCopied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+          {isShareCopied ? 'Lien copié !' : 'Partager au vendeur 🤝'}
+        </Button>
+      </div>
+
       <Footer />
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
       <ReportAdModal open={showReportModal} onOpenChange={setShowReportModal} adUrl={report?.lien_annonce || ''} />
