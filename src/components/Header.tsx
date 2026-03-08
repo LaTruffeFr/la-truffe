@@ -154,6 +154,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
           )}
         </div>
       )}
+      <PricingModal open={showPricing} onOpenChange={setShowPricing} />
     </header>
   );
 };
