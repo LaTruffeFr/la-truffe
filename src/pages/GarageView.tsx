@@ -149,9 +149,9 @@ const GarageView = () => {
                 <Card
                   key={report.id}
                   onClick={() => toggleSelect(report.id)}
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg relative ${
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg dark:hover:shadow-none relative ${
                     isSelected
-                      ? 'ring-3 ring-indigo-500 shadow-lg shadow-indigo-100 bg-indigo-50/30'
+                      ? 'ring-3 ring-primary shadow-lg shadow-primary/10 bg-primary/5'
                       : 'hover:ring-1 hover:ring-slate-200'
                   }`}
                 >
