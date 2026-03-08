@@ -205,7 +205,7 @@ export default function Landing() {
               </div>
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-4">2. Diagnostic prédictif</h3>
-            <p className="text-slate-600 font-medium leading-relaxed">Boîte EDC fragile, chaîne de distribution qui se décale, surconsommation d'huile... L'IA connaît le talon d'Achille de chaque motorisation.</p>
+            <p className="text-slate-600 font-medium leading-relaxed">Boîte EDC fragile, chaîne de distribution qui se décale, surconsommation d'huile... Notre moteur d'analyse connaît le talon d'Achille de chaque motorisation.</p>
           </div>
           <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg transition-shadow">
             <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6">

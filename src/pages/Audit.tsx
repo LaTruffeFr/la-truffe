@@ -286,7 +286,7 @@ export default function AuditPage() {
           {[
             { icon: <Sparkles className="w-6 h-6 text-indigo-600" />, label: "Leboncoin", desc: "Copiez le lien de l'annonce depuis l'application." },
             { icon: <ShieldCheck className="w-6 h-6 text-indigo-600" />, label: "La Centrale", desc: "Fonctionne avec toutes les annonces pro ou particuliers." },
-            { icon: <Zap className="w-6 h-6 text-indigo-600" />, label: "IA Experte", desc: "Notre algorithme traque les incohérences techniques." }
+            { icon: <Zap className="w-6 h-6 text-indigo-600" />, label: "Expertise Avancée", desc: "Notre algorithme traque les incohérences techniques." }
           ].map((item, i) => (
             <div key={i} className="p-8 bg-card rounded-2xl border border-border shadow-sm dark:shadow-none">
               <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -28,7 +28,7 @@ const ReferralCard = () => {
   };
 
   const shareTwitter = () => {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Je viens de découvrir La Truffe 🐕 — l'IA qui analyse les annonces auto pour débusquer les arnaques.\n\nUtilise mon lien pour 1 audit gratuit 👇\n${referralLink}`)}`, '_blank');
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Je viens de découvrir La Truffe 🐕 — l'outil qui analyse les annonces auto pour débusquer les arnaques.\n\nUtilise mon lien pour 1 audit gratuit 👇\n${referralLink}`)}`, '_blank');
   };
 
   if (!user) return null;

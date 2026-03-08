@@ -235,7 +235,7 @@ export default function SellLanding() {
 
           <div className="space-y-4">
             {[
-              "Rapport IA détaillé valorisant votre véhicule",
+              "Rapport d'expertise détaillé valorisant votre véhicule",
               "Photo HD et galerie multi-photos",
               "Statistiques en temps réel (vues, contacts)",
               "Gestion des notifications de contact",

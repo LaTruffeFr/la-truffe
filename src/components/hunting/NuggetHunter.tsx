@@ -46,7 +46,7 @@ const NuggetHunter = () => {
   const loadingTexts = [
     'Connexion au radar Leboncoin...',
     'Scan des annonces en cours...',
-    'L\'IA analyse les meilleures offres...',
+    'Analyse algorithmique des meilleures offres...',
     'Classement des pépites...',
     'Finalisation du Top 5...',
   ];
