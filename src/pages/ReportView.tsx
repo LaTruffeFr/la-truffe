@@ -11,7 +11,7 @@ import {
   Download, CheckCircle2, TrendingDown, Calendar, Gauge, Fuel, 
   Euro, ShieldCheck, Loader2, History, Calculator, FileCheck, Copy, Check, Settings2, 
   Cpu, ScanSearch, Activity, Receipt, Hash, ShieldAlert, Sparkles, Snowflake, 
-  Flame, CircleDashed, Target, ExternalLink, MessageSquare
+  Flame, CircleDashed, Target, ExternalLink, MessageSquare, Flag
 } from "lucide-react";
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
