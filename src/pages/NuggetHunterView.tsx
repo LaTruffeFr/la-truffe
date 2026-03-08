@@ -107,7 +107,7 @@ export default function NuggetHunterView() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
-      <Header activeLink="hunting" />
+      <Header activeLink="selection" />
 
       {/* Background effects */}
       <div className="fixed top-40 left-1/4 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
@@ -121,7 +121,7 @@ export default function NuggetHunterView() {
             <Target className="w-4 h-4" /> Gratuit • Aucun crédit consommé
           </div>
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">
-            Le Chasseur de Pépites
+            La Sélection
           </h1>
           <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
             Laissez l'IA traquer les meilleures affaires du marché Leboncoin pour vous.
