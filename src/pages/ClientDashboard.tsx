@@ -147,10 +147,10 @@ const ClientDashboard = () => {
           
           {/* --- SIDEBAR MENU --- */}
           <aside className="lg:col-span-3 space-y-6">
-            <Card className="rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
+            <Card className="rounded-2xl lg:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
               
-              {/* Wallet & Profil */}
-              <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
+              {/* Wallet & Profil - hidden on mobile, shown on lg */}
+              <div className="hidden lg:block bg-slate-900 p-6 lg:p-8 text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><ShieldCheck className="w-24 h-24 text-white" /></div>
                 <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 backdrop-blur-sm relative z-10 shadow-inner">
                   <User className="w-10 h-10 text-white" />
