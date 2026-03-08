@@ -17,6 +17,7 @@ import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 import { Footer } from '@/components/landing';
 import { generatePDF } from '@/lib/pdfGenerator';
+import ReportAdModal from '@/components/reporting/ReportAdModal';
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
