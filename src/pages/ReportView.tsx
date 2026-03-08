@@ -679,11 +679,11 @@ const ReportView = () => {
         )}
 
         {/* --- DISCLAIMER --- */}
-        <div className="mt-16 p-6 md:p-8 bg-indigo-50/50 border border-indigo-100 rounded-2xl flex gap-4 items-start">
-          <ShieldCheck className="w-8 h-8 text-indigo-500 shrink-0 mt-0.5" />
+        <div className="mt-16 p-6 md:p-8 bg-primary/5 border border-primary/10 rounded-2xl flex gap-4 items-start">
+          <ShieldCheck className="w-8 h-8 text-primary shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-bold text-indigo-900 text-base mb-2">Notre mission : Vous protéger</h3>
-            <p className="text-sm text-indigo-700 leading-relaxed">
+            <h3 className="font-bold text-foreground text-base mb-2">Notre mission : Vous protéger</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               La Truffe a été conçue pour vous accompagner et vous donner l'avantage lors de votre achat. Ce rapport est une aide à la décision générée par Intelligence Artificielle à partir des données fournies par le vendeur. Bien qu'il détecte la majorité des pièges, il ne remplace pas votre vigilance lors de l'essai physique du véhicule. Gardez l'œil ouvert, et bonne route !
             </p>
           </div>
