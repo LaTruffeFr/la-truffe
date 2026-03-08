@@ -329,6 +329,13 @@ const ClientDashboard = () => {
             )}
 
             {/* ------------------------------------- */}
+            {/* ONGLET : MON GARAGE */}
+            {/* ------------------------------------- */}
+            {activeTab === 'garage' && user && (
+              <GarageTab userId={user.id} />
+            )}
+
+            {/* ------------------------------------- */}
             {/* ONGLET 3 : PARAMÈTRES (NOUVEAU) */}
             {/* ------------------------------------- */}
             {activeTab === 'settings' && (
