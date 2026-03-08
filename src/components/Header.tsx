@@ -77,9 +77,19 @@ export const Header = ({ activeLink }: HeaderProps) => {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-500">
-                  {hasUnlimitedCredits ? 'Crédits : Illimités 👑' : `Crédits : ${credits}`}
-                </span>
+                <div className="flex items-center gap-1.5 bg-slate-100 rounded-full px-3 py-1.5">
+                  <span className="text-xs font-bold text-slate-700">
+                    {hasUnlimitedCredits ? '👑 Illimités' : `🪙 ${credits} Crédit${credits !== 1 ? 's' : ''}`}
+                  </span>
+                  {!hasUnlimitedCredits && (
+                    <button
+                      onClick={() => setShowPricing(true)}
+                      className="w-5 h-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
                 <Button 
                   onClick={() => navigate('/client')} 
                   className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-10 px-5"
