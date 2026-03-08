@@ -71,6 +71,20 @@
     display: none !important;
   }
 
+  /* Masquer toasts, sonner, et overlays */
+  [data-sonner-toaster],
+  [role="status"],
+  .toaster,
+  .sonner-toast,
+  ol[data-sonner-toaster],
+  [data-radix-toast-viewport],
+  [data-state="open"][role="dialog"],
+  nav,
+  header,
+  footer {
+    display: none !important;
+  }
+
   /* Forcer fond blanc partout */
   body,
   .pdf-content,
