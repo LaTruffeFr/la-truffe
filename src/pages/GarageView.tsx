@@ -120,15 +120,15 @@ const GarageView = () => {
       <main className="max-w-6xl mx-auto px-4 pt-28 pb-32">
         {/* Hero */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-bold text-sm px-4 py-2 rounded-full mb-4">
             <Car className="w-4 h-4" />
             Mon Garage
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-3">
+          <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-3">
             Le Comparateur
           </h1>
-          <p className="text-lg text-slate-500 max-w-xl mx-auto">
-            Sélectionnez jusqu'à 3 véhicules pour un <span className="font-bold text-slate-700">face-à-face impitoyable</span>.
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Sélectionnez jusqu'à 3 véhicules pour un <span className="font-bold text-foreground">face-à-face impitoyable</span>.
           </p>
         </div>
 
