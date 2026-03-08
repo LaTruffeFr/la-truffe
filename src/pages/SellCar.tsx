@@ -507,7 +507,7 @@ export default function SellCar() {
 
                   <Alert className="bg-indigo-50 border-indigo-100 rounded-3xl p-6 shadow-sm">
                     <AlertCircle className="h-6 w-6 text-indigo-600" />
-                    <AlertTitle className="text-indigo-900 font-black ml-2 mb-1">Conseil IA</AlertTitle>
+                    <AlertTitle className="text-indigo-900 font-black ml-2 mb-1">Conseil d'expert</AlertTitle>
                     <AlertDescription className="text-sm font-medium text-indigo-700 ml-2 leading-relaxed">
                       L'honnêteté paye. Si vous avez une rayure ou des frais à prévoir, indiquez-le. L'algorithme augmente le Trust Score des annonces transparentes.
                     </AlertDescription>
