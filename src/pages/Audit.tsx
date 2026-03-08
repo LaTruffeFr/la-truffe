@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import PricingModal from "@/components/billing/PricingModal";
 import { 
   Link as LinkIcon, Loader2, ScanSearch, 
   Receipt, CheckCircle2, Zap, Sparkles,
@@ -34,6 +35,7 @@ export default function AuditPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [showPricing, setShowPricing] = useState(false);
 
   const isLeboncoin = useMemo(() => url.toLowerCase().includes('leboncoin'), [url]);
 
@@ -88,6 +90,12 @@ export default function AuditPage() {
     }
 
     if (!user) { navigate('/auth'); return; }
+
+    // Check credits before starting audit
+    if (!hasUnlimitedCredits && credits < 1) {
+      setShowPricing(true);
+      return;
+    }
 
     setIsAnalyzing(true);
 
@@ -290,6 +298,7 @@ export default function AuditPage() {
           ))}
         </div>
       </div>
+      <PricingModal open={showPricing} onOpenChange={setShowPricing} />
     </div>
   );
 }

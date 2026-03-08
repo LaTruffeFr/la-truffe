@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, Plus } from 'lucide-react';
 import logoTruffe from '@/assets/logo-truffe-new.png';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useVipAccess } from '@/hooks/useVipAccess';
+import PricingModal from '@/components/billing/PricingModal';
 
 interface HeaderProps {
   activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us';
@@ -16,6 +17,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
   const { user, isAdmin, credits } = useAuth();
   const { hasUnlimitedCredits } = useVipAccess();
   const navigate = useNavigate();
+  const [showPricing, setShowPricing] = useState(false);
 
   // Effet pour rendre le header légèrement transparent au scroll
   useEffect(() => {
@@ -75,9 +77,19 @@ export const Header = ({ activeLink }: HeaderProps) => {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-500">
-                  {hasUnlimitedCredits ? 'Crédits : Illimités 👑' : `Crédits : ${credits}`}
-                </span>
+                <div className="flex items-center gap-1.5 bg-slate-100 rounded-full px-3 py-1.5">
+                  <span className="text-xs font-bold text-slate-700">
+                    {hasUnlimitedCredits ? '👑 Illimités' : `🪙 ${credits} Crédit${credits !== 1 ? 's' : ''}`}
+                  </span>
+                  {!hasUnlimitedCredits && (
+                    <button
+                      onClick={() => setShowPricing(true)}
+                      className="w-5 h-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
                 <Button 
                   onClick={() => navigate('/client')} 
                   className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-10 px-5"
@@ -142,6 +154,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
           )}
         </div>
       )}
+      <PricingModal open={showPricing} onOpenChange={setShowPricing} />
     </header>
   );
 };

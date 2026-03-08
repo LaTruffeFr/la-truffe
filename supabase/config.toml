@@ -36,3 +36,7 @@ verify_jwt = false
 # Manual listing AI analysis - auth checked in code
 verify_jwt = false
 
+[functions.stripe-webhook]
+# Stripe webhook endpoint - no JWT needed
+verify_jwt = false
+
