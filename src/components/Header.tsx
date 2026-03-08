@@ -42,8 +42,8 @@ export const Header = ({ activeLink }: HeaderProps) => {
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm py-3' 
-          : 'bg-white border-b border-transparent py-4'
+          ? 'bg-background/90 backdrop-blur-md border-b border-border shadow-sm py-3' 
+          : 'bg-background border-b border-transparent py-4'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
