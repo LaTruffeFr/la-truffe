@@ -117,8 +117,8 @@ export default function SellCar() {
       });
 
       if (aiError || !aiAnalysis) {
-        console.error("Erreur IA:", aiError);
-        throw new Error("L'IA n'a pas pu analyser votre véhicule. Veuillez réessayer.");
+        console.error("Erreur analyse:", aiError);
+        throw new Error("L'expertise n'a pas pu analyser votre véhicule. Veuillez réessayer.");
       }
       
       const aiResult = { 
