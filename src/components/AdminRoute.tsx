@@ -32,5 +32,5 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
   }
 
   // If logged in but not admin, redirect to client dashboard
-  return <Navigate to="/client-dashboard" replace />;
+  return <Navigate to="/client" replace />;
 };
