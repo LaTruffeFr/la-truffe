@@ -402,7 +402,7 @@ export default function SellCar() {
                   </form>
                 )}
 
-                {/* ÉTAPE DE SUCCÈS (RÉSULTAT IA) */}
+                {/* ÉTAPE DE SUCCÈS (RÉSULTAT EXPERTISE) */}
                 {step === 3 && certification && (
                   <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-indigo-50 opacity-50 pointer-events-none" />

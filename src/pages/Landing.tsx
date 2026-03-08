@@ -98,7 +98,7 @@ export default function Landing() {
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-3">Vendre plus vite</h3>
             <p className="text-slate-500 font-medium mb-8 flex-grow leading-relaxed">
-              Publiez votre voiture. Notre certification IA rassure les acheteurs et justifie votre prix.
+              Publiez votre voiture. Notre certification d'expertise rassure les acheteurs et justifie votre prix.
             </p>
             <div className="flex items-center text-emerald-600 font-bold">
               Déposer une annonce <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

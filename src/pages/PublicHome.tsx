@@ -149,7 +149,7 @@ export default function PublicHome() {
 
         {/* Trust Section */}
         <div className="rounded-xl border border-border bg-card p-6 text-center">
-          <h3 className="font-semibold text-foreground mb-2">🎯 Analyse basée sur l'IA</h3>
+          <h3 className="font-semibold text-foreground mb-2">🎯 Analyse algorithmique avancée</h3>
           <p className="text-sm text-muted-foreground">
             Notre algorithme analyse des centaines d'annonces pour identifier les véhicules sous-cotés par rapport au marché.
           </p>
