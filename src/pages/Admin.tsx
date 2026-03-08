@@ -84,7 +84,7 @@ export default function Admin() {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-6 font-sans">
         <div className="relative mb-12">
-          <BrainCircuit className="w-28 h-28 text-indigo-500 animate-pulse relative z-10" />
+          <ScanSearch className="w-28 h-28 text-indigo-500 animate-pulse relative z-10" />
           <div className="absolute inset-0 bg-indigo-500 blur-[80px] opacity-30 animate-pulse"></div>
         </div>
         <h2 className="text-3xl font-black mb-6 tracking-tight text-center">Analyse du marché en cours...</h2>
