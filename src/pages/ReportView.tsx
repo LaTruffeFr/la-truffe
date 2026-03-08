@@ -227,11 +227,18 @@ const ReportView = () => {
   const handleDownload = () => {
     if (!report) return;
     setIsGeneratingPdf(true);
-    toast({ title: "Préparation du PDF...", description: "La fenêtre d'impression va s'ouvrir." });
+    
+    // Use afterprint to reset state after print dialog closes
+    const handleAfterPrint = () => {
+      setIsGeneratingPdf(false);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    
+    // Small delay to let React hide interactive elements before printing
     setTimeout(() => {
       window.print();
-      setIsGeneratingPdf(false);
-    }, 500);
+    }, 300);
   };
 
   if (loading || authLoading) return (
