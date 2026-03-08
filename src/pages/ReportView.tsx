@@ -515,7 +515,7 @@ const ReportView = () => {
               const entretiens = singleAuditData?.entretiens_recents || (report?.market_data?.entretiens_recents);
               return (
                 <div className="space-y-4 break-inside-avoid">
-                  <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <h3 className="text-xl font-black text-foreground flex items-center gap-2">
                     <ShieldCheck className="text-emerald-500 w-6 h-6" /> Points Sécurisés
                   </h3>
                   <Card className="rounded-[2rem] border-emerald-200 shadow-lg bg-emerald-50/30 h-full">
