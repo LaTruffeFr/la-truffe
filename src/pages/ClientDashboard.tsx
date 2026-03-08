@@ -16,12 +16,11 @@ import { Footer } from '@/components/landing';
 import { SellerListings } from '@/components/SellerListings';
 import WelcomeModal from '@/components/WelcomeModal';
 import ReferralCard from '@/components/dashboard/ReferralCard';
-import NuggetHunter from '@/components/hunting/NuggetHunter';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Shield, Search,
   Loader2, Clock, CheckCircle, Eye, Car, ArrowRight,
-  ShieldCheck, Zap, Lock, Bell, Receipt, Download, Target
+  ShieldCheck, Zap, Lock, Bell, Receipt, Download
 } from 'lucide-react';
 
 interface Report {
