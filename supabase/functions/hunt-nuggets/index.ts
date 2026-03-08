@@ -139,7 +139,7 @@ Ne renvoie RIEN d'autre que le JSON.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: `${systemPrompt}\n\n--- CONTENU DE LA PAGE ---\n${markdown.substring(0, 30000)}${linksContext}` }]
+          parts: [{ text: `${systemPrompt}\n\n--- CONTENU DE LA PAGE ---\n${markdown.substring(0, 25000)}${linksContext}${imagesContext}` }]
         }],
         generationConfig: {
           responseMimeType: 'application/json',
