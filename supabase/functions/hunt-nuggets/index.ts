@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url: leboncoinUrl,
-        formats: ['markdown', 'links'],
+        formats: ['markdown', 'links', 'html'],
         onlyMainContent: true,
         waitFor: 15000,
         location: { country: 'FR', languages: ['fr'] },
@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
     const scrapeData = await scrapeResponse.json();
     const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || '';
     const links = scrapeData?.data?.links || scrapeData?.links || [];
+    const html = scrapeData?.data?.html || scrapeData?.html || '';
 
     if (!markdown || markdown.length < 100) {
       return new Response(
@@ -81,7 +82,14 @@ Deno.serve(async (req) => {
     // Collect Leboncoin ad links for context
     const adLinks = links.filter((l: string) => l.includes('leboncoin.fr/ad/'));
     const linksContext = adLinks.length > 0
-      ? `\n\nVoici les liens d'annonces trouvés sur la page :\n${adLinks.join('\n')}`
+      ? `\n\nLiens d'annonces trouvés :\n${adLinks.join('\n')}`
+      : '';
+
+    // Extract image URLs from HTML for Gemini context
+    const imageMatches = html.match(/https?:\/\/[^\s"']+(?:lfrmedias|img\.leboncoin|classistatic)[^\s"'>]*/gi) || [];
+    const uniqueImages = [...new Set(imageMatches)].slice(0, 30);
+    const imagesContext = uniqueImages.length > 0
+      ? `\n\nURLs d'images trouvées sur la page :\n${uniqueImages.join('\n')}`
       : '';
 
     // --- STEP B: Gemini AI analysis ---
@@ -101,7 +109,9 @@ Deno.serve(async (req) => {
 Voici le texte brut d'une page de recherche Leboncoin contenant plusieurs annonces de voitures ${marque} ${modele} (${criteriaInfo}).
 
 Trouve les 5 meilleures annonces (meilleur rapport prix/kilométrage/fiabilité apparente).
-Pour chaque annonce, tu DOIS fournir le lien Leboncoin complet (format https://www.leboncoin.fr/ad/voitures/XXXXXXX).
+Pour chaque annonce, tu DOIS fournir :
+- Le lien Leboncoin complet (format https://www.leboncoin.fr/ad/voitures/XXXXXXX)
+- L'URL de la photo principale si disponible (cherche les URLs d'images contenant lfrmedias.com, img.leboncoin.fr ou classistatic)
 
 Renvoie UNIQUEMENT un JSON valide avec cette structure exacte :
 {
@@ -112,11 +122,13 @@ Renvoie UNIQUEMENT un JSON valide avec cette structure exacte :
       "price": 12000,
       "km": 85000,
       "link": "https://www.leboncoin.fr/ad/voitures/XXXXXXX",
+      "image_url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/XXXXX.jpg",
       "expert_reason": "Pourquoi c'est une bonne affaire en 1 phrase percutante"
     }
   ]
 }
 
+Si tu ne trouves pas l'URL d'une image, mets null pour image_url.
 Si tu ne trouves pas 5 annonces, renvoie celles que tu trouves. Minimum 1.
 Ne renvoie RIEN d'autre que le JSON.`;
 
@@ -127,7 +139,7 @@ Ne renvoie RIEN d'autre que le JSON.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: `${systemPrompt}\n\n--- CONTENU DE LA PAGE ---\n${markdown.substring(0, 30000)}${linksContext}` }]
+          parts: [{ text: `${systemPrompt}\n\n--- CONTENU DE LA PAGE ---\n${markdown.substring(0, 25000)}${linksContext}${imagesContext}` }]
         }],
         generationConfig: {
           responseMimeType: 'application/json',
