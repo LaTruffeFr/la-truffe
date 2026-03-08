@@ -196,6 +196,7 @@ const ClientDashboard = () => {
                   onClick={() => setActiveTab('hunting')}
                 >
                   <Target className="w-5 h-5 mr-3" /> Chasseur de Pépites
+                </Button>
                 
                 <Button 
                   variant="ghost" 
