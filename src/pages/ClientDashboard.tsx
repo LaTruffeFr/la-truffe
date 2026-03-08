@@ -52,8 +52,8 @@ const ClientDashboard = () => {
 
   // NOUVEAU : On ajoute 'settings' et 'billing' aux onglets possibles
   const initialTab = (searchParams.get('tab') as any) || 'reports';
-  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'hunting' | 'settings' | 'billing'>(
-    ['reports', 'listings', 'hunting', 'settings', 'billing'].includes(initialTab) ? initialTab : 'reports'
+  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'settings' | 'billing'>(
+    ['reports', 'listings', 'settings', 'billing'].includes(initialTab) ? initialTab : 'reports'
   );
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
