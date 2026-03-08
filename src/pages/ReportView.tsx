@@ -386,7 +386,7 @@ const ReportView = () => {
         </div>
       </header>
 
-      <main id="report-content" className="flex-1 container mx-auto px-4 py-10 max-w-5xl space-y-10">
+      <main id="report-content" className="flex-1 container mx-auto px-3 sm:px-4 py-6 md:py-10 max-w-5xl space-y-6 md:space-y-10">
         
         {/* --- 1. HERO SECTION --- */}
         <div className="pdf-section flex flex-col md:flex-row items-center md:items-start gap-8 bg-card p-6 rounded-[2.5rem] shadow-xl dark:shadow-none border border-border">
