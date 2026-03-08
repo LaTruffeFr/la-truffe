@@ -258,27 +258,72 @@ const ReportView = () => {
 
   if (report?.status === 'in_progress' || report?.status === 'pending') {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 font-sans">
-        <div className="w-full max-w-md space-y-10 animate-in fade-in duration-700">
-          <div className="relative mx-auto w-24 h-24 flex items-center justify-center bg-white rounded-3xl shadow-xl border border-indigo-50">
-            <Activity className="w-10 h-10 text-indigo-600 animate-pulse" />
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
+        {/* Effet de brume en fond */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="w-full max-w-md space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
+          
+          {/* En-tête avec Logo animé */}
+          <div className="relative mx-auto w-24 h-24 flex items-center justify-center bg-white rounded-3xl shadow-xl shadow-indigo-500/10 border border-slate-100">
+            <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-3xl animate-ping" />
+            <ScanSearch className="w-10 h-10 text-indigo-600 animate-pulse" />
           </div>
-          <div className="text-center space-y-2">
+          
+          <div className="text-center space-y-3">
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">Audit en cours</h2>
-            <p className="text-slate-500 font-medium">Notre IA traque la moindre faille sur ce véhicule...</p>
+            <p className="text-slate-500 font-medium text-lg">La Truffe analyse ce dossier en profondeur...</p>
           </div>
-          <div className="space-y-4 bg-white p-8 rounded-[2rem] shadow-lg border border-slate-100">
-            <Progress value={progressPercent} className="h-1.5 bg-slate-100 [&>div]:bg-indigo-600" />
-            <div className="pt-4 space-y-4">
-              {PROGRESS_STEPS.map((step, index) => (
-                <div key={index} className={`flex items-center gap-4 transition-all duration-500 ${index === progressIndex ? "scale-105 text-indigo-600" : index < progressIndex ? "text-emerald-500 opacity-70" : "text-slate-300 opacity-50"}`}>
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${index === progressIndex ? "bg-indigo-50" : "bg-slate-50"}`}>
-                    {index < progressIndex ? <CheckCircle2 className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
-                  </div>
-                  <span className={`text-sm font-bold ${index === progressIndex ? "tracking-wide" : ""}`}>{step.label}</span>
+
+          {/* Carte de progression */}
+          <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-indigo-100/20 border border-slate-100">
+            
+            {/* Barre de pourcentage */}
+            <div className="mb-8 relative">
+              <div className="flex justify-between text-xs font-black text-indigo-600 mb-3 px-1">
+                <span className="uppercase tracking-widest">Progression globale</span>
+                <span>{Math.round(progressPercent)}%</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+                <div 
+                  className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out relative" 
+                  style={{ width: `${progressPercent}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[slide_2s_ease-in-out_infinite]" />
                 </div>
-              ))}
+              </div>
             </div>
+
+            {/* Timeline verticale des étapes */}
+            <div className="space-y-6 relative ml-2">
+              {/* Ligne de connexion verticale */}
+              <div className="absolute left-[15px] top-2 bottom-4 w-0.5 bg-slate-100 z-0" />
+              
+              {PROGRESS_STEPS.map((step, index) => {
+                const isCompleted = index < progressIndex;
+                const isCurrent = index === progressIndex;
+                
+                return (
+                  <div key={index} className={`flex items-center gap-5 relative z-10 transition-all duration-500 ${isCurrent ? "scale-105 origin-left" : ""}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-500 ${
+                      isCompleted ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20" : 
+                      isCurrent ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 animate-pulse ring-4 ring-indigo-50" : 
+                      "bg-white text-slate-300 border-2 border-slate-100"
+                    }`}>
+                      {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
+                    </div>
+                    <span className={`text-sm font-bold transition-colors duration-500 ${
+                      isCompleted ? "text-slate-700" : 
+                      isCurrent ? "text-indigo-700" : 
+                      "text-slate-400"
+                    }`}>
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
           </div>
         </div>
       </div>
