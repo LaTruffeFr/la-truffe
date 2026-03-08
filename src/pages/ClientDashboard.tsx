@@ -237,8 +237,10 @@ const ClientDashboard = () => {
               </nav>
             </Card>
             
-            {/* Referral Card */}
-            <ReferralCard />
+            {/* Referral Card - hidden on mobile */}
+            <div className="hidden lg:block">
+              <ReferralCard />
+            </div>
           </aside>
 
           {/* --- MAIN CONTENT --- */}
