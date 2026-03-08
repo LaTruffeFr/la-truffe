@@ -121,7 +121,7 @@ export default function NuggetHunterView() {
             <Target className="w-4 h-4" /> Gratuit • Aucun crédit consommé
           </div>
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">
-            Le Chasseur de Pépites
+            La Sélection
           </h1>
           <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
             Laissez l'IA traquer les meilleures affaires du marché Leboncoin pour vous.
