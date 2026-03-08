@@ -183,7 +183,7 @@ export default function ListingDetails() {
                 </div>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">L'avis du Cerveau Hybride</h4>
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">L'avis de l'Expert</h4>
                 <p className="text-slate-700 leading-relaxed font-medium italic">
                   "{car.ai_avis}"
                 </p>
