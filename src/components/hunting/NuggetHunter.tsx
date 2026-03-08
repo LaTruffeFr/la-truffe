@@ -38,7 +38,7 @@ const NuggetHunter = () => {
   const [marque, setMarque] = useState('');
   const [modele, setModele] = useState('');
   const [budget, setBudget] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [kmMax, setKmMax] = useState('');
   const [nuggets, setNuggets] = useState<Nugget[]>([]);
   const [loadingStep, setLoadingStep] = useState(0);
 
