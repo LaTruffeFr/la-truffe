@@ -54,21 +54,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const initialCheckDone = useRef(false);
 
-  const fetchUserRole = useCallback(async (userId: string): Promise<'admin' | 'vip' | null> => {
+  const fetchUserRole = useCallback(async (userId: string): Promise<'admin' | 'vip' | 'pro' | null> => {
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .in('role', ['admin', 'vip']);
+      .in('role', ['admin', 'vip', 'pro']);
 
     if (error) {
       console.error('Error checking user role:', error);
       return null;
     }
 
-    // Priority: admin > vip
+    // Priority: admin > pro > vip
     const roles = data?.map(r => r.role) || [];
     if (roles.includes('admin')) return 'admin';
+    if (roles.includes('pro')) return 'pro';
     if (roles.includes('vip')) return 'vip';
     return null;
   }, []);
