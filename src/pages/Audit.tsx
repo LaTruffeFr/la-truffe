@@ -210,7 +210,7 @@ export default function AuditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24">
+    <div className="min-h-screen bg-background font-sans pb-24">
       <Header />
 
       {/* BANNIÈRE HERO */}
