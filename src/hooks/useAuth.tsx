@@ -173,6 +173,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       },
     });
 
+    // Non-blocking: trigger welcome email
+    if (!error) {
+      supabase.functions.invoke('send-welcome-email', { body: { email } }).catch(() => {});
+    }
+
     return { error };
   };
 
