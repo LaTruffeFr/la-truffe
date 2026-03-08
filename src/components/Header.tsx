@@ -8,7 +8,7 @@ import { useVipAccess } from '@/hooks/useVipAccess';
 import PricingModal from '@/components/billing/PricingModal';
 
 interface HeaderProps {
-  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us' | 'selection';
+  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us' | 'selection' | 'garage';
 }
 
 export const Header = ({ activeLink }: HeaderProps) => {
@@ -31,6 +31,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
   const navLinks = [
     { name: 'Scanner une annonce', path: '/audit', id: 'audit' },
     { name: 'La Sélection', path: '/chasseur', id: 'selection' },
+    { name: 'Mon Garage', path: '/garage', id: 'garage' },
     { name: 'Marketplace', path: '/marketplace', id: 'marketplace' },
     { name: 'Guide Fiabilité', path: '/guides', id: 'guides' },
     { name: 'Vendre', path: '/vendre', id: 'vendre' },

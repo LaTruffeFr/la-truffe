@@ -25,6 +25,7 @@ import MentionsLegales from "./pages/MentionsLegales";
 import About from "./pages/About";
 import WhyUs from "./pages/WhyUs";
 import NuggetHunterView from "./pages/NuggetHunterView";
+import GarageView from "./pages/GarageView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/why-us" element={<WhyUs />} />
               <Route path="/chasseur" element={<NuggetHunterView />} />
+              <Route path="/garage" element={<GarageView />} />
               <Route path="/settings" element={<Navigate to="/client" replace />} />
               <Route path="/transactions" element={<Navigate to="/client" replace />} />
               <Route path="*" element={<NotFound />} />

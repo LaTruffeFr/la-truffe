@@ -40,3 +40,7 @@ verify_jwt = false
 # Stripe webhook endpoint - no JWT needed
 verify_jwt = false
 
+[functions.compare-vehicles]
+# Vehicle comparison - auth checked via supabase client
+verify_jwt = false
+
