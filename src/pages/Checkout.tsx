@@ -83,7 +83,8 @@ const Checkout = () => {
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
-          planId: selectedPlanId,
+          priceId: plan?.priceId,
+          credits: plan?.credits,
           email: !user ? guestEmail : undefined,
         },
       });
