@@ -209,27 +209,38 @@ serve(async (req: Request) => {
       "entretiens_recents": ["liste des réparations déjà faites", "ex: Chaîne remplacée"]
     }`;
 
-    const extractRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: extractPrompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } }),
+    const extractRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: "Tu es un extracteur de données expert en automobile. Réponds UNIQUEMENT en JSON valide, sans markdown ni commentaire.",
+        messages: [{ role: "user", content: extractPrompt }],
+      }),
     });
 
     if (!extractRes.ok) {
-      console.error("Gemini extraction error:", extractRes.status);
+      const errBody = await extractRes.text().catch(() => "");
+      console.error("Anthropic extraction error:", extractRes.status, errBody);
       return jsonResponse({ error: "L'analyse IA a échoué. Réessayez dans quelques instants." }, 502);
     }
 
     const extractData = await extractRes.json();
-    if (!extractData?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.error("Gemini returned empty response:", JSON.stringify(extractData));
+    if (!extractData?.content?.[0]?.text) {
+      console.error("Anthropic returned empty response:", JSON.stringify(extractData));
       return jsonResponse({ error: "L'IA n'a pas pu analyser cette annonce. Essayez avec une autre." }, 422);
     }
 
     let rawCarData: any;
     try {
-      rawCarData = JSON.parse(extractData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
+      rawCarData = JSON.parse(extractData.content[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
     } catch (parseErr) {
-      console.error("JSON parse error from Gemini:", parseErr);
+      console.error("JSON parse error from Anthropic:", parseErr, extractData.content[0].text);
       return jsonResponse({ error: "L'IA a renvoyé une réponse mal formatée. Réessayez." }, 422);
     }
 
