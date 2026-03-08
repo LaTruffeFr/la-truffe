@@ -168,14 +168,29 @@ const ReportView = () => {
     };
   }, [report, isSingleAudit, vehiclesData, singleAuditData]);
 
+  /** Replace placeholder tokens like [PRIX_TRUFFE] in AI-generated text */
+  const fillPlaceholders = (text: string): string => {
+    if (!text || !stats) return text;
+    return text
+      .replace(/\[PRIX_TRUFFE\]/gi, stats.prixCible?.toLocaleString('fr-FR') ?? '—')
+      .replace(/\[PRIX_AFFICHE\]/gi, stats.prixAffiche?.toLocaleString('fr-FR') ?? '—')
+      .replace(/\[ECONOMIE\]/gi, stats.economy?.toLocaleString('fr-FR') ?? '—');
+  };
+
   const negotiationPoints = useMemo(() => {
     if (!report) return [];
-    if (report.negotiation_points) return report.negotiation_points;
-    if (report.negotiation_arguments) {
-        try { const parsed = JSON.parse(report.negotiation_arguments); if (Array.isArray(parsed)) return parsed; } catch {}
+    let points: any[] = [];
+    if (report.negotiation_points) points = report.negotiation_points;
+    else if (report.negotiation_arguments) {
+      try { const parsed = JSON.parse(report.negotiation_arguments); if (Array.isArray(parsed)) points = parsed; } catch {}
     }
-    return [];
-  }, [report]);
+    // Replace placeholders in all text fields
+    return points.map((p: any) => ({
+      ...p,
+      desc: typeof p.desc === 'string' ? fillPlaceholders(p.desc) : p.desc,
+      titre: typeof p.titre === 'string' ? fillPlaceholders(p.titre) : p.titre,
+    }));
+  }, [report, stats]);
 
   const signaux = useMemo(() => {
     const allTags = singleAuditData?.tags || [];
