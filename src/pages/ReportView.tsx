@@ -245,17 +245,25 @@ const ReportView = () => {
   const handleDownload = () => {
     if (!report) return;
     setIsGeneratingPdf(true);
-    
     const handleAfterPrint = () => {
       setIsGeneratingPdf(false);
       window.removeEventListener('afterprint', handleAfterPrint);
     };
     window.addEventListener('afterprint', handleAfterPrint);
-    
-    // Delay to let React update UI before print dialog opens
-    requestAnimationFrame(() => {
-      window.print();
-    });
+    requestAnimationFrame(() => { window.print(); });
+  };
+
+  const handleShareNegotiation = async () => {
+    if (!report?.share_token) {
+      // Generate share token if missing
+      const { error } = await supabase.from('reports').update({ share_token: crypto.randomUUID() }).eq('id', report.id);
+      if (!error) await fetchReport();
+    }
+    const shareUrl = `${window.location.origin}/audit/${report.share_token || report.id}`;
+    await navigator.clipboard.writeText(shareUrl);
+    setIsShareCopied(true);
+    toast({ title: "🤝 Lien de négociation copié !", description: "Envoyez-le au vendeur par SMS pour justifier votre négociation." });
+    setTimeout(() => setIsShareCopied(false), 3000);
   };
 
   if (loading || authLoading) return (
