@@ -11,7 +11,7 @@ import {
   ShieldCheck, ScanSearch, MessageSquareWarning, Cpu, 
   Settings2, Snowflake, Flame, CircleDashed, Zap
 } from 'lucide-react';
-import logoTruffe from '@/assets/logo-truffe.jpg';
+import logoTruffe from '@/assets/logo-truffe-new.png';
 
 // ========================
 // UTILITY COMPONENTS

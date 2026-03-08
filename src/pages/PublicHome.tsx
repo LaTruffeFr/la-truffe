@@ -6,7 +6,7 @@ import { useVehicleData } from '@/contexts/VehicleDataContext';
 import { Loader2, Crosshair, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import logoTruffe from '@/assets/logo-truffe.jpg';
+import logoTruffe from '@/assets/logo-truffe-new.png';
 
 export default function PublicHome() {
   const {
