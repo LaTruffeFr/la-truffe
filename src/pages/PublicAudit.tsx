@@ -511,6 +511,15 @@ const PublicAudit = () => {
           ))}
         </section>
 
+        {/* BRANDED BANNER */}
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-800 dark:to-purple-800 rounded-2xl p-6 text-center text-white shadow-corporate-lg">
+          <p className="text-lg font-bold mb-1">🦊 Rapport généré par La Truffe — L'IA de confiance</p>
+          <p className="text-sm text-white/80">Scannez vos annonces auto gratuitement sur latruffe.fr</p>
+          <a href="/" className="inline-block mt-4 bg-white text-indigo-700 font-bold px-6 py-2.5 rounded-xl hover:bg-white/90 transition-colors text-sm">
+            Essayer La Truffe gratuitement →
+          </a>
+        </div>
+
         <footer className="border-t border-border pt-8 text-center">
           <p className="text-muted-foreground text-sm">Document généré par La Truffe. Ne constitue pas une garantie mécanique.</p>
           <p className="text-muted-foreground text-xs mt-2">© {new Date().getFullYear()} La Truffe</p>
