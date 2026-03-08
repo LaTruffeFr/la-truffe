@@ -52,16 +52,13 @@ const NuggetHunter = () => {
   ];
 
   const handleSearch = async () => {
-    if (!marque.trim() || !modele.trim() || !budget.trim()) {
-      toast({ variant: 'destructive', title: 'Champs requis', description: 'Remplissez tous les champs.' });
+    if (!marque.trim() || !modele.trim()) {
+      toast({ variant: 'destructive', title: 'Champs requis', description: 'Remplissez au moins la marque et le modèle.' });
       return;
     }
 
-    const budgetNum = parseInt(budget);
-    if (isNaN(budgetNum) || budgetNum < 500) {
-      toast({ variant: 'destructive', title: 'Budget invalide', description: 'Entrez un budget minimum de 500€.' });
-      return;
-    }
+    const budgetNum = budget.trim() ? parseInt(budget) : undefined;
+    const kmMaxNum = kmMax.trim() ? parseInt(kmMax) : undefined;
 
     setIsLoading(true);
     setNuggets([]);
