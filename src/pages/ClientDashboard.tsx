@@ -356,17 +356,17 @@ const ClientDashboard = () => {
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl">
                 <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-6 md:mb-8">Paramètres du Compte</h2>
                 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden mb-8">
-                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
-                      <User className="w-6 h-6 text-slate-700" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden mb-6 md:mb-8">
+                  <div className="bg-muted p-4 md:p-6 border-b border-border flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-border flex items-center justify-center">
+                      <User className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-slate-900">Informations Personnelles</h3>
-                      <p className="text-sm font-medium text-slate-500">Gérez vos données de contact.</p>
+                      <h3 className="font-black text-base md:text-lg text-foreground">Informations Personnelles</h3>
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Gérez vos données de contact.</p>
                     </div>
                   </div>
-                  <CardContent className="p-8 space-y-6">
+                  <CardContent className="p-4 md:p-8 space-y-6">
                     <div className="space-y-2">
                       <Label className="font-bold text-slate-700">Adresse Email</Label>
                       <Input value={displayEmail} disabled className="bg-slate-50 font-medium text-slate-500" />
