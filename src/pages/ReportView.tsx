@@ -375,8 +375,12 @@ const ReportView = () => {
             La Truffe <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 text-[9px] uppercase tracking-widest h-5">Certifié</Badge>
           </Link>
           <div className="flex gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/client')} className="font-bold text-slate-500 hidden sm:flex">Retour</Button>
-            <Button size="sm" onClick={handleDownload} disabled={isGeneratingPdf} className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/client')} className="font-bold text-muted-foreground hidden sm:flex">Retour</Button>
+            <Button size="sm" onClick={handleShareNegotiation} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md">
+              {isShareCopied ? <Check className="w-4 h-4 sm:mr-2" /> : <Share2 className="w-4 h-4 sm:mr-2" />}
+              <span className="hidden sm:inline">{isShareCopied ? 'Copié !' : 'Négocier 🤝'}</span>
+            </Button>
+            <Button size="sm" onClick={handleDownload} disabled={isGeneratingPdf} className="bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl shadow-md">
               {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 sm:mr-2" />} 
               <span className="hidden sm:inline">PDF</span>
             </Button>
