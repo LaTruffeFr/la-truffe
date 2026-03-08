@@ -41,6 +41,7 @@ const statusConfig = {
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
   const { user, signOut, isAdmin, credits } = useAuth();
