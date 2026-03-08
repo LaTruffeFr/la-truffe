@@ -21,7 +21,7 @@ import {
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Shield, Search,
   Loader2, Clock, CheckCircle, Eye, Car, ArrowRight,
-  ShieldCheck, Zap, Lock, Bell, Receipt, Download, Swords
+  ShieldCheck, Zap, Lock, Bell, Receipt, Download, Scale
 } from 'lucide-react';
 
 interface Report {
