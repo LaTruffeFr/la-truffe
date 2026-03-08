@@ -282,7 +282,7 @@ const Checkout = () => {
               </Card>
 
               <p className="text-center text-xs font-medium text-slate-500 max-w-sm mx-auto">
-                En validant votre paiement, vous acceptez nos <Link to="/terms" className="underline hover:text-slate-900">Conditions Générales de Vente</Link>. Vous recevrez une facture par email immédiatement après l'achat.
+                En validant votre paiement, vous acceptez nos <Link to="/cgv" className="underline hover:text-slate-900">Conditions Générales de Vente</Link>. Vous recevrez une facture par email immédiatement après l'achat.
               </p>
             </div>
           </div>

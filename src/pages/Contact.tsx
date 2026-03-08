@@ -140,7 +140,7 @@ const Contact = () => {
             
             {/* Contact Info Footer */}
             <div className="bg-slate-50 p-6 border-t border-slate-100 text-center text-sm text-slate-500">
-              <p>Besoin d'une réponse immédiate ? Consultez notre <Link to="/faq" className="text-primary font-semibold hover:underline">FAQ</Link>.</p>
+              <p>Besoin d'une réponse immédiate ? Consultez notre <Link to="/guides" className="text-primary font-semibold hover:underline">FAQ</Link>.</p>
             </div>
           </div>
         </div>

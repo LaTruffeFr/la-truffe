@@ -19,6 +19,11 @@ import Vendre from "./pages/SellCar";
 import ReportView from "./pages/ReportView";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Contact from "./pages/Contact";
+import CGV from "./pages/CGV";
+import MentionsLegales from "./pages/MentionsLegales";
+import About from "./pages/About";
+import WhyUs from "./pages/WhyUs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +50,11 @@ const App = () => (
               <Route path="/report/:id" element={<ReportView />} />
               <Route path="/client" element={<ClientDashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/cgv" element={<CGV />} />
+              <Route path="/mentions-legales" element={<MentionsLegales />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/why-us" element={<WhyUs />} />
               <Route path="/settings" element={<Navigate to="/client" replace />} />
               <Route path="/transactions" element={<Navigate to="/client" replace />} />
               <Route path="*" element={<NotFound />} />
