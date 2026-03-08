@@ -451,7 +451,7 @@ const ReportView = () => {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2 rounded-[2.5rem] border-0 shadow-xl bg-slate-900 text-white overflow-hidden p-8 relative">
+          <Card className="md:col-span-2 rounded-2xl md:rounded-[2.5rem] border-0 shadow-xl bg-slate-900 text-white overflow-hidden p-4 md:p-8 relative">
             <div className="absolute right-0 top-0 p-8 opacity-5"><Euro className="w-48 h-48" /></div>
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b border-white/10 pb-6 mb-6">
