@@ -67,11 +67,12 @@ const App = () => (
               <Route path="/transactions" element={<Navigate to="/client" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <CookieBanner />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+              <CookieBanner />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   </ErrorBoundary>
 );
 
