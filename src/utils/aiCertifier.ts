@@ -25,7 +25,7 @@ function getMockCertification(details: any) {
   return {
     score: 85,
     verdict: "Très Bonne (Simulé)",
-    avis: `Véhicule ${details.marque} ${details.modele} apparemment en excellent état. Le kilométrage de ${details.mileage}km est cohérent avec l'année ${details.year}. (Note: Analyse simulée suite indisponibilité IA)`,
+    avis: `Véhicule ${details.marque} ${details.modele} apparemment en excellent état. Le kilométrage de ${details.mileage}km est cohérent avec l'année ${details.year}. (Note: Analyse simulée suite indisponibilité du moteur)`,
     tags: ["Dossier Complet", "Prix Cohérent", "Certifié LaTruffe"]
   };
 }
