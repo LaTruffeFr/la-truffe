@@ -298,6 +298,7 @@ export default function AuditPage() {
           ))}
         </div>
       </div>
+      <PricingModal open={showPricing} onOpenChange={setShowPricing} />
     </div>
   );
 }
