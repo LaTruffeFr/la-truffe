@@ -224,23 +224,20 @@ const ReportView = () => {
     setTimeout(() => setIsCopied(false), 3000);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!report) return;
     setIsGeneratingPdf(true);
-    toast({ title: "Génération du PDF...", description: "Veuillez patienter quelques secondes." });
-    try {
-      const fileName = `La-Truffe_${report.marque}_${report.modele}_${new Date().toISOString().slice(0,10)}`;
-      const success = await generatePDF('report-content', fileName);
-      if (!success) {
-        toast({ variant: "destructive", title: "Erreur", description: "Impossible de générer le PDF." });
-      } else {
-        toast({ title: "PDF téléchargé ✅", description: "Votre expertise a été sauvegardée." });
-      }
-    } catch {
-      toast({ variant: "destructive", title: "Erreur", description: "Une erreur est survenue lors de la génération." });
-    } finally {
+    
+    const handleAfterPrint = () => {
       setIsGeneratingPdf(false);
-    }
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    
+    // Delay to let React update UI before print dialog opens
+    requestAnimationFrame(() => {
+      window.print();
+    });
   };
 
   if (loading || authLoading) return (
