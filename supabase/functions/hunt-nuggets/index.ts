@@ -18,11 +18,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { marque, modele, budget } = await req.json();
+    const { marque, modele, budget, km_max } = await req.json();
 
-    if (!marque || !modele || !budget) {
+    if (!marque || !modele) {
       return new Response(
-        JSON.stringify({ error: 'Marque, modèle et budget sont requis.' }),
+        JSON.stringify({ error: 'Marque et modèle sont requis.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
