@@ -114,29 +114,29 @@ const GarageView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-muted to-background">
       <Header activeLink="garage" />
       
       <main className="max-w-6xl mx-auto px-4 pt-28 pb-32">
         {/* Hero */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-bold text-sm px-4 py-2 rounded-full mb-4">
             <Car className="w-4 h-4" />
             Mon Garage
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-3">
+          <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-3">
             Le Comparateur
           </h1>
-          <p className="text-lg text-slate-500 max-w-xl mx-auto">
-            Sélectionnez jusqu'à 3 véhicules pour un <span className="font-bold text-slate-700">face-à-face impitoyable</span>.
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Sélectionnez jusqu'à 3 véhicules pour un <span className="font-bold text-foreground">face-à-face impitoyable</span>.
           </p>
         </div>
 
         {/* Grid */}
         {reports.length === 0 ? (
           <div className="text-center py-20">
-            <Car className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 text-lg font-medium">Aucun audit terminé pour le moment.</p>
+            <Car className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="text-muted-foreground text-lg font-medium">Aucun audit terminé pour le moment.</p>
             <Button onClick={() => navigate('/audit')} className="mt-4">
               Lancer mon premier audit
             </Button>
@@ -149,24 +149,24 @@ const GarageView = () => {
                 <Card
                   key={report.id}
                   onClick={() => toggleSelect(report.id)}
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg relative ${
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg dark:hover:shadow-none relative ${
                     isSelected
-                      ? 'ring-3 ring-indigo-500 shadow-lg shadow-indigo-100 bg-indigo-50/30'
+                      ? 'ring-3 ring-primary shadow-lg shadow-primary/10 bg-primary/5'
                       : 'hover:ring-1 hover:ring-slate-200'
                   }`}
                 >
                   {isSelected && (
-                    <div className="absolute -top-2 -right-2 w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg z-10">
+                    <div className="absolute -top-2 -right-2 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-lg z-10">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                   )}
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-bold text-slate-900 text-base">
+                        <h3 className="font-bold text-foreground text-base">
                           {report.marque} {report.modele}
                         </h3>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-muted-foreground">
                           {report.annee || '—'} • {report.kilometrage ? `${(report.kilometrage / 1000).toFixed(0)}k km` : '—'}
                         </p>
                       </div>
@@ -176,15 +176,15 @@ const GarageView = () => {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       {report.carburant && <span className="capitalize">{report.carburant}</span>}
                       {report.transmission && <span className="capitalize">{report.transmission}</span>}
                       <span>{new Date(report.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
                     {report.prix_estime && report.prix_affiche && (
-                      <div className="mt-3 pt-3 border-t border-slate-100">
+                      <div className="mt-3 pt-3 border-t border-border">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">Estimation La Truffe</span>
+                          <span className="text-muted-foreground">Estimation La Truffe</span>
                           <span className={`font-bold ${report.prix_affiche > report.prix_estime ? 'text-red-600' : 'text-emerald-600'}`}>
                             {report.prix_estime.toLocaleString('fr-FR')} €
                           </span>
@@ -200,7 +200,7 @@ const GarageView = () => {
 
         {/* Selected count */}
         {selected.length > 0 && (
-          <div className="text-center mt-6 text-sm text-slate-500">
+          <div className="text-center mt-6 text-sm text-muted-foreground">
             {selected.length}/3 véhicule{selected.length > 1 ? 's' : ''} sélectionné{selected.length > 1 ? 's' : ''}
           </div>
         )}

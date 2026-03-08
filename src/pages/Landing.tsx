@@ -19,7 +19,7 @@ function useReferralCapture() {
 export default function Landing() {
   useReferralCapture();
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-indigo-500 selection:text-white pb-20">
+    <div className="min-h-screen bg-background font-sans selection:bg-indigo-500 selection:text-white pb-20">
       <Header />
 
       {/* --- HERO SECTION : PREMIUM & DARK --- */}

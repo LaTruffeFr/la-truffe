@@ -119,24 +119,24 @@ const ClientDashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground">
       <WelcomeModal open={showWelcome} onClose={handleCloseWelcome} />
       
       {/* --- HEADER CLIENT PREMIUM --- */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+      <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm dark:shadow-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="font-black text-2xl tracking-tighter text-slate-900 hover:opacity-80 transition-opacity flex items-center gap-2">
-            La Truffe <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-bold border-0">Espace Personnel</Badge>
+          <Link to="/" className="font-black text-2xl tracking-tighter text-foreground hover:opacity-80 transition-opacity flex items-center gap-2">
+            La Truffe <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold border-0">Espace Personnel</Badge>
           </Link>
           <div className="flex items-center gap-4">
              <div className="text-right hidden sm:block">
-                <div className="font-bold text-slate-900 text-sm">{displayEmail}</div>
+                <div className="font-bold text-foreground text-sm">{displayEmail}</div>
                 <div className="text-xs font-medium text-emerald-500 flex items-center justify-end gap-1">
                   <CheckCircle className="w-3 h-3" /> Compte vérifié
                 </div>
              </div>
-             <Avatar className="h-10 w-10 border-2 border-indigo-100 shadow-sm">
-               <AvatarFallback className="bg-indigo-50 text-indigo-600 font-black">{initials}</AvatarFallback>
+             <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm">
+               <AvatarFallback className="bg-primary/10 text-primary font-black">{initials}</AvatarFallback>
              </Avatar>
           </div>
         </div>
@@ -147,7 +147,7 @@ const ClientDashboard = () => {
           
           {/* --- SIDEBAR MENU --- */}
           <aside className="lg:col-span-3 space-y-6">
-            <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden">
+            <Card className="rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
               
               {/* Wallet & Profil */}
               <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
@@ -187,7 +187,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'reports' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'reports' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('reports')}
                 >
                   <LayoutDashboard className="w-5 h-5 mr-3" /> Mes Audits
@@ -195,7 +195,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'listings' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'listings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('listings')}
                 >
                   <Car className="w-5 h-5 mr-3" /> Mes Annonces
@@ -203,7 +203,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('garage')}
                 >
                   <Scale className="w-5 h-5 mr-3" /> Mon Garage
@@ -211,7 +211,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'settings' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('settings')}
                 >
                   <Settings className="w-5 h-5 mr-3" /> Paramètres
@@ -219,13 +219,13 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'billing' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'billing' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('billing')}
                 >
                   <CreditCard className="w-5 h-5 mr-3" /> Facturation
                 </Button>
                 
-                <div className="pt-4 mt-2 border-t border-slate-100">
+                <div className="pt-4 mt-2 border-t border-border">
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-rose-500 hover:text-rose-600 hover:bg-rose-50 h-12 rounded-xl font-bold"
@@ -250,26 +250,26 @@ const ClientDashboard = () => {
             {activeTab === 'reports' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Mes Audits IA</h2>
-                  <Button onClick={() => navigate('/audit')} className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-6 rounded-xl font-bold shadow-lg shadow-indigo-200">
+                  <h2 className="text-3xl font-black text-foreground tracking-tight">Mes Audits IA</h2>
+                  <Button onClick={() => navigate('/audit')} className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-6 rounded-xl font-bold shadow-lg shadow-primary/20">
                     <Plus className="w-5 h-5 mr-2" /> Nouveau Scan
                   </Button>
                 </div>
                 
                 {isLoadingReports ? (
                   <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
                   </div>
                 ) : reports.length === 0 ? (
-                  <Card className="border-slate-200 shadow-sm border-dashed rounded-[2rem] min-h-[400px] flex flex-col items-center justify-center text-center p-8 bg-white">
-                    <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                      <FolderOpen className="w-10 h-10 text-indigo-400" />
+                  <Card className="border-border shadow-sm border-dashed rounded-[2rem] min-h-[400px] flex flex-col items-center justify-center text-center p-8 bg-card">
+                    <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                      <FolderOpen className="w-10 h-10 text-primary/60" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Aucun audit pour l'instant</h3>
-                    <p className="text-slate-500 max-w-md mx-auto mb-8 font-medium">
+                    <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Aucun audit pour l'instant</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
                       Commencez par coller l'URL d'une annonce Leboncoin ou La Centrale pour que l'IA traque les vices cachés.
                     </p>
-                    <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
+                    <Button size="lg" className="bg-foreground hover:bg-foreground/90 text-background h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
                       <Search className="w-5 h-5 mr-2" /> Lancer ma première analyse
                     </Button>
                   </Card>
@@ -282,23 +282,23 @@ const ClientDashboard = () => {
                       return (
                         <Card 
                           key={report.id} 
-                          className="border-slate-100 shadow-sm bg-white hover:shadow-xl hover:border-indigo-200 transition-all cursor-pointer group rounded-2xl overflow-hidden"
+                          className="border-border shadow-sm bg-card hover:shadow-xl dark:hover:shadow-none hover:border-primary/30 transition-all cursor-pointer group rounded-2xl overflow-hidden"
                           onClick={() => handleViewReport(report)}
                         >
                           <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
                             <div className="flex items-center gap-5 min-w-0">
                               {imageUrl ? (
-                                <img src={imageUrl} alt={report.marque} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 shadow-sm border border-slate-100 group-hover:border-indigo-300 transition-colors" />
+                                <img src={imageUrl} alt={report.marque} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 shadow-sm border border-border group-hover:border-primary/30 transition-colors" />
                               ) : (
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-indigo-300 transition-colors">
-                                  <Car className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted rounded-xl flex items-center justify-center shrink-0 border border-border group-hover:border-primary/30 transition-colors">
+                                  <Car className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <h3 className="font-black text-lg text-slate-900 truncate mb-1 group-hover:text-indigo-600 transition-colors">
+                                <h3 className="font-black text-lg text-foreground truncate mb-1 group-hover:text-primary transition-colors">
                                   {report.marque} {report.modele}
                                 </h3>
-                                <p className="text-sm font-medium text-slate-500">
+                                <p className="text-sm font-medium text-muted-foreground">
                                   Expertisé le {new Date(report.created_at).toLocaleDateString('fr-FR', {
                                     day: 'numeric', month: 'long', year: 'numeric'
                                   })}
@@ -311,8 +311,8 @@ const ClientDashboard = () => {
                                 {status.label}
                               </Badge>
                               {report.status === 'completed' && (
-                                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors shrink-0">
-                                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors shrink-0">
+                                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                                 </div>
                               )}
                             </div>
@@ -331,8 +331,8 @@ const ClientDashboard = () => {
             {activeTab === 'listings' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Mes Annonces</h2>
-                  <Button onClick={() => navigate('/vendre')} className="bg-slate-900 hover:bg-slate-800 text-white h-12 px-6 rounded-xl font-bold shadow-lg">
+                  <h2 className="text-3xl font-black text-foreground tracking-tight">Mes Annonces</h2>
+                  <Button onClick={() => navigate('/vendre')} className="bg-foreground hover:bg-foreground/90 text-background h-12 px-6 rounded-xl font-bold shadow-lg">
                     <Plus className="w-5 h-5 mr-2" /> Déposer une annonce
                   </Button>
                 </div>
