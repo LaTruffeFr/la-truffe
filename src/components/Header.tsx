@@ -8,7 +8,7 @@ import { useVipAccess } from '@/hooks/useVipAccess';
 import PricingModal from '@/components/billing/PricingModal';
 
 interface HeaderProps {
-  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us' | 'hunting';
+  activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us' | 'selection';
 }
 
 export const Header = ({ activeLink }: HeaderProps) => {
