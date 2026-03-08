@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useVipAccess } from '@/hooks/useVipAccess';
 import PricingModal from '@/components/billing/PricingModal';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface HeaderProps {
   activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us' | 'selection' | 'garage';
@@ -41,8 +42,8 @@ export const Header = ({ activeLink }: HeaderProps) => {
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm py-3' 
-          : 'bg-white border-b border-transparent py-4'
+          ? 'bg-background/90 backdrop-blur-md border-b border-border shadow-sm py-3' 
+          : 'bg-background border-b border-transparent py-4'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,10 +52,10 @@ export const Header = ({ activeLink }: HeaderProps) => {
           {/* LOGO */}
           <Link 
             to="/" 
-            className="flex items-center gap-2 font-black text-2xl tracking-tighter text-slate-900 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2 font-black text-2xl tracking-tighter text-foreground hover:opacity-80 transition-opacity"
           >
             <img src={logoTruffe} alt="La Truffe" className="w-8 h-8 rounded-lg object-cover" />
-            <span className="font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-950 via-indigo-700 to-indigo-500">La Truffe</span>
+            <span className="font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-950 via-indigo-700 to-indigo-500 dark:from-indigo-300 dark:via-indigo-400 dark:to-indigo-500">La Truffe</span>
           </Link>
 
           {/* DESKTOP NAVIGATION */}
@@ -65,8 +66,8 @@ export const Header = ({ activeLink }: HeaderProps) => {
                 to={link.path}
                 className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
                   activeLink === link.id 
-                    ? 'bg-indigo-50 text-indigo-600' 
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }`}
               >
                 {link.name}
@@ -76,16 +77,17 @@ export const Header = ({ activeLink }: HeaderProps) => {
 
           {/* AUTH BUTTONS (DESKTOP) */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 bg-slate-100 rounded-full px-3 py-1.5">
-                  <span className="text-xs font-bold text-slate-700">
+                <div className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1.5">
+                  <span className="text-xs font-bold text-muted-foreground">
                     {hasUnlimitedCredits ? '👑 Illimités' : `🪙 ${credits} Crédit${credits !== 1 ? 's' : ''}`}
                   </span>
                   {!hasUnlimitedCredits && (
                     <button
                       onClick={() => setShowPricing(true)}
-                      className="w-5 h-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center transition-colors"
+                      className="w-5 h-5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center transition-colors"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
@@ -93,7 +95,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
                 </div>
                 <Button 
                   onClick={() => navigate('/client')} 
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-10 px-5"
+                  className="bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl h-10 px-5"
                 >
                   <User className="w-4 h-4 mr-2" /> Mon Espace
                 </Button>
@@ -101,7 +103,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
             ) : (
               <Button 
                 onClick={() => navigate('/auth')} 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-10 px-5 shadow-lg shadow-indigo-200"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl h-10 px-5 shadow-lg shadow-primary/20"
               >
                 Se connecter
               </Button>
@@ -120,7 +122,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
 
       {/* MOBILE NAVIGATION */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-xl py-4 px-4 flex flex-col gap-2 animate-in slide-in-from-top-2">
+        <div className="md:hidden absolute top-full left-0 w-full bg-background border-b border-border shadow-xl py-4 px-4 flex flex-col gap-2 animate-in slide-in-from-top-2">
           {navLinks.map((link) => (
             <Link 
               key={link.id} 
@@ -128,27 +130,32 @@ export const Header = ({ activeLink }: HeaderProps) => {
               onClick={() => setIsMobileMenuOpen(false)}
               className={`p-4 rounded-xl text-base font-bold ${
                 activeLink === link.id 
-                  ? 'bg-indigo-50 text-indigo-600' 
-                  : 'text-slate-700 hover:bg-slate-50'
+                  ? 'bg-primary/10 text-primary' 
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               {link.name}
             </Link>
           ))}
           
-          <div className="h-px bg-slate-100 my-2" />
+          <div className="h-px bg-border my-2" />
+          
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="text-sm font-bold text-muted-foreground">Thème</span>
+            <ThemeToggle />
+          </div>
           
           {user ? (
             <Button 
               onClick={() => { navigate('/client'); setIsMobileMenuOpen(false); }} 
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-12"
+              className="w-full bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl h-12"
             >
               <User className="w-5 h-5 mr-2" /> Mon Espace
             </Button>
           ) : (
             <Button 
               onClick={() => { navigate('/auth'); setIsMobileMenuOpen(false); }} 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-12"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl h-12"
             >
               Se connecter
             </Button>

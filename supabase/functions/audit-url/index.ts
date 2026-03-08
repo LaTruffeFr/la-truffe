@@ -430,6 +430,59 @@ serve(async (req: Request) => {
       return jsonResponse({ error: "Erreur lors de la sauvegarde du rapport en base de données." }, 500);
     }
 
+    // === NON-BLOCKING: Send email notification to user ===
+    try {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('email')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile?.email) {
+        // Generate share token for the report
+        const shareToken = crypto.randomUUID();
+        await supabaseAdmin.from('reports').update({ share_token: shareToken }).eq('id', report.id);
+
+        const appUrl = Deno.env.get("APP_URL") || "https://latruffe.lovable.app";
+        const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+        if (RESEND_API_KEY) {
+          const { Resend } = await import("https://esm.sh/resend@2.0.0");
+          const resend = new Resend(RESEND_API_KEY);
+          resend.emails.send({
+            from: "La Truffe <onboarding@resend.dev>",
+            to: [profile.email],
+            subject: `🦊 Votre expertise La Truffe est prête : ${rawCarData.marque} ${rawCarData.modele}`,
+            html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+            <body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+              <table style="width:100%;border-collapse:collapse;"><tr><td align="center" style="padding:40px 20px;">
+                <table style="max-width:600px;width:100%;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                  <tr><td style="background:linear-gradient(135deg,#312e81,#4338ca,#6366f1);padding:32px 24px;text-align:center;">
+                    <h1 style="margin:0;color:white;font-size:28px;font-weight:900;">🦊 La Truffe</h1>
+                    <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Votre expertise automobile est prête</p>
+                  </td></tr>
+                  <tr><td style="padding:32px 24px;">
+                    <h2 style="margin:0 0 16px;color:#18181b;font-size:22px;">Résultat : ${rawCarData.marque} ${rawCarData.modele} 🎯</h2>
+                    <div style="background:#f4f4f5;border-radius:12px;padding:20px;margin-bottom:24px;">
+                      <p style="margin:0 0 8px;color:#52525b;font-size:14px;">Prix affiché : <strong>${prixAffiche.toLocaleString('fr-FR')} €</strong></p>
+                      <p style="margin:0;color:#059669;font-size:18px;font-weight:700;">💰 Prix La Truffe : ${prix_truffe.toLocaleString('fr-FR')} €</p>
+                    </div>
+                    <table style="width:100%;"><tr><td align="center">
+                      <a href="${appUrl}/report/${report.id}" style="display:inline-block;background:linear-gradient(135deg,#4338ca,#6366f1);color:white;text-decoration:none;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:700;">📊 Voir mon rapport complet</a>
+                    </td></tr></table>
+                  </td></tr>
+                  <tr><td style="background:#f4f4f5;padding:24px;text-align:center;">
+                    <p style="margin:0;color:#71717a;font-size:12px;">© ${new Date().getFullYear()} La Truffe — L'Expert Automobile IA</p>
+                  </td></tr>
+                </table>
+              </td></tr></table>
+            </body></html>`,
+          }).catch((e: any) => console.error("Email send failed (non-blocking):", e));
+        }
+      }
+    } catch (emailErr) {
+      console.error("Non-blocking email error:", emailErr);
+    }
+
     // === ÉTAPE 6 : DÉDUCTION DU CRÉDIT (atomique, via service_role) ===
     if (!hasUnlimitedCredits) {
       const { data: deducted, error: deductErr } = await supabaseAdmin.rpc('deduct_credit', { _user_id: user.id });

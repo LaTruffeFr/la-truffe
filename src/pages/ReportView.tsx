@@ -11,7 +11,7 @@ import {
   Download, CheckCircle2, TrendingDown, Calendar, Gauge, Fuel, 
   Euro, ShieldCheck, Loader2, History, Calculator, FileCheck, Copy, Check, Settings2, 
   Cpu, ScanSearch, Activity, Receipt, Hash, ShieldAlert, Sparkles, Snowflake, 
-  Flame, CircleDashed, Target, ExternalLink, MessageSquare, Flag
+  Flame, CircleDashed, Target, ExternalLink, MessageSquare, Flag, Share2
 } from "lucide-react";
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
@@ -140,6 +140,7 @@ const ReportView = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isShareCopied, setIsShareCopied] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
@@ -244,17 +245,25 @@ const ReportView = () => {
   const handleDownload = () => {
     if (!report) return;
     setIsGeneratingPdf(true);
-    
     const handleAfterPrint = () => {
       setIsGeneratingPdf(false);
       window.removeEventListener('afterprint', handleAfterPrint);
     };
     window.addEventListener('afterprint', handleAfterPrint);
-    
-    // Delay to let React update UI before print dialog opens
-    requestAnimationFrame(() => {
-      window.print();
-    });
+    requestAnimationFrame(() => { window.print(); });
+  };
+
+  const handleShareNegotiation = async () => {
+    if (!report?.share_token) {
+      // Generate share token if missing
+      const { error } = await supabase.from('reports').update({ share_token: crypto.randomUUID() }).eq('id', report.id);
+      if (!error) await fetchReport();
+    }
+    const shareUrl = `${window.location.origin}/audit/${report.share_token || report.id}`;
+    await navigator.clipboard.writeText(shareUrl);
+    setIsShareCopied(true);
+    toast({ title: "🤝 Lien de négociation copié !", description: "Envoyez-le au vendeur par SMS pour justifier votre négociation." });
+    setTimeout(() => setIsShareCopied(false), 3000);
   };
 
   if (loading || authLoading) return (
@@ -366,8 +375,12 @@ const ReportView = () => {
             La Truffe <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 text-[9px] uppercase tracking-widest h-5">Certifié</Badge>
           </Link>
           <div className="flex gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/client')} className="font-bold text-slate-500 hidden sm:flex">Retour</Button>
-            <Button size="sm" onClick={handleDownload} disabled={isGeneratingPdf} className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/client')} className="font-bold text-muted-foreground hidden sm:flex">Retour</Button>
+            <Button size="sm" onClick={handleShareNegotiation} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md">
+              {isShareCopied ? <Check className="w-4 h-4 sm:mr-2" /> : <Share2 className="w-4 h-4 sm:mr-2" />}
+              <span className="hidden sm:inline">{isShareCopied ? 'Copié !' : 'Négocier 🤝'}</span>
+            </Button>
+            <Button size="sm" onClick={handleDownload} disabled={isGeneratingPdf} className="bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl shadow-md">
               {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 sm:mr-2" />} 
               <span className="hidden sm:inline">PDF</span>
             </Button>
