@@ -354,7 +354,7 @@ const ClientDashboard = () => {
             {/* ------------------------------------- */}
             {activeTab === 'settings' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl">
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-8">Paramètres du Compte</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-6 md:mb-8">Paramètres du Compte</h2>
                 
                 <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden mb-8">
                   <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-4">
