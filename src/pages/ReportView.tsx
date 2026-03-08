@@ -297,22 +297,22 @@ const ReportView = () => {
         <div className="w-full max-w-md space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
           
           {/* En-tête avec Logo animé */}
-          <div className="relative mx-auto w-24 h-24 flex items-center justify-center bg-white rounded-3xl shadow-xl shadow-indigo-500/10 border border-slate-100">
+          <div className="relative mx-auto w-24 h-24 flex items-center justify-center bg-card rounded-3xl shadow-xl shadow-indigo-500/10 border border-border">
             <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-3xl animate-ping" />
-            <ScanSearch className="w-10 h-10 text-indigo-600 animate-pulse" />
+            <ScanSearch className="w-10 h-10 text-primary animate-pulse" />
           </div>
           
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Audit en cours</h2>
-            <p className="text-slate-500 font-medium text-lg">La Truffe analyse ce dossier en profondeur...</p>
+            <h2 className="text-3xl font-black text-foreground tracking-tight">Audit en cours</h2>
+            <p className="text-muted-foreground font-medium text-lg">La Truffe analyse ce dossier en profondeur...</p>
           </div>
 
           {/* Carte de progression */}
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-indigo-100/20 border border-slate-100">
+          <div className="bg-card p-8 rounded-[2.5rem] shadow-xl shadow-indigo-100/20 dark:shadow-none border border-border">
             
             {/* Barre de pourcentage */}
             <div className="mb-8 relative">
-              <div className="flex justify-between text-xs font-black text-indigo-600 mb-3 px-1">
+              <div className="flex justify-between text-xs font-black text-primary mb-3 px-1">
                 <span className="uppercase tracking-widest">Progression globale</span>
                 <span>{Math.round(progressPercent)}%</span>
               </div>
