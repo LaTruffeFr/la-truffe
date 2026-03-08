@@ -94,7 +94,7 @@ export default function SellCar() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (imageFiles.length === 0) return alert("Une photo est obligatoire pour l'analyse IA !");
+    if (imageFiles.length === 0) return alert("Une photo est obligatoire pour l'analyse !");
     if (!formData.contact) return alert("Indiquez un moyen de contact.");
     if (!formData.motorisation || !formData.carburant) return alert("La motorisation et le carburant sont obligatoires.");
     
