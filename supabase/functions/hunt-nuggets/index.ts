@@ -9,8 +9,8 @@ interface NuggetResult {
   price: number;
   km: number;
   link: string;
-  image_url?: string;
-  expert_reason: string;
+  image_url?: string | null;
+  expert_reason?: string;
 }
 
 Deno.serve(async (req) => {
@@ -36,67 +36,50 @@ Deno.serve(async (req) => {
       );
     }
 
-    // --- STEP A: Build a precise Leboncoin search URL with price filter ---
-    const budgetFilter = budget ? ` moins de ${budget}€` : '';
-    const kmFilter = km_max ? ` moins de ${km_max}km` : '';
-    const searchQuery = `${marque} ${modele}${budgetFilter}${kmFilter} site:leboncoin.fr/ad/voitures`;
+    const query = `${marque} ${modele}${km_max ? ` ${km_max} km max` : ''}`.trim();
+    const parsedBudget = Number.isFinite(Number(budget)) && Number(budget) > 0 ? Math.floor(Number(budget)) : null;
 
-    console.log('Firecrawl search query:', searchQuery);
+    const lbcUrl = parsedBudget
+      ? `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(query)}&price=min-${parsedBudget}`
+      : `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(query)}`;
 
-    const searchResponse = await fetch('https://api.firecrawl.dev/v1/search', {
+    console.log('Firecrawl scrape URL:', lbcUrl);
+
+    const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        query: searchQuery,
-        limit: 30,
-        lang: 'fr',
-        country: 'fr',
-        scrapeOptions: { formats: ['markdown', 'links'] },
+        url: lbcUrl,
+        formats: ['markdown'],
+        onlyMainContent: false,
+        waitFor: 3000,
       }),
     });
 
-    if (!searchResponse.ok) {
-      const errText = await searchResponse.text();
-      console.error('Firecrawl search error:', searchResponse.status, errText);
+    if (!scrapeResponse.ok) {
+      const errText = await scrapeResponse.text();
+      console.error('Firecrawl scrape error:', scrapeResponse.status, errText);
       return new Response(
         JSON.stringify({ error: 'Impossible de scanner le marché. Réessayez dans quelques instants.' }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const searchData = await searchResponse.json();
-    const results = searchData?.data || [];
+    const scrapeData = await scrapeResponse.json();
+    const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || '';
 
-    if (!results || results.length === 0) {
+    if (!markdown || typeof markdown !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Aucune annonce trouvée pour cette recherche. Essayez avec d\'autres critères.' }),
+        JSON.stringify({ error: 'Aucune donnée exploitable récupérée depuis Leboncoin.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Filter to only keep actual Leboncoin ad URLs
-    const adResults = results.filter((r: any) =>
-      r.url && /leboncoin\.fr\/ad\//.test(r.url)
-    );
+    console.log(`Scraped markdown length: ${markdown.length}`);
 
-    // Build rich context from search results
-    const resultsContext = (adResults.length > 0 ? adResults : results)
-      .slice(0, 25)
-      .map((r: any, i: number) => {
-        const parts = [`[Résultat ${i + 1}]`];
-        if (r.url) parts.push(`URL: ${r.url}`);
-        if (r.title) parts.push(`Titre: ${r.title}`);
-        if (r.description) parts.push(`Description: ${r.description}`);
-        if (r.markdown) parts.push(`Contenu: ${r.markdown.substring(0, 2000)}`);
-        return parts.join('\n');
-      }).join('\n\n---\n\n');
-
-    console.log(`Got ${results.length} results (${adResults.length} ad URLs), sending to Gemini...`);
-
-    // --- STEP B: Gemini AI analysis with strict prompt ---
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) {
       return new Response(
@@ -105,48 +88,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const budgetText = budget ? `${budget}` : 'illimité';
-    const kmText = km_max ? `${km_max} km` : 'illimité';
+    const budgetForPrompt = parsedBudget ?? 9999999;
 
-    const systemPrompt = `Tu es un expert automobile chargé d'extraire des données brutes de résultats de recherche Leboncoin scrappés.
-L'utilisateur cherche : ${marque} ${modele}
-Budget MAXIMUM : ${budgetText} €
-Kilométrage MAXIMUM : ${kmText}
+    const systemPrompt = `Tu es un expert automobile. Je te fournis le texte brut d'une recherche Leboncoin. Le budget MAXIMUM de l'utilisateur est de ${budgetForPrompt} €.
 
-Voici tes ordres stricts :
+ORDRES STRICTS :
 
-1. QUANTITÉ : Tu DOIS obligatoirement renvoyer une liste de 5 annonces (sauf s'il y en a moins de 5 dans les résultats fournis).
+Renvoie OBLIGATOIREMENT 5 annonces (sauf s'il y en a moins de 5).
 
-2. PRIX EXACT : Tu ne dois JAMAIS inventer un prix. Cherche le prix exact affiché dans le texte de chaque annonce. Si tu ne trouves pas le prix exact dans le contenu, N'INCLUS PAS cette annonce.
+Tu NE DOIS PAS inventer de prix. Lis le prix exact indiqué dans le texte de l'annonce.
 
-3. RESPECT DU BUDGET : ${budget ? `Tous les véhicules que tu sélectionnes DOIVENT avoir un prix STRICTEMENT inférieur ou égal à ${budget} €. Si le prix dépasse ${budget} €, EXCLUS cette annonce.` : 'Pas de contrainte de budget.'}
+TOUS les véhicules de ta liste doivent coûter MOINS CHER ou ÉGAL au budget de l'utilisateur. Refuse tout ce qui dépasse.
 
-4. KILOMÉTRAGE : ${km_max ? `Tous les véhicules DOIVENT avoir un kilométrage inférieur ou égal à ${km_max} km. Si le km dépasse, EXCLUS cette annonce.` : 'Pas de contrainte de kilométrage.'}
+Trouve l'URL de la page (https://www.leboncoin.fr/ad/...) et l'URL de l'image.
 
-5. LIEN : Utilise UNIQUEMENT les URLs Leboncoin trouvées dans les résultats (format https://www.leboncoin.fr/ad/voitures/XXXXXXX). Ne modifie JAMAIS une URL.
-
-6. PHOTO : Trouve l'URL de la photo principale dans le contenu (domaines : lfrmedias.com, img.leboncoin.fr, classistatic.com). Si aucune image n'est trouvée, mets null.
-
-7. EXPERT_REASON : Pour chaque annonce, donne une raison percutante en 1 phrase expliquant pourquoi c'est une bonne affaire (rapport prix/km, fiabilité, etc.).
-
-8. CLASSEMENT : Classe les annonces par meilleur rapport qualité-prix (la meilleure en rank 1).
-
-Renvoie UNIQUEMENT un objet JSON valide avec cette structure exacte :
-{
-  "top5": [
-    {
-      "rank": 1,
-      "title": "Texte exact du titre de l'annonce",
-      "price": NombreEntier,
-      "km": NombreEntier,
-      "link": "https://www.leboncoin.fr/ad/voitures/XXXXXXX",
-      "image_url": "URL_IMAGE ou null",
-      "expert_reason": "Raison en 1 phrase"
-    }
-  ]
-}
-
-RAPPEL CRITIQUE : Ne renvoie AUCUNE annonce dont le prix dépasse ${budgetText} €. Vérifie chaque prix AVANT de l'inclure.`;
+Renvoie un JSON valide : { "top5": [ { "rank": 1, "title": "...", "price": 0, "km": 0, "link": "...", "image_url": "..." } ] }`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
@@ -155,11 +111,11 @@ RAPPEL CRITIQUE : Ne renvoie AUCUNE annonce dont le prix dépasse ${budgetText} 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: `${systemPrompt}\n\n--- RÉSULTATS DE RECHERCHE ---\n${resultsContext.substring(0, 28000)}` }]
+          parts: [{ text: `${systemPrompt}\n\n--- TEXTE BRUT LEBONCOIN ---\n${markdown.substring(0, 52000)}` }],
         }],
         generationConfig: {
           responseMimeType: 'application/json',
-          temperature: 0.1,
+          temperature: 0,
         },
       }),
     });
@@ -176,59 +132,70 @@ RAPPEL CRITIQUE : Ne renvoie AUCUNE annonce dont le prix dépasse ${budgetText} 
     const geminiData = await geminiResponse.json();
     let rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    // Clean markdown code fences if present
-    rawText = rawText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let parsed: { top5: NuggetResult[] };
     try {
       parsed = JSON.parse(rawText);
     } catch {
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[0]);
-      } else {
+      if (!jsonMatch) {
         console.error('Failed to parse Gemini response:', rawText.substring(0, 500));
         return new Response(
           JSON.stringify({ error: 'Format de réponse IA invalide.' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      parsed = JSON.parse(jsonMatch[0]);
     }
 
-    if (!parsed.top5 || !Array.isArray(parsed.top5) || parsed.top5.length === 0) {
+    if (!parsed?.top5 || !Array.isArray(parsed.top5) || parsed.top5.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Aucune pépite trouvée pour ces critères.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // --- STEP C: Server-side enforcement of budget & km filters ---
-    let filtered = parsed.top5;
+    let filtered = parsed.top5
+      .map((item, index) => ({
+        rank: index + 1,
+        title: String(item.title || '').trim(),
+        price: Number(item.price),
+        km: Number(item.km),
+        link: String(item.link || '').trim(),
+        image_url: item.image_url || null,
+        expert_reason: item.expert_reason || 'Annonce filtrée automatiquement selon le budget.',
+      }))
+      .filter((item) =>
+        item.title &&
+        Number.isFinite(item.price) &&
+        Number.isFinite(item.km) &&
+        /^https:\/\/www\.leboncoin\.fr\/ad\//.test(item.link)
+      );
 
-    if (budget) {
-      filtered = filtered.filter(n => typeof n.price === 'number' && n.price <= budget);
-    }
-    if (km_max) {
-      filtered = filtered.filter(n => typeof n.km === 'number' && n.km <= km_max);
+    if (parsedBudget) {
+      filtered = filtered.filter((item) => item.price <= parsedBudget);
     }
 
-    // Re-rank after filtering
-    filtered = filtered.map((n, i) => ({ ...n, rank: i + 1 }));
+    if (km_max && Number.isFinite(Number(km_max))) {
+      filtered = filtered.filter((item) => item.km <= Number(km_max));
+    }
+
+    filtered = filtered.slice(0, 5).map((item, index) => ({ ...item, rank: index + 1 }));
 
     if (filtered.length === 0) {
       return new Response(
-        JSON.stringify({ error: `Aucune annonce trouvée dans le budget de ${budget} €. Essayez avec un budget plus élevé.` }),
+        JSON.stringify({ error: parsedBudget ? `Aucune annonce valide trouvée sous ${parsedBudget} €.` : 'Aucune annonce valide trouvée.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Found ${parsed.top5.length} from AI, ${filtered.length} after budget/km filter for ${marque} ${modele}`);
+    console.log(`Returning ${filtered.length} nuggets for ${marque} ${modele}`);
 
     return new Response(
       JSON.stringify({ success: true, top5: filtered }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
     console.error('hunt-nuggets error:', error);
     return new Response(
