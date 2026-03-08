@@ -124,7 +124,7 @@ export default function NuggetHunterView() {
             La Sélection
           </h1>
           <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
-            Laissez notre algorithme traquer les meilleures affaires du marché Leboncoin pour vous.
+            Laissez notre algorithme dénicher les meilleures affaires du marché pour vous.
           </p>
         </div>
 

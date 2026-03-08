@@ -32,7 +32,7 @@ export default function Landing() {
         
         <div className="relative max-w-7xl mx-auto z-10 text-center">
           <Badge className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 px-4 py-1.5 mb-8 rounded-full font-bold uppercase tracking-widest text-xs backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-700 flex items-center gap-2 mx-auto w-fit">
-            <ShieldCheck className="w-4 h-4" /> La 1ère IA experte en mécanique
+            <ShieldCheck className="w-4 h-4" /> Expert automobile indépendant
           </Badge>
           
           <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 leading-[1.1]">
@@ -70,7 +70,7 @@ export default function Landing() {
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-3">Auditer une annonce</h3>
             <p className="text-slate-500 font-medium mb-8 flex-grow leading-relaxed">
-              Collez un lien. L'IA traque les arnaques, les compteurs trafiqués et les frais cachés.
+              Collez un lien. Notre algorithme traque les arnaques, les compteurs trafiqués et les frais cachés.
             </p>
             <div className="flex items-center text-indigo-600 font-bold">
               Lancer l'audit <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -98,7 +98,7 @@ export default function Landing() {
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-3">Vendre plus vite</h3>
             <p className="text-slate-500 font-medium mb-8 flex-grow leading-relaxed">
-              Publiez votre voiture. Notre certification IA rassure les acheteurs et justifie votre prix.
+              Publiez votre voiture. Notre certification d'expertise rassure les acheteurs et justifie votre prix.
             </p>
             <div className="flex items-center text-emerald-600 font-bold">
               Déposer une annonce <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

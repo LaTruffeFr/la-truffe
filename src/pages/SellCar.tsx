@@ -238,7 +238,7 @@ export default function SellCar() {
               Vendez votre voiture au <span className="text-emerald-400">Juste Prix</span>.
             </h1>
             <p className="text-xl text-slate-300 font-medium max-w-2xl mx-auto">
-              Notre IA certifie votre annonce. Les acheteurs sont rassurés, vous vendez 2x plus vite sans négociation inutile.
+              Notre moteur d'expertise certifie votre annonce. Les acheteurs sont rassurés, vous vendez 2x plus vite sans négociation inutile.
             </p>
           </div>
         </section>
@@ -402,7 +402,7 @@ export default function SellCar() {
                   </form>
                 )}
 
-                {/* ÉTAPE DE SUCCÈS (RÉSULTAT IA) */}
+                {/* ÉTAPE DE SUCCÈS (RÉSULTAT EXPERTISE) */}
                 {step === 3 && certification && (
                   <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-indigo-50 opacity-50 pointer-events-none" />
@@ -418,7 +418,7 @@ export default function SellCar() {
                       <div className="grid md:grid-cols-2 gap-10 text-left bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 mb-12">
                         
                         <div className="flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-slate-100 pb-8 md:pb-0 md:pr-10">
-                          <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">Score de Confiance IA</span>
+                          <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">Score de Confiance</span>
                           <div className={`text-8xl font-[1000] tracking-tighter ${certification.score > 75 ? 'text-emerald-500' : 'text-amber-500'}`}>
                             {certification.score}
                           </div>
@@ -429,7 +429,7 @@ export default function SellCar() {
                               </span>
                             )}
                             <span className="px-4 py-1.5 bg-emerald-100 text-emerald-700 text-xs font-black rounded-lg flex items-center gap-1.5 uppercase">
-                              <ShieldCheck className="w-3 h-3" /> IA Vérifié
+                              <ShieldCheck className="w-3 h-3" /> Certifié La Truffe
                             </span>
                           </div>
                         </div>
@@ -479,7 +479,7 @@ export default function SellCar() {
                         </div>
                         <div>
                           <h4 className="font-black text-base">Vente 3x plus rapide</h4>
-                          <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Les annonces certifiées par l'IA partent en priorité absolue.</p>
+                          <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Les annonces certifiées par La Truffe partent en priorité absolue.</p>
                         </div>
                       </div>
                       
@@ -498,8 +498,8 @@ export default function SellCar() {
                           <Sparkles className="w-6 h-6 text-indigo-400" />
                         </div>
                         <div>
-                          <h4 className="font-black text-base">Génération par IA</h4>
-                          <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Même si votre description est courte, l'IA en fera un argumentaire parfait.</p>
+                           <h4 className="font-black text-base">Génération automatique</h4>
+                           <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Même si votre description est courte, notre moteur en fera un argumentaire parfait.</p>
                         </div>
                       </div>
                     </CardContent>
@@ -507,7 +507,7 @@ export default function SellCar() {
 
                   <Alert className="bg-indigo-50 border-indigo-100 rounded-3xl p-6 shadow-sm">
                     <AlertCircle className="h-6 w-6 text-indigo-600" />
-                    <AlertTitle className="text-indigo-900 font-black ml-2 mb-1">Conseil IA</AlertTitle>
+                    <AlertTitle className="text-indigo-900 font-black ml-2 mb-1">Conseil d'expert</AlertTitle>
                     <AlertDescription className="text-sm font-medium text-indigo-700 ml-2 leading-relaxed">
                       L'honnêteté paye. Si vous avez une rayure ou des frais à prévoir, indiquez-le. L'algorithme augmente le Trust Score des annonces transparentes.
                     </AlertDescription>

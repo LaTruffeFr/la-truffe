@@ -86,17 +86,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    const budgetForPrompt = parsedBudget ?? 9999999;
+    const budgetForPrompt = parsedBudget < 9999999 ? parsedBudget : null;
+    const kmMaxForPrompt = km_max && Number.isFinite(Number(km_max)) ? Number(km_max) : null;
 
-    const systemPrompt = `Tu es un expert automobile. Je te fournis le texte brut d'une recherche Leboncoin. Le budget MAXIMUM de l'utilisateur est de ${budgetForPrompt} €.
+    const systemPrompt = `Tu es un expert automobile intraitable. Je te fournis le texte brut d'une recherche Leboncoin. Le client cherche SPÉCIFIQUEMENT le modèle suivant : ${marque} ${modele}.${budgetForPrompt ? ` Son budget maximum est de ${budgetForPrompt} €.` : ''}${kmMaxForPrompt ? ` Le kilométrage maximum est de ${kmMaxForPrompt} km.` : ''}
 
-ORDRES STRICTS :
+ORDRES STRICTS ET ÉLIMINATOIRES :
 
-Renvoie OBLIGATOIREMENT 5 annonces (sauf s'il y en a moins de 5).
+FILTRE MODÈLE : Tu DOIS ÉLIMINER toutes les annonces qui ne sont pas EXACTEMENT le modèle demandé. (ex: si le client veut une "Clio 4 RS", élimine les "Clio dCi", les "Clio 5", etc.). Seuls les véhicules correspondant précisément à "${marque} ${modele}" sont acceptés.
 
-Tu NE DOIS PAS inventer de prix. Lis le prix exact indiqué dans le texte de l'annonce.
+PRIX ET KM : ${budgetForPrompt ? `Le prix indiqué dans l'annonce DOIT être inférieur ou égal à ${budgetForPrompt} €.` : 'Aucune limite de budget.'} ${kmMaxForPrompt ? `Le kilométrage DOIT être inférieur ou égal à ${kmMaxForPrompt} km.` : ''}
 
-TOUS les véhicules de ta liste doivent coûter MOINS CHER ou ÉGAL au budget de l'utilisateur. Refuse tout ce qui dépasse.
+PAS D'INVENTION : Lis le prix exact indiqué dans le texte de l'annonce, n'invente rien.
+
+QUANTITÉ : Renvoie les 5 meilleures annonces qui survivent à ces filtres (ou moins s'il n'y en a pas assez).
 
 Trouve l'URL de la page (https://www.leboncoin.fr/ad/...) et l'URL de l'image.
 

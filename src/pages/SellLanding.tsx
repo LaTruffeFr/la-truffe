@@ -104,7 +104,7 @@ export default function SellLanding() {
               Vendez votre voiture au meilleur prix
             </h1>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl leading-relaxed">
-              Nos rapports IA révèlent la vraie valeur de votre véhicule. Les acheteurs viennent
+               Nos rapports d'expertise révèlent la vraie valeur de votre véhicule. Les acheteurs viennent
               avec confiance. Vous concluez rapidement.
             </p>
 
