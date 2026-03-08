@@ -316,9 +316,9 @@ const ReportView = () => {
                 <span className="uppercase tracking-widest">Progression globale</span>
                 <span>{Math.round(progressPercent)}%</span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+              <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden shadow-inner">
                 <div 
-                  className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out relative" 
+                  className="bg-primary h-full rounded-full transition-all duration-500 ease-out relative" 
                   style={{ width: `${progressPercent}%` }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[slide_2s_ease-in-out_infinite]" />
