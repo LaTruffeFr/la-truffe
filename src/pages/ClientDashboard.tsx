@@ -375,19 +375,19 @@ const ClientDashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden mb-8">
-                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
-                      <Lock className="w-6 h-6 text-slate-700" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden mb-6 md:mb-8">
+                  <div className="bg-muted p-4 md:p-6 border-b border-border flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-border flex items-center justify-center">
+                      <Lock className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-slate-900">Sécurité</h3>
-                      <p className="text-sm font-medium text-slate-500">Mettez à jour votre mot de passe.</p>
+                      <h3 className="font-black text-base md:text-lg text-foreground">Sécurité</h3>
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Mettez à jour votre mot de passe.</p>
                     </div>
                   </div>
-                  <CardContent className="p-8 space-y-6">
+                  <CardContent className="p-4 md:p-8 space-y-6">
                     <div className="space-y-2">
-                      <Label className="font-bold text-slate-700">Nouveau mot de passe</Label>
+                      <Label className="font-bold text-muted-foreground">Nouveau mot de passe</Label>
                       <Input type="password" placeholder="••••••••" className="font-medium" />
                     </div>
                     <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-12 px-8">
