@@ -21,6 +21,7 @@ interface AuthContextType {
   role: AppRole | null;
   isAdmin: boolean;
   isVip: boolean;
+  isPro: boolean;
   credits: number;
   userEmail: string | null;
 
