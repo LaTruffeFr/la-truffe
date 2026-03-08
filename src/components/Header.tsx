@@ -77,16 +77,17 @@ export const Header = ({ activeLink }: HeaderProps) => {
 
           {/* AUTH BUTTONS (DESKTOP) */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 bg-slate-100 rounded-full px-3 py-1.5">
-                  <span className="text-xs font-bold text-slate-700">
+                <div className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1.5">
+                  <span className="text-xs font-bold text-muted-foreground">
                     {hasUnlimitedCredits ? '👑 Illimités' : `🪙 ${credits} Crédit${credits !== 1 ? 's' : ''}`}
                   </span>
                   {!hasUnlimitedCredits && (
                     <button
                       onClick={() => setShowPricing(true)}
-                      className="w-5 h-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center transition-colors"
+                      className="w-5 h-5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center transition-colors"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
@@ -94,7 +95,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
                 </div>
                 <Button 
                   onClick={() => navigate('/client')} 
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-10 px-5"
+                  className="bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl h-10 px-5"
                 >
                   <User className="w-4 h-4 mr-2" /> Mon Espace
                 </Button>
@@ -102,7 +103,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
             ) : (
               <Button 
                 onClick={() => navigate('/auth')} 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-10 px-5 shadow-lg shadow-indigo-200"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl h-10 px-5 shadow-lg shadow-primary/20"
               >
                 Se connecter
               </Button>
