@@ -484,14 +484,14 @@ const ReportView = () => {
         </div>
 
         {/* --- 3. VERDICT IA --- */}
-        <div className="pdf-section bg-white border border-indigo-100/60 rounded-[2rem] p-6 md:p-8 shadow-lg shadow-indigo-100/20 flex flex-col md:flex-row items-start gap-6 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-50/50 rounded-full blur-3xl -mr-20 -mt-20"></div>
-          <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 shrink-0 relative z-10">
-            <Sparkles className="w-8 h-8 text-indigo-600" />
+        <div className="pdf-section bg-card border border-primary/10 rounded-[2rem] p-6 md:p-8 shadow-lg shadow-primary/5 dark:shadow-none flex flex-col md:flex-row items-start gap-6 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20 shrink-0 relative z-10">
+            <Sparkles className="w-8 h-8 text-primary" />
           </div>
           <div className="flex-1 space-y-4 relative z-10">
-            <h2 className="text-sm font-black uppercase tracking-widest text-indigo-500">Verdict de l'Expert</h2>
-            <p className="text-lg font-medium text-slate-700 leading-relaxed">
+            <h2 className="text-sm font-black uppercase tracking-widest text-primary">Verdict de l'Expert</h2>
+            <p className="text-lg font-medium text-muted-foreground leading-relaxed">
               {report.expert_opinion ? report.expert_opinion.split('|||DATA|||')[0] : "Analyse du profil en cours d'écriture..."}
             </p>
             {signaux.length > 0 && (
