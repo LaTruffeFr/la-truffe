@@ -411,18 +411,18 @@ const ReportView = () => {
               </h1>
             )}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-              <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-700 flex items-center gap-2 shadow-sm">
-                <Calendar className="w-4 h-4 text-indigo-500" /> {report.annee}
+              <div className="px-4 py-2 bg-muted border border-border rounded-xl font-bold text-foreground flex items-center gap-2 shadow-sm">
+                <Calendar className="w-4 h-4 text-primary" /> {report.annee}
               </div>
-              <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-700 flex items-center gap-2 shadow-sm">
+              <div className="px-4 py-2 bg-muted border border-border rounded-xl font-bold text-foreground flex items-center gap-2 shadow-sm">
                 <Gauge className="w-4 h-4 text-emerald-500" /> {safeNum(report.kilometrage)} km
               </div>
-              <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-700 flex items-center gap-2 capitalize shadow-sm">
+              <div className="px-4 py-2 bg-muted border border-border rounded-xl font-bold text-foreground flex items-center gap-2 capitalize shadow-sm">
                 <Fuel className="w-4 h-4 text-amber-500" /> {report.carburant || 'Essence'}
               </div>
               {report.transmission && (
-                <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-700 flex items-center gap-2 capitalize shadow-sm">
-                  <Settings2 className="w-4 h-4 text-slate-500" /> {report.transmission}
+                <div className="px-4 py-2 bg-muted border border-border rounded-xl font-bold text-foreground flex items-center gap-2 capitalize shadow-sm">
+                  <Settings2 className="w-4 h-4 text-muted-foreground" /> {report.transmission}
                 </div>
               )}
               {report.lien_annonce && (
