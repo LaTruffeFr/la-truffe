@@ -85,7 +85,7 @@ export function PublishReportModal({
   const handlePublish = async () => {
     setIsLoading(true);
     try {
-      // 1. Récupération de l'utilisateur (Optionnel pour ne pas bloquer Lovable Cloud)
+      // 1. Récupération de l'utilisateur
       const { data: authData } = await supabase.auth.getUser();
       const user = authData?.user;
 
