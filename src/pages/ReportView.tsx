@@ -71,11 +71,11 @@ const ScoreCircularGauge = ({ score }: { score: number }) => {
 };
 
 const PROGRESS_STEPS = [
-  { time: 1000, label: "Extraction sécurisée de l'annonce...", icon: ScanSearch },
-  { time: 3500, label: "Identification mécanique...", icon: Cpu },
-  { time: 7000, label: "Recherche de vices cachés...", icon: ShieldAlert },
-  { time: 10000, label: "Calcul de la cote La Truffe...", icon: Calculator },
-  { time: 13000, label: "Édition du rapport...", icon: FileCheck },
+  { time: 0, label: "Flairage de l'annonce et extraction des données...", icon: ScanSearch, percent: 15 },
+  { time: 3000, label: "Analyse du pedigree mécanique...", icon: Cpu, percent: 40 },
+  { time: 6000, label: "Traque des vices cachés et arnaques...", icon: ShieldAlert, percent: 65 },
+  { time: 9000, label: "Calcul de la vraie cote La Truffe...", icon: Calculator, percent: 85 },
+  { time: 12000, label: "Rédaction finale du rapport d'expertise...", icon: FileCheck, percent: 98 },
 ];
 
 const formatText = (text: string) => {
