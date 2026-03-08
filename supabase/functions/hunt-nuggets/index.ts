@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
     const scrapeData = await scrapeResponse.json();
     const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || '';
     const links = scrapeData?.data?.links || scrapeData?.links || [];
+    const html = scrapeData?.data?.html || scrapeData?.html || '';
 
     if (!markdown || markdown.length < 100) {
       return new Response(
@@ -81,7 +82,14 @@ Deno.serve(async (req) => {
     // Collect Leboncoin ad links for context
     const adLinks = links.filter((l: string) => l.includes('leboncoin.fr/ad/'));
     const linksContext = adLinks.length > 0
-      ? `\n\nVoici les liens d'annonces trouvés sur la page :\n${adLinks.join('\n')}`
+      ? `\n\nLiens d'annonces trouvés :\n${adLinks.join('\n')}`
+      : '';
+
+    // Extract image URLs from HTML for Gemini context
+    const imageMatches = html.match(/https?:\/\/[^\s"']+(?:lfrmedias|img\.leboncoin|classistatic)[^\s"'>]*/gi) || [];
+    const uniqueImages = [...new Set(imageMatches)].slice(0, 30);
+    const imagesContext = uniqueImages.length > 0
+      ? `\n\nURLs d'images trouvées sur la page :\n${uniqueImages.join('\n')}`
       : '';
 
     // --- STEP B: Gemini AI analysis ---
