@@ -322,15 +322,6 @@ const ClientDashboard = () => {
             )}
 
             {/* ------------------------------------- */}
-            {/* ONGLET : CHASSEUR DE PÉPITES */}
-            {/* ------------------------------------- */}
-            {activeTab === 'hunting' && (
-              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <NuggetHunter />
-              </section>
-            )}
-
-            {/* ------------------------------------- */}
             {/* ONGLET 3 : PARAMÈTRES (NOUVEAU) */}
             {/* ------------------------------------- */}
             {activeTab === 'settings' && (
