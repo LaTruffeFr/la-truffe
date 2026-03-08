@@ -66,8 +66,8 @@ export const Header = ({ activeLink }: HeaderProps) => {
                 to={link.path}
                 className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
                   activeLink === link.id 
-                    ? 'bg-indigo-50 text-indigo-600' 
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }`}
               >
                 {link.name}
