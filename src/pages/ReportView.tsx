@@ -410,7 +410,7 @@ const ReportView = () => {
                 {report.marque} <span className="text-primary">{report.modele}</span>
               </h1>
             )}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-3">
               <div className="px-4 py-2 bg-muted border border-border rounded-xl font-bold text-foreground flex items-center gap-2 shadow-sm">
                 <Calendar className="w-4 h-4 text-primary" /> {report.annee}
               </div>
