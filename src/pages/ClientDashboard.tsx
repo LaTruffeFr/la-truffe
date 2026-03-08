@@ -216,6 +216,9 @@ const ClientDashboard = () => {
                 </div>
               </nav>
             </Card>
+            
+            {/* Referral Card */}
+            <ReferralCard />
           </aside>
 
           {/* --- MAIN CONTENT --- */}
