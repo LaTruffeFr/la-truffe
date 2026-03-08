@@ -187,7 +187,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'reports' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'reports' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('reports')}
                 >
                   <LayoutDashboard className="w-5 h-5 mr-3" /> Mes Audits
@@ -195,7 +195,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'listings' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'listings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('listings')}
                 >
                   <Car className="w-5 h-5 mr-3" /> Mes Annonces
@@ -203,7 +203,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('garage')}
                 >
                   <Scale className="w-5 h-5 mr-3" /> Mon Garage
@@ -211,7 +211,7 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'settings' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('settings')}
                 >
                   <Settings className="w-5 h-5 mr-3" /> Paramètres
@@ -219,13 +219,13 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'billing' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'billing' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('billing')}
                 >
                   <CreditCard className="w-5 h-5 mr-3" /> Facturation
                 </Button>
                 
-                <div className="pt-4 mt-2 border-t border-slate-100">
+                <div className="pt-4 mt-2 border-t border-border">
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-rose-500 hover:text-rose-600 hover:bg-rose-50 h-12 rounded-xl font-bold"
