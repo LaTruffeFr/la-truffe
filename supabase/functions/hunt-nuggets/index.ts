@@ -36,12 +36,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const query = `${marque} ${modele}${km_max ? ` ${km_max} km max` : ''}`.trim();
-    const parsedBudget = Number.isFinite(Number(budget)) && Number(budget) > 0 ? Math.floor(Number(budget)) : null;
+    const query = `${marque} ${modele}`.trim();
+    const parsedBudget = Number.isFinite(Number(budget)) && Number(budget) > 0 ? Math.floor(Number(budget)) : 9999999;
 
-    const lbcUrl = parsedBudget
-      ? `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(query)}&price=min-${parsedBudget}`
-      : `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(query)}`;
+    const lbcUrl = `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(query)}&price=min-${parsedBudget}`;
 
     console.log('Firecrawl scrape URL:', lbcUrl);
 
