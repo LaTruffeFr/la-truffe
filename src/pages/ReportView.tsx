@@ -367,10 +367,10 @@ const ReportView = () => {
     <div className="min-h-screen bg-background flex flex-col font-sans text-foreground">
       
       {/* HEADER */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50 h-16 flex items-center px-4 md:px-6 print:hidden">
+      <header className="bg-card/80 backdrop-blur-xl border-b border-border sticky top-0 z-50 h-16 flex items-center px-4 md:px-6 print:hidden">
         <div className="container mx-auto flex items-center justify-between max-w-6xl">
-          <Link to="/" className="font-black text-xl tracking-tighter text-slate-900 flex items-center gap-2">
-            La Truffe <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 text-[9px] uppercase tracking-widest h-5">Certifié</Badge>
+          <Link to="/" className="font-black text-xl tracking-tighter text-foreground flex items-center gap-2">
+            La Truffe <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] uppercase tracking-widest h-5">Certifié</Badge>
           </Link>
           <div className="flex gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate('/client')} className="font-bold text-muted-foreground hidden sm:flex">Retour</Button>
