@@ -672,7 +672,7 @@ const ReportView = () => {
               </div>
               <Badge className="bg-foreground text-background font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest border-0">Data Live</Badge>
             </div>
-            <Card className="rounded-[3rem] shadow-xl border-0 overflow-hidden h-[500px] bg-slate-950 p-6">
+            <Card className="rounded-2xl md:rounded-[3rem] shadow-xl border-0 overflow-hidden h-[350px] md:h-[500px] bg-slate-950 p-3 md:p-6">
               <SniperChart data={vehiclesData} trendLine={calculateLogTrendLine(vehiclesData)} onVehicleClick={setSelectedVehicle} />
             </Card>
           </div>

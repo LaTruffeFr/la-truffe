@@ -223,7 +223,7 @@ export default function Landing() {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[100px] -mr-20 -mt-20"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-[100px] -ml-20 -mb-20"></div>
           
-          <h2 className="text-4xl md:text-6xl font-black text-white mb-6 relative z-10 tracking-tight">Prêt à acheter en confiance ?</h2>
+          <h2 className="text-3xl md:text-6xl font-black text-white mb-4 md:mb-6 relative z-10 tracking-tight">Prêt à acheter en confiance ?</h2>
           <p className="text-indigo-100 text-xl md:text-2xl font-medium mb-12 max-w-2xl mx-auto relative z-10">
             Rejoignez les acheteurs malins qui utilisent La Truffe pour sécuriser leurs transactions.
           </p>

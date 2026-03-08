@@ -124,7 +124,7 @@ const GarageView = () => {
             <Car className="w-4 h-4" />
             Mon Garage
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-3">
+          <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tight mb-3">
             Le Comparateur
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">

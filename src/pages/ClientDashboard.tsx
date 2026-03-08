@@ -454,14 +454,14 @@ const ClientDashboard = () => {
                   </Card>
                 </div>
 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden">
-                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
-                      <Receipt className="w-6 h-6 text-slate-700" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
+                  <div className="bg-muted p-4 md:p-6 border-b border-border flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-border flex items-center justify-center">
+                      <Receipt className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-slate-900">Historique des transactions</h3>
-                      <p className="text-sm font-medium text-slate-500">Retrouvez vos factures.</p>
+                      <h3 className="font-black text-base md:text-lg text-foreground">Historique des transactions</h3>
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Retrouvez vos factures.</p>
                     </div>
                   </div>
                   <CardContent className="p-0">
