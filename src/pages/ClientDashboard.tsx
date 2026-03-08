@@ -16,12 +16,11 @@ import { Footer } from '@/components/landing';
 import { SellerListings } from '@/components/SellerListings';
 import WelcomeModal from '@/components/WelcomeModal';
 import ReferralCard from '@/components/dashboard/ReferralCard';
-import NuggetHunter from '@/components/hunting/NuggetHunter';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Shield, Search,
   Loader2, Clock, CheckCircle, Eye, Car, ArrowRight,
-  ShieldCheck, Zap, Lock, Bell, Receipt, Download, Target
+  ShieldCheck, Zap, Lock, Bell, Receipt, Download
 } from 'lucide-react';
 
 interface Report {
@@ -52,8 +51,8 @@ const ClientDashboard = () => {
 
   // NOUVEAU : On ajoute 'settings' et 'billing' aux onglets possibles
   const initialTab = (searchParams.get('tab') as any) || 'reports';
-  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'hunting' | 'settings' | 'billing'>(
-    ['reports', 'listings', 'hunting', 'settings', 'billing'].includes(initialTab) ? initialTab : 'reports'
+  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'settings' | 'billing'>(
+    ['reports', 'listings', 'settings', 'billing'].includes(initialTab) ? initialTab : 'reports'
   );
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
@@ -194,13 +193,6 @@ const ClientDashboard = () => {
                   <Car className="w-5 h-5 mr-3" /> Mes Annonces
                 </Button>
                 
-                <Button 
-                  variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'hunting' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
-                  onClick={() => setActiveTab('hunting')}
-                >
-                  <Target className="w-5 h-5 mr-3" /> Chasseur de Pépites
-                </Button>
                 
                 <Button 
                   variant="ghost" 
@@ -325,15 +317,6 @@ const ClientDashboard = () => {
                   </Button>
                 </div>
                 {user && <SellerListings userId={user.id} />}
-              </section>
-            )}
-
-            {/* ------------------------------------- */}
-            {/* ONGLET : CHASSEUR DE PÉPITES */}
-            {/* ------------------------------------- */}
-            {activeTab === 'hunting' && (
-              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <NuggetHunter />
               </section>
             )}
 
