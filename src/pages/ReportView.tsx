@@ -141,6 +141,7 @@ const ReportView = () => {
   const [isCopied, setIsCopied] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
+  const [fastLoadStep, setFastLoadStep] = useState(0);
 
   const fetchReport = async () => {
     const { data, error } = await supabase.from('reports').select('*').eq('id', id).maybeSingle();
