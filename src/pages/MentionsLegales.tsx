@@ -37,7 +37,7 @@ const MentionsLegales = () => (
 
         <h2 className="text-xl font-bold mt-8 mb-4 text-indigo-900">3. Propriété intellectuelle</h2>
         <p className="text-slate-600 leading-relaxed mb-4">
-          L'ensemble du contenu du site La Truffe (textes, graphismes, images, logos, icônes, logiciels, algorithmes d'Intelligence Artificielle) est la propriété exclusive de l'éditeur ou de ses partenaires. Toute reproduction, représentation ou diffusion, même partielle, est interdite sans autorisation écrite préalable, conformément aux articles L.111-1 et suivants du Code de la Propriété Intellectuelle.
+          L'ensemble du contenu du site La Truffe (textes, graphismes, images, logos, icônes, logiciels, algorithmes d'analyse avancés) est la propriété exclusive de l'éditeur ou de ses partenaires. Toute reproduction, représentation ou diffusion, même partielle, est interdite sans autorisation écrite préalable, conformément aux articles L.111-1 et suivants du Code de la Propriété Intellectuelle.
         </p>
 
         <h2 className="text-xl font-bold mt-8 mb-4 text-indigo-900">4. Responsabilité</h2>
