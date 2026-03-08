@@ -123,8 +123,8 @@ export default function Landing() {
       </div>
 
       {/* --- EXEMPLE VISUEL (AVANT / APRÈS L'IA) --- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32">
-        <div className="bg-slate-900 rounded-[3rem] p-8 md:p-12 lg:p-16 shadow-2xl relative overflow-hidden border border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 md:mt-32">
+        <div className="bg-slate-900 rounded-2xl md:rounded-[3rem] p-4 sm:p-8 md:p-12 lg:p-16 shadow-2xl relative overflow-hidden border border-slate-800">
           <div className="absolute top-0 right-0 p-8 opacity-5"><ShieldCheck className="w-64 h-64" /></div>
           
           <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
