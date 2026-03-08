@@ -13,7 +13,7 @@ const ReferralCard = () => {
 
   const referralLink = useMemo(() => {
     if (!user) return '';
-    return `https://latruffe.lovable.app/?ref=${user.id}`;
+    return `https://latruffe-auto.fr/?ref=${user.id}`;
   }, [user]);
 
   const handleCopy = () => {

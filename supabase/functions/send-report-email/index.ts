@@ -154,7 +154,7 @@ serve(async (req) => {
     }
 
     // Build public report URL using share token
-    const appUrl = Deno.env.get("APP_URL") || "https://votre-app.lovable.app";
+    const appUrl = Deno.env.get("APP_URL") || "https://latruffe-auto.fr";
     const reportUrl = `${appUrl}/audit/${shareToken}`;
 
     // 5. Send email
