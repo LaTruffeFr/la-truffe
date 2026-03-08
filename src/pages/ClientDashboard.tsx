@@ -174,7 +174,7 @@ const ClientDashboard = () => {
               </div>
               
               {/* Navigation */}
-              <nav className="p-4 space-y-1">
+              <nav className="p-2 lg:p-4 flex flex-row lg:flex-col overflow-x-auto gap-1 lg:gap-1 pb-2 lg:pb-4 scrollbar-hide">
                 {isAdmin && (
                   <Button 
                     variant="ghost" 
