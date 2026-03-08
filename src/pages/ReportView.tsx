@@ -465,7 +465,7 @@ const ReportView = () => {
                   <p className="text-emerald-400 font-black uppercase tracking-widest text-[10px] mb-2 flex items-center sm:justify-end gap-1.5">
                     <CheckCircle2 className="w-4 h-4"/> Cote La Truffe
                   </p>
-                  <p className="text-5xl md:text-6xl font-[1000] tracking-tighter leading-none">{safeNum(stats.prixCible)} €</p>
+                  <p className="text-3xl sm:text-5xl md:text-6xl font-[1000] tracking-tighter leading-none">{safeNum(stats.prixCible)} €</p>
                 </div>
               </div>
               <div className="flex items-center justify-between bg-white/5 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
