@@ -176,7 +176,7 @@ export default function AuditPage() {
 
             {/* Timeline verticale des étapes */}
             <div className="space-y-6 relative ml-2">
-              <div className="absolute left-[15px] top-2 bottom-4 w-0.5 bg-slate-100 z-0" />
+              <div className="absolute left-[15px] top-2 bottom-4 w-0.5 bg-border z-0" />
               
               {AUDIT_STEPS.map((step, index) => {
                 const isCompleted = index < loadingStepIndex;
