@@ -479,7 +479,7 @@ export default function SellCar() {
                         </div>
                         <div>
                           <h4 className="font-black text-base">Vente 3x plus rapide</h4>
-                          <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Les annonces certifiées par l'IA partent en priorité absolue.</p>
+                          <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Les annonces certifiées par La Truffe partent en priorité absolue.</p>
                         </div>
                       </div>
                       
