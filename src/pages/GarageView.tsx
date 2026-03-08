@@ -230,16 +230,17 @@ const GarageView = () => {
             </DialogTitle>
           </DialogHeader>
 
+          <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-4 md:p-6">
           {comparing ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
-              <p className="text-lg font-bold text-slate-700">La Truffe délibère entre ces modèles...</p>
-              <p className="text-sm text-slate-400">Analyse comparative en cours</p>
+            <div className="flex flex-col items-center justify-center py-16 md:py-20 gap-4">
+              <Loader2 className="w-10 h-10 md:w-12 md:h-12 animate-spin text-indigo-600" />
+              <p className="text-base md:text-lg font-bold text-foreground">La Truffe délibère entre ces modèles...</p>
+              <p className="text-sm text-muted-foreground">Analyse comparative en cours</p>
             </div>
           ) : result ? (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Winner Banner */}
-              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-6 text-center">
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl md:rounded-2xl p-4 md:p-6 text-center">
                 <Trophy className="w-10 h-10 text-amber-500 mx-auto mb-2" />
                 <h2 className="text-xl font-black text-slate-900 mb-1">
                   🏆 Le Choix de La Truffe : {selectedReports[result.winner_index]?.marque} {selectedReports[result.winner_index]?.modele}
