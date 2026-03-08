@@ -157,17 +157,16 @@ export default function AuditPage() {
           </div>
 
           {/* Carte de progression */}
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-indigo-100/20 border border-slate-100">
+          <div className="bg-card p-8 rounded-[2.5rem] shadow-xl shadow-primary/5 dark:shadow-none border border-border">
             
-            {/* Barre de pourcentage */}
             <div className="mb-8 relative">
-              <div className="flex justify-between text-xs font-black text-indigo-600 mb-3 px-1">
+              <div className="flex justify-between text-xs font-black text-primary mb-3 px-1">
                 <span className="uppercase tracking-widest">Progression globale</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+              <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden shadow-inner">
                 <div 
-                  className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out relative" 
+                  className="bg-primary h-full rounded-full transition-all duration-500 ease-out relative" 
                   style={{ width: `${progress}%` }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[slide_2s_ease-in-out_infinite]" />
