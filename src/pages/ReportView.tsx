@@ -574,8 +574,8 @@ const ReportView = () => {
                         </div>
                       )}
                     </div>
-                    <div className="bg-rose-50 px-6 py-5 flex justify-between items-center border-t-2 border-rose-200">
-                      <span className="font-black text-rose-900 uppercase text-xs tracking-widest">Impact sur le prix</span>
+                    <div className="bg-rose-50 dark:bg-rose-950/30 px-6 py-5 flex justify-between items-center border-t-2 border-rose-200 dark:border-rose-900/30">
+                      <span className="font-black text-rose-900 dark:text-rose-300 uppercase text-xs tracking-widest">Impact sur le prix</span>
                       <span className="text-2xl font-black text-rose-600 tracking-tighter">{safeNum(total)} €</span>
                     </div>
                   </Card>
