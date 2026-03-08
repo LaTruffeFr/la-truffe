@@ -176,13 +176,13 @@ const GarageView = () => {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       {report.carburant && <span className="capitalize">{report.carburant}</span>}
                       {report.transmission && <span className="capitalize">{report.transmission}</span>}
                       <span>{new Date(report.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
                     {report.prix_estime && report.prix_affiche && (
-                      <div className="mt-3 pt-3 border-t border-slate-100">
+                      <div className="mt-3 pt-3 border-t border-border">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-500">Estimation La Truffe</span>
                           <span className={`font-bold ${report.prix_affiche > report.prix_estime ? 'text-red-600' : 'text-emerald-600'}`}>
