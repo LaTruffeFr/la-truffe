@@ -24,6 +24,7 @@ import CGV from "./pages/CGV";
 import MentionsLegales from "./pages/MentionsLegales";
 import About from "./pages/About";
 import WhyUs from "./pages/WhyUs";
+import NuggetHunterView from "./pages/NuggetHunterView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
