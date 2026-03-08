@@ -187,18 +187,35 @@ const ReportView = () => {
 
   useEffect(() => {
     if (report?.status !== 'in_progress' && report?.status !== 'pending') return;
+    
     const startTime = Date.now();
-    let animationFrameId: number;
-    const updateProgress = () => {
+    const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const targetPercent = Math.min((elapsed / 10000) * 100, 95);
-      setProgressPercent(targetPercent);
-      if (targetPercent < 95) animationFrameId = requestAnimationFrame(updateProgress);
-    };
-    animationFrameId = requestAnimationFrame(updateProgress);
-    PROGRESS_STEPS.forEach((step, index) => { setTimeout(() => setProgressIndex(index), step.time); });
-    return () => cancelAnimationFrame(animationFrameId);
+      
+      let currentStepIndex = 0;
+      for (let i = PROGRESS_STEPS.length - 1; i >= 0; i--) {
+        if (elapsed >= PROGRESS_STEPS[i].time) {
+          currentStepIndex = i;
+          break;
+        }
+      }
+      
+      setProgressIndex(currentStepIndex);
+      setProgressPercent(PROGRESS_STEPS[currentStepIndex].percent);
+      
+    }, 500);
+
+    return () => clearInterval(interval);
   }, [report?.status]);
+
+  useEffect(() => {
+    if (loading || authLoading) {
+      const interval = setInterval(() => setFastLoadStep(p => (p < 3 ? p + 1 : p)), 400);
+      return () => clearInterval(interval);
+    }
+  }, [loading, authLoading]);
+  const fastTexts = ["Connexion sécurisée...", "Extraction du dossier...", "Déchiffrement...", "Ouverture..."];
+  const fastPercents = [25, 50, 80, 100];
 
   const handleCopySMS = (text: string) => {
     navigator.clipboard.writeText(text);
