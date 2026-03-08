@@ -28,6 +28,7 @@ import About from "./pages/About";
 import WhyUs from "./pages/WhyUs";
 import NuggetHunterView from "./pages/NuggetHunterView";
 import GarageView from "./pages/GarageView";
+import ProDashboard from "./pages/ProDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/why-us" element={<WhyUs />} />
               <Route path="/chasseur" element={<NuggetHunterView />} />
               <Route path="/garage" element={<GarageView />} />
+              <Route path="/pro" element={<ProDashboard />} />
               <Route path="/settings" element={<Navigate to="/client" replace />} />
               <Route path="/transactions" element={<Navigate to="/client" replace />} />
               <Route path="*" element={<NotFound />} />
