@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import PricingModal from "@/components/billing/PricingModal";
 import { 
   Link as LinkIcon, Loader2, ScanSearch, 
   Receipt, CheckCircle2, Zap, Sparkles,
