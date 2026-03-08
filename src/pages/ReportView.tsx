@@ -518,12 +518,12 @@ const ReportView = () => {
                   <h3 className="text-xl font-black text-foreground flex items-center gap-2">
                     <ShieldCheck className="text-emerald-500 w-6 h-6" /> Points Sécurisés
                   </h3>
-                  <Card className="rounded-[2rem] border-emerald-200 shadow-lg bg-emerald-50/30 h-full">
-                    <div className="bg-emerald-50/80 px-6 py-4 border-b border-emerald-100">
-                      <p className="text-[10px] font-black uppercase text-emerald-700 tracking-widest">Travaux & Entretiens validés</p>
+                  <Card className="rounded-[2rem] border-emerald-200 dark:border-emerald-900/30 shadow-lg dark:shadow-none bg-emerald-50/30 dark:bg-emerald-950/20 h-full">
+                    <div className="bg-emerald-50/80 dark:bg-emerald-950/40 px-6 py-4 border-b border-emerald-100 dark:border-emerald-900/30">
+                      <p className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-widest">Travaux & Entretiens validés</p>
                     </div>
                     {Array.isArray(entretiens) && entretiens.length > 0 ? (
-                      <div className="divide-y divide-emerald-100/50 p-2">
+                      <div className="divide-y divide-emerald-100/50 dark:divide-emerald-900/30 p-2">
                         {entretiens.map((item: string, i: number) => (
                           <div key={i} className="flex items-start gap-3 px-4 py-3">
                             <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
