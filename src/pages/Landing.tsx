@@ -35,7 +35,7 @@ export default function Landing() {
             <ShieldCheck className="w-4 h-4" /> La 1ère IA experte en mécanique
           </Badge>
           
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 leading-[1.1]">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 leading-[1.1]">
             Ne vous faites plus <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">arnaquer</span> <br className="hidden md:block" />
             sur le marché de l'occasion.
           </h1>
