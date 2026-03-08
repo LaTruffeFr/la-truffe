@@ -9,9 +9,10 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Link as LinkIcon, Loader2, Activity, 
+  Link as LinkIcon, Loader2, ScanSearch, 
   Receipt, CheckCircle2, Zap, Sparkles,
-  ShieldCheck, ExternalLink, AlertCircle
+  ShieldCheck, ExternalLink, AlertCircle,
+  Cpu, ShieldAlert, Calculator, FileCheck
 } from "lucide-react";
 
 const AUDIT_STEPS = [
