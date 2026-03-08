@@ -221,7 +221,7 @@ function AdminDashboardInner() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] font-sans text-slate-900">
+    <div className="min-h-screen flex flex-col bg-background font-sans text-foreground">
       {/* HEADER GLOBAL ADMIN */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-lg print:hidden">
         <div className="flex items-center gap-4">
