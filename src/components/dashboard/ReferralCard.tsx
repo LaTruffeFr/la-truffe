@@ -24,7 +24,7 @@ const ReferralCard = () => {
   };
 
   const shareWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`🐕 La Truffe - L'IA qui traque les arnaques auto !\nUtilise mon lien pour obtenir 1 audit gratuit :\n${referralLink}`)}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(`🐕 La Truffe - L'expert qui traque les arnaques auto !\nUtilise mon lien pour obtenir 1 audit gratuit :\n${referralLink}`)}`, '_blank');
   };
 
   const shareTwitter = () => {
