@@ -365,24 +365,35 @@ serve(async (req: Request) => {
       "tags": ["tag1", "tag2"]
     }`;
 
-    const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: writingPrompt }] }], generationConfig: { temperature: 0.3, responseMimeType: "application/json" } }),
+    const writingRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: "Tu es 'La Truffe', l'expert en mécanique automobile le plus rigoureux et courtois de France. Réponds UNIQUEMENT en JSON valide, sans markdown ni commentaire.",
+        messages: [{ role: "user", content: writingPrompt }],
+      }),
     });
 
     if (!writingRes.ok) {
-      console.error("Gemini writing error:", writingRes.status);
+      const errBody = await writingRes.text().catch(() => "");
+      console.error("Anthropic writing error:", writingRes.status, errBody);
       return jsonResponse({ error: "La rédaction du rapport IA a échoué. Réessayez." }, 502);
     }
 
     const writingData = await writingRes.json();
-    if (!writingData?.candidates?.[0]?.content?.parts?.[0]?.text) {
+    if (!writingData?.content?.[0]?.text) {
       return jsonResponse({ error: "L'IA n'a pas pu rédiger le rapport. Réessayez." }, 422);
     }
 
     let finalReview: any;
     try {
-      finalReview = JSON.parse(writingData.candidates[0].content.parts[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
+      finalReview = JSON.parse(writingData.content[0].text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
     } catch {
       return jsonResponse({ error: "Réponse IA mal formatée lors de la rédaction. Réessayez." }, 422);
     }
