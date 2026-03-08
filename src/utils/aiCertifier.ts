@@ -73,8 +73,8 @@ export async function certifyCar(details: any, imageFile: File) {
     return JSON.parse(text);
 
   } catch (error) {
-    // 2. Si L'IA plante (404, 429, Network Error...), on attrape l'erreur et on simule
-    console.error("❌ Erreur IA (Passage automatique en simulation):", error);
+    // 2. Si le moteur plante (404, 429, Network Error...), on attrape l'erreur et on simule
+    console.error("❌ Erreur moteur (Passage automatique en simulation):", error);
     return getMockCertification(details);
   }
 }
