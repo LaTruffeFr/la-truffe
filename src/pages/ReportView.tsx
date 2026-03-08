@@ -224,21 +224,23 @@ const ReportView = () => {
     setTimeout(() => setIsCopied(false), 3000);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!report) return;
     setIsGeneratingPdf(true);
-    
-    // Use afterprint to reset state after print dialog closes
-    const handleAfterPrint = () => {
+    toast({ title: "Génération du PDF...", description: "Veuillez patienter quelques secondes." });
+    try {
+      const fileName = `La-Truffe_${report.marque}_${report.modele}_${new Date().toISOString().slice(0,10)}`;
+      const success = await generatePDF('report-content', fileName);
+      if (!success) {
+        toast({ variant: "destructive", title: "Erreur", description: "Impossible de générer le PDF." });
+      } else {
+        toast({ title: "PDF téléchargé ✅", description: "Votre expertise a été sauvegardée." });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "Erreur", description: "Une erreur est survenue lors de la génération." });
+    } finally {
       setIsGeneratingPdf(false);
-      window.removeEventListener('afterprint', handleAfterPrint);
-    };
-    window.addEventListener('afterprint', handleAfterPrint);
-    
-    // Small delay to let React hide interactive elements before printing
-    setTimeout(() => {
-      window.print();
-    }, 300);
+    }
   };
 
   if (loading || authLoading) return (
