@@ -386,11 +386,11 @@ const ReportView = () => {
         </div>
       </header>
 
-      <main id="report-content" className="flex-1 container mx-auto px-4 py-10 max-w-5xl space-y-10">
+      <main id="report-content" className="flex-1 container mx-auto px-3 sm:px-4 py-6 md:py-10 max-w-5xl space-y-6 md:space-y-10">
         
         {/* --- 1. HERO SECTION --- */}
-        <div className="pdf-section flex flex-col md:flex-row items-center md:items-start gap-8 bg-card p-6 rounded-[2.5rem] shadow-xl dark:shadow-none border border-border">
-          <div className="w-48 h-48 sm:w-56 sm:h-56 shrink-0 rounded-[2rem] overflow-hidden shadow-inner border-4 border-muted relative group">
+        <div className="pdf-section flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 bg-card p-4 md:p-6 rounded-2xl md:rounded-[2.5rem] shadow-xl dark:shadow-none border border-border">
+          <div className="w-32 h-32 sm:w-48 sm:h-48 md:w-56 md:h-56 shrink-0 rounded-xl md:rounded-[2rem] overflow-hidden shadow-inner border-4 border-muted relative group">
             <img src={imageCover} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Vehicule" />
             <div className="absolute top-3 left-3">
                <Badge className="bg-black/60 backdrop-blur-md text-white border-0 shadow-sm">{isSingleAudit ? 'Dossier Premium' : 'Analyse Marché'}</Badge>
@@ -402,15 +402,15 @@ const ReportView = () => {
               <Hash className="w-3 h-3" /> Dossier {report.id.slice(0,8)} • <History className="w-3 h-3 ml-2" /> {new Date(report.created_at).toLocaleDateString()}
             </div>
             {report.market_data?.original_title ? (
-              <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tighter leading-tight mb-6">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground tracking-tighter leading-tight mb-4 md:mb-6">
                 {report.market_data.original_title}
               </h1>
             ) : (
-              <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter leading-none mb-6">
+              <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tighter leading-none mb-4 md:mb-6">
                 {report.marque} <span className="text-primary">{report.modele}</span>
               </h1>
             )}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-3">
               <div className="px-4 py-2 bg-muted border border-border rounded-xl font-bold text-foreground flex items-center gap-2 shadow-sm">
                 <Calendar className="w-4 h-4 text-primary" /> {report.annee}
               </div>
@@ -440,8 +440,8 @@ const ReportView = () => {
         </div>
 
         {/* --- 2. LES CHIFFRES (SCORE & PRIX) --- */}
-        <div className="pdf-section grid md:grid-cols-3 gap-6">
-          <Card className="rounded-[2.5rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden flex flex-col justify-center p-6 relative">
+        <div className="pdf-section grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <Card className="rounded-2xl md:rounded-[2.5rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden flex flex-col justify-center p-4 md:p-6 relative">
             <div className={`absolute top-0 left-0 w-full h-1.5 ${stats.score >= 80 ? 'bg-emerald-500' : stats.score >= 60 ? 'bg-amber-400' : 'bg-rose-500'}`}></div>
             <CardContent className="text-center p-0 pt-4">
               <ScoreCircularGauge score={stats.score} />
@@ -451,7 +451,7 @@ const ReportView = () => {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2 rounded-[2.5rem] border-0 shadow-xl bg-slate-900 text-white overflow-hidden p-8 relative">
+          <Card className="md:col-span-2 rounded-2xl md:rounded-[2.5rem] border-0 shadow-xl bg-slate-900 text-white overflow-hidden p-4 md:p-8 relative">
             <div className="absolute right-0 top-0 p-8 opacity-5"><Euro className="w-48 h-48" /></div>
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b border-white/10 pb-6 mb-6">
@@ -465,7 +465,7 @@ const ReportView = () => {
                   <p className="text-emerald-400 font-black uppercase tracking-widest text-[10px] mb-2 flex items-center sm:justify-end gap-1.5">
                     <CheckCircle2 className="w-4 h-4"/> Cote La Truffe
                   </p>
-                  <p className="text-5xl md:text-6xl font-[1000] tracking-tighter leading-none">{safeNum(stats.prixCible)} €</p>
+                  <p className="text-3xl sm:text-5xl md:text-6xl font-[1000] tracking-tighter leading-none">{safeNum(stats.prixCible)} €</p>
                 </div>
               </div>
               <div className="flex items-center justify-between bg-white/5 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
@@ -484,7 +484,7 @@ const ReportView = () => {
         </div>
 
         {/* --- 3. VERDICT IA --- */}
-        <div className="pdf-section bg-card border border-primary/10 rounded-[2rem] p-6 md:p-8 shadow-lg shadow-primary/5 dark:shadow-none flex flex-col md:flex-row items-start gap-6 relative overflow-hidden">
+        <div className="pdf-section bg-card border border-primary/10 rounded-2xl md:rounded-[2rem] p-4 md:p-8 shadow-lg shadow-primary/5 dark:shadow-none flex flex-col md:flex-row items-start gap-4 md:gap-6 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
           <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20 shrink-0 relative z-10">
             <Sparkles className="w-8 h-8 text-primary" />
@@ -672,14 +672,14 @@ const ReportView = () => {
               </div>
               <Badge className="bg-foreground text-background font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest border-0">Data Live</Badge>
             </div>
-            <Card className="rounded-[3rem] shadow-xl border-0 overflow-hidden h-[500px] bg-slate-950 p-6">
+            <Card className="rounded-2xl md:rounded-[3rem] shadow-xl border-0 overflow-hidden h-[350px] md:h-[500px] bg-slate-950 p-3 md:p-6">
               <SniperChart data={vehiclesData} trendLine={calculateLogTrendLine(vehiclesData)} onVehicleClick={setSelectedVehicle} />
             </Card>
           </div>
         )}
 
         {/* --- DISCLAIMER --- */}
-        <div className="mt-16 p-6 md:p-8 bg-primary/5 border border-primary/10 rounded-2xl flex gap-4 items-start">
+        <div className="mt-10 md:mt-16 p-4 md:p-8 bg-primary/5 border border-primary/10 rounded-2xl flex gap-3 md:gap-4 items-start">
           <ShieldCheck className="w-8 h-8 text-primary shrink-0 mt-0.5" />
           <div>
             <h3 className="font-bold text-foreground text-base mb-2">Notre mission : Vous protéger</h3>
@@ -690,6 +690,18 @@ const ReportView = () => {
         </div>
 
       </main>
+
+      {/* Sticky mobile share button */}
+      <div className="fixed bottom-4 left-4 right-4 z-50 sm:hidden print:hidden">
+        <Button
+          onClick={handleShareNegotiation}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-14 shadow-2xl shadow-emerald-600/30 text-base gap-2"
+        >
+          {isShareCopied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+          {isShareCopied ? 'Lien copié !' : 'Partager au vendeur 🤝'}
+        </Button>
+      </div>
+
       <Footer />
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
       <ReportAdModal open={showReportModal} onOpenChange={setShowReportModal} adUrl={report?.lien_annonce || ''} />

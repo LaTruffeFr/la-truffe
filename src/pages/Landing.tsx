@@ -35,12 +35,12 @@ export default function Landing() {
             <ShieldCheck className="w-4 h-4" /> La 1ère IA experte en mécanique
           </Badge>
           
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 leading-[1.1]">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 leading-[1.1]">
             Ne vous faites plus <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">arnaquer</span> <br className="hidden md:block" />
             sur le marché de l'occasion.
           </h1>
           
-          <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto mb-12 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+          <p className="text-base sm:text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto mb-8 md:mb-12 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 px-2">
             La Truffe analyse les annonces, détecte les vices cachés, calcule le devis des réparations et vous donne la vraie valeur de la voiture en 5 secondes.
           </p>
           
@@ -123,17 +123,17 @@ export default function Landing() {
       </div>
 
       {/* --- EXEMPLE VISUEL (AVANT / APRÈS L'IA) --- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32">
-        <div className="bg-slate-900 rounded-[3rem] p-8 md:p-12 lg:p-16 shadow-2xl relative overflow-hidden border border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 md:mt-32">
+        <div className="bg-slate-900 rounded-2xl md:rounded-[3rem] p-4 sm:p-8 md:p-12 lg:p-16 shadow-2xl relative overflow-hidden border border-slate-800">
           <div className="absolute top-0 right-0 p-8 opacity-5"><ShieldCheck className="w-64 h-64" /></div>
           
           <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
             <div>
               <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 mb-6">Démonstration</Badge>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-6">
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight mb-4 md:mb-6">
                 Le vendeur dit : <br/><span className="text-slate-400 font-medium italic">"Rien à prévoir."</span>
               </h2>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-8">
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight mb-6 md:mb-8">
                 La Truffe répond : <br/><span className="text-emerald-400">"Préparez 1 500€."</span>
               </h2>
               <p className="text-slate-400 text-lg font-medium leading-relaxed mb-8">
@@ -183,9 +183,9 @@ export default function Landing() {
       </div>
 
       {/* --- SECTION COMMENT ÇA MARCHE --- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Le mécanicien le plus <span className="text-indigo-600">incorruptible</span>.</h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 md:mt-32">
+        <div className="text-center mb-10 md:mb-16">
+          <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 md:mb-6 tracking-tight">Le mécanicien le plus <span className="text-indigo-600">incorruptible</span>.</h2>
           <p className="text-xl text-slate-500 max-w-3xl mx-auto font-medium">Notre intelligence artificielle a été entraînée sur des milliers de fiches techniques, pannes récurrentes et données du marché automobile.</p>
         </div>
 
@@ -218,12 +218,12 @@ export default function Landing() {
       </div>
 
       {/* --- CTA BANNER --- */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-32 mb-10">
-        <div className="bg-indigo-600 rounded-[3rem] p-12 md:p-20 text-center shadow-2xl relative overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 md:mt-32 mb-10">
+        <div className="bg-indigo-600 rounded-2xl md:rounded-[3rem] p-6 sm:p-12 md:p-20 text-center shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[100px] -mr-20 -mt-20"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-[100px] -ml-20 -mb-20"></div>
           
-          <h2 className="text-4xl md:text-6xl font-black text-white mb-6 relative z-10 tracking-tight">Prêt à acheter en confiance ?</h2>
+          <h2 className="text-3xl md:text-6xl font-black text-white mb-4 md:mb-6 relative z-10 tracking-tight">Prêt à acheter en confiance ?</h2>
           <p className="text-indigo-100 text-xl md:text-2xl font-medium mb-12 max-w-2xl mx-auto relative z-10">
             Rejoignez les acheteurs malins qui utilisent La Truffe pour sécuriser leurs transactions.
           </p>

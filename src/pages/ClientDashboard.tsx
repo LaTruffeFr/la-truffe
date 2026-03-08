@@ -147,10 +147,10 @@ const ClientDashboard = () => {
           
           {/* --- SIDEBAR MENU --- */}
           <aside className="lg:col-span-3 space-y-6">
-            <Card className="rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
+            <Card className="rounded-2xl lg:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
               
-              {/* Wallet & Profil */}
-              <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
+              {/* Wallet & Profil - hidden on mobile, shown on lg */}
+              <div className="hidden lg:block bg-slate-900 p-6 lg:p-8 text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><ShieldCheck className="w-24 h-24 text-white" /></div>
                 <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 backdrop-blur-sm relative z-10 shadow-inner">
                   <User className="w-10 h-10 text-white" />
@@ -174,58 +174,58 @@ const ClientDashboard = () => {
               </div>
               
               {/* Navigation */}
-              <nav className="p-4 space-y-1">
+              <nav className="p-2 lg:p-4 flex flex-row lg:flex-col overflow-x-auto gap-1 lg:gap-1 pb-2 lg:pb-4 scrollbar-hide">
                 {isAdmin && (
                   <Button 
                     variant="ghost" 
-                    className="w-full justify-start text-white bg-slate-900 hover:bg-slate-800 hover:text-white font-bold h-12 rounded-xl mb-4 shadow-md"
+                    className="whitespace-nowrap flex-shrink-0 justify-start text-white bg-slate-900 hover:bg-slate-800 hover:text-white font-bold h-10 lg:h-12 rounded-xl lg:mb-4 shadow-md text-xs lg:text-sm"
                     onClick={() => navigate('/admin')}
                   >
-                    <Shield className="w-5 h-5 mr-3 text-indigo-400" /> Tour de Contrôle Admin
+                    <Shield className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 text-indigo-400" /> <span className="hidden lg:inline">Tour de Contrôle</span><span className="lg:hidden">Admin</span>
                   </Button>
                 )}
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'reports' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'reports' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('reports')}
                 >
-                  <LayoutDashboard className="w-5 h-5 mr-3" /> Mes Audits
+                  <LayoutDashboard className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> Audits
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'listings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'listings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('listings')}
                 >
-                  <Car className="w-5 h-5 mr-3" /> Mes Annonces
+                  <Car className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> Annonces
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'garage' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('garage')}
                 >
-                  <Scale className="w-5 h-5 mr-3" /> Mon Garage
+                  <Scale className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> Garage
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('settings')}
                 >
-                  <Settings className="w-5 h-5 mr-3" /> Paramètres
+                  <Settings className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> <span className="hidden lg:inline">Paramètres</span><span className="lg:hidden">Config</span>
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'billing' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'billing' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('billing')}
                 >
-                  <CreditCard className="w-5 h-5 mr-3" /> Facturation
+                  <CreditCard className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> <span className="hidden lg:inline">Facturation</span><span className="lg:hidden">Factures</span>
                 </Button>
                 
-                <div className="pt-4 mt-2 border-t border-border">
+                <div className="hidden lg:block pt-4 mt-2 border-t border-border">
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-rose-500 hover:text-rose-600 hover:bg-rose-50 h-12 rounded-xl font-bold"
@@ -237,8 +237,10 @@ const ClientDashboard = () => {
               </nav>
             </Card>
             
-            {/* Referral Card */}
-            <ReferralCard />
+            {/* Referral Card - hidden on mobile */}
+            <div className="hidden lg:block">
+              <ReferralCard />
+            </div>
           </aside>
 
           {/* --- MAIN CONTENT --- */}
@@ -352,40 +354,40 @@ const ClientDashboard = () => {
             {/* ------------------------------------- */}
             {activeTab === 'settings' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl">
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-8">Paramètres du Compte</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-6 md:mb-8">Paramètres du Compte</h2>
                 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden mb-8">
-                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
-                      <User className="w-6 h-6 text-slate-700" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden mb-6 md:mb-8">
+                  <div className="bg-muted p-4 md:p-6 border-b border-border flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-border flex items-center justify-center">
+                      <User className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-slate-900">Informations Personnelles</h3>
-                      <p className="text-sm font-medium text-slate-500">Gérez vos données de contact.</p>
+                      <h3 className="font-black text-base md:text-lg text-foreground">Informations Personnelles</h3>
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Gérez vos données de contact.</p>
                     </div>
                   </div>
-                  <CardContent className="p-8 space-y-6">
+                  <CardContent className="p-4 md:p-8 space-y-6">
                     <div className="space-y-2">
-                      <Label className="font-bold text-slate-700">Adresse Email</Label>
-                      <Input value={displayEmail} disabled className="bg-slate-50 font-medium text-slate-500" />
+                      <Label className="font-bold text-muted-foreground">Adresse Email</Label>
+                      <Input value={displayEmail} disabled className="bg-muted font-medium text-muted-foreground" />
                       <p className="text-xs text-slate-400 font-medium mt-1">L'email utilisé pour la connexion ne peut pas être modifié ici.</p>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden mb-8">
-                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
-                      <Lock className="w-6 h-6 text-slate-700" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden mb-6 md:mb-8">
+                  <div className="bg-muted p-4 md:p-6 border-b border-border flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-border flex items-center justify-center">
+                      <Lock className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-slate-900">Sécurité</h3>
-                      <p className="text-sm font-medium text-slate-500">Mettez à jour votre mot de passe.</p>
+                      <h3 className="font-black text-base md:text-lg text-foreground">Sécurité</h3>
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Mettez à jour votre mot de passe.</p>
                     </div>
                   </div>
-                  <CardContent className="p-8 space-y-6">
+                  <CardContent className="p-4 md:p-8 space-y-6">
                     <div className="space-y-2">
-                      <Label className="font-bold text-slate-700">Nouveau mot de passe</Label>
+                      <Label className="font-bold text-muted-foreground">Nouveau mot de passe</Label>
                       <Input type="password" placeholder="••••••••" className="font-medium" />
                     </div>
                     <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-12 px-8">
@@ -394,10 +396,10 @@ const ClientDashboard = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden">
-                  <div className="bg-rose-50 p-6 border-b border-rose-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-rose-200 flex items-center justify-center">
-                      <LogOut className="w-6 h-6 text-rose-600" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
+                  <div className="bg-rose-50 dark:bg-rose-950/20 p-4 md:p-6 border-b border-rose-100 dark:border-rose-900/30 flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-rose-200 dark:border-rose-900/30 flex items-center justify-center">
+                      <LogOut className="w-5 h-5 md:w-6 md:h-6 text-rose-600" />
                     </div>
                     <div>
                       <h3 className="font-black text-lg text-rose-700">Zone de Danger</h3>
@@ -418,10 +420,10 @@ const ClientDashboard = () => {
             {/* ------------------------------------- */}
             {activeTab === 'billing' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-8">Facturation & Crédits</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-6 md:mb-8">Facturation & Crédits</h2>
                 
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
-                  <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-slate-900 overflow-hidden text-white relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+                  <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl bg-slate-900 overflow-hidden text-white relative">
                     <div className="absolute top-0 right-0 p-6 opacity-10"><Zap className="w-32 h-32" /></div>
                     <CardContent className="p-8 relative z-10">
                       <h3 className="text-indigo-400 font-black text-sm uppercase tracking-widest mb-2">Offre Actuelle</h3>
@@ -438,8 +440,8 @@ const ClientDashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden flex flex-col justify-center">
-                    <CardContent className="p-8 text-center">
+                  <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden flex flex-col justify-center">
+                    <CardContent className="p-6 md:p-8 text-center">
                       <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-100">
                         <CheckCircle className="w-10 h-10 text-emerald-500" />
                       </div>
@@ -452,14 +454,14 @@ const ClientDashboard = () => {
                   </Card>
                 </div>
 
-                <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden">
-                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
-                      <Receipt className="w-6 h-6 text-slate-700" />
+                <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
+                  <div className="bg-muted p-4 md:p-6 border-b border-border flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-card rounded-xl shadow-sm border border-border flex items-center justify-center">
+                      <Receipt className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-slate-900">Historique des transactions</h3>
-                      <p className="text-sm font-medium text-slate-500">Retrouvez vos factures.</p>
+                      <h3 className="font-black text-base md:text-lg text-foreground">Historique des transactions</h3>
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Retrouvez vos factures.</p>
                     </div>
                   </div>
                   <CardContent className="p-0">

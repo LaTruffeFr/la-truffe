@@ -117,14 +117,14 @@ const GarageView = () => {
     <div className="min-h-screen bg-gradient-to-b from-muted to-background">
       <Header activeLink="garage" />
       
-      <main className="max-w-6xl mx-auto px-4 pt-28 pb-32">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 pt-24 md:pt-28 pb-24 md:pb-32">
         {/* Hero */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-bold text-sm px-4 py-2 rounded-full mb-4">
             <Car className="w-4 h-4" />
             Mon Garage
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-3">
+          <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tight mb-3">
             Le Comparateur
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
@@ -222,41 +222,42 @@ const GarageView = () => {
 
       {/* Comparison Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black text-slate-900 flex items-center gap-2">
-              <Swords className="w-6 h-6 text-indigo-600" />
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 md:p-6 pb-0">
+            <DialogTitle className="text-xl md:text-2xl font-black text-foreground flex items-center gap-2">
+              <Swords className="w-5 h-5 md:w-6 md:h-6 text-indigo-600" />
               Face-à-Face
             </DialogTitle>
           </DialogHeader>
 
+          <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-4 md:p-6">
           {comparing ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
-              <p className="text-lg font-bold text-slate-700">La Truffe délibère entre ces modèles...</p>
-              <p className="text-sm text-slate-400">Analyse comparative en cours</p>
+            <div className="flex flex-col items-center justify-center py-16 md:py-20 gap-4">
+              <Loader2 className="w-10 h-10 md:w-12 md:h-12 animate-spin text-indigo-600" />
+              <p className="text-base md:text-lg font-bold text-foreground">La Truffe délibère entre ces modèles...</p>
+              <p className="text-sm text-muted-foreground">Analyse comparative en cours</p>
             </div>
           ) : result ? (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Winner Banner */}
-              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-6 text-center">
-                <Trophy className="w-10 h-10 text-amber-500 mx-auto mb-2" />
-                <h2 className="text-xl font-black text-slate-900 mb-1">
-                  🏆 Le Choix de La Truffe : {selectedReports[result.winner_index]?.marque} {selectedReports[result.winner_index]?.modele}
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl md:rounded-2xl p-4 md:p-6 text-center">
+                <Trophy className="w-8 h-8 md:w-10 md:h-10 text-amber-500 mx-auto mb-2" />
+                <h2 className="text-base md:text-xl font-black text-foreground mb-1">
+                  🏆 Le Choix : {selectedReports[result.winner_index]?.marque} {selectedReports[result.winner_index]?.modele}
                 </h2>
-                <p className="text-slate-600 text-sm max-w-lg mx-auto leading-relaxed">{result.verdict}</p>
+                <p className="text-muted-foreground text-xs md:text-sm max-w-lg mx-auto leading-relaxed">{result.verdict}</p>
               </div>
 
               {/* Comparison Table */}
-              <div className="rounded-xl border border-slate-200 overflow-hidden">
-                <Table>
+              <div className="rounded-xl border border-border overflow-x-auto pb-2 overscroll-x-contain snap-x">
+                <Table className="min-w-[600px] md:min-w-0">
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead className="font-bold text-slate-700 w-1/4">Critère</TableHead>
+                    <TableRow className="bg-muted">
+                      <TableHead className="font-bold text-foreground w-1/4 min-w-[120px] snap-start">Critère</TableHead>
                       {selectedReports.map((r, i) => (
                         <TableHead
                           key={r.id}
-                          className={`font-bold text-center ${i === result.winner_index ? 'bg-amber-50 text-amber-800' : 'text-slate-700'}`}
+                          className={`font-bold text-center min-w-[150px] snap-start ${i === result.winner_index ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300' : 'text-foreground'}`}
                         >
                           <div className="flex items-center justify-center gap-1.5">
                             {i === result.winner_index && <Crown className="w-4 h-4 text-amber-500" />}
@@ -320,6 +321,7 @@ const GarageView = () => {
               </div>
             </div>
           ) : null}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
