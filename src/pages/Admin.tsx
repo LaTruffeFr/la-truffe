@@ -10,7 +10,7 @@ import { DealCard } from '@/components/trading/DealCard';
 import { useVehicleData } from '@/contexts/VehicleDataContext';
 import { 
   Loader2, Crosshair, RotateCcw, Maximize2, Minimize2, 
-  ChevronDown, ChevronUp, SlidersHorizontal, Upload, Shield, BrainCircuit 
+  ChevronDown, ChevronUp, SlidersHorizontal, Upload, Shield, ScanSearch 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
