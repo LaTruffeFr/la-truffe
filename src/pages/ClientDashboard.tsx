@@ -440,8 +440,8 @@ const ClientDashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-white overflow-hidden flex flex-col justify-center">
-                    <CardContent className="p-8 text-center">
+                  <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden flex flex-col justify-center">
+                    <CardContent className="p-6 md:p-8 text-center">
                       <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-100">
                         <CheckCircle className="w-10 h-10 text-emerald-500" />
                       </div>
