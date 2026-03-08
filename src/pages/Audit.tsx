@@ -91,6 +91,12 @@ export default function AuditPage() {
 
     if (!user) { navigate('/auth'); return; }
 
+    // Check credits before starting audit
+    if (!hasUnlimitedCredits && credits < 1) {
+      setShowPricing(true);
+      return;
+    }
+
     setIsAnalyzing(true);
 
     try {
