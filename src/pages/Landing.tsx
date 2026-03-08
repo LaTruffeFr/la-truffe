@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { 
   ShieldCheck, Search, Car as CarIcon, 
-  ArrowRight, LineChart, Wrench, CheckCircle2, Zap, AlertTriangle, PlayCircle, Star
+  ArrowRight, LineChart, Wrench, CheckCircle2, Zap, AlertTriangle, PlayCircle, Star, ScanSearch
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 

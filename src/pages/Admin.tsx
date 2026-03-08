@@ -140,7 +140,7 @@ export default function Admin() {
       <header className="bg-slate-900 border-b border-slate-800 px-4 md:px-8 py-5 flex flex-col lg:flex-row lg:items-center gap-5 justify-between shrink-0 z-10 relative shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-            <BrainCircuit className="w-6 h-6 text-indigo-400" />
+            <ScanSearch className="w-6 h-6 text-indigo-400" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-black text-white flex flex-wrap items-center gap-3">

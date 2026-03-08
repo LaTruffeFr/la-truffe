@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Loader2, CheckCircle2, TrendingDown, AlertTriangle,
   ExternalLink, MapPin, Calendar, Fuel, Gauge, Copy, Check,
-  ShieldCheck, BrainCircuit, MessageSquareWarning, Cpu, 
+  ShieldCheck, ScanSearch, MessageSquareWarning, Cpu, 
   Settings2, Snowflake, Flame, CircleDashed, Zap
 } from 'lucide-react';
 import logoTruffe from '@/assets/logo-truffe.jpg';

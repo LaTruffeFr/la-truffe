@@ -5,7 +5,7 @@ import {
   ArrowLeft, ExternalLink, Terminal, ShieldCheck, 
   Cpu, MessageSquareWarning, Zap, CheckCircle2, AlertTriangle, Loader2,
   Copy, Check, Snowflake, Flame, CircleDashed, Settings2, TrendingDown,
-  BrainCircuit
+  ScanSearch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
