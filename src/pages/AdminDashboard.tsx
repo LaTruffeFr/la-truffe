@@ -11,6 +11,7 @@ import { ClientOrdersPanel } from "@/components/admin/ClientOrdersPanel";
 import { PublishReportModal } from "@/components/admin/PublishReportModal";
 import { VipManagementPanel } from "@/components/admin/VipManagementPanel";
 import { WaitlistPanel } from "@/components/admin/WaitlistPanel";
+import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
 import { SniperChart } from "@/components/trading/SniperChart";
 import { OpportunityModal } from "@/components/trading/OpportunityModal";
 import { useToast } from "@/hooks/use-toast";
