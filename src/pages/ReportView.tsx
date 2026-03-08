@@ -140,6 +140,7 @@ const ReportView = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [fastLoadStep, setFastLoadStep] = useState(0);
