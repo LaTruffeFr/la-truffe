@@ -87,7 +87,7 @@ const NuggetHunter = () => {
 
       if (data?.top5) {
         setNuggets(data.top5);
-        toast({ title: `${data.top5.length} pépites trouvées ! 🏆`, description: 'L\'IA a sélectionné les meilleures offres.' });
+        toast({ title: `${data.top5.length} pépites trouvées ! 🏆`, description: 'Notre algorithme a sélectionné les meilleures offres.' });
       }
     } catch (err: any) {
       console.error('Hunt error:', err);
