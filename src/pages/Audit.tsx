@@ -16,11 +16,11 @@ import {
 } from "lucide-react";
 
 const AUDIT_STEPS = [
-  'Scraping de l\'annonce...',
-  'Interrogation de l\'IA Agentique...',
-  'Détection des tags et signaux...',
-  'Calcul de la vraie cote...',
-  'Génération du Playbook...',
+  { time: 0, label: "Flairage de l'annonce et extraction des données...", icon: ScanSearch, percent: 15 },
+  { time: 3000, label: "Analyse du pedigree mécanique...", icon: Cpu, percent: 40 },
+  { time: 6000, label: "Traque des vices cachés et arnaques...", icon: ShieldAlert, percent: 65 },
+  { time: 9000, label: "Calcul de la vraie cote La Truffe...", icon: Calculator, percent: 85 },
+  { time: 12000, label: "Rédaction finale du rapport d'expertise...", icon: FileCheck, percent: 98 },
 ];
 
 export default function AuditPage() {
