@@ -64,6 +64,7 @@ const App = () => (
               <Route path="/why-us" element={<WhyUs />} />
               <Route path="/chasseur" element={<NuggetHunterView />} />
               <Route path="/garage" element={<GarageView />} />
+              <Route path="/pro" element={<ProDashboard />} />
               <Route path="/settings" element={<Navigate to="/client" replace />} />
               <Route path="/transactions" element={<Navigate to="/client" replace />} />
               <Route path="*" element={<NotFound />} />
