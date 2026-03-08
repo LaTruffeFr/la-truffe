@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Swords, Loader2, Crown, Trophy, Check, Car, FolderOpen, Gauge, Calendar, Fuel } from 'lucide-react';
+import { Swords, Loader2, Check, Car, FolderOpen, Gauge, Calendar, Fuel, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -17,6 +16,17 @@ interface ComparisonResult {
 interface GarageTabProps {
   userId: string;
 }
+
+/** Extract an image URL from the report's various possible fields */
+const getReportImage = (report: any): string | null => {
+  // single audit image
+  if (report.market_data?.image_url) return report.market_data.image_url;
+  if (report.market_data?.screenshot) return `data:image/png;base64,${report.market_data.screenshot}`;
+  // vehicles array first image
+  const vehicles = report.vehicles_data;
+  if (Array.isArray(vehicles) && vehicles.length > 0 && vehicles[0]?.image) return vehicles[0].image;
+  return null;
+};
 
 const GarageTab = ({ userId }: GarageTabProps) => {
   const navigate = useNavigate();
@@ -58,8 +68,13 @@ const GarageTab = ({ userId }: GarageTabProps) => {
     });
   };
 
+  const selectedReports = useMemo(
+    () => reports.filter(r => selected.includes(r.id)),
+    [reports, selected]
+  );
+
   const launchComparison = async () => {
-    const vehicles = reports.filter(r => selected.includes(r.id)).map(r => ({
+    const vehicles = selectedReports.map(r => ({
       marque: r.marque,
       modele: r.modele,
       prix_affiche: r.prix_affiche,
@@ -93,15 +108,15 @@ const GarageTab = ({ userId }: GarageTabProps) => {
     }
   };
 
-  const selectedReports = reports.filter(r => selected.includes(r.id));
-
-  const getScoreColor = (prix_affiche: number | null, prix_estime: number | null) => {
-    if (!prix_affiche || !prix_estime) return 'text-slate-400';
-    const ratio = prix_affiche / prix_estime;
-    if (ratio > 1.1) return 'text-red-500';
-    if (ratio < 0.95) return 'text-emerald-500';
+  const getScoreColor = (pa: number | null, pe: number | null) => {
+    if (!pa || !pe) return 'text-slate-400';
+    if (pa / pe > 1.1) return 'text-red-500';
+    if (pa / pe < 0.95) return 'text-emerald-500';
     return 'text-amber-500';
   };
+
+  // Grid template for the modal based on number of vehicles
+  const colCount = selectedReports.length + 1;
 
   if (loading) {
     return (
@@ -140,6 +155,7 @@ const GarageTab = ({ userId }: GarageTabProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {reports.map(report => {
               const isSelected = selected.includes(report.id);
+              const imageUrl = getReportImage(report);
               return (
                 <div
                   key={report.id}
@@ -150,61 +166,69 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                       : 'border-slate-100 hover:border-indigo-300 hover:shadow-indigo-100'
                   }`}
                 >
-                  {/* Selection badge */}
                   {isSelected && (
                     <div className="absolute -top-3 -right-3 bg-indigo-600 text-white rounded-full p-1.5 shadow-lg z-10 animate-in zoom-in-50 duration-200">
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
-                  {/* Card content */}
-                  <div className="flex flex-col">
-                    {/* Title row */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="min-w-0">
-                        <h3 className="font-black text-lg text-slate-900 line-clamp-1 group-hover:text-indigo-700 transition-colors">
-                          {report.marque} {report.modele}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          {report.annee && (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
-                              <Calendar className="w-3 h-3" /> {report.annee}
-                            </span>
-                          )}
-                          {report.carburant && (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg capitalize">
-                              <Fuel className="w-3 h-3" /> {report.carburant}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {/* Price */}
-                      <div className="text-right shrink-0">
-                        <div className="text-2xl font-black text-indigo-600">
-                          {report.prix_affiche ? report.prix_affiche.toLocaleString('fr-FR') : '—'}
-                          <span className="text-sm font-bold ml-0.5">€</span>
-                        </div>
-                      </div>
+                  {/* Image or Placeholder */}
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={`${report.marque} ${report.modele}`}
+                      className="h-32 w-full object-cover rounded-2xl mb-4"
+                    />
+                  ) : (
+                    <div className="h-32 w-full rounded-2xl mb-4 bg-slate-100 flex items-center justify-center">
+                      <Car className="w-12 h-12 text-slate-300" />
                     </div>
+                  )}
 
-                    {/* Stats row */}
-                    <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
-                      {report.kilometrage && (
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <Gauge className="w-4 h-4 text-slate-400" />
-                          <span className="font-bold text-slate-700">{(report.kilometrage / 1000).toFixed(0)}k</span>
-                          <span className="text-slate-400 text-xs">km</span>
-                        </div>
-                      )}
-                      {report.prix_estime && (
-                        <div className="flex items-center gap-1.5 text-sm ml-auto">
-                          <span className="text-xs text-slate-400">Estimation</span>
-                          <span className={`font-black ${getScoreColor(report.prix_affiche, report.prix_estime)}`}>
-                            {report.prix_estime.toLocaleString('fr-FR')} €
+                  {/* Title & Price */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <h3 className="font-black text-lg text-slate-900 line-clamp-1 group-hover:text-indigo-700 transition-colors">
+                        {report.marque} {report.modele}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        {report.annee && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                            <Calendar className="w-3 h-3" /> {report.annee}
                           </span>
-                        </div>
-                      )}
+                        )}
+                        {report.carburant && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg capitalize">
+                            <Fuel className="w-3 h-3" /> {report.carburant}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-2xl font-black text-indigo-600">
+                        {report.prix_affiche ? report.prix_affiche.toLocaleString('fr-FR') : '—'}
+                        <span className="text-sm font-bold ml-0.5">€</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="flex items-center gap-4 pt-3 border-t border-slate-100">
+                    {report.kilometrage && (
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <Gauge className="w-4 h-4 text-slate-400" />
+                        <span className="font-bold text-slate-700">{(report.kilometrage / 1000).toFixed(0)}k</span>
+                        <span className="text-slate-400 text-xs">km</span>
+                      </div>
+                    )}
+                    {report.prix_estime && (
+                      <div className="flex items-center gap-1.5 text-sm ml-auto">
+                        <span className="text-xs text-slate-400">Estimation</span>
+                        <span className={`font-black ${getScoreColor(report.prix_affiche, report.prix_estime)}`}>
+                          {report.prix_estime.toLocaleString('fr-FR')} €
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -236,7 +260,7 @@ const GarageTab = ({ userId }: GarageTabProps) => {
 
       {/* ===== COMPARISON MODAL ===== */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-5xl rounded-[2.5rem] p-0 overflow-hidden border-0 shadow-2xl gap-0 bg-white">
+        <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-y-auto p-0 border-0 rounded-3xl bg-white gap-0">
 
           {comparing ? (
             <div className="flex flex-col items-center justify-center py-28 gap-5 px-8">
@@ -262,91 +286,118 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                 </div>
               </div>
 
-              {/* Comparison Table */}
-              <div className="p-6 md:p-10">
-                {/* Column headers */}
-                <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: `200px repeat(${selectedReports.length}, 1fr)` }}>
-                  <div />
-                  {selectedReports.map((r, i) => (
-                    <div
-                      key={r.id}
-                      className={`text-center rounded-2xl p-4 transition-all ${
-                        i === result.winner_index
-                          ? 'bg-amber-50 border-2 border-amber-200'
-                          : 'bg-slate-50 border-2 border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-1.5 mb-1">
-                        {i === result.winner_index && <Crown className="w-4 h-4 text-amber-500" />}
-                        <span className="font-black text-sm text-slate-900">{r.marque}</span>
+              {/* Comparison Grid */}
+              <div className="p-4 md:p-8 overflow-x-auto">
+                <div
+                  className="min-w-[600px]"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `180px repeat(${selectedReports.length}, 1fr)`,
+                    gap: 0,
+                  }}
+                >
+                  {/* ---- HEADER ROW: empty + vehicle cards ---- */}
+                  <div /> {/* empty top-left */}
+                  {selectedReports.map((r, i) => {
+                    const img = getReportImage(r);
+                    const isWinner = i === result.winner_index;
+                    return (
+                      <div
+                        key={r.id}
+                        className={`mx-2 rounded-2xl p-4 text-center transition-all ${
+                          isWinner
+                            ? 'bg-amber-50 border-2 border-amber-300 shadow-md'
+                            : 'bg-slate-50 border-2 border-transparent'
+                        }`}
+                      >
+                        {isWinner && <div className="text-3xl mb-2">👑</div>}
+                        {img ? (
+                          <img
+                            src={img}
+                            alt={`${r.marque} ${r.modele}`}
+                            className="h-40 w-full object-cover rounded-xl mb-3"
+                          />
+                        ) : (
+                          <div className="h-40 w-full rounded-xl mb-3 bg-slate-100 flex items-center justify-center">
+                            <Car className="w-12 h-12 text-slate-300" />
+                          </div>
+                        )}
+                        <h3 className="font-black text-base text-slate-900 line-clamp-1">
+                          {r.marque} {r.modele}
+                        </h3>
+                        <p className="text-xl font-black text-indigo-600 mt-1">
+                          {r.prix_affiche ? `${r.prix_affiche.toLocaleString('fr-FR')} €` : '—'}
+                        </p>
+                        {r.annee && (
+                          <p className="text-xs text-slate-400 font-semibold mt-1">{r.annee} • {r.kilometrage ? `${(r.kilometrage / 1000).toFixed(0)}k km` : ''}</p>
+                        )}
                       </div>
-                      <span className="text-xs font-semibold text-slate-500">{r.modele}</span>
-                    </div>
-                  ))}
-                </div>
+                    );
+                  })}
 
-                {/* Data rows */}
-                <div className="space-y-0">
-                  {/* Fixed rows */}
+                  {/* ---- DATA ROWS ---- */}
                   {[
                     {
                       label: 'Prix affiché',
-                      render: (r: any) => r.prix_affiche ? (
-                        <span className="font-black text-lg text-slate-900">{r.prix_affiche.toLocaleString('fr-FR')} €</span>
-                      ) : <span className="text-slate-300">—</span>
+                      render: (r: any) => r.prix_affiche
+                        ? <span className="font-black text-lg text-slate-900">{r.prix_affiche.toLocaleString('fr-FR')} €</span>
+                        : <span className="text-slate-300">—</span>,
                     },
                     {
                       label: 'Kilométrage',
-                      render: (r: any) => r.kilometrage ? (
-                        <span className="font-bold text-slate-700">{r.kilometrage.toLocaleString('fr-FR')} km</span>
-                      ) : <span className="text-slate-300">—</span>
+                      render: (r: any) => r.kilometrage
+                        ? <span className="font-bold text-slate-700">{r.kilometrage.toLocaleString('fr-FR')} km</span>
+                        : <span className="text-slate-300">—</span>,
                     },
                     {
                       label: 'Année',
-                      render: (r: any) => r.annee ? (
-                        <span className="font-bold text-slate-700">{r.annee}</span>
-                      ) : <span className="text-slate-300">—</span>
+                      render: (r: any) => r.annee
+                        ? <span className="font-bold text-slate-700">{r.annee}</span>
+                        : <span className="text-slate-300">—</span>,
                     },
                     {
                       label: 'Estimation Truffe',
-                      render: (r: any) => r.prix_estime ? (
-                        <span className={`font-black text-lg ${r.prix_affiche && r.prix_affiche > r.prix_estime ? 'text-red-500' : 'text-emerald-500'}`}>
-                          {r.prix_estime.toLocaleString('fr-FR')} €
-                        </span>
-                      ) : <span className="text-slate-300">—</span>
+                      render: (r: any) => r.prix_estime
+                        ? <span className={`font-black text-lg ${r.prix_affiche && r.prix_affiche > r.prix_estime ? 'text-red-500' : 'text-emerald-500'}`}>
+                            {r.prix_estime.toLocaleString('fr-FR')} €
+                          </span>
+                        : <span className="text-slate-300">—</span>,
                     },
                   ].map((row, idx) => (
-                    <div
-                      key={idx}
-                      className="grid items-center gap-4 border-b border-slate-100 py-4"
-                      style={{ gridTemplateColumns: `200px repeat(${selectedReports.length}, 1fr)` }}
-                    >
-                      <div className="text-sm font-bold text-slate-500">{row.label}</div>
+                    <React.Fragment key={`data-${idx}`}>
+                      <div className="flex items-center border-b border-slate-100 py-4 pr-4">
+                        <span className="font-bold text-sm text-slate-500">{row.label}</span>
+                      </div>
                       {selectedReports.map((r, i) => (
-                        <div key={r.id} className={`text-center ${i === result.winner_index ? 'bg-amber-50/50 rounded-xl py-1' : ''}`}>
+                        <div
+                          key={r.id}
+                          className={`flex items-center justify-center border-b border-slate-100 py-4 mx-2 ${
+                            i === result.winner_index ? 'bg-amber-50/50' : ''
+                          }`}
+                        >
                           {row.render(r)}
                         </div>
                       ))}
-                    </div>
+                    </React.Fragment>
                   ))}
 
-                  {/* AI comparison rows */}
+                  {/* ---- AI COMPARISON ROWS ---- */}
                   {result.comparison_points.map((point, idx) => (
-                    <div
-                      key={`ai-${idx}`}
-                      className="grid items-start gap-4 border-b border-slate-100 py-4 last:border-0"
-                      style={{ gridTemplateColumns: `200px repeat(${selectedReports.length}, 1fr)` }}
-                    >
-                      <div className="text-sm font-bold text-slate-500 pt-0.5">{point.criteria}</div>
+                    <React.Fragment key={`ai-${idx}`}>
+                      <div className="flex items-start border-b border-slate-100 py-4 pr-4 last:border-0">
+                        <span className="font-bold text-sm text-slate-500">{point.criteria}</span>
+                      </div>
                       {point.values.map((val, i) => (
                         <div
                           key={i}
-                          className={`text-sm leading-relaxed text-slate-700 font-medium ${i === result.winner_index ? 'bg-amber-50/50 rounded-xl p-2 -m-2' : ''}`}
+                          className={`border-b border-slate-100 py-4 px-3 mx-2 text-sm text-slate-700 font-medium leading-relaxed last:border-0 ${
+                            i === result.winner_index ? 'bg-amber-50/50' : ''
+                          }`}
                         >
                           {val}
                         </div>
                       ))}
-                    </div>
+                    </React.Fragment>
                   ))}
                 </div>
               </div>
