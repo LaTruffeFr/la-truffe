@@ -418,7 +418,7 @@ export default function SellCar() {
                       <div className="grid md:grid-cols-2 gap-10 text-left bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 mb-12">
                         
                         <div className="flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-slate-100 pb-8 md:pb-0 md:pr-10">
-                          <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">Score de Confiance IA</span>
+                          <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">Score de Confiance</span>
                           <div className={`text-8xl font-[1000] tracking-tighter ${certification.score > 75 ? 'text-emerald-500' : 'text-amber-500'}`}>
                             {certification.score}
                           </div>
