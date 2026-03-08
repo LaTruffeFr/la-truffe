@@ -498,8 +498,8 @@ export default function SellCar() {
                           <Sparkles className="w-6 h-6 text-indigo-400" />
                         </div>
                         <div>
-                          <h4 className="font-black text-base">Génération par IA</h4>
-                          <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Même si votre description est courte, l'IA en fera un argumentaire parfait.</p>
+                           <h4 className="font-black text-base">Génération automatique</h4>
+                           <p className="text-sm font-medium text-slate-400 mt-1 leading-relaxed">Même si votre description est courte, notre moteur en fera un argumentaire parfait.</p>
                         </div>
                       </div>
                     </CardContent>
