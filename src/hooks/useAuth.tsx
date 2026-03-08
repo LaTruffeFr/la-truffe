@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback,
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-type AppRole = 'admin' | 'vip' | 'client';
+type AppRole = 'admin' | 'vip' | 'pro' | 'client';
 
 interface UserProfile {
   credits: number;
@@ -21,6 +21,7 @@ interface AuthContextType {
   role: AppRole | null;
   isAdmin: boolean;
   isVip: boolean;
+  isPro: boolean;
   credits: number;
   userEmail: string | null;
 
@@ -53,21 +54,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const initialCheckDone = useRef(false);
 
-  const fetchUserRole = useCallback(async (userId: string): Promise<'admin' | 'vip' | null> => {
+  const fetchUserRole = useCallback(async (userId: string): Promise<'admin' | 'vip' | 'pro' | null> => {
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .in('role', ['admin', 'vip']);
+      .in('role', ['admin', 'vip', 'pro']);
 
     if (error) {
       console.error('Error checking user role:', error);
       return null;
     }
 
-    // Priority: admin > vip
+    // Priority: admin > pro > vip
     const roles = data?.map(r => r.role) || [];
     if (roles.includes('admin')) return 'admin';
+    if (roles.includes('pro')) return 'pro';
     if (roles.includes('vip')) return 'vip';
     return null;
   }, []);
@@ -208,6 +210,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAdmin = role === 'admin';
   const isVip = role === 'vip' || role === 'admin'; // Admins are also VIP
+  const isPro = role === 'pro' || role === 'admin'; // Admins have pro access too
 
   return (
     <AuthContext.Provider
@@ -219,6 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role,
         isAdmin,
         isVip,
+        isPro,
         credits,
         userEmail,
         signUp,

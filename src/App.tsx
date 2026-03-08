@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CookieBanner } from "@/components/CookieBanner";
+import { ProRoute } from "@/components/ProRoute";
 import { ThemeProvider } from "next-themes";
 
 import Landing from "./pages/Landing";
@@ -64,7 +65,7 @@ const App = () => (
               <Route path="/why-us" element={<WhyUs />} />
               <Route path="/chasseur" element={<NuggetHunterView />} />
               <Route path="/garage" element={<GarageView />} />
-              <Route path="/pro" element={<ProDashboard />} />
+              <Route path="/pro" element={<ProRoute><ProDashboard /></ProRoute>} />
               <Route path="/settings" element={<Navigate to="/client" replace />} />
               <Route path="/transactions" element={<Navigate to="/client" replace />} />
               <Route path="*" element={<NotFound />} />
