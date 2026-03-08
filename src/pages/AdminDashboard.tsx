@@ -277,7 +277,7 @@ function AdminDashboardInner() {
 
         {/* --- ONGLET VUE D'ENSEMBLE --- */}
         <TabsContent value="overview" className="flex-1 m-0">
-          <AdminOverviewTab totalUsers={allUsers.length} totalReports={allUsers.length * 3} />
+          <AdminOverviewTab />
         </TabsContent>
 
         {/* --- ONGLET MODÉRATION --- */}
