@@ -194,13 +194,6 @@ const ClientDashboard = () => {
                   <Car className="w-5 h-5 mr-3" /> Mes Annonces
                 </Button>
                 
-                <Button 
-                  variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'hunting' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
-                  onClick={() => setActiveTab('hunting')}
-                >
-                  <Target className="w-5 h-5 mr-3" /> Chasseur de Pépites
-                </Button>
                 
                 <Button 
                   variant="ghost" 
