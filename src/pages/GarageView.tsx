@@ -222,10 +222,10 @@ const GarageView = () => {
 
       {/* Comparison Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black text-slate-900 flex items-center gap-2">
-              <Swords className="w-6 h-6 text-indigo-600" />
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 md:p-6 pb-0">
+            <DialogTitle className="text-xl md:text-2xl font-black text-foreground flex items-center gap-2">
+              <Swords className="w-5 h-5 md:w-6 md:h-6 text-indigo-600" />
               Face-à-Face
             </DialogTitle>
           </DialogHeader>
