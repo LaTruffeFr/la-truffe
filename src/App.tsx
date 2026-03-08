@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Contact from "./pages/Contact";
 import CGV from "./pages/CGV";
 import MentionsLegales from "./pages/MentionsLegales";
+import Privacy from "./pages/Privacy";
 import About from "./pages/About";
 import WhyUs from "./pages/WhyUs";
 import NuggetHunterView from "./pages/NuggetHunterView";
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/cgv" element={<CGV />} />
               <Route path="/mentions-legales" element={<MentionsLegales />} />
+              <Route path="/confidentialite" element={<Privacy />} />
               <Route path="/about" element={<About />} />
               <Route path="/why-us" element={<WhyUs />} />
               <Route path="/chasseur" element={<NuggetHunterView />} />
