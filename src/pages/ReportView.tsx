@@ -267,21 +267,21 @@ const ReportView = () => {
   };
 
   if (loading || authLoading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] relative overflow-hidden p-6">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background relative overflow-hidden p-6">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/20 blur-[100px] rounded-full pointer-events-none" />
       <div className="relative z-10 flex flex-col items-center space-y-8 max-w-sm w-full animate-in fade-in zoom-in duration-500">
-        <div className="w-20 h-20 bg-white rounded-3xl shadow-xl shadow-indigo-500/10 border border-slate-100 flex items-center justify-center relative">
+        <div className="w-20 h-20 bg-card rounded-3xl shadow-xl shadow-indigo-500/10 border border-border flex items-center justify-center relative">
           <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-3xl animate-ping" />
-          <ScanSearch className="w-10 h-10 text-indigo-600 animate-pulse" />
+          <ScanSearch className="w-10 h-10 text-primary animate-pulse" />
         </div>
         <div className="text-center space-y-3 h-16">
-          <h2 className="text-2xl font-black tracking-tighter text-slate-900 transition-all duration-300">
+          <h2 className="text-2xl font-black tracking-tighter text-foreground transition-all duration-300">
             {fastTexts[fastLoadStep]}
           </h2>
-          <p className="text-slate-500 font-medium">Récupération de l'expertise La Truffe.</p>
+          <p className="text-muted-foreground font-medium">Récupération de l'expertise La Truffe.</p>
         </div>
-        <div className="w-full bg-slate-200/50 rounded-full h-2 overflow-hidden shadow-inner">
-          <div className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out relative" style={{ width: `${fastPercents[fastLoadStep]}%` }}>
+        <div className="w-full bg-muted rounded-full h-2 overflow-hidden shadow-inner">
+          <div className="bg-primary h-full rounded-full transition-all duration-500 ease-out relative" style={{ width: `${fastPercents[fastLoadStep]}%` }}>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[slide_2s_ease-in-out_infinite]" />
           </div>
         </div>
