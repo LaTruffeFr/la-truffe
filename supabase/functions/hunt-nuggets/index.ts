@@ -37,7 +37,9 @@ Deno.serve(async (req) => {
     }
 
     const searchQuery = `${marque} ${modele}`;
-    const leboncoinUrl = `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(searchQuery)}&price=min-${budget}`;
+    let leboncoinUrl = `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(searchQuery)}`;
+    if (budget) leboncoinUrl += `&price=min-${budget}`;
+    if (km_max) leboncoinUrl += `&mileage=min-${km_max}`;
 
     console.log('Scraping Leboncoin URL:', leboncoinUrl);
 
