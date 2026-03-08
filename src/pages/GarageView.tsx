@@ -163,10 +163,10 @@ const GarageView = () => {
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-bold text-slate-900 text-base">
+                        <h3 className="font-bold text-foreground text-base">
                           {report.marque} {report.modele}
                         </h3>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-muted-foreground">
                           {report.annee || '—'} • {report.kilometrage ? `${(report.kilometrage / 1000).toFixed(0)}k km` : '—'}
                         </p>
                       </div>
