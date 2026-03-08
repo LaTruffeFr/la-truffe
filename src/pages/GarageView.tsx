@@ -156,7 +156,7 @@ const GarageView = () => {
                   }`}
                 >
                   {isSelected && (
-                    <div className="absolute -top-2 -right-2 w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg z-10">
+                    <div className="absolute -top-2 -right-2 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-lg z-10">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                   )}
