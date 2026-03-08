@@ -420,7 +420,7 @@ const ClientDashboard = () => {
             {/* ------------------------------------- */}
             {activeTab === 'billing' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-8">Facturation & Crédits</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-6 md:mb-8">Facturation & Crédits</h2>
                 
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   <Card className="rounded-[2rem] border-slate-100 shadow-xl bg-slate-900 overflow-hidden text-white relative">
