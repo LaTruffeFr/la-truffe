@@ -186,15 +186,15 @@ export default function AuditPage() {
                   <div key={index} className={`flex items-center gap-5 relative z-10 transition-all duration-500 ${isCurrent ? "scale-105 origin-left" : ""}`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-500 ${
                       isCompleted ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20" : 
-                      isCurrent ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 animate-pulse ring-4 ring-indigo-50" : 
-                      "bg-white text-slate-300 border-2 border-slate-100"
+                      isCurrent ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 animate-pulse ring-4 ring-primary/10" : 
+                      "bg-card text-muted-foreground border-2 border-border"
                     }`}>
                       {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
                     </div>
                     <span className={`text-sm font-bold transition-colors duration-500 ${
-                      isCompleted ? "text-slate-700" : 
-                      isCurrent ? "text-indigo-700" : 
-                      "text-slate-400"
+                      isCompleted ? "text-foreground" : 
+                      isCurrent ? "text-primary" : 
+                      "text-muted-foreground"
                     }`}>
                       {step.label}
                     </span>
