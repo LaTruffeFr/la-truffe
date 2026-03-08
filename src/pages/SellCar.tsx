@@ -336,7 +336,7 @@ export default function SellCar() {
                             <Label className="font-bold text-slate-700">Description détaillée</Label>
                             <Textarea 
                               name="description" 
-                              placeholder="Soyez transparent. Listez les options, l'état des pneus, les entretiens récents, et les éventuels défauts. L'IA récompensera votre honnêteté par un meilleur score." 
+                              placeholder="Soyez transparent. Listez les options, l'état des pneus, les entretiens récents, et les éventuels défauts. Notre algorithme récompensera votre honnêteté par un meilleur score." 
                               value={formData.description} 
                               onChange={handleChange} 
                               className="min-h-[160px] bg-slate-50 border-slate-200 font-medium text-base resize-y rounded-2xl p-4" 
