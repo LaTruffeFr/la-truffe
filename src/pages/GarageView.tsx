@@ -321,6 +321,7 @@ const GarageView = () => {
               </div>
             </div>
           ) : null}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
