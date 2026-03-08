@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, ScanSearch } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
+import logoTruffe from '@/assets/logo-truffe.jpg';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useVipAccess } from '@/hooks/useVipAccess';
@@ -49,7 +50,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
             to="/" 
             className="flex items-center gap-2 font-black text-2xl tracking-tighter text-slate-900 hover:opacity-80 transition-opacity"
           >
-            <ScanSearch className="w-7 h-7 text-indigo-600" />
+            <img src={logoTruffe} alt="La Truffe" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-950 via-indigo-700 to-indigo-500">La Truffe</span>
           </Link>
 
