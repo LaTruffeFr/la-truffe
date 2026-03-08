@@ -339,7 +339,7 @@ const ClientDashboard = () => {
             {/* ONGLET : MON GARAGE */}
             {/* ------------------------------------- */}
             {activeTab === 'garage' && user && (
-              <GarageTab userId={user.id} />
+              <GarageTab userId={user.id} reports={reports.filter(r => r.status === 'completed')} isLoading={isLoadingReports} />
             )}
 
             {/* ------------------------------------- */}
