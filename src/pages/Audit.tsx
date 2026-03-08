@@ -32,7 +32,6 @@ export default function AuditPage() {
   const [url, setUrl] = useState("");
   const [manualDescription, setManualDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [loadingStep, setLoadingStep] = useState("");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
