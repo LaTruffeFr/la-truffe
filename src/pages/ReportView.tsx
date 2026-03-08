@@ -398,7 +398,7 @@ const ReportView = () => {
           </div>
           
           <div className="flex-1 flex flex-col justify-center py-2 text-center md:text-left w-full">
-            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest mb-3">
+            <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground font-bold text-xs uppercase tracking-widest mb-3">
               <Hash className="w-3 h-3" /> Dossier {report.id.slice(0,8)} • <History className="w-3 h-3 ml-2" /> {new Date(report.created_at).toLocaleDateString()}
             </div>
             {report.market_data?.original_title ? (
