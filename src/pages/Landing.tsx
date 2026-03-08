@@ -40,7 +40,7 @@ export default function Landing() {
             sur le marché de l'occasion.
           </h1>
           
-          <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto mb-12 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+          <p className="text-base sm:text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto mb-8 md:mb-12 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 px-2">
             La Truffe analyse les annonces, détecte les vices cachés, calcule le devis des réparations et vous donne la vraie valeur de la voiture en 5 secondes.
           </p>
           
