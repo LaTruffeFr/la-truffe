@@ -9,6 +9,7 @@ interface NuggetResult {
   price: number;
   km: number;
   link: string;
+  image_url?: string;
   expert_reason: string;
 }
 
@@ -27,7 +28,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // --- STEP A: Scrape Leboncoin search page via Firecrawl ---
     const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
     if (!FIRECRAWL_API_KEY) {
       return new Response(
@@ -36,61 +36,58 @@ Deno.serve(async (req) => {
       );
     }
 
-    const searchQuery = `${marque} ${modele}`;
-    let leboncoinUrl = `https://www.leboncoin.fr/recherche?category=2&text=${encodeURIComponent(searchQuery)}`;
-    if (budget) leboncoinUrl += `&price=min-${budget}`;
-    if (km_max) leboncoinUrl += `&mileage=min-${km_max}`;
+    // --- STEP A: Use Firecrawl SEARCH (much more reliable than scraping Leboncoin directly) ---
+    const budgetPart = budget ? ` moins de ${budget}€` : '';
+    const kmPart = km_max ? ` moins de ${km_max}km` : '';
+    const searchQuery = `site:leboncoin.fr voiture ${marque} ${modele}${budgetPart}${kmPart}`;
 
-    console.log('Scraping Leboncoin URL:', leboncoinUrl);
+    console.log('Firecrawl search query:', searchQuery);
 
-    const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    const searchResponse = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        url: leboncoinUrl,
-        formats: ['markdown', 'links', 'html'],
-        onlyMainContent: true,
-        waitFor: 15000,
-        location: { country: 'FR', languages: ['fr'] },
+        query: searchQuery,
+        limit: 20,
+        lang: 'fr',
+        country: 'fr',
+        scrapeOptions: { formats: ['markdown'] },
       }),
     });
 
-    if (!scrapeResponse.ok) {
-      const errText = await scrapeResponse.text();
-      console.error('Firecrawl error:', scrapeResponse.status, errText);
+    if (!searchResponse.ok) {
+      const errText = await searchResponse.text();
+      console.error('Firecrawl search error:', searchResponse.status, errText);
       return new Response(
-        JSON.stringify({ error: 'Impossible de scanner Leboncoin. Réessayez dans quelques instants.' }),
+        JSON.stringify({ error: 'Impossible de scanner le marché. Réessayez dans quelques instants.' }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const scrapeData = await scrapeResponse.json();
-    const markdown = scrapeData?.data?.markdown || scrapeData?.markdown || '';
-    const links = scrapeData?.data?.links || scrapeData?.links || [];
-    const html = scrapeData?.data?.html || scrapeData?.html || '';
+    const searchData = await searchResponse.json();
+    const results = searchData?.data || [];
 
-    if (!markdown || markdown.length < 100) {
+    if (!results || results.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Aucune annonce trouvée pour cette recherche. Essayez avec d\'autres critères.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Collect Leboncoin ad links for context
-    const adLinks = links.filter((l: string) => l.includes('leboncoin.fr/ad/'));
-    const linksContext = adLinks.length > 0
-      ? `\n\nLiens d'annonces trouvés :\n${adLinks.join('\n')}`
-      : '';
+    // Build context from search results
+    const resultsContext = results.map((r: any, i: number) => {
+      const parts = [`[Résultat ${i + 1}]`];
+      if (r.url) parts.push(`URL: ${r.url}`);
+      if (r.title) parts.push(`Titre: ${r.title}`);
+      if (r.description) parts.push(`Description: ${r.description}`);
+      if (r.markdown) parts.push(`Contenu: ${r.markdown.substring(0, 1500)}`);
+      return parts.join('\n');
+    }).join('\n\n---\n\n');
 
-    // Extract image URLs from HTML for Gemini context
-    const imageMatches = html.match(/https?:\/\/[^\s"']+(?:lfrmedias|img\.leboncoin|classistatic)[^\s"'>]*/gi) || [];
-    const uniqueImages = [...new Set(imageMatches)].slice(0, 30);
-    const imagesContext = uniqueImages.length > 0
-      ? `\n\nURLs d'images trouvées sur la page :\n${uniqueImages.join('\n')}`
-      : '';
+    console.log(`Got ${results.length} search results, sending to Gemini...`);
 
     // --- STEP B: Gemini AI analysis ---
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
@@ -106,31 +103,30 @@ Deno.serve(async (req) => {
     const criteriaInfo = [budgetInfo, kmInfo].filter(Boolean).join(' et ') || 'sans contrainte particulière';
 
     const systemPrompt = `Tu es un expert automobile français spécialisé dans la chasse aux bonnes affaires.
-Voici le texte brut d'une page de recherche Leboncoin contenant plusieurs annonces de voitures ${marque} ${modele} (${criteriaInfo}).
+Voici des résultats de recherche Leboncoin pour des ${marque} ${modele} (${criteriaInfo}).
 
-Trouve les 5 meilleures annonces (meilleur rapport prix/kilométrage/fiabilité apparente).
-Pour chaque annonce, tu DOIS fournir :
-- Le lien Leboncoin complet (format https://www.leboncoin.fr/ad/voitures/XXXXXXX)
-- L'URL de la photo principale si disponible (cherche les URLs d'images contenant lfrmedias.com, img.leboncoin.fr ou classistatic)
+Analyse ces résultats et sélectionne les 5 meilleures affaires (meilleur rapport prix/kilométrage/fiabilité).
+IMPORTANT :
+- Utilise UNIQUEMENT les URLs Leboncoin trouvées dans les résultats (format https://www.leboncoin.fr/ad/...)
+- Si une image est mentionnée dans le contenu (URL contenant lfrmedias.com, img.leboncoin.fr, ou classistatic), utilise-la
+- Extrais le prix et le kilométrage réels depuis le contenu
 
-Renvoie UNIQUEMENT un JSON valide avec cette structure exacte :
+Renvoie UNIQUEMENT un JSON valide :
 {
   "top5": [
     {
       "rank": 1,
-      "title": "Titre exact de l'annonce",
+      "title": "Titre de l'annonce",
       "price": 12000,
       "km": 85000,
       "link": "https://www.leboncoin.fr/ad/voitures/XXXXXXX",
-      "image_url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/XXXXX.jpg",
+      "image_url": null,
       "expert_reason": "Pourquoi c'est une bonne affaire en 1 phrase percutante"
     }
   ]
 }
 
-Si tu ne trouves pas l'URL d'une image, mets null pour image_url.
-Si tu ne trouves pas 5 annonces, renvoie celles que tu trouves. Minimum 1.
-Ne renvoie RIEN d'autre que le JSON.`;
+Si tu ne trouves pas l'URL d'une image, mets null. Si tu trouves moins de 5 annonces valides, renvoie celles que tu as. Minimum 1.`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
@@ -139,7 +135,7 @@ Ne renvoie RIEN d'autre que le JSON.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: `${systemPrompt}\n\n--- CONTENU DE LA PAGE ---\n${markdown.substring(0, 25000)}${linksContext}${imagesContext}` }]
+          parts: [{ text: `${systemPrompt}\n\n--- RÉSULTATS ---\n${resultsContext.substring(0, 28000)}` }]
         }],
         generationConfig: {
           responseMimeType: 'application/json',
@@ -164,7 +160,6 @@ Ne renvoie RIEN d'autre que le JSON.`;
     try {
       parsed = JSON.parse(rawText);
     } catch {
-      // Try extracting JSON from markdown code block
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         parsed = JSON.parse(jsonMatch[0]);
