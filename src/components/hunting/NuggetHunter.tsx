@@ -116,7 +116,7 @@ const NuggetHunter = () => {
             </div>
             <div>
               <h2 className="text-2xl font-black text-white tracking-tight">Le Chasseur de Pépites</h2>
-              <p className="text-indigo-200 font-medium text-sm">Scan IA gratuit du marché Leboncoin • Top 5 des meilleures affaires</p>
+              <p className="text-indigo-200 font-medium text-sm">Scan gratuit du marché Leboncoin • Top 5 des meilleures affaires</p>
             </div>
           </div>
         </div>
