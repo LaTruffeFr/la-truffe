@@ -37,7 +37,7 @@ const Pricing = () => {
             Éviter une arnaque coûte <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">moins cher</span> qu'un café.
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed">
-            L'Intelligence Artificielle consomme des ressources pour scanner les vices cachés. Choisissez le pack de crédits adapté à votre recherche.
+            Notre algorithme d'expertise consomme des ressources pour scanner les vices cachés. Choisissez le pack de crédits adapté à votre recherche.
           </p>
         </div>
       </section>
