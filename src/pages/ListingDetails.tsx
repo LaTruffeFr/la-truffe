@@ -248,7 +248,7 @@ export default function ListingDetails() {
                 ) : (
                   <div className="text-center py-8">
                     <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                    <p className="text-slate-600 font-medium">Aucun frais majeur à prévoir selon l'IA.</p>
+                    <p className="text-slate-600 font-medium">Aucun frais majeur à prévoir selon notre analyse.</p>
                   </div>
                 )}
                 
