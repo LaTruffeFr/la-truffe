@@ -16,6 +16,7 @@ import { Footer } from '@/components/landing';
 import { SellerListings } from '@/components/SellerListings';
 import WelcomeModal from '@/components/WelcomeModal';
 import ReferralCard from '@/components/dashboard/ReferralCard';
+import GarageTab from '@/components/dashboard/GarageTab';
 import { 
   LayoutDashboard, Settings, CreditCard, LogOut, 
   Plus, FileText, FolderOpen, User, Shield, Search,
@@ -51,8 +52,8 @@ const ClientDashboard = () => {
 
   // NOUVEAU : On ajoute 'settings' et 'billing' aux onglets possibles
   const initialTab = (searchParams.get('tab') as any) || 'reports';
-  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'settings' | 'billing'>(
-    ['reports', 'listings', 'settings', 'billing'].includes(initialTab) ? initialTab : 'reports'
+  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'garage' | 'settings' | 'billing'>(
+    ['reports', 'listings', 'garage', 'settings', 'billing'].includes(initialTab) ? initialTab : 'reports'
   );
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
@@ -195,8 +196,8 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start h-12 font-bold rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                  onClick={() => navigate('/garage')}
+                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  onClick={() => setActiveTab('garage')}
                 >
                   <Swords className="w-5 h-5 mr-3" /> Mon Garage
                 </Button>
@@ -325,6 +326,13 @@ const ClientDashboard = () => {
                 </div>
                 {user && <SellerListings userId={user.id} />}
               </section>
+            )}
+
+            {/* ------------------------------------- */}
+            {/* ONGLET : MON GARAGE */}
+            {/* ------------------------------------- */}
+            {activeTab === 'garage' && user && (
+              <GarageTab userId={user.id} />
             )}
 
             {/* ------------------------------------- */}
