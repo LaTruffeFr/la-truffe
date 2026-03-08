@@ -268,7 +268,7 @@ export default function AuditPage() {
             <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">Mobile.de</Badge>
           </div>
 
-          <p className="text-xs text-slate-400/60 mt-2 text-center">🌍 L'IA traduit et analyse automatiquement les annonces étrangères.</p>
+          <p className="text-xs text-slate-400/60 mt-2 text-center">🌍 Notre algorithme traduit et analyse automatiquement les annonces étrangères.</p>
 
           <p className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
             <AlertCircle className="w-3 h-3" /> L'analyse IA prend environ 15 secondes. 
