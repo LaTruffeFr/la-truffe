@@ -30,6 +30,7 @@ export const Header = ({ activeLink }: HeaderProps) => {
 
   const navLinks = [
     { name: 'Scanner une annonce', path: '/audit', id: 'audit' },
+    { name: 'Chasseur de Pépites', path: '/client?tab=hunting', id: 'hunting' },
     { name: 'Marketplace', path: '/marketplace', id: 'marketplace' },
     { name: 'Guide Fiabilité', path: '/guides', id: 'guides' },
     { name: 'Vendre', path: '/vendre', id: 'vendre' },
