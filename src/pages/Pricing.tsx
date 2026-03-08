@@ -62,7 +62,7 @@ const Pricing = () => {
                 </div>
 
                 <ul className="space-y-4 text-sm font-bold text-slate-700 mb-8">
-                  <li className="flex items-center gap-3"><Zap className="w-5 h-5 text-indigo-500" /> <span className="text-slate-900 font-black">3 Crédits IA</span> (3 URL)</li>
+                  <li className="flex items-center gap-3"><Zap className="w-5 h-5 text-indigo-500" /> <span className="text-slate-900 font-black">3 Crédits d'Expertise</span> (3 URL)</li>
                   <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Déblocage du Playbook Négociation</li>
                   <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Devis chiffré des réparations</li>
                 </ul>
