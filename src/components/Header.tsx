@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useVipAccess } from '@/hooks/useVipAccess';
 import PricingModal from '@/components/billing/PricingModal';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface HeaderProps {
   activeLink?: 'home' | 'audit' | 'marketplace' | 'vendre' | 'guides' | 'pricing' | 'about' | 'contact' | 'why-us' | 'selection' | 'garage';
