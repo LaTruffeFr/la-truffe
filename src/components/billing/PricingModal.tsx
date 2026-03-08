@@ -14,7 +14,7 @@ const PLANS = [
     price: '4,90€',
     priceId: 'price_1T8gzGPpNQZ47toNJaEMNkL9',
     description: 'Idéal pour tester',
-    features: ['1 audit complet', 'Rapport PDF', 'Score de confiance IA'],
+    features: ['1 audit complet', 'Rapport PDF', 'Score de confiance'],
     popular: false,
   },
   {
