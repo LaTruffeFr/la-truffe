@@ -218,8 +218,8 @@ export default function Landing() {
       </div>
 
       {/* --- CTA BANNER --- */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-32 mb-10">
-        <div className="bg-indigo-600 rounded-[3rem] p-12 md:p-20 text-center shadow-2xl relative overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 md:mt-32 mb-10">
+        <div className="bg-indigo-600 rounded-2xl md:rounded-[3rem] p-6 sm:p-12 md:p-20 text-center shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[100px] -mr-20 -mt-20"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-[100px] -ml-20 -mb-20"></div>
           
