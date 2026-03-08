@@ -206,7 +206,7 @@ const ClientDashboard = () => {
                   className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
                   onClick={() => setActiveTab('garage')}
                 >
-                  <Swords className="w-5 h-5 mr-3" /> Mon Garage
+                  <Scale className="w-5 h-5 mr-3" /> Mon Garage
                 </Button>
                 
                 <Button 
