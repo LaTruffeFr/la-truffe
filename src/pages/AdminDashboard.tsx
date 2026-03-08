@@ -84,7 +84,7 @@ function AdminDashboardInner() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("moderation");
+  const [activeTab, setActiveTab] = useState("overview");
   const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
   const [showAllVehicles, setShowAllVehicles] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
