@@ -67,7 +67,7 @@ export default function SellLanding() {
       number: "2",
       title: "Nous analysons",
       description:
-        "Notre IA génère un rapport détaillé avec prix équitable et points forts",
+        "Notre moteur d'expertise génère un rapport détaillé avec prix équitable et points forts",
     },
     {
       number: "3",
