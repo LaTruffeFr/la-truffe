@@ -12,24 +12,10 @@ export function Footer() {
 
           {/* Links */}
           <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
-            <Link 
-              to="/contact" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Contact
-            </Link>
-            <Link 
-              to="/mentions-legales" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Mentions Légales
-            </Link>
-            <Link 
-              to="/cgv" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              CGV
-            </Link>
+            <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
+            <Link to="/mentions-legales" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Mentions Légales</Link>
+            <Link to="/cgv" className="text-sm text-muted-foreground hover:text-foreground transition-colors">CGV / CGU</Link>
+            <Link to="/confidentialite" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Confidentialité</Link>
           </nav>
 
           {/* Copyright */}
