@@ -187,45 +187,45 @@ const ClientDashboard = () => {
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'reports' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'reports' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('reports')}
                 >
-                  <LayoutDashboard className="w-5 h-5 mr-3" /> Mes Audits
+                  <LayoutDashboard className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> Audits
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'listings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'listings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('listings')}
                 >
-                  <Car className="w-5 h-5 mr-3" /> Mes Annonces
+                  <Car className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> Annonces
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'garage' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'garage' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('garage')}
                 >
-                  <Scale className="w-5 h-5 mr-3" /> Mon Garage
+                  <Scale className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> Garage
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('settings')}
                 >
-                  <Settings className="w-5 h-5 mr-3" /> Paramètres
+                  <Settings className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> <span className="hidden lg:inline">Paramètres</span><span className="lg:hidden">Config</span>
                 </Button>
                 
                 <Button 
                   variant="ghost" 
-                  className={`w-full justify-start h-12 font-bold rounded-xl ${activeTab === 'billing' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                  className={`whitespace-nowrap flex-shrink-0 justify-start h-10 lg:h-12 font-bold rounded-xl text-xs lg:text-sm ${activeTab === 'billing' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
                   onClick={() => setActiveTab('billing')}
                 >
-                  <CreditCard className="w-5 h-5 mr-3" /> Facturation
+                  <CreditCard className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" /> <span className="hidden lg:inline">Facturation</span><span className="lg:hidden">Factures</span>
                 </Button>
                 
-                <div className="pt-4 mt-2 border-t border-border">
+                <div className="hidden lg:block pt-4 mt-2 border-t border-border">
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-rose-500 hover:text-rose-600 hover:bg-rose-50 h-12 rounded-xl font-bold"
