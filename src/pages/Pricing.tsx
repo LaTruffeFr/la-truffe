@@ -157,7 +157,7 @@ const Pricing = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 max-w-2xl mx-auto">
             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4">Investissement immédiat</h2>
-            <p className="text-slate-500 text-lg font-medium">Ne payez plus jamais une voiture au-dessus de sa vraie valeur. L'IA trouve la faille, vous négociez.</p>
+            <p className="text-slate-500 text-lg font-medium">Ne payez plus jamais une voiture au-dessus de sa vraie valeur. Notre algorithme trouve la faille, vous négociez.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
