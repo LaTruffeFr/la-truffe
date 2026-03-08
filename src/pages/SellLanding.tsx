@@ -21,9 +21,9 @@ export default function SellLanding() {
   const benefits = [
     {
       icon: BarChart3,
-      title: "Analyse de marché IA",
+      title: "Analyse de marché avancée",
       description:
-        "Notre IA analyse les prix du marché en temps réel pour vous proposer le meilleur tarif",
+        "Notre algorithme analyse les prix du marché en temps réel pour vous proposer le meilleur tarif",
     },
     {
       icon: Users,
