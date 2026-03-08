@@ -382,3 +382,63 @@
     }
   }
 }
+
+/* ===== PRINT STYLES FOR PDF EXPORT ===== */
+@media print {
+  /* Force background colors to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide interactive elements */
+  .print\\:hidden,
+  header,
+  footer,
+  nav,
+  .no-print,
+  button,
+  [role="dialog"],
+  .sonner-toaster {
+    display: none !important;
+  }
+
+  /* Show the print button area as hidden */
+  #report-content {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  body {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pdf-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure cards print well */
+  [class*="rounded-"] {
+    border-radius: 12px !important;
+  }
+
+  /* Remove shadows for cleaner print */
+  [class*="shadow-"] {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+}
