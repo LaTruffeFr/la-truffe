@@ -114,7 +114,7 @@ const GarageView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-muted to-background">
       <Header activeLink="garage" />
       
       <main className="max-w-6xl mx-auto px-4 pt-28 pb-32">
