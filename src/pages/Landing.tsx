@@ -183,9 +183,9 @@ export default function Landing() {
       </div>
 
       {/* --- SECTION COMMENT ÇA MARCHE --- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Le mécanicien le plus <span className="text-indigo-600">incorruptible</span>.</h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 md:mt-32">
+        <div className="text-center mb-10 md:mb-16">
+          <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 md:mb-6 tracking-tight">Le mécanicien le plus <span className="text-indigo-600">incorruptible</span>.</h2>
           <p className="text-xl text-slate-500 max-w-3xl mx-auto font-medium">Notre intelligence artificielle a été entraînée sur des milliers de fiches techniques, pannes récurrentes et données du marché automobile.</p>
         </div>
 
