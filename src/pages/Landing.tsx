@@ -32,7 +32,7 @@ export default function Landing() {
         
         <div className="relative max-w-7xl mx-auto z-10 text-center">
           <Badge className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 px-4 py-1.5 mb-8 rounded-full font-bold uppercase tracking-widest text-xs backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-700 flex items-center gap-2 mx-auto w-fit">
-            <ShieldCheck className="w-4 h-4" /> La 1ère IA experte en mécanique
+            <ShieldCheck className="w-4 h-4" /> Expert automobile indépendant
           </Badge>
           
           <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 leading-[1.1]">
