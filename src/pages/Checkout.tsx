@@ -32,7 +32,7 @@ const Checkout = () => {
       id: 'curieux', 
       name: "Pack Curieux", 
       price: 4.90, 
-      credits: "3 Crédits IA", 
+      credits: "3 Crédits d'Expertise", 
       desc: "Idéal pour vérifier quelques annonces", 
       tag: null,
       icon: Zap,
