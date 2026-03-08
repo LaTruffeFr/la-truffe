@@ -51,7 +51,10 @@ const ClientDashboard = () => {
   const initials = displayEmail.substring(0, 2).toUpperCase();
 
   // NOUVEAU : On ajoute 'settings' et 'billing' aux onglets possibles
-  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'hunting' | 'settings' | 'billing'>('reports');
+  const initialTab = (searchParams.get('tab') as any) || 'reports';
+  const [activeTab, setActiveTab] = useState<'reports' | 'listings' | 'hunting' | 'settings' | 'billing'>(
+    ['reports', 'listings', 'hunting', 'settings', 'billing'].includes(initialTab) ? initialTab : 'reports'
+  );
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
