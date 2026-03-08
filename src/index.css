@@ -65,13 +65,15 @@
 
 /* ===== STYLES D'IMPRESSION / PDF ===== */
 @media print {
-  /* Masquer les éléments non imprimables */
-  .no-print,
-  .print\\:hidden {
-    display: none !important;
+  /* Taille de page */
+  @page {
+    size: A4;
+    margin: 12mm 10mm;
   }
 
-  /* Masquer toasts, sonner, et overlays */
+  /* Masquer TOUT ce qui n'est pas le rapport */
+  .no-print,
+  .print\\:hidden,
   [data-sonner-toaster],
   [role="status"],
   .toaster,
@@ -81,31 +83,71 @@
   [data-state="open"][role="dialog"],
   nav,
   header,
-  footer {
+  footer,
+  .fixed,
+  .sticky {
     display: none !important;
+    visibility: hidden !important;
   }
 
-  /* Forcer fond blanc partout */
-  body,
+  /* Reset body */
+  html, body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Le conteneur principal du rapport prend toute la largeur */
+  #report-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Forcer les couleurs de fond sur les cartes */
+  .pdf-section,
   .pdf-content,
   .corporate-card,
   .corporate-card-elevated {
     background-color: white !important;
-    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    break-inside: avoid;
   }
 
-  /* Section Arguments - forcer fond blanc */
+  /* Section Arguments */
   .negotiation-card {
     background-color: white !important;
     border: 1px solid #e2e8f0 !important;
     color: black !important;
     box-shadow: none !important;
+    break-inside: avoid;
   }
 
-  /* Enlever les ombres des cartes */
+  /* Enlever les ombres */
   .card-shadow,
   [class*="shadow"] {
     box-shadow: none !important;
+  }
+
+  /* Les badges et éléments colorés gardent leurs couleurs */
+  .badge, [class*="bg-indigo"], [class*="bg-emerald"], [class*="bg-amber"], [class*="bg-red"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Éviter les coupures dans les cartes */
+  .break-inside-avoid,
+  .rounded-2xl,
+  .rounded-\\[2\\.5rem\\],
+  .rounded-\\[2rem\\] {
+    break-inside: avoid;
   }
 }
 
