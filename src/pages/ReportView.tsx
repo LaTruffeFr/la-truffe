@@ -484,7 +484,7 @@ const ReportView = () => {
           </Card>
         </div>
 
-        {/* --- 3. VERDICT IA --- */}
+        {/* --- 3. VERDICT EXPERT --- */}
         <div className="pdf-section bg-card border border-primary/10 rounded-2xl md:rounded-[2rem] p-4 md:p-8 shadow-lg shadow-primary/5 dark:shadow-none flex flex-col md:flex-row items-start gap-4 md:gap-6 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
           <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20 shrink-0 relative z-10">
