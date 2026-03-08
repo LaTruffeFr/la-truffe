@@ -26,6 +26,14 @@ const Auth = () => {
   const redirectUrl = searchParams.get('redirect');
   const messageText = searchParams.get('message');
 
+  // Capturer le code de parrainage depuis l'URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('referral_code', refCode);
+    }
+  }, [searchParams]);
+
   // Redirect based on role when user is logged in and role is resolved
   useEffect(() => {
     if (user && !isRoleLoading) {
