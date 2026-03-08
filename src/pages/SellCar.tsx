@@ -90,7 +90,7 @@ export default function SellCar() {
     setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // --- SOUMISSION À L'IA ET SUPABASE ---
+  // --- SOUMISSION À L'EXPERTISE ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
