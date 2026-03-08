@@ -135,8 +135,8 @@ const GarageView = () => {
         {/* Grid */}
         {reports.length === 0 ? (
           <div className="text-center py-20">
-            <Car className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 text-lg font-medium">Aucun audit terminé pour le moment.</p>
+            <Car className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="text-muted-foreground text-lg font-medium">Aucun audit terminé pour le moment.</p>
             <Button onClick={() => navigate('/audit')} className="mt-4">
               Lancer mon premier audit
             </Button>
