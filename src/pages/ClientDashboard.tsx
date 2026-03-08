@@ -368,8 +368,8 @@ const ClientDashboard = () => {
                   </div>
                   <CardContent className="p-4 md:p-8 space-y-6">
                     <div className="space-y-2">
-                      <Label className="font-bold text-slate-700">Adresse Email</Label>
-                      <Input value={displayEmail} disabled className="bg-slate-50 font-medium text-slate-500" />
+                      <Label className="font-bold text-muted-foreground">Adresse Email</Label>
+                      <Input value={displayEmail} disabled className="bg-muted font-medium text-muted-foreground" />
                       <p className="text-xs text-slate-400 font-medium mt-1">L'email utilisé pour la connexion ne peut pas être modifié ici.</p>
                     </div>
                   </CardContent>
