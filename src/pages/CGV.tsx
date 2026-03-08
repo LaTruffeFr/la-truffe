@@ -23,7 +23,7 @@ const CGV = () => (
 
         <h2 className="text-xl font-bold mt-8 mb-4 text-indigo-900">Article 2 — Description du service</h2>
         <p className="text-slate-600 leading-relaxed mb-4">
-          La Truffe propose un service d'audit automatisé par Intelligence Artificielle. L'utilisateur soumet le lien d'une annonce automobile en ligne. Le système analyse les données disponibles (prix, kilométrage, options, historique annoncé) et génère un rapport d'expertise comprenant : une estimation de valeur, un score de confiance, un devis prévisionnel d'entretien, des arguments de négociation et un avis d'expert.
+          La Truffe propose un service d'audit automatisé par algorithme d'expertise propriétaire. L'utilisateur soumet le lien d'une annonce automobile en ligne. Le système analyse les données disponibles (prix, kilométrage, options, historique annoncé) et génère un rapport d'expertise comprenant : une estimation de valeur, un score de confiance, un devis prévisionnel d'entretien, des arguments de négociation et un avis d'expert.
         </p>
         <p className="text-slate-600 leading-relaxed mb-4">
           <strong>Important :</strong> La Truffe est un outil d'aide à la décision. Les rapports sont générés à partir des données déclarées par le vendeur et des modèles d'Intelligence Artificielle. Ils ne remplacent en aucun cas un contrôle technique professionnel, un essai physique du véhicule ou l'avis d'un mécanicien certifié. L'Éditeur ne saurait être tenu responsable en cas de panne mécanique, vice caché ou tout autre défaut survenant après l'achat du véhicule.
