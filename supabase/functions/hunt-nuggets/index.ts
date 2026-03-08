@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         url: lbcUrl,
         formats: ['markdown'],
-        onlyMainContent: false,
-        waitFor: 3000,
+        onlyMainContent: true,
+        waitFor: 5000,
       }),
     });
 
@@ -109,7 +109,7 @@ Renvoie un JSON valide : { "top5": [ { "rank": 1, "title": "...", "price": 0, "k
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: `${systemPrompt}\n\n--- TEXTE BRUT LEBONCOIN ---\n${markdown.substring(0, 28000)}` }],
+          parts: [{ text: `${systemPrompt}\n\n--- TEXTE BRUT LEBONCOIN ---\n${markdown.substring(0, 45000)}` }],
         }],
         generationConfig: {
           responseMimeType: 'application/json',
