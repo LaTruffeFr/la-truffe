@@ -326,6 +326,7 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                             </span>
                           : <span className="text-slate-300">—</span>;
                       },
+                    },
                     {
                       label: 'Kilométrage',
                       render: (r: any) => r.kilometrage
