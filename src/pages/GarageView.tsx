@@ -257,7 +257,7 @@ const GarageView = () => {
                       {selectedReports.map((r, i) => (
                         <TableHead
                           key={r.id}
-                          className={`font-bold text-center ${i === result.winner_index ? 'bg-amber-50 text-amber-800' : 'text-slate-700'}`}
+                          className={`font-bold text-center min-w-[150px] snap-start ${i === result.winner_index ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300' : 'text-foreground'}`}
                         >
                           <div className="flex items-center justify-center gap-1.5">
                             {i === result.winner_index && <Crown className="w-4 h-4 text-amber-500" />}
