@@ -664,13 +664,13 @@ const ReportView = () => {
 
         {/* --- RADAR SNIPER --- */}
         {!isSingleAudit && vehiclesData.length > 0 && (
-          <div className="pt-12 border-t border-slate-200 space-y-8">
+          <div className="pt-12 border-t border-border space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-end gap-4">
               <div>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Analyse de Marché</h2>
-                <p className="text-slate-500 font-bold mt-1">Positionnement de l'offre sur {stats.totalVehicules} annonces.</p>
+                <h2 className="text-3xl font-black text-foreground tracking-tighter">Analyse de Marché</h2>
+                <p className="text-muted-foreground font-bold mt-1">Positionnement de l'offre sur {stats.totalVehicules} annonces.</p>
               </div>
-              <Badge className="bg-slate-900 text-white font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest border-0">Data Live</Badge>
+              <Badge className="bg-foreground text-background font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest border-0">Data Live</Badge>
             </div>
             <Card className="rounded-[3rem] shadow-xl border-0 overflow-hidden h-[500px] bg-slate-950 p-6">
               <SniperChart data={vehiclesData} trendLine={calculateLogTrendLine(vehiclesData)} onVehicleClick={setSelectedVehicle} />
