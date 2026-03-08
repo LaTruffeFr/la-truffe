@@ -144,7 +144,7 @@ const NuggetHunter = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 text-sm">Budget Max (€)</Label>
+              <Label className="font-bold text-slate-700 text-sm">Budget Max (€) <span className="text-slate-400 font-normal">optionnel</span></Label>
               <Input
                 type="number"
                 placeholder="ex: 15000"
@@ -152,7 +152,17 @@ const NuggetHunter = () => {
                 onChange={e => setBudget(e.target.value)}
                 className="h-12 font-medium rounded-xl border-slate-200"
                 disabled={isLoading}
-                min={500}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-slate-700 text-sm">Km Max <span className="text-slate-400 font-normal">optionnel</span></Label>
+              <Input
+                type="number"
+                placeholder="ex: 150000"
+                value={kmMax}
+                onChange={e => setKmMax(e.target.value)}
+                className="h-12 font-medium rounded-xl border-slate-200"
+                disabled={isLoading}
               />
             </div>
           </div>
