@@ -93,8 +93,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    const budgetInfo = budget ? `budget max de ${budget}€` : '';
+    const kmInfo = km_max ? `kilométrage max de ${km_max} km` : '';
+    const criteriaInfo = [budgetInfo, kmInfo].filter(Boolean).join(' et ') || 'sans contrainte particulière';
+
     const systemPrompt = `Tu es un expert automobile français spécialisé dans la chasse aux bonnes affaires.
-Voici le texte brut d'une page de recherche Leboncoin contenant plusieurs annonces de voitures ${marque} ${modele} avec un budget max de ${budget}€.
+Voici le texte brut d'une page de recherche Leboncoin contenant plusieurs annonces de voitures ${marque} ${modele} (${criteriaInfo}).
 
 Trouve les 5 meilleures annonces (meilleur rapport prix/kilométrage/fiabilité apparente).
 Pour chaque annonce, tu DOIS fournir le lien Leboncoin complet (format https://www.leboncoin.fr/ad/voitures/XXXXXXX).
