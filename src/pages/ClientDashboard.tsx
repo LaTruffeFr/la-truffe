@@ -119,24 +119,24 @@ const ClientDashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground">
       <WelcomeModal open={showWelcome} onClose={handleCloseWelcome} />
       
       {/* --- HEADER CLIENT PREMIUM --- */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+      <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm dark:shadow-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="font-black text-2xl tracking-tighter text-slate-900 hover:opacity-80 transition-opacity flex items-center gap-2">
-            La Truffe <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-bold border-0">Espace Personnel</Badge>
+          <Link to="/" className="font-black text-2xl tracking-tighter text-foreground hover:opacity-80 transition-opacity flex items-center gap-2">
+            La Truffe <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold border-0">Espace Personnel</Badge>
           </Link>
           <div className="flex items-center gap-4">
              <div className="text-right hidden sm:block">
-                <div className="font-bold text-slate-900 text-sm">{displayEmail}</div>
+                <div className="font-bold text-foreground text-sm">{displayEmail}</div>
                 <div className="text-xs font-medium text-emerald-500 flex items-center justify-end gap-1">
                   <CheckCircle className="w-3 h-3" /> Compte vérifié
                 </div>
              </div>
-             <Avatar className="h-10 w-10 border-2 border-indigo-100 shadow-sm">
-               <AvatarFallback className="bg-indigo-50 text-indigo-600 font-black">{initials}</AvatarFallback>
+             <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-sm">
+               <AvatarFallback className="bg-primary/10 text-primary font-black">{initials}</AvatarFallback>
              </Avatar>
           </div>
         </div>
