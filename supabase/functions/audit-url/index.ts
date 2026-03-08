@@ -84,8 +84,8 @@ serve(async (req: Request) => {
     if (!url || !isValidListingUrl(url)) return jsonResponse({ error: "URL invalide. Seuls LeBonCoin, La Centrale, AutoScout24 et Mobile.de sont supportés." }, 400);
 
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!FIRECRAWL_API_KEY || !ANTHROPIC_API_KEY) return jsonResponse({ error: "Configuration serveur incomplète (clés API manquantes)." }, 500);
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!FIRECRAWL_API_KEY || !GEMINI_API_KEY) return jsonResponse({ error: "Configuration serveur incomplète (clés API manquantes)." }, 500);
 
     // === ÉTAPE 1 : EXTRACTION SÉCURISÉE (avec timeout et params adaptés par site) ===
     const scrapeController = new AbortController();
