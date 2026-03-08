@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback,
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-type AppRole = 'admin' | 'vip' | 'client';
+type AppRole = 'admin' | 'vip' | 'pro' | 'client';
 
 interface UserProfile {
   credits: number;
