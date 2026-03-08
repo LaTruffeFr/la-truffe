@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Swords, Loader2, Check, Car, FolderOpen, Gauge, Calendar, Fuel, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,47 +15,25 @@ interface ComparisonResult {
 
 interface GarageTabProps {
   userId: string;
+  reports: any[];
+  isLoading: boolean;
 }
 
-/** Extract an image URL from the report's various possible fields */
+/** Extract image from report's market_data or vehicles_data */
 const getReportImage = (report: any): string | null => {
-  // single audit image
   if (report.market_data?.image_url) return report.market_data.image_url;
   if (report.market_data?.screenshot) return `data:image/png;base64,${report.market_data.screenshot}`;
-  // vehicles array first image
   const vehicles = report.vehicles_data;
   if (Array.isArray(vehicles) && vehicles.length > 0 && vehicles[0]?.image) return vehicles[0].image;
   return null;
 };
 
-const GarageTab = ({ userId }: GarageTabProps) => {
+const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
   const navigate = useNavigate();
-  const [reports, setReports] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string[]>([]);
   const [comparing, setComparing] = useState(false);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchReports = async () => {
-      const { data, error } = await supabase
-        .from('reports')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error(error);
-        toast.error('Impossible de charger vos audits.');
-      } else {
-        setReports(data || []);
-      }
-      setLoading(false);
-    };
-    fetchReports();
-  }, [userId]);
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -115,10 +93,7 @@ const GarageTab = ({ userId }: GarageTabProps) => {
     return 'text-amber-500';
   };
 
-  // Grid template for the modal based on number of vehicles
-  const colCount = selectedReports.length + 1;
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
@@ -156,6 +131,9 @@ const GarageTab = ({ userId }: GarageTabProps) => {
             {reports.map(report => {
               const isSelected = selected.includes(report.id);
               const imageUrl = getReportImage(report);
+              const prixAnnonce = report.prix_affiche;
+              const coteTruffe = report.prix_estime;
+
               return (
                 <div
                   key={report.id}
@@ -206,9 +184,10 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                     </div>
                     <div className="text-right shrink-0">
                       <div className="text-2xl font-black text-indigo-600">
-                        {report.prix_affiche ? report.prix_affiche.toLocaleString('fr-FR') : '—'}
+                        {prixAnnonce ? prixAnnonce.toLocaleString('fr-FR') : '—'}
                         <span className="text-sm font-bold ml-0.5">€</span>
                       </div>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Prix annonce</span>
                     </div>
                   </div>
 
@@ -221,11 +200,11 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                         <span className="text-slate-400 text-xs">km</span>
                       </div>
                     )}
-                    {report.prix_estime && (
+                    {coteTruffe && (
                       <div className="flex items-center gap-1.5 text-sm ml-auto">
-                        <span className="text-xs text-slate-400">Estimation</span>
-                        <span className={`font-black ${getScoreColor(report.prix_affiche, report.prix_estime)}`}>
-                          {report.prix_estime.toLocaleString('fr-FR')} €
+                        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Cote Truffe</span>
+                        <span className={`font-black ${getScoreColor(prixAnnonce, coteTruffe)}`}>
+                          {coteTruffe.toLocaleString('fr-FR')} €
                         </span>
                       </div>
                     )}
@@ -260,7 +239,7 @@ const GarageTab = ({ userId }: GarageTabProps) => {
 
       {/* ===== COMPARISON MODAL ===== */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-y-auto p-0 border-0 rounded-3xl bg-white gap-0">
+        <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-y-auto p-0 border-0 rounded-[2.5rem] bg-white gap-0">
 
           {comparing ? (
             <div className="flex flex-col items-center justify-center py-28 gap-5 px-8">
@@ -296,8 +275,8 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                     gap: 0,
                   }}
                 >
-                  {/* ---- HEADER ROW: empty + vehicle cards ---- */}
-                  <div /> {/* empty top-left */}
+                  {/* ---- HEADER ROW ---- */}
+                  <div />
                   {selectedReports.map((r, i) => {
                     const img = getReportImage(r);
                     const isWinner = i === result.winner_index;
@@ -312,25 +291,19 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                       >
                         {isWinner && <div className="text-3xl mb-2">👑</div>}
                         {img ? (
-                          <img
-                            src={img}
-                            alt={`${r.marque} ${r.modele}`}
-                            className="h-40 w-full object-cover rounded-xl mb-3"
-                          />
+                          <img src={img} alt={`${r.marque} ${r.modele}`} className="h-40 w-full object-cover rounded-xl mb-3" />
                         ) : (
                           <div className="h-40 w-full rounded-xl mb-3 bg-slate-100 flex items-center justify-center">
                             <Car className="w-12 h-12 text-slate-300" />
                           </div>
                         )}
-                        <h3 className="font-black text-base text-slate-900 line-clamp-1">
-                          {r.marque} {r.modele}
-                        </h3>
+                        <h3 className="font-black text-base text-slate-900 line-clamp-1">{r.marque} {r.modele}</h3>
                         <p className="text-xl font-black text-indigo-600 mt-1">
                           {r.prix_affiche ? `${r.prix_affiche.toLocaleString('fr-FR')} €` : '—'}
                         </p>
-                        {r.annee && (
-                          <p className="text-xs text-slate-400 font-semibold mt-1">{r.annee} • {r.kilometrage ? `${(r.kilometrage / 1000).toFixed(0)}k km` : ''}</p>
-                        )}
+                        <p className="text-xs text-slate-400 font-semibold mt-1">
+                          {r.annee || ''}{r.annee && r.kilometrage ? ' • ' : ''}{r.kilometrage ? `${(r.kilometrage / 1000).toFixed(0)}k km` : ''}
+                        </p>
                       </div>
                     );
                   })}
@@ -338,9 +311,17 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                   {/* ---- DATA ROWS ---- */}
                   {[
                     {
-                      label: 'Prix affiché',
+                      label: 'Prix annonce',
                       render: (r: any) => r.prix_affiche
                         ? <span className="font-black text-lg text-slate-900">{r.prix_affiche.toLocaleString('fr-FR')} €</span>
+                        : <span className="text-slate-300">—</span>,
+                    },
+                    {
+                      label: 'Cote La Truffe',
+                      render: (r: any) => r.prix_estime
+                        ? <span className={`font-black text-lg ${r.prix_affiche && r.prix_affiche > r.prix_estime ? 'text-red-500' : 'text-emerald-500'}`}>
+                            {r.prix_estime.toLocaleString('fr-FR')} €
+                          </span>
                         : <span className="text-slate-300">—</span>,
                     },
                     {
@@ -353,14 +334,6 @@ const GarageTab = ({ userId }: GarageTabProps) => {
                       label: 'Année',
                       render: (r: any) => r.annee
                         ? <span className="font-bold text-slate-700">{r.annee}</span>
-                        : <span className="text-slate-300">—</span>,
-                    },
-                    {
-                      label: 'Estimation Truffe',
-                      render: (r: any) => r.prix_estime
-                        ? <span className={`font-black text-lg ${r.prix_affiche && r.prix_affiche > r.prix_estime ? 'text-red-500' : 'text-emerald-500'}`}>
-                            {r.prix_estime.toLocaleString('fr-FR')} €
-                          </span>
                         : <span className="text-slate-300">—</span>,
                     },
                   ].map((row, idx) => (
