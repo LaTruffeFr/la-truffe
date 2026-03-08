@@ -35,7 +35,7 @@ const rankBadges = [
 
 const loadingTexts = [
   'Connexion au radar Leboncoin...',
-  'Gemini analyse le marché...',
+  'Analyse algorithmique du marché...',
   'Extraction des photos...',
   'Identification des meilleures affaires...',
   'Classement du Top 5...',
