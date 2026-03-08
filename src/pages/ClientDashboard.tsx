@@ -31,6 +31,13 @@ interface Report {
   status: 'pending' | 'in_progress' | 'completed';
   created_at: string;
   updated_at: string;
+  prix_affiche: number | null;
+  prix_estime: number | null;
+  kilometrage: number | null;
+  annee: number | null;
+  carburant: string | null;
+  market_data: any;
+  vehicles_data: any;
 }
 
 const statusConfig = {
