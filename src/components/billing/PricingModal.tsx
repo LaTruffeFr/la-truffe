@@ -34,7 +34,7 @@ const PLANS = [
     price: '24,90€',
     priceId: 'price_1T8h0XPpNQZ47toNyg0eyJlh',
     description: 'Pour les pros',
-    features: ['10 audits complets', 'Rapport PDF', 'Score de confiance IA', 'Arguments de négo', 'Priorité d\'analyse'],
+    features: ['10 audits complets', 'Rapport PDF', 'Score de confiance', 'Arguments de négo', 'Priorité d\'analyse'],
     popular: false,
   },
 ];
