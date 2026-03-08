@@ -238,7 +238,7 @@ export default function SellCar() {
               Vendez votre voiture au <span className="text-emerald-400">Juste Prix</span>.
             </h1>
             <p className="text-xl text-slate-300 font-medium max-w-2xl mx-auto">
-              Notre IA certifie votre annonce. Les acheteurs sont rassurés, vous vendez 2x plus vite sans négociation inutile.
+              Notre moteur d'expertise certifie votre annonce. Les acheteurs sont rassurés, vous vendez 2x plus vite sans négociation inutile.
             </p>
           </div>
         </section>
