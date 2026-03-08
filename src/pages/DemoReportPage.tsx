@@ -5,7 +5,7 @@ import {
   ArrowLeft, ExternalLink, Terminal, ShieldCheck, 
   Cpu, MessageSquareWarning, Zap, CheckCircle2, AlertTriangle, Loader2,
   Copy, Check, Snowflake, Flame, CircleDashed, Settings2, TrendingDown,
-  BrainCircuit
+  ScanSearch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -266,7 +266,7 @@ const DemoReportPage = () => {
             ========================================= */}
         <Alert className="bg-primary/5 border-primary/20 p-6 md:p-8 rounded-2xl flex flex-col md:flex-row items-start md:items-center gap-6 shadow-sm">
           <div className="bg-white p-4 rounded-full shadow-sm border border-primary/10 shrink-0">
-            <BrainCircuit className="w-8 h-8 text-primary" />
+            <ScanSearch className="w-8 h-8 text-primary" />
           </div>
           <div>
             <AlertTitle className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-2">

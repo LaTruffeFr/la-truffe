@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Loader2, CheckCircle2, TrendingDown, AlertTriangle,
   ExternalLink, MapPin, Calendar, Fuel, Gauge, Copy, Check,
-  ShieldCheck, BrainCircuit, MessageSquareWarning, Cpu, 
+  ShieldCheck, ScanSearch, MessageSquareWarning, Cpu, 
   Settings2, Snowflake, Flame, CircleDashed, Zap
 } from 'lucide-react';
 import logoTruffe from '@/assets/logo-truffe.jpg';
@@ -268,7 +268,7 @@ const PublicAudit = () => {
           {report.expert_opinion && (
             <Alert className="bg-muted/50 border-primary/20 p-6 md:p-8 rounded-2xl flex flex-col md:flex-row items-start md:items-center gap-6 shadow-corporate">
               <div className="bg-card p-4 rounded-full shadow-corporate border border-primary/10 shrink-0">
-                <BrainCircuit className="w-8 h-8 text-primary" />
+                <ScanSearch className="w-8 h-8 text-primary" />
               </div>
               <div>
                 <AlertTitle className="text-lg font-bold text-foreground flex items-center gap-2 mb-2">
