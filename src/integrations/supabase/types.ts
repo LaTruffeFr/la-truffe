@@ -617,7 +617,7 @@ export type Database = {
       is_vip: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user" | "vip"
+      app_role: "admin" | "user" | "vip" | "pro"
       report_status: "pending" | "in_progress" | "completed"
     }
     CompositeTypes: {
@@ -746,7 +746,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "vip"],
+      app_role: ["admin", "user", "vip", "pro"],
       report_status: ["pending", "in_progress", "completed"],
     },
   },
