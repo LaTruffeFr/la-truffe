@@ -152,7 +152,7 @@ const AdminOverviewTab = ({ totalUsers, totalReports }: AdminOverviewTabProps) =
                 />
                 <Bar dataKey="audits" name="Audits" radius={[0, 8, 8, 0]} barSize={28}>
                   {topModels.map((_, index) => (
-                    <rect key={index} fill={COLORS[index % COLORS.length]} />
+                    <RechartsCell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>
