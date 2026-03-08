@@ -402,7 +402,7 @@ const ReportView = () => {
               <Hash className="w-3 h-3" /> Dossier {report.id.slice(0,8)} • <History className="w-3 h-3 ml-2" /> {new Date(report.created_at).toLocaleDateString()}
             </div>
             {report.market_data?.original_title ? (
-              <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tighter leading-tight mb-6">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground tracking-tighter leading-tight mb-4 md:mb-6">
                 {report.market_data.original_title}
               </h1>
             ) : (
