@@ -222,6 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role,
         isAdmin,
         isVip,
+        isPro,
         credits,
         userEmail,
         signUp,
