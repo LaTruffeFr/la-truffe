@@ -224,13 +224,14 @@ const ReportView = () => {
     setTimeout(() => setIsCopied(false), 3000);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!report) return;
     setIsGeneratingPdf(true);
-    toast({ title: "Génération PDF...", description: "Veuillez patienter." });
-    const success = await generatePDF('report-content', `Expertise_La_Truffe_${report.marque}_${report.modele}`);
-    setIsGeneratingPdf(false);
-    if (success) toast({ title: "Succès", description: "Rapport PDF téléchargé." });
+    toast({ title: "Préparation du PDF...", description: "La fenêtre d'impression va s'ouvrir." });
+    setTimeout(() => {
+      window.print();
+      setIsGeneratingPdf(false);
+    }, 500);
   };
 
   if (loading || authLoading) return (
