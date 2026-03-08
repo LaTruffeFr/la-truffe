@@ -117,7 +117,7 @@ const GarageView = () => {
     <div className="min-h-screen bg-gradient-to-b from-muted to-background">
       <Header activeLink="garage" />
       
-      <main className="max-w-6xl mx-auto px-4 pt-28 pb-32">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 pt-24 md:pt-28 pb-24 md:pb-32">
         {/* Hero */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-bold text-sm px-4 py-2 rounded-full mb-4">
