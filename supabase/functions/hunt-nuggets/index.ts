@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url: leboncoinUrl,
-        formats: ['markdown', 'links'],
+        formats: ['markdown', 'links', 'html'],
         onlyMainContent: true,
         waitFor: 15000,
         location: { country: 'FR', languages: ['fr'] },
