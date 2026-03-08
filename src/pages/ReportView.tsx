@@ -679,7 +679,7 @@ const ReportView = () => {
         )}
 
         {/* --- DISCLAIMER --- */}
-        <div className="mt-16 p-6 md:p-8 bg-primary/5 border border-primary/10 rounded-2xl flex gap-4 items-start">
+        <div className="mt-10 md:mt-16 p-4 md:p-8 bg-primary/5 border border-primary/10 rounded-2xl flex gap-3 md:gap-4 items-start">
           <ShieldCheck className="w-8 h-8 text-primary shrink-0 mt-0.5" />
           <div>
             <h3 className="font-bold text-foreground text-base mb-2">Notre mission : Vous protéger</h3>
