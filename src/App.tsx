@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Contact from "./pages/Contact";
 import CGV from "./pages/CGV";
 import MentionsLegales from "./pages/MentionsLegales";
+import Privacy from "./pages/Privacy";
 import About from "./pages/About";
 import WhyUs from "./pages/WhyUs";
 import NuggetHunterView from "./pages/NuggetHunterView";
