@@ -549,14 +549,14 @@ const ReportView = () => {
               
               return (
                 <div className="space-y-4 break-inside-avoid">
-                  <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <h3 className="text-xl font-black text-foreground flex items-center gap-2">
                     <Receipt className="text-rose-500 w-6 h-6" /> Frais à Prévoir
                   </h3>
-                  <Card className="rounded-[2rem] border-rose-100 shadow-lg bg-white h-full flex flex-col">
-                    <div className="bg-rose-50/50 px-6 py-4 border-b border-rose-100">
+                  <Card className="rounded-[2rem] border-rose-100 dark:border-rose-900/30 shadow-lg dark:shadow-none bg-card h-full flex flex-col">
+                    <div className="bg-rose-50/50 dark:bg-rose-950/20 px-6 py-4 border-b border-rose-100 dark:border-rose-900/30">
                       <p className="text-[10px] font-black uppercase text-rose-500 tracking-widest">Fiabilisation estimée</p>
                     </div>
-                    <div className="divide-y divide-dashed divide-slate-100 flex-1 p-2">
+                    <div className="divide-y divide-dashed divide-border flex-1 p-2">
                       {devisItems.length > 0 ? devisItems.map((item, i) => (
                         <div key={i} className="flex justify-between items-center px-4 py-3">
                           <span className={`font-bold text-sm pr-4 leading-tight ${item.deja_fait ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700'}`}>
