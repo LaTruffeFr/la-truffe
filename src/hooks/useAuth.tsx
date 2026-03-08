@@ -210,6 +210,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAdmin = role === 'admin';
   const isVip = role === 'vip' || role === 'admin'; // Admins are also VIP
+  const isPro = role === 'pro' || role === 'admin'; // Admins have pro access too
 
   return (
     <AuthContext.Provider
