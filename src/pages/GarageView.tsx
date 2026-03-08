@@ -241,11 +241,11 @@ const GarageView = () => {
             <div className="space-y-4 md:space-y-6">
               {/* Winner Banner */}
               <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl md:rounded-2xl p-4 md:p-6 text-center">
-                <Trophy className="w-10 h-10 text-amber-500 mx-auto mb-2" />
-                <h2 className="text-xl font-black text-slate-900 mb-1">
-                  🏆 Le Choix de La Truffe : {selectedReports[result.winner_index]?.marque} {selectedReports[result.winner_index]?.modele}
+                <Trophy className="w-8 h-8 md:w-10 md:h-10 text-amber-500 mx-auto mb-2" />
+                <h2 className="text-base md:text-xl font-black text-foreground mb-1">
+                  🏆 Le Choix : {selectedReports[result.winner_index]?.marque} {selectedReports[result.winner_index]?.modele}
                 </h2>
-                <p className="text-slate-600 text-sm max-w-lg mx-auto leading-relaxed">{result.verdict}</p>
+                <p className="text-muted-foreground text-xs md:text-sm max-w-lg mx-auto leading-relaxed">{result.verdict}</p>
               </div>
 
               {/* Comparison Table */}
