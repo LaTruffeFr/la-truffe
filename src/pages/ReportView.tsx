@@ -415,9 +415,14 @@ const ReportView = () => {
                 </div>
               )}
               {report.lien_annonce && (
-                <a href={report.lien_annonce} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ml-0 md:ml-auto">
-                  <ExternalLink className="w-4 h-4" /> Voir l'annonce
-                </a>
+                <div className="flex items-center gap-2 ml-0 md:ml-auto">
+                  <a href={report.lien_annonce} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md">
+                    <ExternalLink className="w-4 h-4" /> Voir l'annonce
+                  </a>
+                  <Button variant="ghost" size="sm" className="text-slate-400 hover:text-rose-500" onClick={() => setShowReportModal(true)}>
+                    <Flag className="w-4 h-4 mr-1" /> Signaler
+                  </Button>
+                </div>
               )}
             </div>
           </div>
