@@ -11,12 +11,13 @@ import {
   Download, CheckCircle2, TrendingDown, Calendar, Gauge, Fuel, 
   Euro, ShieldCheck, Loader2, History, Calculator, FileCheck, Copy, Check, Settings2, 
   Cpu, ScanSearch, Activity, Receipt, Hash, ShieldAlert, Sparkles, Snowflake, 
-  Flame, CircleDashed, Target, ExternalLink, MessageSquare
+  Flame, CircleDashed, Target, ExternalLink, MessageSquare, Flag
 } from "lucide-react";
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
 import { Footer } from '@/components/landing';
 import { generatePDF } from '@/lib/pdfGenerator';
+import ReportAdModal from '@/components/reporting/ReportAdModal';
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
@@ -139,6 +140,7 @@ const ReportView = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [fastLoadStep, setFastLoadStep] = useState(0);
@@ -413,9 +415,14 @@ const ReportView = () => {
                 </div>
               )}
               {report.lien_annonce && (
-                <a href={report.lien_annonce} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ml-0 md:ml-auto">
-                  <ExternalLink className="w-4 h-4" /> Voir l'annonce
-                </a>
+                <div className="flex items-center gap-2 ml-0 md:ml-auto">
+                  <a href={report.lien_annonce} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md">
+                    <ExternalLink className="w-4 h-4" /> Voir l'annonce
+                  </a>
+                  <Button variant="ghost" size="sm" className="text-slate-400 hover:text-rose-500" onClick={() => setShowReportModal(true)}>
+                    <Flag className="w-4 h-4 mr-1" /> Signaler
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -674,6 +681,7 @@ const ReportView = () => {
       </main>
       <Footer />
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
+      <ReportAdModal open={showReportModal} onOpenChange={setShowReportModal} adUrl={report?.lien_annonce || ''} />
     </div>
   );
 };

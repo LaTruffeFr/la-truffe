@@ -351,6 +351,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reported_listings: {
+        Row: {
+          ad_url: string
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          ad_url: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          ad_url?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           admin_notes: string | null
