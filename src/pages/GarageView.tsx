@@ -252,8 +252,8 @@ const GarageView = () => {
               <div className="rounded-xl border border-border overflow-x-auto pb-2 overscroll-x-contain snap-x">
                 <Table className="min-w-[600px] md:min-w-0">
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead className="font-bold text-slate-700 w-1/4">Critère</TableHead>
+                    <TableRow className="bg-muted">
+                      <TableHead className="font-bold text-foreground w-1/4 min-w-[120px] snap-start">Critère</TableHead>
                       {selectedReports.map((r, i) => (
                         <TableHead
                           key={r.id}
