@@ -184,7 +184,7 @@ const GarageView = () => {
                     {report.prix_estime && report.prix_affiche && (
                       <div className="mt-3 pt-3 border-t border-border">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">Estimation La Truffe</span>
+                          <span className="text-muted-foreground">Estimation La Truffe</span>
                           <span className={`font-bold ${report.prix_affiche > report.prix_estime ? 'text-red-600' : 'text-emerald-600'}`}>
                             {report.prix_estime.toLocaleString('fr-FR')} €
                           </span>
