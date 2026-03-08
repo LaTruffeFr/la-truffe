@@ -107,7 +107,7 @@ export default function NuggetHunterView() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
-      <Header activeLink="hunting" />
+      <Header activeLink="selection" />
 
       {/* Background effects */}
       <div className="fixed top-40 left-1/4 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
