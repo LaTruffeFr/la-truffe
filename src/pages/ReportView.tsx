@@ -18,6 +18,7 @@ import { OpportunityModal } from '@/components/trading/OpportunityModal';
 import { Footer } from '@/components/landing';
 import { generatePDF } from '@/lib/pdfGenerator';
 import ReportAdModal from '@/components/reporting/ReportAdModal';
+import { SmartOptionsDisplay } from '@/components/SmartOptionsDisplay';
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
@@ -637,28 +638,13 @@ const ReportView = () => {
           </div>
         </div>
 
-        {/* --- 6. ÉQUIPEMENTS CLÉS (MODE FICHE TECHNIQUE LARGE) --- */}
-        {isSingleAudit && (
+        {/* --- 6. ÉQUIPEMENTS CLÉS --- */}
+        {isSingleAudit && Array.isArray(singleAuditData?.options) && singleAuditData.options.length > 0 && (
           <div className="pdf-section space-y-6 pt-8 border-t border-border break-inside-avoid">
             <h3 className="text-2xl font-black text-foreground flex items-center gap-3">
               <Settings2 className="w-7 h-7 text-muted-foreground" /> Équipements & Options détectés
             </h3>
-            <Card className="rounded-[2rem] border-border shadow-md dark:shadow-none bg-card p-6 md:p-8">
-              {Array.isArray(singleAuditData?.options) && singleAuditData.options.length > 0 ? (
-                <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
-                  {singleAuditData.options.map((opt: string, i: number) => (
-                    <li key={i} className="flex items-start gap-3 group">
-                      <div className="mt-0.5 text-primary/70 group-hover:text-primary transition-colors shrink-0">
-                        {getOptionIcon(opt)}
-                      </div>
-                      <span className="font-bold text-muted-foreground group-hover:text-foreground transition-colors text-sm leading-snug">{opt}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-slate-500 italic text-sm py-4">Aucun équipement spécifique ou option premium détecté dans l'annonce.</p>
-              )}
-            </Card>
+            <SmartOptionsDisplay options={singleAuditData.options} />
           </div>
         )}
 
