@@ -24,7 +24,7 @@ const PLANS = [
     price: '9,90€',
     priceId: 'price_1T8gziPpNQZ47toNnH7WXUrx',
     description: 'Le plus populaire',
-    features: ['3 audits complets', 'Rapport PDF', 'Score de confiance IA', 'Arguments de négo'],
+    features: ['3 audits complets', 'Rapport PDF', 'Score de confiance', 'Arguments de négo'],
     popular: true,
   },
   {
