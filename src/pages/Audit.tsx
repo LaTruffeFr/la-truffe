@@ -9,17 +9,18 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Link as LinkIcon, Loader2, Activity, 
+  Link as LinkIcon, Loader2, ScanSearch, 
   Receipt, CheckCircle2, Zap, Sparkles,
-  ShieldCheck, ExternalLink, AlertCircle
+  ShieldCheck, ExternalLink, AlertCircle,
+  Cpu, ShieldAlert, Calculator, FileCheck
 } from "lucide-react";
 
 const AUDIT_STEPS = [
-  'Scraping de l\'annonce...',
-  'Interrogation de l\'IA Agentique...',
-  'Détection des tags et signaux...',
-  'Calcul de la vraie cote...',
-  'Génération du Playbook...',
+  { time: 0, label: "Flairage de l'annonce et extraction des données...", icon: ScanSearch, percent: 15 },
+  { time: 3000, label: "Analyse du pedigree mécanique...", icon: Cpu, percent: 40 },
+  { time: 6000, label: "Traque des vices cachés et arnaques...", icon: ShieldAlert, percent: 65 },
+  { time: 9000, label: "Calcul de la vraie cote La Truffe...", icon: Calculator, percent: 85 },
+  { time: 12000, label: "Rédaction finale du rapport d'expertise...", icon: FileCheck, percent: 98 },
 ];
 
 export default function AuditPage() {
@@ -31,7 +32,6 @@ export default function AuditPage() {
   const [url, setUrl] = useState("");
   const [manualDescription, setManualDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [loadingStep, setLoadingStep] = useState("");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
@@ -43,25 +43,26 @@ export default function AuditPage() {
     }
   }, [user, authLoading, navigate]);
 
-  // Animated loading steps
+  // Animated loading steps - synchronized with AUDIT_STEPS
   useEffect(() => {
-    if (!isAnalyzing) return;
+    if (!isAnalyzing) { setLoadingStepIndex(0); setProgress(0); return; }
+    
+    const startTime = Date.now();
     const interval = setInterval(() => {
-      setLoadingStepIndex(s => (s + 1) % AUDIT_STEPS.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isAnalyzing]);
-
-  useEffect(() => {
-    setLoadingStep(AUDIT_STEPS[loadingStepIndex]);
-  }, [loadingStepIndex]);
-
-  // Progress bar
-  useEffect(() => {
-    if (!isAnalyzing) { setProgress(0); return; }
-    const interval = setInterval(() => {
-      setProgress(p => Math.min(p + 1, 95));
-    }, 160);
+      const elapsed = Date.now() - startTime;
+      
+      let currentStepIndex = 0;
+      for (let i = AUDIT_STEPS.length - 1; i >= 0; i--) {
+        if (elapsed >= AUDIT_STEPS[i].time) {
+          currentStepIndex = i;
+          break;
+        }
+      }
+      
+      setLoadingStepIndex(currentStepIndex);
+      setProgress(AUDIT_STEPS[currentStepIndex].percent);
+    }, 500);
+    
     return () => clearInterval(interval);
   }, [isAnalyzing]);
 
@@ -129,18 +130,72 @@ export default function AuditPage() {
   // --- ÉCRAN DE CHARGEMENT IA ---
   if (isAnalyzing) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white font-sans px-4">
-        <div className="relative mb-8">
-          <Activity className="w-24 h-24 text-indigo-500 animate-pulse relative z-10" />
-          <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-50 animate-pulse"></div>
-        </div>
-        <h2 className="text-3xl font-extrabold mb-4 tracking-tight text-center">Analyse de l'annonce en cours...</h2>
-        <div className="flex items-center gap-3 text-indigo-300 font-medium text-lg bg-white/5 px-6 py-3 rounded-full border border-white/10">
-          <Loader2 className="w-5 h-5 animate-spin" /> {loadingStep}
-        </div>
-        <div className="w-64 mt-8 space-y-2">
-          <Progress value={progress} className="h-2" />
-          <p className="text-xs text-slate-400 text-center">{progress}% — Veuillez patienter…</p>
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
+        {/* Effet de brume en fond */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="w-full max-w-md space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
+          
+          {/* En-tête avec Logo animé */}
+          <div className="relative mx-auto w-24 h-24 flex items-center justify-center bg-white rounded-3xl shadow-xl shadow-indigo-500/10 border border-slate-100">
+            <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-3xl animate-ping" />
+            <ScanSearch className="w-10 h-10 text-indigo-600 animate-pulse" />
+          </div>
+          
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Audit en cours</h2>
+            <p className="text-slate-500 font-medium text-lg">La Truffe analyse ce dossier en profondeur...</p>
+          </div>
+
+          {/* Carte de progression */}
+          <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-indigo-100/20 border border-slate-100">
+            
+            {/* Barre de pourcentage */}
+            <div className="mb-8 relative">
+              <div className="flex justify-between text-xs font-black text-indigo-600 mb-3 px-1">
+                <span className="uppercase tracking-widest">Progression globale</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+                <div 
+                  className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out relative" 
+                  style={{ width: `${progress}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[slide_2s_ease-in-out_infinite]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline verticale des étapes */}
+            <div className="space-y-6 relative ml-2">
+              <div className="absolute left-[15px] top-2 bottom-4 w-0.5 bg-slate-100 z-0" />
+              
+              {AUDIT_STEPS.map((step, index) => {
+                const isCompleted = index < loadingStepIndex;
+                const isCurrent = index === loadingStepIndex;
+                
+                return (
+                  <div key={index} className={`flex items-center gap-5 relative z-10 transition-all duration-500 ${isCurrent ? "scale-105 origin-left" : ""}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-500 ${
+                      isCompleted ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20" : 
+                      isCurrent ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 animate-pulse ring-4 ring-indigo-50" : 
+                      "bg-white text-slate-300 border-2 border-slate-100"
+                    }`}>
+                      {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
+                    </div>
+                    <span className={`text-sm font-bold transition-colors duration-500 ${
+                      isCompleted ? "text-slate-700" : 
+                      isCurrent ? "text-indigo-700" : 
+                      "text-slate-400"
+                    }`}>
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
         </div>
       </div>
     );
