@@ -268,7 +268,7 @@ serve(async (req: Request) => {
     let prixAffiche = Number(rawCarData.prix_affiche) || 0;
     const isPrixFerme = rawCarData.prix_ferme === true;
 
-    // === ÉTAPE 4 : RÉDACTION IA (DIAGNOSTIC LA TRUFFE V10) ===
+    // === ÉTAPE 4 : RÉDACTION (DIAGNOSTIC LA TRUFFE V11) ===
     const writingPrompt = `Tu es "La Truffe", l'expert en mécanique automobile le plus rigoureux et courtois de France. Tu t'adresses à des passionnés ET des néophytes.
 
     VÉHICULE : ${rawCarData.marque} ${rawCarData.modele} | BOÎTE : ${rawCarData.transmission || 'Inconnue'} | MOTEUR : ${rawCarData.code_moteur_estime} | KM : ${rawCarData.kilometrage} | Prix affiché : ${prixAffiche}€.
@@ -327,17 +327,23 @@ serve(async (req: Request) => {
     - Sois un véritable expert automobile, précis et objectif.
     - Calcule aussi "prix_truffe" = prix_estime arrondi à -5% supplémentaire (marge de négo).
 
-    STRATÉGIE DE NÉGOCIATION :
-    - Analyse le profil du vendeur. S'il se dit "passionné", "minutieux" ou refuse les "pros", rédige le SMS d'approche (Stratégie d'approche) sur un ton amical, de passionné à passionné, en le rassurant sur le fait que la voiture sera entre de bonnes mains, tout en justifiant fermement la baisse de prix par la mécanique.
+    === RÈGLE 7 : STRATÉGIE DE NÉGOCIATION (PLAYBOOK) ===
+    Compare le prix affiché (${prixAffiche}€) avec ton estimation (prix_estime).
+    CAS A (Prix affiché SUPÉRIEUR à ta Cote) :
+    - Rédige une stratégie pour faire baisser le prix jusqu'à ta cote. S'il se dit "passionné", adopte un ton amical.
     ${isPrixFerme 
-      ? `- L'annonce mentionne "Prix ferme". Le SMS de négociation doit être TRÈS diplomatique. Justifie uniquement par les frais d'entretien préventif à venir. Montre de l'intérêt sincère avant d'aborder le prix.`
-      : `- Rédige un SMS poli mais assertif avec une offre justifiée par les frais d'entretien identifiés.`
+      ? `- L'annonce mentionne "Prix ferme". Le SMS doit être TRÈS diplomatique. Justifie la baisse uniquement par les frais préventifs.`
+      : `- Rédige un SMS poli mais assertif avec une offre à la baisse justifiée par les frais d'entretien identifiés.`
     }
+    
+    CAS B (Prix affiché INFÉRIEUR ou ÉGAL à ta Cote - Voiture SOUS-COTÉE / Bonne affaire) :
+    - CHANGE DE TON. Ne demande pas à l'acheteur de négocier violemment, c'est DÉJÀ une excellente affaire.
+    - Le Playbook doit conseiller de : 1) Bloquer la vente rapidement en montrant un sérieux absolu. 2) Utiliser les 'frais à prévoir' (devis_estime) uniquement pour justifier le prix bas actuel, ou pour tenter de gratter un tout petit geste symbolique (ex: payer la carte grise), mais SANS risquer de froisser le vendeur et de perdre la voiture.
 
     STRUCTURE DE RÉPONSE :
     - "expert_opinion" : Ton avis global en 3-4 phrases. Commence par saluer l'utilisateur. Inclus ton estimation de la valeur marché d'origine et compare au prix affiché.
     - "negotiation_arguments" : 3 points précis :
-      * Point 1 (Titre: "Stratégie d'approche") : SMS de négociation adapté.
+      * Point 1 (Titre: "Stratégie d'approche") : SMS de négociation adapté (selon le Cas A ou Cas B).
       * Point 2 (Titre: "Mécanique et Historique") : Maladies connues de CE moteur + commentaire entretien.
       * Point 3 (Titre: "Inspection sous le capot") : Points d'inspection à vérifier sur place.
     - "devis_estime" : UNIQUEMENT les interventions d'entretien/fiabilisation nécessaires. PAS de remise en conformité légale.
@@ -353,7 +359,6 @@ serve(async (req: Request) => {
       "prix_truffe": 51800,
       "tags": ["tag1", "tag2"]
     }`;
-
     const writingRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contents: [{ parts: [{ text: writingPrompt }] }], generationConfig: { temperature: 0.3, responseMimeType: "application/json" } }),
