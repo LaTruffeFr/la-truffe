@@ -280,7 +280,7 @@ const ClientDashboard = () => {
                     </div>
                     <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Aucun audit pour l'instant</h3>
                     <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
-                      Commencez par coller l'URL d'une annonce Leboncoin ou La Centrale pour que l'IA traque les vices cachés.
+                      Commencez par coller l'URL d'une annonce Leboncoin ou La Centrale pour que notre algorithme traque les vices cachés.
                     </p>
                     <Button size="lg" className="bg-foreground hover:bg-foreground/90 text-background h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
                       <Search className="w-5 h-5 mr-2" /> Lancer ma première analyse
