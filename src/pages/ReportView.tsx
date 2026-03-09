@@ -477,7 +477,7 @@ const ReportView = () => {
                     </div>
                     <div>
                       <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-0.5">Marge de négociation</p>
-                      <p className="text-2xl font-black text-emerald-400">-{safeNum(stats.economy)} €</p>
+                      <p className="text-2xl font-black text-emerald-400">{safeNum(Math.abs(stats.economy))} €</p>
                     </div>
                   </div>
                 </div>
