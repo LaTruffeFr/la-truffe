@@ -33,9 +33,12 @@ interface Report {
   updated_at: string;
   prix_affiche: number | null;
   prix_estime: number | null;
+  prix_truffe: number | null;
   kilometrage: number | null;
   annee: number | null;
   carburant: string | null;
+  transmission: string | null;
+  expert_opinion: string | null;
   market_data: any;
   vehicles_data: any;
 }
@@ -70,7 +73,7 @@ const ClientDashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from('reports')
-      .select('id, marque, modele, status, created_at, updated_at, prix_affiche, prix_estime, prix_truffe, kilometrage, annee, carburant, market_data, vehicles_data')
+      .select('id, marque, modele, status, created_at, updated_at, prix_affiche, prix_estime, prix_truffe, kilometrage, annee, carburant, transmission, expert_opinion, market_data, vehicles_data')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -93,6 +96,14 @@ const ClientDashboard = () => {
       setShowWelcome(true);
     }
   }, [user, navigate, credits]);
+
+  // Auto-refresh pending/in_progress reports every 15s
+  useEffect(() => {
+    const hasPending = reports.some(r => r.status === 'pending' || r.status === 'in_progress');
+    if (!hasPending) return;
+    const interval = setInterval(fetchReports, 15000);
+    return () => clearInterval(interval);
+  }, [reports, user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -159,7 +170,7 @@ const ClientDashboard = () => {
                 
                 <div className="mt-6 bg-white/10 rounded-xl p-4 border border-white/20 backdrop-blur-sm relative z-10">
                    <div className="text-[10px] text-indigo-300 uppercase font-black tracking-widest mb-1 flex items-center justify-center gap-1">
-                     <Zap className="w-3 h-3" /> Crédits IA
+                     <Zap className="w-3 h-3" /> Crédits d'Expertise
                    </div>
                    <div className="text-4xl font-black text-white mb-4">
                      {hasUnlimitedCredits ? '∞' : credits}
@@ -252,7 +263,7 @@ const ClientDashboard = () => {
             {activeTab === 'reports' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                  <h2 className="text-3xl font-black text-foreground tracking-tight">Mes Audits IA</h2>
+                  <h2 className="text-3xl font-black text-foreground tracking-tight">Mes Audits</h2>
                   <Button onClick={() => navigate('/audit')} className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-6 rounded-xl font-bold shadow-lg shadow-primary/20">
                     <Plus className="w-5 h-5 mr-2" /> Nouveau Scan
                   </Button>
@@ -269,7 +280,7 @@ const ClientDashboard = () => {
                     </div>
                     <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Aucun audit pour l'instant</h3>
                     <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
-                      Commencez par coller l'URL d'une annonce Leboncoin ou La Centrale pour que l'IA traque les vices cachés.
+                      Commencez par coller l'URL d'une annonce Leboncoin ou La Centrale pour que notre algorithme traque les vices cachés.
                     </p>
                     <Button size="lg" className="bg-foreground hover:bg-foreground/90 text-background h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
                       <Search className="w-5 h-5 mr-2" /> Lancer ma première analyse
