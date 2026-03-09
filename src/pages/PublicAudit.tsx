@@ -79,9 +79,10 @@ const PublicAudit = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const { data, error: fetchError } = await supabase.functions.invoke('get-public-report', {
-          body: { shareToken }
-        });
+        // Detect format: UUID (report ID) vs 64-hex (share token)
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shareToken);
+        const body = isUUID ? { reportId: shareToken } : { shareToken };
+        const { data, error: fetchError } = await supabase.functions.invoke('get-public-report', { body });
         if (fetchError || data?.error) { setError(data?.error || 'Rapport introuvable'); return; }
         setReport(data.report);
       } catch { setError('Une erreur est survenue'); }

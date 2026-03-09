@@ -16,6 +16,7 @@ import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Guides from "./pages/Guides";
 import Audit from "./pages/Audit"; 
+import PublicAudit from "./pages/PublicAudit";
 import Marketplace from "./pages/Marketplace"; 
 import Vendre from "./pages/SellCar";
 import ReportView from "./pages/ReportView";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/guides" element={<Guides />} />
               <Route path="/cote" element={<Navigate to="/guides" replace />} />
               <Route path="/audit" element={<Audit />} />
+              <Route path="/audit/:id" element={<PublicAudit />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/vendre" element={<Vendre />} />
               <Route path="/report/:id" element={<ReportView />} />
