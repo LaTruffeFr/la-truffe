@@ -469,17 +469,39 @@ const ReportView = () => {
                   <p className="text-3xl sm:text-5xl md:text-6xl font-[1000] tracking-tighter leading-none">{safeNum(stats.prixCible)} €</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between bg-white/5 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
-                <div className="flex items-center gap-4">
-                  <div className="bg-emerald-500 p-3 rounded-xl shadow-lg shadow-emerald-500/20">
-                    <TrendingDown className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-0.5">Marge de négociation</p>
-                    <p className="text-2xl font-black text-emerald-400">-{safeNum(Math.abs(stats.economy))} €</p>
+              {stats.economy > 0 ? (
+                <div className="flex items-center justify-between bg-white/5 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-emerald-500 p-3 rounded-xl shadow-lg shadow-emerald-500/20">
+                      <TrendingDown className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-0.5">Marge de négociation</p>
+                      <p className="text-2xl font-black text-emerald-400">-{safeNum(stats.economy)} €</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between bg-white/5 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-slate-600 p-3 rounded-xl">
+                        <TrendingDown className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-0.5">Marge de négociation</p>
+                        <p className="text-2xl font-black text-slate-400">0 €</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-emerald-500/10 rounded-2xl p-4 border border-emerald-500/20">
+                    <Flame className="w-6 h-6 text-emerald-400 shrink-0" />
+                    <p className="text-emerald-400 font-black text-sm">
+                      🔥 Sous-cotée : Économie immédiate de {safeNum(Math.abs(stats.economy))} € !
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
