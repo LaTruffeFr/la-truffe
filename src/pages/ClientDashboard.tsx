@@ -263,7 +263,7 @@ const ClientDashboard = () => {
             {activeTab === 'reports' && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                  <h2 className="text-3xl font-black text-foreground tracking-tight">Mes Audits IA</h2>
+                  <h2 className="text-3xl font-black text-foreground tracking-tight">Mes Audits</h2>
                   <Button onClick={() => navigate('/audit')} className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-6 rounded-xl font-bold shadow-lg shadow-primary/20">
                     <Plus className="w-5 h-5 mr-2" /> Nouveau Scan
                   </Button>
