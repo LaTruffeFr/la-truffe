@@ -73,7 +73,7 @@ const ClientDashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from('reports')
-      .select('id, marque, modele, status, created_at, updated_at, prix_affiche, prix_estime, prix_truffe, kilometrage, annee, carburant, market_data, vehicles_data')
+      .select('id, marque, modele, status, created_at, updated_at, prix_affiche, prix_estime, prix_truffe, kilometrage, annee, carburant, transmission, expert_opinion, market_data, vehicles_data')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -96,6 +96,14 @@ const ClientDashboard = () => {
       setShowWelcome(true);
     }
   }, [user, navigate, credits]);
+
+  // Auto-refresh pending/in_progress reports every 15s
+  useEffect(() => {
+    const hasPending = reports.some(r => r.status === 'pending' || r.status === 'in_progress');
+    if (!hasPending) return;
+    const interval = setInterval(fetchReports, 15000);
+    return () => clearInterval(interval);
+  }, [reports, user]);
 
   const handleLogout = async () => {
     await signOut();
