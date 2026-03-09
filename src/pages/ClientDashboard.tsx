@@ -33,9 +33,12 @@ interface Report {
   updated_at: string;
   prix_affiche: number | null;
   prix_estime: number | null;
+  prix_truffe: number | null;
   kilometrage: number | null;
   annee: number | null;
   carburant: string | null;
+  transmission: string | null;
+  expert_opinion: string | null;
   market_data: any;
   vehicles_data: any;
 }
