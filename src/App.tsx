@@ -16,6 +16,7 @@ import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Guides from "./pages/Guides";
 import Audit from "./pages/Audit"; 
+import PublicAudit from "./pages/PublicAudit";
 import Marketplace from "./pages/Marketplace"; 
 import Vendre from "./pages/SellCar";
 import ReportView from "./pages/ReportView";
