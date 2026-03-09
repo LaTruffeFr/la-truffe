@@ -170,7 +170,7 @@ const ClientDashboard = () => {
                 
                 <div className="mt-6 bg-white/10 rounded-xl p-4 border border-white/20 backdrop-blur-sm relative z-10">
                    <div className="text-[10px] text-indigo-300 uppercase font-black tracking-widest mb-1 flex items-center justify-center gap-1">
-                     <Zap className="w-3 h-3" /> Crédits IA
+                     <Zap className="w-3 h-3" /> Crédits d'Expertise
                    </div>
                    <div className="text-4xl font-black text-white mb-4">
                      {hasUnlimitedCredits ? '∞' : credits}
