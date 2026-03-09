@@ -12,37 +12,47 @@ serve(async (req) => {
   }
 
   try {
-    const { shareToken }: { shareToken?: string } = await req.json();
+    const { shareToken, reportId }: { shareToken?: string; reportId?: string } = await req.json();
 
-    if (!shareToken) {
+    if (!shareToken && !reportId) {
       return new Response(
-        JSON.stringify({ error: "Share token is required" }),
+        JSON.stringify({ error: "shareToken or reportId is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Validate share token format (64 hex characters)
-    const hexPattern = /^[a-f0-9]{64}$/;
-    if (!hexPattern.test(shareToken)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid share token format" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Create Supabase client with service role (bypasses RLS)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Fetch report by share_token (not by ID - more secure)
-    const { data: report, error: reportError } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("reports")
       .select("*")
-      .eq("share_token", shareToken)
-      .eq("status", "completed")
-      .single();
+      .eq("status", "completed");
+
+    if (reportId) {
+      // UUID format check
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidPattern.test(reportId)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid report ID format" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      query = query.eq("id", reportId);
+    } else if (shareToken) {
+      const hexPattern = /^[a-f0-9]{64}$/;
+      if (!hexPattern.test(shareToken)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid share token format" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      query = query.eq("share_token", shareToken);
+    }
+
+    const { data: report, error: reportError } = await query.single();
 
     if (reportError || !report) {
       console.error("Report fetch error:", reportError);
@@ -52,10 +62,11 @@ serve(async (req) => {
       );
     }
 
-    // Return report data (vehicles are stored in vehicles_data JSONB column)
-    // No need to fetch from vehicles table as the report contains the snapshot
+    // Strip sensitive fields before returning
+    const { user_id, admin_notes, ...safeReport } = report;
+
     return new Response(
-      JSON.stringify({ report }),
+      JSON.stringify({ report: safeReport }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: unknown) {
