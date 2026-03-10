@@ -214,26 +214,26 @@ export default function AuditPage() {
       <Header />
 
       {/* BANNIÈRE HERO */}
-      <div className="bg-slate-900 pt-32 pb-24 px-4 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-600/10 to-transparent"></div>
+      <div className="bg-gradient-to-b from-primary/5 to-background pt-32 pb-24 px-4 text-center relative overflow-hidden border-b border-border">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent"></div>
         <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-bold mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-bold mb-6">
             <Sparkles className="w-4 h-4" /> Expertise IA Professionnelle
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-6">
-            Scanner d'Annonce <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400">La Truffe</span>
+          <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tighter mb-6">
+            Scanner d'Annonce <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">La Truffe</span>
           </h1>
           
           {/* BARRE DE RECHERCHE */}
-          <form onSubmit={handleAudit} className="max-w-3xl mx-auto bg-white p-2 rounded-2xl shadow-2xl flex flex-col sm:flex-row gap-2 mt-8">
+          <form onSubmit={handleAudit} className="max-w-3xl mx-auto bg-card p-2 rounded-2xl shadow-2xl border border-border flex flex-col sm:flex-row gap-2 mt-8">
             <div className="flex-1 flex items-center pl-4">
-              <LinkIcon className="w-6 h-6 text-slate-400" />
+              <LinkIcon className="w-6 h-6 text-muted-foreground" />
               <input
                 type="url"
                 placeholder="Collez l'URL Leboncoin, La Centrale, AutoScout24 ou Mobile.de..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="w-full pl-3 pr-4 py-4 text-lg text-slate-900 outline-none placeholder:text-slate-400"
+                className="w-full pl-3 pr-4 py-4 text-lg text-foreground bg-transparent outline-none placeholder:text-muted-foreground"
                 required
                 disabled={isAnalyzing}
               />
@@ -241,7 +241,7 @@ export default function AuditPage() {
             <button 
               type="submit"
               disabled={isAnalyzing}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 disabled:opacity-50"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 disabled:opacity-50"
             >
               <span className="flex items-center gap-2">
                 <ExternalLink className="w-5 h-5" /> Auditer l'URL
@@ -256,25 +256,25 @@ export default function AuditPage() {
                 placeholder="Leboncoin bloque parfois La Truffe. Pour une expertise parfaite, copiez-collez la description de l'annonce ici (Optionnel)"
                 value={manualDescription}
                 onChange={(e) => setManualDescription(e.target.value)}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 min-h-[100px] rounded-xl backdrop-blur-sm focus:border-indigo-400"
+                className="bg-card/80 border-border text-foreground placeholder:text-muted-foreground min-h-[100px] rounded-xl backdrop-blur-sm focus:border-primary"
               />
             </div>
           )}
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">LeBonCoin</Badge>
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">La Centrale</Badge>
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">AutoScout24</Badge>
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">Mobile.de</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">LeBonCoin</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">La Centrale</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">AutoScout24</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">Mobile.de</Badge>
           </div>
 
-          <p className="text-xs text-slate-400/60 mt-2 text-center">🌍 Notre algorithme traduit et analyse automatiquement les annonces étrangères.</p>
+          <p className="text-xs text-muted-foreground/60 mt-2 text-center">🌍 Notre algorithme traduit et analyse automatiquement les annonces étrangères.</p>
 
-          <p className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
+          <p className="text-xs text-muted-foreground mt-2 flex items-center justify-center gap-1">
             <AlertCircle className="w-3 h-3" /> L'analyse prend environ 15 secondes. 
             {hasUnlimitedCredits 
-              ? <span className="ml-1">Crédits : <strong className="text-white">Illimités 👑</strong></span>
-              : <span className="ml-1">Crédits restants : <strong className="text-white">{credits}</strong></span>
+              ? <span className="ml-1">Crédits : <strong className="text-foreground">Illimités 👑</strong></span>
+              : <span className="ml-1">Crédits restants : <strong className="text-foreground">{credits}</strong></span>
             }
           </p>
         </div>
