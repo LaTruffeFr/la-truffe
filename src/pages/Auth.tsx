@@ -166,9 +166,9 @@ const Auth = () => {
         <CardContent>
           {/* Afficher le message si fourni */}
           {messageText && (
-            <Alert className="mb-4 border-blue-200 bg-blue-50">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
+            <Alert className="mb-4 border-primary/20 bg-primary/5">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-foreground">
                 {decodeURIComponent(messageText)}
               </AlertDescription>
             </Alert>

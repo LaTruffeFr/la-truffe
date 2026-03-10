@@ -284,16 +284,16 @@ export default function AuditPage() {
       <div className="max-w-6xl mx-auto px-4 mt-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center py-12">
           {[
-            { icon: <Sparkles className="w-6 h-6 text-indigo-600" />, label: "Leboncoin", desc: "Copiez le lien de l'annonce depuis l'application." },
-            { icon: <ShieldCheck className="w-6 h-6 text-indigo-600" />, label: "La Centrale", desc: "Fonctionne avec toutes les annonces pro ou particuliers." },
-            { icon: <Zap className="w-6 h-6 text-indigo-600" />, label: "Expertise Avancée", desc: "Notre algorithme traque les incohérences techniques." }
+            { icon: <Sparkles className="w-6 h-6 text-primary" />, label: "Leboncoin", desc: "Copiez le lien de l'annonce depuis l'application." },
+            { icon: <ShieldCheck className="w-6 h-6 text-primary" />, label: "La Centrale", desc: "Fonctionne avec toutes les annonces pro ou particuliers." },
+            { icon: <Zap className="w-6 h-6 text-primary" />, label: "Expertise Avancée", desc: "Notre algorithme traque les incohérences techniques." }
           ].map((item, i) => (
             <div key={i} className="p-8 bg-card rounded-2xl border border-border shadow-sm dark:shadow-none">
-              <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 {item.icon}
               </div>
-              <h4 className="font-bold mb-2">{item.label}</h4>
-              <p className="text-sm text-slate-500">{item.desc}</p>
+              <h4 className="font-bold mb-2 text-foreground">{item.label}</h4>
+              <p className="text-sm text-muted-foreground">{item.desc}</p>
             </div>
           ))}
         </div>
