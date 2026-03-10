@@ -225,15 +225,15 @@ export default function AuditPage() {
           </h1>
           
           {/* BARRE DE RECHERCHE */}
-          <form onSubmit={handleAudit} className="max-w-3xl mx-auto bg-white p-2 rounded-2xl shadow-2xl flex flex-col sm:flex-row gap-2 mt-8">
+          <form onSubmit={handleAudit} className="max-w-3xl mx-auto bg-card p-2 rounded-2xl shadow-2xl border border-border flex flex-col sm:flex-row gap-2 mt-8">
             <div className="flex-1 flex items-center pl-4">
-              <LinkIcon className="w-6 h-6 text-slate-400" />
+              <LinkIcon className="w-6 h-6 text-muted-foreground" />
               <input
                 type="url"
                 placeholder="Collez l'URL Leboncoin, La Centrale, AutoScout24 ou Mobile.de..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="w-full pl-3 pr-4 py-4 text-lg text-slate-900 outline-none placeholder:text-slate-400"
+                className="w-full pl-3 pr-4 py-4 text-lg text-foreground bg-transparent outline-none placeholder:text-muted-foreground"
                 required
                 disabled={isAnalyzing}
               />
@@ -241,7 +241,7 @@ export default function AuditPage() {
             <button 
               type="submit"
               disabled={isAnalyzing}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 disabled:opacity-50"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 disabled:opacity-50"
             >
               <span className="flex items-center gap-2">
                 <ExternalLink className="w-5 h-5" /> Auditer l'URL
