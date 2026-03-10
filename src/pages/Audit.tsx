@@ -214,14 +214,14 @@ export default function AuditPage() {
       <Header />
 
       {/* BANNIÈRE HERO */}
-      <div className="bg-slate-900 pt-32 pb-24 px-4 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-600/10 to-transparent"></div>
+      <div className="bg-gradient-to-b from-primary/5 to-background pt-32 pb-24 px-4 text-center relative overflow-hidden border-b border-border">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent"></div>
         <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-bold mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-bold mb-6">
             <Sparkles className="w-4 h-4" /> Expertise IA Professionnelle
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-6">
-            Scanner d'Annonce <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400">La Truffe</span>
+          <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tighter mb-6">
+            Scanner d'Annonce <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">La Truffe</span>
           </h1>
           
           {/* BARRE DE RECHERCHE */}
