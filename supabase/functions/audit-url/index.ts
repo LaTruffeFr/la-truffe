@@ -316,14 +316,14 @@ serve(async (req: Request) => {
     1. Base-toi UNIQUEMENT sur le code moteur (${rawCarData.code_moteur_estime}). Ne cite que les maladies documentées de CE bloc précis.
     2. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. En cas de doute, mentionne uniquement la cylindrée standard.
 
-    === RÈGLE 6 : CALCUL DE LA VRAIE COTE ET DU PRIX ESTIMÉ ===
-    - Oublie le prix affiché par le vendeur pour faire ton calcul.
-    - ÉTAPE 1 : Utilise tes connaissances du marché automobile européen pour déterminer la COTE MARCHÉ RÉELLE de ce véhicule précis (selon sa marque, son modèle, son année, sa finition et son kilométrage).
-    - ÉTAPE 2 : Prends cette COTE MARCHÉ RÉELLE et SOUSTRAIS le total exact de la facture prévisionnelle (le tableau 'devis_estime').
-    - Le résultat final est le "prix_estime".
-    - Ainsi, si le vendeur affiche 60000€, mais que tu sais que la cote réelle est de 56000€, et qu'il y a 1500€ de frais, ton "prix_estime" DOIT être de 54500€.
-    - Sois un véritable expert automobile, précis et objectif.
-    - Calcule aussi "prix_truffe" = prix_estime arrondi à -5% supplémentaire (marge de négo).
+    === RÈGLE 6 : COHÉRENCE MATHÉMATIQUE ABSOLUE ===
+    Estime la COTE MARCHÉ d'origine, puis soustrais le total du 'devis_estime' pour obtenir ton 'prix_estime'.
+
+    RÈGLE D'OR DE COHÉRENCE : Ton 'prix_estime' final dans le JSON DOIT IMPÉRATIVEMENT correspondre à ton 'expert_opinion'.
+    - Si ton texte indique que le prix affiché est 'très compétitif', 'sous le marché' ou que c'est une 'excellente opportunité' : ton 'prix_estime' DOIT OBLIGATOIREMENT être ÉGAL ou SUPÉRIEUR au prix affiché.
+    - Si ton texte indique que c'est 'trop cher' : ton 'prix_estime' DOIT être INFÉRIEUR.
+    - Si la voiture est déjà la moins chère du marché, ne soustrais pas le devis préventif une seconde fois. NE CONTREDIS JAMAIS ton texte par tes chiffres.
+    - Calcule aussi "prix_truffe" = prix_estime arrondi à -5% supplémentaire (marge de négo). Mais si le véhicule est déjà sous-coté, prix_truffe = prix affiché.
 
     === RÈGLE 7 : STRATÉGIE DE NÉGOCIATION (PLAYBOOK) ===
     Compare le prix affiché (${prixAffiche}€) avec ton estimation (prix_estime).
