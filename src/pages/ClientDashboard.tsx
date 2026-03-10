@@ -161,22 +161,22 @@ const ClientDashboard = () => {
             <Card className="rounded-2xl lg:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
               
               {/* Wallet & Profil - hidden on mobile, shown on lg */}
-              <div className="hidden lg:block bg-slate-900 p-6 lg:p-8 text-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><ShieldCheck className="w-24 h-24 text-white" /></div>
-                <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 backdrop-blur-sm relative z-10 shadow-inner">
-                  <User className="w-10 h-10 text-white" />
+              <div className="hidden lg:block bg-foreground dark:bg-accent p-6 lg:p-8 text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><ShieldCheck className="w-24 h-24 text-background dark:text-foreground" /></div>
+                <div className="w-20 h-20 bg-background/10 dark:bg-background/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-background/20 dark:border-border backdrop-blur-sm relative z-10 shadow-inner">
+                  <User className="w-10 h-10 text-background dark:text-foreground" />
                 </div>
-                <div className="font-bold text-white text-lg truncate relative z-10 mb-1" title={displayEmail}>{displayEmail}</div>
+                <div className="font-bold text-background dark:text-foreground text-lg truncate relative z-10 mb-1" title={displayEmail}>{displayEmail}</div>
                 
-                <div className="mt-6 bg-white/10 rounded-xl p-4 border border-white/20 backdrop-blur-sm relative z-10">
-                   <div className="text-[10px] text-indigo-300 uppercase font-black tracking-widest mb-1 flex items-center justify-center gap-1">
+                <div className="mt-6 bg-background/10 dark:bg-background/10 rounded-xl p-4 border border-background/20 dark:border-border backdrop-blur-sm relative z-10">
+                   <div className="text-[10px] text-primary/80 dark:text-primary uppercase font-black tracking-widest mb-1 flex items-center justify-center gap-1">
                      <Zap className="w-3 h-3" /> Crédits d'Expertise
                    </div>
-                   <div className="text-4xl font-black text-white mb-4">
+                   <div className="text-4xl font-black text-background dark:text-foreground mb-4">
                      {hasUnlimitedCredits ? '∞' : credits}
                   </div>
                   <Button 
-                    className="w-full bg-white text-slate-900 hover:bg-indigo-50 font-bold h-10 rounded-lg shadow-lg"
+                    className="w-full bg-background dark:bg-card text-foreground hover:bg-background/90 dark:hover:bg-card/90 font-bold h-10 rounded-lg shadow-lg"
                     onClick={() => navigate('/pricing')}
                   >
                     <Plus className="w-4 h-4 mr-2" /> Recharger
