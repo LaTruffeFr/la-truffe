@@ -292,10 +292,8 @@ serve(async (req: Request) => {
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
     INTERDICTION ABSOLUE : Lis le TEXTE INTÉGRAL DE L'ANNONCE ci-dessus. Si une pièce est mentionnée comme neuve, changée ou contrôlée (ex: chaîne de distribution), tu as l'INTERDICTION de la mettre dans 'devis_estime'. Mets-la UNIQUEMENT dans 'entretiens_recents'.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
-    Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
+    Si la sportive a >80 000 km, ajoute des frais préventifs logiques (Vidange boîte auto, bougies/bobines, pompe à eau si faiblesse connue). MAIS NE CHIFFRE JAMAIS de changements de pièces lourdes (comme une chaîne de distribution à 1200€ ou des turbos) à moins que l'annonce ne mentionne explicitement un bruit ou un défaut. Garde le devis préventif réaliste pour ne pas fausser le prix final.
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
-    - Bougies et bobines d'allumage
-    - Fiabilisation spécifique au modèle (ex: charge pipe alu pour N55/B58 BMW, chaîne de distribution pour EA888, etc.)
     - Liquide de frein + purge (surtout si usage circuit mentionné)
 
     === RÈGLE 4 : LÉGALITÉ (DISCOURS PASSIONNÉ) ===
@@ -318,14 +316,14 @@ serve(async (req: Request) => {
     1. Base-toi UNIQUEMENT sur le code moteur (${rawCarData.code_moteur_estime}). Ne cite que les maladies documentées de CE bloc précis.
     2. Ne devine JAMAIS un moteur. Croise l'année, le modèle et la puissance. En cas de doute, mentionne uniquement la cylindrée standard.
 
-    === RÈGLE 6 : CALCUL DE LA VRAIE COTE ET DU PRIX ESTIMÉ ===
-    - Oublie le prix affiché par le vendeur pour faire ton calcul.
-    - ÉTAPE 1 : Utilise tes connaissances du marché automobile européen pour déterminer la COTE MARCHÉ RÉELLE de ce véhicule précis (selon sa marque, son modèle, son année, sa finition et son kilométrage).
-    - ÉTAPE 2 : Prends cette COTE MARCHÉ RÉELLE et SOUSTRAIS le total exact de la facture prévisionnelle (le tableau 'devis_estime').
-    - Le résultat final est le "prix_estime".
-    - Ainsi, si le vendeur affiche 60000€, mais que tu sais que la cote réelle est de 56000€, et qu'il y a 1500€ de frais, ton "prix_estime" DOIT être de 54500€.
-    - Sois un véritable expert automobile, précis et objectif.
-    - Calcule aussi "prix_truffe" = prix_estime arrondi à -5% supplémentaire (marge de négo).
+    === RÈGLE 6 : COHÉRENCE MATHÉMATIQUE ABSOLUE ===
+    Estime la COTE MARCHÉ d'origine, puis soustrais le total du 'devis_estime' pour obtenir ton 'prix_estime'.
+
+    RÈGLE D'OR DE COHÉRENCE : Ton 'prix_estime' final dans le JSON DOIT IMPÉRATIVEMENT correspondre à ton 'expert_opinion'.
+    - Si ton texte indique que le prix affiché est 'très compétitif', 'sous le marché' ou que c'est une 'excellente opportunité' : ton 'prix_estime' DOIT OBLIGATOIREMENT être ÉGAL ou SUPÉRIEUR au prix affiché.
+    - Si ton texte indique que c'est 'trop cher' : ton 'prix_estime' DOIT être INFÉRIEUR.
+    - Si la voiture est déjà la moins chère du marché, ne soustrais pas le devis préventif une seconde fois. NE CONTREDIS JAMAIS ton texte par tes chiffres.
+    - Calcule aussi "prix_truffe" = prix_estime arrondi à -5% supplémentaire (marge de négo). Mais si le véhicule est déjà sous-coté, prix_truffe = prix affiché.
 
     === RÈGLE 7 : STRATÉGIE DE NÉGOCIATION (PLAYBOOK) ===
     Compare le prix affiché (${prixAffiche}€) avec ton estimation (prix_estime).
@@ -383,7 +381,15 @@ serve(async (req: Request) => {
 
     // === ÉTAPE 5 : EXTRACTION DES PRIX IA ===
     const prixEstime = finalReview.prix_estime || prixAffiche;
-    const prix_truffe = finalReview.prix_truffe || Math.round(prixEstime * 0.95);
+    let prix_truffe: number;
+
+    if (prixAffiche > 0 && prixEstime >= prixAffiche) {
+      // Le véhicule est déjà sous-coté ou au juste prix : pas de négociation agressive
+      prix_truffe = prixAffiche;
+    } else {
+      // Le véhicule est surcoté : on applique la marge de négociation
+      prix_truffe = finalReview.prix_truffe || Math.round(prixEstime * 0.95);
+    }
 
     // === ÉTAPE 6 : SAUVEGARDE (via service_role pour bypasser RLS) ===
     const reportData: Record<string, any> = {
