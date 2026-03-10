@@ -149,7 +149,7 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-             <Link to="/" className="font-bold text-2xl md:text-3xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
+             <Link to="/" className="font-bold text-2xl md:text-3xl tracking-tight text-foreground hover:opacity-80 transition-opacity">
                La Truffe
              </Link>
           </div>
@@ -166,9 +166,9 @@ const Auth = () => {
         <CardContent>
           {/* Afficher le message si fourni */}
           {messageText && (
-            <Alert className="mb-4 border-blue-200 bg-blue-50">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
+            <Alert className="mb-4 border-primary/20 bg-primary/5">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-foreground">
                 {decodeURIComponent(messageText)}
               </AlertDescription>
             </Alert>

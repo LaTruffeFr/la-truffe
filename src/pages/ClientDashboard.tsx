@@ -161,22 +161,22 @@ const ClientDashboard = () => {
             <Card className="rounded-2xl lg:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden">
               
               {/* Wallet & Profil - hidden on mobile, shown on lg */}
-              <div className="hidden lg:block bg-slate-900 p-6 lg:p-8 text-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><ShieldCheck className="w-24 h-24 text-white" /></div>
-                <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 backdrop-blur-sm relative z-10 shadow-inner">
-                  <User className="w-10 h-10 text-white" />
+              <div className="hidden lg:block bg-foreground dark:bg-accent p-6 lg:p-8 text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><ShieldCheck className="w-24 h-24 text-background dark:text-foreground" /></div>
+                <div className="w-20 h-20 bg-background/10 dark:bg-background/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-background/20 dark:border-border backdrop-blur-sm relative z-10 shadow-inner">
+                  <User className="w-10 h-10 text-background dark:text-foreground" />
                 </div>
-                <div className="font-bold text-white text-lg truncate relative z-10 mb-1" title={displayEmail}>{displayEmail}</div>
+                <div className="font-bold text-background dark:text-foreground text-lg truncate relative z-10 mb-1" title={displayEmail}>{displayEmail}</div>
                 
-                <div className="mt-6 bg-white/10 rounded-xl p-4 border border-white/20 backdrop-blur-sm relative z-10">
-                   <div className="text-[10px] text-indigo-300 uppercase font-black tracking-widest mb-1 flex items-center justify-center gap-1">
+                <div className="mt-6 bg-background/10 dark:bg-background/10 rounded-xl p-4 border border-background/20 dark:border-border backdrop-blur-sm relative z-10">
+                   <div className="text-[10px] text-primary/80 dark:text-primary uppercase font-black tracking-widest mb-1 flex items-center justify-center gap-1">
                      <Zap className="w-3 h-3" /> Crédits d'Expertise
                    </div>
-                   <div className="text-4xl font-black text-white mb-4">
+                   <div className="text-4xl font-black text-background dark:text-foreground mb-4">
                      {hasUnlimitedCredits ? '∞' : credits}
                   </div>
                   <Button 
-                    className="w-full bg-white text-slate-900 hover:bg-indigo-50 font-bold h-10 rounded-lg shadow-lg"
+                    className="w-full bg-background dark:bg-card text-foreground hover:bg-background/90 dark:hover:bg-card/90 font-bold h-10 rounded-lg shadow-lg"
                     onClick={() => navigate('/pricing')}
                   >
                     <Plus className="w-4 h-4 mr-2" /> Recharger
@@ -189,10 +189,10 @@ const ClientDashboard = () => {
                 {isAdmin && (
                   <Button 
                     variant="ghost" 
-                    className="whitespace-nowrap flex-shrink-0 justify-start text-white bg-slate-900 hover:bg-slate-800 hover:text-white font-bold h-10 lg:h-12 rounded-xl lg:mb-4 shadow-md text-xs lg:text-sm"
+                    className="whitespace-nowrap flex-shrink-0 justify-start text-primary-foreground bg-foreground dark:bg-accent hover:bg-foreground/90 dark:hover:bg-accent/90 hover:text-primary-foreground font-bold h-10 lg:h-12 rounded-xl lg:mb-4 shadow-md text-xs lg:text-sm"
                     onClick={() => navigate('/admin')}
                   >
-                    <Shield className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 text-indigo-400" /> <span className="hidden lg:inline">Tour de Contrôle</span><span className="lg:hidden">Admin</span>
+                    <Shield className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 text-primary" /> <span className="hidden lg:inline">Tour de Contrôle</span><span className="lg:hidden">Admin</span>
                   </Button>
                 )}
                 
@@ -381,7 +381,7 @@ const ClientDashboard = () => {
                     <div className="space-y-2">
                       <Label className="font-bold text-muted-foreground">Adresse Email</Label>
                       <Input value={displayEmail} disabled className="bg-muted font-medium text-muted-foreground" />
-                      <p className="text-xs text-slate-400 font-medium mt-1">L'email utilisé pour la connexion ne peut pas être modifié ici.</p>
+                      <p className="text-xs text-muted-foreground font-medium mt-1">L'email utilisé pour la connexion ne peut pas être modifié ici.</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -401,7 +401,7 @@ const ClientDashboard = () => {
                       <Label className="font-bold text-muted-foreground">Nouveau mot de passe</Label>
                       <Input type="password" placeholder="••••••••" className="font-medium" />
                     </div>
-                    <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-12 px-8">
+                    <Button className="bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl h-12 px-8">
                       Mettre à jour la sécurité
                     </Button>
                   </CardContent>
@@ -413,12 +413,12 @@ const ClientDashboard = () => {
                       <LogOut className="w-5 h-5 md:w-6 md:h-6 text-rose-600" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-rose-700">Zone de Danger</h3>
+                      <h3 className="font-black text-lg text-rose-700 dark:text-rose-400">Zone de Danger</h3>
                     </div>
                   </div>
                   <CardContent className="p-8">
-                    <p className="text-slate-600 font-medium mb-6">La suppression de votre compte est définitive. Toutes vos annonces et vos rapports d'audit seront effacés.</p>
-                    <Button variant="outline" className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 font-bold rounded-xl h-12 px-8">
+                    <p className="text-muted-foreground font-medium mb-6">La suppression de votre compte est définitive. Toutes vos annonces et vos rapports d'audit seront effacés.</p>
+                    <Button variant="outline" className="text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/30 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-700 font-bold rounded-xl h-12 px-8">
                       Supprimer mon compte
                     </Button>
                   </CardContent>
@@ -434,18 +434,18 @@ const ClientDashboard = () => {
                 <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-6 md:mb-8">Facturation & Crédits</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-                  <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl bg-slate-900 overflow-hidden text-white relative">
+                  <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl bg-foreground dark:bg-accent overflow-hidden text-background dark:text-foreground relative">
                     <div className="absolute top-0 right-0 p-6 opacity-10"><Zap className="w-32 h-32" /></div>
                     <CardContent className="p-8 relative z-10">
-                      <h3 className="text-indigo-400 font-black text-sm uppercase tracking-widest mb-2">Offre Actuelle</h3>
+                      <h3 className="text-primary/80 dark:text-primary font-black text-sm uppercase tracking-widest mb-2">Offre Actuelle</h3>
                       <div className="text-4xl font-black mb-6">Plan {hasUnlimitedCredits ? 'Illimité' : 'Basic'}</div>
                       <div className="flex items-center gap-4 mb-8">
-                        <div className="bg-white/10 p-4 rounded-xl border border-white/20">
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Crédits</p>
+                        <div className="bg-background/10 dark:bg-background/10 p-4 rounded-xl border border-background/20 dark:border-border">
+                          <p className="text-xs font-bold text-background/50 dark:text-muted-foreground uppercase tracking-wider mb-1">Crédits</p>
                           <p className="text-2xl font-black">{hasUnlimitedCredits ? '∞' : credits}</p>
                         </div>
                       </div>
-                      <Button onClick={() => navigate('/pricing')} className="w-full bg-white text-slate-900 hover:bg-indigo-50 font-bold rounded-xl h-12">
+                      <Button onClick={() => navigate('/pricing')} className="w-full bg-background dark:bg-card text-foreground hover:bg-background/90 dark:hover:bg-card/90 font-bold rounded-xl h-12">
                         Passer à l'offre supérieure
                       </Button>
                     </CardContent>
@@ -453,14 +453,14 @@ const ClientDashboard = () => {
 
                   <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden flex flex-col justify-center">
                     <CardContent className="p-6 md:p-8 text-center">
-                      <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-100">
-                        <CheckCircle className="w-10 h-10 text-emerald-500" />
-                      </div>
-                      <h3 className="text-xl font-black text-slate-900 mb-2">Moyen de paiement</h3>
-                      <p className="text-slate-500 font-medium mb-6">Aucune carte enregistrée. Vous payez à l'usage (Pay-as-you-go).</p>
-                      <Button variant="outline" className="font-bold border-slate-200 text-slate-700 rounded-xl h-12 px-8 hover:bg-slate-50">
-                        Ajouter une carte
-                      </Button>
+                       <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-500/20">
+                         <CheckCircle className="w-10 h-10 text-emerald-500" />
+                       </div>
+                       <h3 className="text-xl font-black text-foreground mb-2">Moyen de paiement</h3>
+                       <p className="text-muted-foreground font-medium mb-6">Aucune carte enregistrée. Vous payez à l'usage (Pay-as-you-go).</p>
+                       <Button variant="outline" className="font-bold border-border text-foreground rounded-xl h-12 px-8 hover:bg-accent">
+                         Ajouter une carte
+                       </Button>
                     </CardContent>
                   </Card>
                 </div>
@@ -476,11 +476,11 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                   <CardContent className="p-0">
-                    <div className="text-center py-16 text-slate-500">
-                      <Receipt className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                      <p className="font-bold text-lg text-slate-900 mb-1">Aucune transaction</p>
-                      <p className="font-medium">Vous n'avez pas encore effectué d'achat sur La Truffe.</p>
-                    </div>
+                    <div className="text-center py-16 text-muted-foreground">
+                       <Receipt className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+                       <p className="font-bold text-lg text-foreground mb-1">Aucune transaction</p>
+                       <p className="font-medium">Vous n'avez pas encore effectué d'achat sur La Truffe.</p>
+                     </div>
                   </CardContent>
                 </Card>
               </section>
