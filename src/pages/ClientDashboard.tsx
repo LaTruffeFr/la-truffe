@@ -476,11 +476,11 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                   <CardContent className="p-0">
-                    <div className="text-center py-16 text-slate-500">
-                      <Receipt className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                      <p className="font-bold text-lg text-slate-900 mb-1">Aucune transaction</p>
-                      <p className="font-medium">Vous n'avez pas encore effectué d'achat sur La Truffe.</p>
-                    </div>
+                    <div className="text-center py-16 text-muted-foreground">
+                       <Receipt className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+                       <p className="font-bold text-lg text-foreground mb-1">Aucune transaction</p>
+                       <p className="font-medium">Vous n'avez pas encore effectué d'achat sur La Truffe.</p>
+                     </div>
                   </CardContent>
                 </Card>
               </section>
