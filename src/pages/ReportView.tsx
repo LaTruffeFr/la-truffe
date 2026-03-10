@@ -107,18 +107,18 @@ const formatText = (text: string) => {
   }
 
   return (
-    <div className="text-slate-600 font-medium leading-relaxed space-y-4">
+    <div className="text-muted-foreground font-medium leading-relaxed space-y-4">
       {intro && <p>{intro.trim()}</p>}
       <ul className="space-y-3">
         {bullets.map((bullet, i) => {
           const parts = bullet.split(/(\*\*.*?\*\*)/g);
           return (
             <li key={i} className="flex items-start gap-3">
-              <div className="mt-2 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <div className="mt-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
               <div className="flex-1">
                 {parts.map((p, j) => 
                   p.startsWith('**') && p.endsWith('**') 
-                    ? <strong key={j} className="text-slate-900 font-black">{p.slice(2, -2)}</strong> 
+                    ? <strong key={j} className="text-foreground font-black">{p.slice(2, -2)}</strong> 
                     : p
                 )}
               </div>
