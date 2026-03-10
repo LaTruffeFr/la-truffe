@@ -256,7 +256,7 @@ export default function AuditPage() {
                 placeholder="Leboncoin bloque parfois La Truffe. Pour une expertise parfaite, copiez-collez la description de l'annonce ici (Optionnel)"
                 value={manualDescription}
                 onChange={(e) => setManualDescription(e.target.value)}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 min-h-[100px] rounded-xl backdrop-blur-sm focus:border-indigo-400"
+                className="bg-card/80 border-border text-foreground placeholder:text-muted-foreground min-h-[100px] rounded-xl backdrop-blur-sm focus:border-primary"
               />
             </div>
           )}
