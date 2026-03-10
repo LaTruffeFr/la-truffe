@@ -417,8 +417,8 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                   <CardContent className="p-8">
-                    <p className="text-slate-600 font-medium mb-6">La suppression de votre compte est définitive. Toutes vos annonces et vos rapports d'audit seront effacés.</p>
-                    <Button variant="outline" className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 font-bold rounded-xl h-12 px-8">
+                    <p className="text-muted-foreground font-medium mb-6">La suppression de votre compte est définitive. Toutes vos annonces et vos rapports d'audit seront effacés.</p>
+                    <Button variant="outline" className="text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/30 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-700 font-bold rounded-xl h-12 px-8">
                       Supprimer mon compte
                     </Button>
                   </CardContent>
