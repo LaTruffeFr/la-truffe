@@ -149,7 +149,7 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-             <Link to="/" className="font-bold text-2xl md:text-3xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
+             <Link to="/" className="font-bold text-2xl md:text-3xl tracking-tight text-foreground hover:opacity-80 transition-opacity">
                La Truffe
              </Link>
           </div>
