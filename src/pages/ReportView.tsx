@@ -163,11 +163,23 @@ const ReportView = () => {
   const stats = useMemo(() => {
     if (!report) return null;
     const pAffiche = Number(report.prix_affiche || report.prix_moyen || 0);
-    const pCible = Number(report.prix_truffe || report.prix_estime || pAffiche);
+    const pEstime = Number(report.prix_estime || pAffiche);
+    const pTruffe = Number(report.prix_truffe || pEstime);
     const score = isSingleAudit ? (singleAuditData?.score || 50) : (vehiclesData[0]?.dealScore || 50);
+    
+    // Sous-coté = l'expert estime la voiture PLUS cher que le prix affiché
+    const isUnderPriced = pEstime > pAffiche;
+    // Si sous-coté, l'économie est la différence entre l'estimation expert et le prix affiché
+    const economyValue = isUnderPriced ? Math.abs(pEstime - pAffiche) : 0;
+    // Si surcoté, la marge de négo est la différence entre le prix affiché et le prix Truffe
+    const negotiationMargin = !isUnderPriced ? Math.abs(pAffiche - pTruffe) : 0;
+    
     return { 
-      prixAffiche: pAffiche, prixCible: pCible, economy: pAffiche - pCible,
-      score, isGoodDeal: pAffiche <= pCible,
+      prixAffiche: pAffiche, prixEstime: pEstime, prixTruffe: pTruffe,
+      prixCible: isUnderPriced ? pEstime : pTruffe,
+      economy: isUnderPriced ? economyValue : negotiationMargin,
+      isUnderPriced,
+      score, isGoodDeal: isUnderPriced || pAffiche <= pTruffe,
       totalVehicules: isSingleAudit ? 1 : (report.total_vehicules || vehiclesData.length)
     };
   }, [report, isSingleAudit, vehiclesData, singleAuditData]);

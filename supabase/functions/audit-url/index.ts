@@ -383,9 +383,10 @@ serve(async (req: Request) => {
     const prixEstime = finalReview.prix_estime || prixAffiche;
     let prix_truffe: number;
 
-    if (prixAffiche > 0 && prixEstime >= prixAffiche) {
-      // Le véhicule est déjà sous-coté ou au juste prix : pas de négociation agressive
-      prix_truffe = prixAffiche;
+    if (prixAffiche > 0 && prixEstime > prixAffiche) {
+      // Le véhicule est SOUS-COTÉ : L'expert valorise la voiture plus cher que l'annonce.
+      // On assigne le vrai prix estimé au prix_truffe pour que le front puisse calculer l'économie.
+      prix_truffe = prixEstime;
     } else {
       // Le véhicule est surcoté : on applique la marge de négociation
       prix_truffe = finalReview.prix_truffe || Math.round(prixEstime * 0.95);
