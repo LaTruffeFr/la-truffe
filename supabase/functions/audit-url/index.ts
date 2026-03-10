@@ -292,10 +292,8 @@ serve(async (req: Request) => {
     === RÈGLE 3 : ENTRETIEN SÉVÉRISÉ (VOITURES PRÉPARÉES OU FORT KM) ===
     INTERDICTION ABSOLUE : Lis le TEXTE INTÉGRAL DE L'ANNONCE ci-dessus. Si une pièce est mentionnée comme neuve, changée ou contrôlée (ex: chaîne de distribution), tu as l'INTERDICTION de la mettre dans 'devis_estime'. Mets-la UNIQUEMENT dans 'entretiens_recents'.
     - Si la voiture a moins de 50 000 km OU si l'annonce mentionne explicitement qu'elle est vendue par un professionnel avec une garantie constructeur, NE PROPOSE PAS de réparations extrêmes ou de fiabilisations moteur coûteuses (ex: Crank Hub, coussinets de bielles) sauf si l'annonce indique un problème. Limite le devis à l'entretien courant (vidange boîte, bougies, fluides).
-    Si la voiture est préparée (Stage 1/2, reprog) OU fort kilométrée (>80 000 km pour sportive, >120 000 km pour standard), ajoute OBLIGATOIREMENT au devis les frais préventifs suivants si non déclarés comme faits :
+    Si la sportive a >80 000 km, ajoute des frais préventifs logiques (Vidange boîte auto, bougies/bobines, pompe à eau si faiblesse connue). MAIS NE CHIFFRE JAMAIS de changements de pièces lourdes (comme une chaîne de distribution à 1200€ ou des turbos) à moins que l'annonce ne mentionne explicitement un bruit ou un défaut. Garde le devis préventif réaliste pour ne pas fausser le prix final.
     - Vidange de boîte : Ne propose cette intervention QUE si la BOÎTE est "Automatique" (ex: ZF8, DSG). Si la BOÎTE est "Manuelle", NE PROPOSE SURTOUT PAS de vidange de boîte dans le devis.
-    - Bougies et bobines d'allumage
-    - Fiabilisation spécifique au modèle (ex: charge pipe alu pour N55/B58 BMW, chaîne de distribution pour EA888, etc.)
     - Liquide de frein + purge (surtout si usage circuit mentionné)
 
     === RÈGLE 4 : LÉGALITÉ (DISCOURS PASSIONNÉ) ===
