@@ -189,10 +189,10 @@ const ClientDashboard = () => {
                 {isAdmin && (
                   <Button 
                     variant="ghost" 
-                    className="whitespace-nowrap flex-shrink-0 justify-start text-white bg-slate-900 hover:bg-slate-800 hover:text-white font-bold h-10 lg:h-12 rounded-xl lg:mb-4 shadow-md text-xs lg:text-sm"
+                    className="whitespace-nowrap flex-shrink-0 justify-start text-primary-foreground bg-foreground dark:bg-accent hover:bg-foreground/90 dark:hover:bg-accent/90 hover:text-primary-foreground font-bold h-10 lg:h-12 rounded-xl lg:mb-4 shadow-md text-xs lg:text-sm"
                     onClick={() => navigate('/admin')}
                   >
-                    <Shield className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 text-indigo-400" /> <span className="hidden lg:inline">Tour de Contrôle</span><span className="lg:hidden">Admin</span>
+                    <Shield className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 text-primary" /> <span className="hidden lg:inline">Tour de Contrôle</span><span className="lg:hidden">Admin</span>
                   </Button>
                 )}
                 
