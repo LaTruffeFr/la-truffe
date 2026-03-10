@@ -381,7 +381,15 @@ serve(async (req: Request) => {
 
     // === ÉTAPE 5 : EXTRACTION DES PRIX IA ===
     const prixEstime = finalReview.prix_estime || prixAffiche;
-    const prix_truffe = finalReview.prix_truffe || Math.round(prixEstime * 0.95);
+    let prix_truffe: number;
+
+    if (prixAffiche > 0 && prixEstime >= prixAffiche) {
+      // Le véhicule est déjà sous-coté ou au juste prix : pas de négociation agressive
+      prix_truffe = prixAffiche;
+    } else {
+      // Le véhicule est surcoté : on applique la marge de négociation
+      prix_truffe = finalReview.prix_truffe || Math.round(prixEstime * 0.95);
+    }
 
     // === ÉTAPE 6 : SAUVEGARDE (via service_role pour bypasser RLS) ===
     const reportData: Record<string, any> = {
