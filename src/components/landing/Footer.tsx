@@ -6,7 +6,7 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center gap-6 text-center md:text-left md:flex-row md:justify-between">
           {/* Logo */}
-          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
+          <Link to="/" className="font-bold text-xl md:text-2xl tracking-tight text-foreground hover:opacity-80 transition-opacity">
             La Truffe
           </Link>
 

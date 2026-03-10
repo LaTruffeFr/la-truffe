@@ -87,7 +87,7 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
   };
 
   const getScoreColor = (pa: number | null, pe: number | null) => {
-    if (!pa || !pe) return 'text-slate-400';
+    if (!pa || !pe) return 'text-muted-foreground';
     if (pa / pe > 1.1) return 'text-red-500';
     if (pa / pe < 0.95) return 'text-emerald-500';
     return 'text-amber-500';
@@ -96,7 +96,7 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
@@ -105,22 +105,22 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
     <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="mb-10">
-        <h2 className="text-3xl font-black tracking-tight text-slate-900">Mon Garage</h2>
-        <p className="text-slate-500 mt-2 text-base">
-          Sélectionnez jusqu'à <span className="font-bold text-slate-700">3 véhicules</span> pour un face-à-face impitoyable.
+        <h2 className="text-3xl font-black tracking-tight text-foreground">Mon Garage</h2>
+        <p className="text-muted-foreground mt-2 text-base">
+          Sélectionnez jusqu'à <span className="font-bold text-foreground">3 véhicules</span> pour un face-à-face impitoyable.
         </p>
       </div>
 
       {reports.length === 0 ? (
-        <div className="bg-white rounded-3xl shadow-lg shadow-slate-200/40 border-2 border-dashed border-slate-200 min-h-[400px] flex flex-col items-center justify-center text-center p-10">
-          <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-            <FolderOpen className="w-10 h-10 text-indigo-400" />
+        <div className="bg-card rounded-3xl shadow-lg dark:shadow-none border-2 border-dashed border-border min-h-[400px] flex flex-col items-center justify-center text-center p-10">
+          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6 shadow-inner">
+            <FolderOpen className="w-10 h-10 text-primary/60" />
           </div>
-          <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Aucun audit terminé</h3>
-          <p className="text-slate-500 max-w-md mx-auto mb-8 font-medium">
+          <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Aucun audit terminé</h3>
+          <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
             Lancez d'abord un audit pour pouvoir comparer vos véhicules côte à côte.
           </p>
-          <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
+          <Button size="lg" className="bg-foreground hover:bg-foreground/90 text-background h-14 px-8 rounded-xl font-bold" onClick={() => navigate('/audit')}>
             Lancer mon premier audit
           </Button>
         </div>
@@ -138,14 +138,14 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                 <div
                   key={report.id}
                   onClick={() => toggleSelect(report.id)}
-                  className={`bg-white rounded-3xl p-5 shadow-lg shadow-slate-200/40 border-2 transition-all duration-300 cursor-pointer relative group ${
+                  className={`bg-card rounded-3xl p-5 shadow-lg dark:shadow-none border-2 transition-all duration-300 cursor-pointer relative group ${
                     isSelected
-                      ? 'border-indigo-600 ring-4 ring-indigo-600/20 scale-[1.02]'
-                      : 'border-slate-100 hover:border-indigo-300 hover:shadow-indigo-100'
+                      ? 'border-primary ring-4 ring-primary/20 scale-[1.02]'
+                      : 'border-border hover:border-primary/30'
                   }`}
                 >
                   {isSelected && (
-                    <div className="absolute -top-3 -right-3 bg-indigo-600 text-white rounded-full p-1.5 shadow-lg z-10 animate-in zoom-in-50 duration-200">
+                    <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg z-10 animate-in zoom-in-50 duration-200">
                       <Check className="w-4 h-4" />
                     </div>
                   )}
@@ -158,51 +158,51 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                       className="h-32 w-full object-cover rounded-2xl mb-4"
                     />
                   ) : (
-                    <div className="h-32 w-full rounded-2xl mb-4 bg-slate-100 flex items-center justify-center">
-                      <Car className="w-12 h-12 text-slate-300" />
+                    <div className="h-32 w-full rounded-2xl mb-4 bg-muted flex items-center justify-center">
+                      <Car className="w-12 h-12 text-muted-foreground/30" />
                     </div>
                   )}
 
                   {/* Title & Price */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
-                      <h3 className="font-black text-lg text-slate-900 line-clamp-1 group-hover:text-indigo-700 transition-colors">
+                      <h3 className="font-black text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                         {report.marque} {report.modele}
                       </h3>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {report.annee && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-lg">
                             <Calendar className="w-3 h-3" /> {report.annee}
                           </span>
                         )}
                         {report.carburant && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg capitalize">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-lg capitalize">
                             <Fuel className="w-3 h-3" /> {report.carburant}
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="text-2xl font-black text-indigo-600">
+                      <div className="text-2xl font-black text-primary">
                         {prixAnnonce ? prixAnnonce.toLocaleString('fr-FR') : '—'}
                         <span className="text-sm font-bold ml-0.5">€</span>
                       </div>
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Prix annonce</span>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Prix annonce</span>
                     </div>
                   </div>
 
                   {/* Stats row */}
-                  <div className="flex items-center gap-4 pt-3 border-t border-slate-100">
+                  <div className="flex items-center gap-4 pt-3 border-t border-border">
                     {report.kilometrage && (
                       <div className="flex items-center gap-1.5 text-sm">
-                        <Gauge className="w-4 h-4 text-slate-400" />
-                        <span className="font-bold text-slate-700">{(report.kilometrage / 1000).toFixed(0)}k</span>
-                        <span className="text-slate-400 text-xs">km</span>
+                        <Gauge className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-bold text-foreground">{(report.kilometrage / 1000).toFixed(0)}k</span>
+                        <span className="text-muted-foreground text-xs">km</span>
                       </div>
                     )}
                     {coteTruffe && (
                       <div className="flex items-center gap-1.5 text-sm ml-auto">
-                        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Cote Truffe</span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Cote Truffe</span>
                         <span className={`font-black ${getScoreColor(prixAnnonce, coteTruffe)}`}>
                           {coteTruffe.toLocaleString('fr-FR')} €
                         </span>
@@ -216,7 +216,7 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
 
           {/* Selection counter */}
           {selected.length > 0 && (
-            <p className="text-center mt-5 text-sm font-semibold text-slate-400">
+            <p className="text-center mt-5 text-sm font-semibold text-muted-foreground">
               {selected.length} / 3 sélectionné{selected.length > 1 ? 's' : ''}
             </p>
           )}
@@ -226,11 +226,11 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
             <div className="sticky bottom-6 z-30 mt-8 animate-in slide-in-from-bottom-4 duration-300">
               <button
                 onClick={launchComparison}
-                className="bg-indigo-900 text-white px-8 py-4 rounded-full shadow-2xl hover:bg-indigo-800 hover:scale-105 transition-all flex items-center justify-center gap-3 font-bold text-lg ring-4 ring-indigo-900/30 w-full md:w-auto mx-auto"
+                className="bg-foreground text-background px-8 py-4 rounded-full shadow-2xl hover:bg-foreground/90 hover:scale-105 transition-all flex items-center justify-center gap-3 font-bold text-lg ring-4 ring-foreground/20 w-full md:w-auto mx-auto"
               >
                 <Swords className="w-5 h-5" />
                 Lancer le Face-à-Face
-                <span className="bg-white/20 text-white text-xs font-black px-2 py-0.5 rounded-full ml-1">Gratuit</span>
+                <span className="bg-background/20 text-background text-xs font-black px-2 py-0.5 rounded-full ml-1">Gratuit</span>
               </button>
             </div>
           )}
@@ -239,28 +239,28 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
 
       {/* ===== COMPARISON MODAL ===== */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-y-auto p-0 border-0 rounded-[2.5rem] bg-white gap-0">
+        <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-y-auto p-0 border-0 rounded-[2.5rem] bg-card gap-0">
 
           {comparing ? (
             <div className="flex flex-col items-center justify-center py-28 gap-5 px-8">
-              <div className="w-20 h-20 rounded-full bg-indigo-50 flex items-center justify-center shadow-inner">
-                <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center shadow-inner">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
               </div>
-              <p className="text-xl font-black text-slate-900">La Truffe délibère...</p>
-              <p className="text-sm text-slate-400 font-medium">Analyse comparative en cours entre {selectedReports.length} véhicules</p>
+              <p className="text-xl font-black text-foreground">La Truffe délibère...</p>
+              <p className="text-sm text-muted-foreground font-medium">Analyse comparative en cours entre {selectedReports.length} véhicules</p>
             </div>
           ) : result ? (
             <>
               {/* Winner Banner */}
-              <div className="bg-gradient-to-br from-amber-100 to-orange-50 p-8 md:p-10 text-center border-b border-amber-200">
+              <div className="bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 p-8 md:p-10 text-center border-b border-amber-200 dark:border-amber-900/30">
                 <div className="text-4xl mb-3">👑</div>
-                <p className="uppercase tracking-widest text-amber-700 font-bold text-sm mb-2">
+                <p className="uppercase tracking-widest text-amber-700 dark:text-amber-400 font-bold text-sm mb-2">
                   🏆 Le Choix de La Truffe
                 </p>
-                <h2 className="text-3xl font-black text-amber-950 mt-1">
+                <h2 className="text-3xl font-black text-amber-950 dark:text-amber-200 mt-1">
                   {selectedReports[result.winner_index]?.marque} {selectedReports[result.winner_index]?.modele}
                 </h2>
-                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl text-amber-900 font-medium mt-5 inline-block max-w-2xl mx-auto text-sm leading-relaxed shadow-sm">
+                <div className="bg-card/60 backdrop-blur-sm p-4 rounded-2xl text-foreground font-medium mt-5 inline-block max-w-2xl mx-auto text-sm leading-relaxed shadow-sm">
                   {result.verdict}
                 </div>
               </div>
@@ -285,23 +285,23 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                         key={r.id}
                         className={`mx-2 rounded-2xl p-4 text-center transition-all ${
                           isWinner
-                            ? 'bg-amber-50 border-2 border-amber-300 shadow-md'
-                            : 'bg-slate-50 border-2 border-transparent'
+                            ? 'bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 shadow-md'
+                            : 'bg-muted border-2 border-transparent'
                         }`}
                       >
                         {isWinner && <div className="text-3xl mb-2">👑</div>}
                         {img ? (
                           <img src={img} alt={`${r.marque} ${r.modele}`} className="h-40 w-full object-cover rounded-xl mb-3" />
                         ) : (
-                          <div className="h-40 w-full rounded-xl mb-3 bg-slate-100 flex items-center justify-center">
-                            <Car className="w-12 h-12 text-slate-300" />
+                          <div className="h-40 w-full rounded-xl mb-3 bg-muted flex items-center justify-center">
+                            <Car className="w-12 h-12 text-muted-foreground/30" />
                           </div>
                         )}
-                        <h3 className="font-black text-base text-slate-900 line-clamp-1">{r.marque} {r.modele}</h3>
-                        <p className="text-xl font-black text-indigo-600 mt-1">
+                        <h3 className="font-black text-base text-foreground line-clamp-1">{r.marque} {r.modele}</h3>
+                        <p className="text-xl font-black text-primary mt-1">
                           {r.prix_affiche ? `${r.prix_affiche.toLocaleString('fr-FR')} €` : '—'}
                         </p>
-                        <p className="text-xs text-slate-400 font-semibold mt-1">
+                        <p className="text-xs text-muted-foreground font-semibold mt-1">
                           {r.annee || ''}{r.annee && r.kilometrage ? ' • ' : ''}{r.kilometrage ? `${(r.kilometrage / 1000).toFixed(0)}k km` : ''}
                         </p>
                       </div>
@@ -313,8 +313,8 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                     {
                       label: 'Prix annonce',
                       render: (r: any) => r.prix_affiche
-                        ? <span className="font-black text-lg text-slate-900">{r.prix_affiche.toLocaleString('fr-FR')} €</span>
-                        : <span className="text-slate-300">—</span>,
+                        ? <span className="font-black text-lg text-foreground">{r.prix_affiche.toLocaleString('fr-FR')} €</span>
+                        : <span className="text-muted-foreground/30">—</span>,
                     },
                     {
                       label: 'Cote La Truffe',
@@ -324,31 +324,31 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                           ? <span className={`font-black text-lg ${r.prix_affiche && r.prix_affiche > cote ? 'text-red-500' : 'text-emerald-500'}`}>
                               {cote.toLocaleString('fr-FR')} €
                             </span>
-                          : <span className="text-slate-300">—</span>;
+                          : <span className="text-muted-foreground/30">—</span>;
                       },
                     },
                     {
                       label: 'Kilométrage',
                       render: (r: any) => r.kilometrage
-                        ? <span className="font-bold text-slate-700">{r.kilometrage.toLocaleString('fr-FR')} km</span>
-                        : <span className="text-slate-300">—</span>,
+                        ? <span className="font-bold text-foreground">{r.kilometrage.toLocaleString('fr-FR')} km</span>
+                        : <span className="text-muted-foreground/30">—</span>,
                     },
                     {
                       label: 'Année',
                       render: (r: any) => r.annee
-                        ? <span className="font-bold text-slate-700">{r.annee}</span>
-                        : <span className="text-slate-300">—</span>,
+                        ? <span className="font-bold text-foreground">{r.annee}</span>
+                        : <span className="text-muted-foreground/30">—</span>,
                     },
                   ].map((row, idx) => (
                     <React.Fragment key={`data-${idx}`}>
-                      <div className="flex items-center border-b border-slate-100 py-4 pr-4">
-                        <span className="font-bold text-sm text-slate-500">{row.label}</span>
+                      <div className="flex items-center border-b border-border py-4 pr-4">
+                        <span className="font-bold text-sm text-muted-foreground">{row.label}</span>
                       </div>
                       {selectedReports.map((r, i) => (
                         <div
                           key={r.id}
-                          className={`flex items-center justify-center border-b border-slate-100 py-4 mx-2 ${
-                            i === result.winner_index ? 'bg-amber-50/50' : ''
+                          className={`flex items-center justify-center border-b border-border py-4 mx-2 ${
+                            i === result.winner_index ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''
                           }`}
                         >
                           {row.render(r)}
@@ -360,14 +360,14 @@ const GarageTab = ({ userId, reports, isLoading }: GarageTabProps) => {
                   {/* ---- AI COMPARISON ROWS ---- */}
                   {result.comparison_points.map((point, idx) => (
                     <React.Fragment key={`ai-${idx}`}>
-                      <div className="flex items-start border-b border-slate-100 py-4 pr-4 last:border-0">
-                        <span className="font-bold text-sm text-slate-500">{point.criteria}</span>
+                      <div className="flex items-start border-b border-border py-4 pr-4 last:border-0">
+                        <span className="font-bold text-sm text-muted-foreground">{point.criteria}</span>
                       </div>
                       {point.values.map((val, i) => (
                         <div
                           key={i}
-                          className={`border-b border-slate-100 py-4 px-3 mx-2 text-sm text-slate-700 font-medium leading-relaxed last:border-0 ${
-                            i === result.winner_index ? 'bg-amber-50/50' : ''
+                          className={`border-b border-border py-4 px-3 mx-2 text-sm text-foreground/80 font-medium leading-relaxed last:border-0 ${
+                            i === result.winner_index ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''
                           }`}
                         >
                           {val}

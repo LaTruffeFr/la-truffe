@@ -66,7 +66,7 @@ const ScoreCircularGauge = ({ score }: { score: number }) => {
       </svg>
       <div className="absolute flex flex-col items-center justify-center mt-1">
         <span className={`text-4xl font-black tracking-tighter ${colorClass}`}>{score}</span>
-        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Trust Score</span>
+        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Trust Score</span>
       </div>
     </div>
   );
