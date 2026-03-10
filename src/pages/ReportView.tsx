@@ -58,7 +58,7 @@ const ScoreCircularGauge = ({ score }: { score: number }) => {
   return (
     <div className="relative flex items-center justify-center w-32 h-32 mx-auto drop-shadow-lg">
       <svg className="transform -rotate-90 w-32 h-32">
-        <circle cx="64" cy="64" r={radius} stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
+        <circle cx="64" cy="64" r={radius} stroke="currentColor" strokeWidth="8" fill="transparent" className="text-muted" />
         <circle cx="64" cy="64" r={radius} stroke="currentColor" strokeWidth="8" fill="transparent"
           strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
