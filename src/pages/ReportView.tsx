@@ -93,10 +93,10 @@ const formatText = (text: string) => {
           if (!line.trim()) return null;
           const parts = line.split(/(\*\*.*?\*\*)/g);
           return (
-            <p key={i} className="text-slate-600 font-medium leading-relaxed">
+            <p key={i} className="text-muted-foreground font-medium leading-relaxed">
               {parts.map((p, j) => 
                 p.startsWith('**') && p.endsWith('**') 
-                  ? <strong key={j} className="text-slate-900 font-black">{p.slice(2, -2)}</strong> 
+                  ? <strong key={j} className="text-foreground font-black">{p.slice(2, -2)}</strong> 
                   : p
               )}
             </p>
