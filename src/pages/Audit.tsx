@@ -262,10 +262,10 @@ export default function AuditPage() {
           )}
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">LeBonCoin</Badge>
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">La Centrale</Badge>
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">AutoScout24</Badge>
-            <Badge variant="secondary" className="text-xs font-normal bg-white/10 text-white/70 border-white/10">Mobile.de</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">LeBonCoin</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">La Centrale</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">AutoScout24</Badge>
+            <Badge variant="secondary" className="text-xs font-normal">Mobile.de</Badge>
           </div>
 
           <p className="text-xs text-slate-400/60 mt-2 text-center">🌍 Notre algorithme traduit et analyse automatiquement les annonces étrangères.</p>
