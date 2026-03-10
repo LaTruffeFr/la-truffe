@@ -401,7 +401,7 @@ const ClientDashboard = () => {
                       <Label className="font-bold text-muted-foreground">Nouveau mot de passe</Label>
                       <Input type="password" placeholder="••••••••" className="font-medium" />
                     </div>
-                    <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-12 px-8">
+                    <Button className="bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl h-12 px-8">
                       Mettre à jour la sécurité
                     </Button>
                   </CardContent>
