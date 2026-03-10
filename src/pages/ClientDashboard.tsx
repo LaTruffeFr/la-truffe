@@ -413,7 +413,7 @@ const ClientDashboard = () => {
                       <LogOut className="w-5 h-5 md:w-6 md:h-6 text-rose-600" />
                     </div>
                     <div>
-                      <h3 className="font-black text-lg text-rose-700">Zone de Danger</h3>
+                      <h3 className="font-black text-lg text-rose-700 dark:text-rose-400">Zone de Danger</h3>
                     </div>
                   </div>
                   <CardContent className="p-8">
