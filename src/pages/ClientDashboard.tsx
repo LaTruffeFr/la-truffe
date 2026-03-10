@@ -453,14 +453,14 @@ const ClientDashboard = () => {
 
                   <Card className="rounded-2xl md:rounded-[2rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden flex flex-col justify-center">
                     <CardContent className="p-6 md:p-8 text-center">
-                      <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-100">
-                        <CheckCircle className="w-10 h-10 text-emerald-500" />
-                      </div>
-                      <h3 className="text-xl font-black text-slate-900 mb-2">Moyen de paiement</h3>
-                      <p className="text-slate-500 font-medium mb-6">Aucune carte enregistrée. Vous payez à l'usage (Pay-as-you-go).</p>
-                      <Button variant="outline" className="font-bold border-slate-200 text-slate-700 rounded-xl h-12 px-8 hover:bg-slate-50">
-                        Ajouter une carte
-                      </Button>
+                       <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-500/20">
+                         <CheckCircle className="w-10 h-10 text-emerald-500" />
+                       </div>
+                       <h3 className="text-xl font-black text-foreground mb-2">Moyen de paiement</h3>
+                       <p className="text-muted-foreground font-medium mb-6">Aucune carte enregistrée. Vous payez à l'usage (Pay-as-you-go).</p>
+                       <Button variant="outline" className="font-bold border-border text-foreground rounded-xl h-12 px-8 hover:bg-accent">
+                         Ajouter une carte
+                       </Button>
                     </CardContent>
                   </Card>
                 </div>
