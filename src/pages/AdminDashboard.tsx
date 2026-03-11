@@ -22,7 +22,7 @@ import {
   ShoppingBag, User, Settings, LogOut, Send, CheckCircle2, AlertTriangle,
   Gauge, Fuel, Euro, ShieldCheck, Calendar, MapPin, Search, Share2, Trophy,
   ListFilter, ExternalLink, Crown, ShieldAlert, Check, X, Eye, Trash2,
-  Users, CreditCard, FileText, ArrowRight,
+  Users, CreditCard, FileText, ArrowRight, Star, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
