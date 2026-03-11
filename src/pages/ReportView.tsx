@@ -19,6 +19,7 @@ import { Footer } from '@/components/landing';
 import { generatePDF } from '@/lib/pdfGenerator';
 import ReportAdModal from '@/components/reporting/ReportAdModal';
 import { SmartOptionsDisplay } from '@/components/SmartOptionsDisplay';
+import { StickyCtaBanner } from '@/components/StickyCtaBanner';
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
