@@ -722,6 +722,7 @@ function AdminDashboardInner() {
             </div>
           )}
         </TabsContent>
+      </Tabs>
 
       <CSVImportModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImport} />
       <PublishReportModal isOpen={isPublishModalOpen} onClose={() => setIsPublishModalOpen(false)} vehicles={chartVehicles} trendLine={trendLine as any} kpis={kpis} vehicleInfo={vehicleInfo} clients={[]} />
