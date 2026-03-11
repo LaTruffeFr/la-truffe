@@ -96,7 +96,9 @@ function AdminDashboardInner() {
   const [userReports, setUserReports] = useState<any[]>([]);
   const [userListings, setUserListings] = useState<any[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false); // NOUVEAU: État de chargement
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
   const fetchPendingListings = async () => {
     const { data, error } = await supabase
