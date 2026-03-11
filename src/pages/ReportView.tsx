@@ -163,7 +163,35 @@ const ReportView = () => {
     setLoading(false);
   };
 
-  useEffect(() => { if (id) fetchReport(); }, [id]);
+  const isOwner = !!user && !!report && report.user_id === user.id;
+
+  // Check if user already left a review
+  useEffect(() => {
+    if (!user || !id) return;
+    supabase.from('reviews').select('id').eq('report_id', id).eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => { if (data) setReviewSubmitted(true); });
+  }, [user, id]);
+
+  const handleSubmitReview = async () => {
+    if (!user || !id || rating === 0) return;
+    setIsSubmittingReview(true);
+    const { error } = await supabase.from('reviews').insert({
+      report_id: id,
+      user_id: user.id,
+      rating,
+      comment: reviewComment.trim() || null,
+    });
+    setIsSubmittingReview(false);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erreur', description: 'Impossible d\'enregistrer votre avis.' });
+      return;
+    }
+    setReviewSubmitted(true);
+    setShowRatingModal(false);
+    toast({ title: '⭐ Merci pour votre avis !', description: 'Votre retour nous aide à nous améliorer.' });
+  };
+
+
 
   const isSingleAudit = useMemo(() => report?.market_data?.type === 'single_audit', [report]);
   const singleAuditData = useMemo(() => isSingleAudit ? report?.market_data : null, [report, isSingleAudit]);
