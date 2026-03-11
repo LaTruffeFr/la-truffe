@@ -11,7 +11,7 @@ import {
   Download, CheckCircle2, TrendingDown, Calendar, Gauge, Fuel, 
   Euro, ShieldCheck, Loader2, History, Calculator, FileCheck, Copy, Check, Settings2, 
   Cpu, ScanSearch, Activity, Receipt, Hash, ShieldAlert, Sparkles, Snowflake, 
-  Flame, CircleDashed, Target, ExternalLink, MessageSquare, Flag, Share2
+  Flame, CircleDashed, Target, ExternalLink, MessageSquare, Flag, Share2, Star
 } from "lucide-react";
 import { SniperChart } from '@/components/trading/SniperChart';
 import { OpportunityModal } from '@/components/trading/OpportunityModal';
@@ -20,6 +20,8 @@ import { generatePDF } from '@/lib/pdfGenerator';
 import ReportAdModal from '@/components/reporting/ReportAdModal';
 import { SmartOptionsDisplay } from '@/components/SmartOptionsDisplay';
 import { StickyCtaBanner } from '@/components/StickyCtaBanner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 const safeNum = (value: any): string => {
   if (value === null || value === undefined || isNaN(value)) return "0";
