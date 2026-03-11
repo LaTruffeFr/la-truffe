@@ -12,6 +12,7 @@ import {
   Settings2, Snowflake, Flame, CircleDashed, Zap
 } from 'lucide-react';
 import logoTruffe from '@/assets/logo-truffe-new.png';
+import { StickyCtaBanner } from '@/components/StickyCtaBanner';
 
 // ========================
 // UTILITY COMPONENTS
@@ -526,6 +527,7 @@ const PublicAudit = () => {
           <p className="text-muted-foreground text-xs mt-2">© {new Date().getFullYear()} La Truffe</p>
         </footer>
       </main>
+      <StickyCtaBanner />
     </div>
   );
 };
