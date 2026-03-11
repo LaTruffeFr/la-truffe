@@ -175,7 +175,7 @@ const ReportView = () => {
   const handleSubmitReview = async () => {
     if (!user || !id || rating === 0) return;
     setIsSubmittingReview(true);
-    const { error } = await supabase.from('reviews').insert({
+    const { error } = await (supabase.from('reviews' as any) as any).insert({
       report_id: id,
       user_id: user.id,
       rating,

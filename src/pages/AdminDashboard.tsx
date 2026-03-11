@@ -122,8 +122,8 @@ function AdminDashboardInner() {
 
   const fetchReviews = async () => {
     setIsLoadingReviews(true);
-    const { data, error } = await supabase
-      .from('reviews')
+    const { data, error } = await (supabase
+      .from('reviews' as any) as any)
       .select('*')
       .order('created_at', { ascending: false });
     if (!error && data) setReviews(data);
