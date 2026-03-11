@@ -22,7 +22,7 @@ import {
   ShoppingBag, User, Settings, LogOut, Send, CheckCircle2, AlertTriangle,
   Gauge, Fuel, Euro, ShieldCheck, Calendar, MapPin, Search, Share2, Trophy,
   ListFilter, ExternalLink, Crown, ShieldAlert, Check, X, Eye, Trash2,
-  Users, CreditCard, FileText, ArrowRight,
+  Users, CreditCard, FileText, ArrowRight, Star, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -96,7 +96,9 @@ function AdminDashboardInner() {
   const [userReports, setUserReports] = useState<any[]>([]);
   const [userListings, setUserListings] = useState<any[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false); // NOUVEAU: État de chargement
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
   const fetchPendingListings = async () => {
     const { data, error } = await supabase
@@ -118,7 +120,17 @@ function AdminDashboardInner() {
     setIsLoadingUsers(false);
   };
 
-  const fetchUserHistory = async (userId: string) => {
+  const fetchReviews = async () => {
+    setIsLoadingReviews(true);
+    const { data, error } = await (supabase
+      .from('reviews' as any) as any)
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) setReviews(data);
+    setIsLoadingReviews(false);
+  };
+
+
     setSelectedUserId(userId);
     setUserReports([]);
     setUserListings([]);
@@ -152,6 +164,7 @@ function AdminDashboardInner() {
     if (!authLoading && user) {
       fetchPendingListings();
       fetchAllUsers();
+      fetchReviews();
     } else if (!authLoading && !user) {
       navigate("/");
     }
@@ -271,6 +284,9 @@ function AdminDashboardInner() {
             </TabsTrigger>
             <TabsTrigger value="crm" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
               <Users className="w-5 h-5 mr-2" /> CRM & Utilisateurs
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-amber-600 data-[state=active]:border-b-4 data-[state=active]:border-amber-600 data-[state=inactive]:text-slate-500">
+              <Star className="w-5 h-5 mr-2" /> Avis Clients
             </TabsTrigger>
           </TabsList>
         </div>
@@ -642,6 +658,67 @@ function AdminDashboardInner() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* --- ONGLET AVIS CLIENTS --- */}
+        <TabsContent value="reviews" className="flex-1 m-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <div>
+              <h2 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
+                <Star className="w-8 h-8 text-amber-500" /> Avis Clients
+              </h2>
+              <p className="text-muted-foreground font-medium mt-2">Retours et notes des utilisateurs sur leurs audits.</p>
+            </div>
+            <div className="bg-card px-5 py-3 rounded-2xl border border-border shadow-sm text-center">
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total avis</p>
+              <p className="text-3xl font-black text-amber-600">{reviews.length}</p>
+            </div>
+          </div>
+
+          {isLoadingReviews ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : reviews.length === 0 ? (
+            <Card className="rounded-2xl border-border shadow-lg">
+              <CardContent className="py-16 text-center">
+                <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
+                <p className="font-black text-xl text-foreground">Aucun avis pour le moment</p>
+                <p className="text-muted-foreground mt-2">Les avis apparaîtront ici quand les clients noteront leurs rapports.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {reviews.map((review: any) => (
+                <Card key={review.id} className="rounded-2xl border-border shadow-lg overflow-hidden">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-5 h-5 ${star <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/20'}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {new Date(review.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-foreground/80 leading-relaxed italic">"{review.comment}"</p>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary font-bold text-xs gap-1"
+                      onClick={() => window.open(`/report/${review.report_id}`, '_blank')}
+                    >
+                      <ExternalLink className="w-3 h-3" /> Voir le rapport
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </TabsContent>
