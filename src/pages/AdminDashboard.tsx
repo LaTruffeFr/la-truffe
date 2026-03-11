@@ -122,9 +122,9 @@ function AdminDashboardInner() {
 
   const fetchReviews = async () => {
     setIsLoadingReviews(true);
-    // @ts-ignore - reviews table exists but types not yet regenerated
-    const { data, error } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
-    if (!error && data) setReviews(data as any[]);
+    const client = supabase as any;
+    const { data, error } = await client.from('reviews').select('*').order('created_at', { ascending: false });
+    if (!error && data) setReviews(data);
     setIsLoadingReviews(false);
   };
 
