@@ -285,6 +285,9 @@ function AdminDashboardInner() {
             <TabsTrigger value="crm" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-indigo-600 data-[state=active]:border-b-4 data-[state=active]:border-indigo-600 data-[state=inactive]:text-slate-500">
               <Users className="w-5 h-5 mr-2" /> CRM & Utilisateurs
             </TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-none h-full px-0 font-bold text-base data-[state=active]:text-amber-600 data-[state=active]:border-b-4 data-[state=active]:border-amber-600 data-[state=inactive]:text-slate-500">
+              <Star className="w-5 h-5 mr-2" /> Avis Clients
+            </TabsTrigger>
           </TabsList>
         </div>
 
