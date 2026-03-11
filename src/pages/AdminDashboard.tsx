@@ -120,7 +120,17 @@ function AdminDashboardInner() {
     setIsLoadingUsers(false);
   };
 
-  const fetchUserHistory = async (userId: string) => {
+  const fetchReviews = async () => {
+    setIsLoadingReviews(true);
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) setReviews(data);
+    setIsLoadingReviews(false);
+  };
+
+
     setSelectedUserId(userId);
     setUserReports([]);
     setUserListings([]);
