@@ -122,13 +122,13 @@ function AdminDashboardInner() {
 
   const fetchReviews = async () => {
     setIsLoadingReviews(true);
-    const client = supabase as any;
+    const client: any = supabase;
     const { data, error } = await client.from('reviews').select('*').order('created_at', { ascending: false });
     if (!error && data) setReviews(data);
     setIsLoadingReviews(false);
   };
 
-
+  const fetchUserHistory = async (userId: string) => {
     setSelectedUserId(userId);
     setUserReports([]);
     setUserListings([]);
@@ -359,7 +359,7 @@ function AdminDashboardInner() {
                           <span className="bg-slate-100 px-2 py-1 rounded-md">{listing.annee}</span>
                           <span className="bg-slate-100 px-2 py-1 rounded-md capitalize">{listing.carburant}</span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-2 font-medium line-clamp-1 italic max-w-xs">"{listing.description}"</p>
+                        <p className="text-xs text-slate-400 mt-2 font-medium line-clamp-1 italic max-w-xs">&quot;{listing.description}&quot;</p>
                       </TableCell>
                       <TableCell className="text-right pr-8">
                         <div className="flex flex-col items-end gap-2">
@@ -397,7 +397,7 @@ function AdminDashboardInner() {
                 <Crosshair className="w-12 h-12 text-indigo-600" />
               </div>
               <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Le Radar est prêt</h2>
-              <p className="text-slate-500 text-lg mb-8 max-w-md">Importez un dataset CSV pour lancer l'algorithme d'analyse et repérer les anomalies du marché.</p>
+              <p className="text-slate-500 text-lg mb-8 max-w-md">Importez un dataset CSV pour lancer l&apos;algorithme d&apos;analyse et repérer les anomalies du marché.</p>
               <Button onClick={() => setIsImportModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-14 px-8 rounded-2xl shadow-xl shadow-indigo-600/20 active:scale-95 transition-all">
                 <Upload className="w-5 h-5 mr-3" /> Importer un Fichier CSV
               </Button>
@@ -523,7 +523,7 @@ function AdminDashboardInner() {
               <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                 <Users className="w-8 h-8 text-indigo-500" /> CRM & Utilisateurs
               </h2>
-              <p className="text-slate-500 font-medium mt-2">Vue d'ensemble de votre base clients.</p>
+              <p className="text-slate-500 font-medium mt-2">Vue d&apos;ensemble de votre base clients.</p>
             </div>
           </div>
 
@@ -585,7 +585,7 @@ function AdminDashboardInner() {
             </Card>
           )}
 
-          {/* User History Modal (Améliorée avec chargement) */}
+          {/* User History Modal */}
           {isUserModalOpen && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setIsUserModalOpen(false)}>
               <div className="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8" onClick={(e) => e.stopPropagation()}>
@@ -704,7 +704,7 @@ function AdminDashboardInner() {
                       </span>
                     </div>
                     {review.comment && (
-                      <p className="text-sm text-foreground/80 leading-relaxed italic">"{review.comment}"</p>
+                      <p className="text-sm text-foreground/80 leading-relaxed italic">&quot;{review.comment}&quot;</p>
                     )}
                     <Button
                       variant="ghost"
@@ -728,6 +728,7 @@ function AdminDashboardInner() {
     </div>
   );
 }
+
 export default function AdminDashboard() {
   return (
     <VehicleDataProvider>
