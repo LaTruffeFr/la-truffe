@@ -12,6 +12,7 @@ import {
   Settings2, Snowflake, Flame, CircleDashed, Zap
 } from 'lucide-react';
 import logoTruffe from '@/assets/logo-truffe-new.png';
+import { StickyCtaBanner } from '@/components/StickyCtaBanner';
 
 // ========================
 // UTILITY COMPONENTS
