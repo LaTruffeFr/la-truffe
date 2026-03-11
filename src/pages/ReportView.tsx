@@ -758,21 +758,96 @@ const ReportView = () => {
           </div>
         </div>
 
+        {/* --- OWNER: Rating CTA --- */}
+        {isOwner && (
+          <div className="flex justify-center pt-4 pb-8">
+            {reviewSubmitted ? (
+              <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-6 py-4 rounded-2xl border border-emerald-200 dark:border-emerald-800 font-bold">
+                <CheckCircle2 className="w-5 h-5" /> Merci pour votre avis !
+              </div>
+            ) : (
+              <Button
+                onClick={() => setShowRatingModal(true)}
+                size="lg"
+                className="rounded-2xl font-black text-base px-8 py-6 shadow-xl shadow-primary/20 gap-2"
+              >
+                <Star className="w-5 h-5" /> Noter La Truffe et laisser un avis
+              </Button>
+            )}
+          </div>
+        )}
+
       </main>
 
-      {/* Sticky mobile share button */}
-      <div className="fixed bottom-4 left-4 right-4 z-50 sm:hidden print:hidden">
-        <Button
-          onClick={handleShareNegotiation}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-14 shadow-2xl shadow-emerald-600/30 text-base gap-2"
-        >
-          {isShareCopied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-          {isShareCopied ? 'Lien copié !' : 'Partager au vendeur 🤝'}
-        </Button>
-      </div>
+      {/* Sticky mobile share button - owner only */}
+      {isOwner && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 sm:hidden print:hidden">
+          <Button
+            onClick={handleShareNegotiation}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-14 shadow-2xl shadow-emerald-600/30 text-base gap-2"
+          >
+            {isShareCopied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+            {isShareCopied ? 'Lien copié !' : 'Partager au vendeur 🤝'}
+          </Button>
+        </div>
+      )}
+
+      {/* Visitor: Sticky CTA Banner */}
+      {!isOwner && <StickyCtaBanner />}
+
+      {/* Rating Modal */}
+      <Dialog open={showRatingModal} onOpenChange={setShowRatingModal}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black">⭐ Notez votre expérience</DialogTitle>
+            <DialogDescription>Votre avis nous aide à améliorer La Truffe.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 pt-2">
+            {/* Star rating */}
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <Star
+                    className={`w-10 h-10 transition-colors ${
+                      star <= (hoverRating || rating)
+                        ? 'text-amber-400 fill-amber-400'
+                        : 'text-muted-foreground/30'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            {rating > 0 && (
+              <p className="text-center text-sm font-bold text-muted-foreground">
+                {rating === 5 ? '🔥 Excellent !' : rating === 4 ? '👍 Très bien !' : rating === 3 ? '😐 Correct' : rating === 2 ? '😕 Peut mieux faire' : '😞 Décevant'}
+              </p>
+            )}
+            <Textarea
+              placeholder="Un commentaire ? (optionnel)"
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              className="rounded-xl resize-none"
+              rows={3}
+            />
+            <Button
+              onClick={handleSubmitReview}
+              disabled={rating === 0 || isSubmittingReview}
+              className="w-full rounded-xl font-bold h-12"
+            >
+              {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Envoyer mon avis
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
-      <StickyCtaBanner />
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
       <ReportAdModal open={showReportModal} onOpenChange={setShowReportModal} adUrl={report?.lien_annonce || ''} />
     </div>
