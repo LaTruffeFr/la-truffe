@@ -70,7 +70,7 @@ interface AdminUser {
   user_id: string; email: string; credits: number; created_at: string;
 }
 
-function AdminDashboardInner(): JSX.Element {
+function AdminDashboardInner() {
   const { signOut, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
