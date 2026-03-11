@@ -133,7 +133,7 @@ const formatText = (text: string) => {
 
 const ReportView = () => {
   const { id } = useParams<{ id: string }>();
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -147,6 +147,12 @@ const ReportView = () => {
   const [progressIndex, setProgressIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [fastLoadStep, setFastLoadStep] = useState(0);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const fetchReport = async () => {
     const { data, error } = await supabase.from('reports').select('*').eq('id', id).maybeSingle();
