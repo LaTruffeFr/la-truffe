@@ -168,8 +168,8 @@ const ReportView = () => {
   // Check if user already left a review
   useEffect(() => {
     if (!user || !id) return;
-    supabase.from('reviews').select('id').eq('report_id', id).eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => { if (data) setReviewSubmitted(true); });
+    (supabase.from('reviews' as any).select('id').eq('report_id', id).eq('user_id', user.id).maybeSingle() as any)
+      .then(({ data }: any) => { if (data) setReviewSubmitted(true); });
   }, [user, id]);
 
   const handleSubmitReview = async () => {
