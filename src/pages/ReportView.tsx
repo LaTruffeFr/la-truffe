@@ -736,6 +736,7 @@ const ReportView = () => {
       </div>
 
       <Footer />
+      <StickyCtaBanner />
       {selectedVehicle && <OpportunityModal vehicle={selectedVehicle as any} onClose={() => setSelectedVehicle(null)} />}
       <ReportAdModal open={showReportModal} onOpenChange={setShowReportModal} adUrl={report?.lien_annonce || ''} />
     </div>

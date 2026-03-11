@@ -527,6 +527,7 @@ const PublicAudit = () => {
           <p className="text-muted-foreground text-xs mt-2">© {new Date().getFullYear()} La Truffe</p>
         </footer>
       </main>
+      <StickyCtaBanner />
     </div>
   );
 };
