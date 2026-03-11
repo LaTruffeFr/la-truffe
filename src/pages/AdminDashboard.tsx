@@ -164,6 +164,7 @@ function AdminDashboardInner() {
     if (!authLoading && user) {
       fetchPendingListings();
       fetchAllUsers();
+      fetchReviews();
     } else if (!authLoading && !user) {
       navigate("/");
     }
