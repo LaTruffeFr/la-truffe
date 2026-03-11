@@ -163,6 +163,11 @@ const ReportView = () => {
     setLoading(false);
   };
 
+  useEffect(() => {
+    if (!id || authLoading) return;
+    fetchReport();
+  }, [id, authLoading]);
+
   const isOwner = !!user && !!report && report.user_id === user.id;
 
   // Check if user already left a review
