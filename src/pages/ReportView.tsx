@@ -556,11 +556,11 @@ const ReportView = () => {
         {/* --- 2. LES CHIFFRES (SCORE & PRIX) --- */}
         <div className="pdf-section grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           <Card className="rounded-2xl md:rounded-[2.5rem] border-border shadow-xl dark:shadow-none bg-card overflow-hidden flex flex-col justify-center p-4 md:p-6 relative">
-            <div className={`absolute top-0 left-0 w-full h-1.5 ${stats.score >= 80 ? 'bg-emerald-500' : stats.score >= 60 ? 'bg-amber-400' : 'bg-rose-500'}`}></div>
+            <div className={`absolute top-0 left-0 w-full h-1.5 ${stats.score >= 75 ? 'bg-emerald-500' : stats.score >= 50 ? 'bg-amber-400' : 'bg-red-500'}`}></div>
             <CardContent className="text-center p-0 pt-4">
               <ScoreCircularGauge score={stats.score} />
               <p className="mt-6 font-black text-foreground text-lg uppercase tracking-tight">
-                {stats.score >= 80 ? "Achat Recommandé" : stats.score >= 60 ? "Négociation Requise" : "Vigilance Absolue"}
+                {stats.score >= 75 ? "Achat Recommandé" : stats.score >= 50 ? "Négociation Requise" : "Vigilance Absolue"}
               </p>
             </CardContent>
           </Card>
