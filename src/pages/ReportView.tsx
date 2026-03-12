@@ -675,7 +675,7 @@ const ReportView = () => {
                         {entretiens.map((item: string, i: number) => (
                           <div key={i} className="flex items-start gap-3 px-4 py-3">
                             <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                            <span className="text-emerald-950 font-bold text-sm leading-tight">{item}</span>
+                            <span className="text-emerald-900 dark:text-emerald-200 font-bold text-sm leading-tight">{item}</span>
                           </div>
                         ))}
                       </div>
