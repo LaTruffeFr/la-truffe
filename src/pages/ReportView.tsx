@@ -643,9 +643,9 @@ const ReportView = () => {
               {report.expert_opinion ? report.expert_opinion.split('|||DATA|||')[0] : "Analyse du profil en cours d'écriture..."}
             </p>
             {signaux.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-3 border-t border-indigo-50">
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
                 {signaux.map((s: any, i: number) => (
-                  <Badge key={i} className={`font-bold text-[10px] px-3 py-1 border-0 ${s.type === 'destructive' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                  <Badge key={i} className={`font-bold text-[10px] px-3 py-1 border-0 ${s.type === 'destructive' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'}`}>
                     {s.label}
                   </Badge>
                 ))}
@@ -675,12 +675,12 @@ const ReportView = () => {
                         {entretiens.map((item: string, i: number) => (
                           <div key={i} className="flex items-start gap-3 px-4 py-3">
                             <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                            <span className="text-emerald-950 font-bold text-sm leading-tight">{item}</span>
+                            <span className="text-emerald-900 dark:text-emerald-200 font-bold text-sm leading-tight">{item}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="p-8 text-center text-emerald-700/60 font-medium text-sm">
+                      <div className="p-8 text-center text-emerald-700/60 dark:text-emerald-400/60 font-medium text-sm">
                         Aucun entretien majeur spécifié dans l'annonce.
                       </div>
                     )}
