@@ -53,23 +53,82 @@ function calculateLogTrendLine(data: any[]): { type: string; a: number; b: numbe
 }
 
 const ScoreCircularGauge = ({ score }: { score: number }) => {
-  const radius = 38;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
-  const colorClass = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-rose-500';
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 150);
+    return () => clearTimeout(t);
+  }, []);
+
+  const colorClass =
+    score >= 75 ? 'text-emerald-500' : score >= 50 ? 'text-amber-500' : 'text-red-500';
+  const strokeColor =
+    score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+
+  // Semi-circle geometry
+  const cx = 100, cy = 100, r = 80;
+  // Arc from 180° to 0° (left to right, bottom half = semi-circle top visually)
+  const startAngle = Math.PI; // left
+  const endAngle = 0; // right
+  const arcLength = Math.PI * r; // half circumference
+
+  const filledLength = animated ? (score / 100) * arcLength : 0;
+  const gapLength = arcLength - filledLength;
+
+  // Needle angle: 180° (left, score=0) to 0° (right, score=100)
+  const needleAngle = Math.PI - (animated ? (score / 100) : 0) * Math.PI;
+  const needleLen = 60;
+  const nx = cx + needleLen * Math.cos(needleAngle);
+  const ny = cy - needleLen * Math.sin(needleAngle);
+
+  // Arc path (drawn from left to right over the top)
+  const arcPath = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
 
   return (
-    <div className="relative flex items-center justify-center w-32 h-32 mx-auto drop-shadow-lg">
-      <svg className="transform -rotate-90 w-32 h-32">
-        <circle cx="64" cy="64" r={radius} stroke="currentColor" strokeWidth="8" fill="transparent" className="text-muted" />
-        <circle cx="64" cy="64" r={radius} stroke="currentColor" strokeWidth="8" fill="transparent"
-          strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
+    <div className="relative w-full max-w-[220px] mx-auto">
+      <svg viewBox="0 0 200 120" className="w-full">
+        {/* Background track */}
+        <path d={arcPath} fill="none" stroke="hsl(var(--muted))" strokeWidth="14" strokeLinecap="round" />
+        {/* Colored fill */}
+        <path
+          d={arcPath}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="14"
           strokeLinecap="round"
-          className={`${colorClass} transition-all duration-1000 ease-out`} />
+          strokeDasharray={`${filledLength} ${gapLength}`}
+          className="transition-all duration-[1400ms] ease-out"
+        />
+        {/* Tick marks */}
+        {[0, 25, 50, 75, 100].map((tick) => {
+          const a = Math.PI - (tick / 100) * Math.PI;
+          const inner = r - 10;
+          const outer = r + 2;
+          return (
+            <line
+              key={tick}
+              x1={cx + inner * Math.cos(a)} y1={cy - inner * Math.sin(a)}
+              x2={cx + outer * Math.cos(a)} y2={cy - outer * Math.sin(a)}
+              stroke="hsl(var(--muted-foreground))" strokeWidth="1.5" strokeLinecap="round" opacity="0.4"
+            />
+          );
+        })}
+        {/* Needle */}
+        <line
+          x1={cx} y1={cy} x2={nx} y2={ny}
+          stroke="hsl(var(--foreground))" strokeWidth="2.5" strokeLinecap="round"
+          className="transition-all duration-[1400ms] ease-out"
+        />
+        <circle cx={cx} cy={cy} r="5" fill="hsl(var(--foreground))" />
       </svg>
-      <div className="absolute flex flex-col items-center justify-center mt-1">
-        <span className={`text-4xl font-black tracking-tighter ${colorClass}`}>{score}</span>
-        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Trust Score</span>
+      {/* Score label centered at bottom of the gauge */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-1">
+        <span className={`text-4xl md:text-5xl font-black tracking-tighter ${colorClass} transition-colors duration-700`}>
+          {score}
+        </span>
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+          Trust Score
+        </span>
       </div>
     </div>
   );
