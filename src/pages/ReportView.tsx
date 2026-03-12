@@ -680,7 +680,7 @@ const ReportView = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-8 text-center text-emerald-700/60 font-medium text-sm">
+                      <div className="p-8 text-center text-emerald-700/60 dark:text-emerald-400/60 font-medium text-sm">
                         Aucun entretien majeur spécifié dans l'annonce.
                       </div>
                     )}
