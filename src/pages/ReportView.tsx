@@ -436,6 +436,29 @@ const ReportView = () => {
     </div>
   );
 
+  // Error state - show retry instead of redirecting
+  if (fetchError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-10 h-10 text-destructive" />
+        </div>
+        <h1 className="text-2xl font-black text-foreground tracking-tight">{fetchError}</h1>
+        <p className="text-muted-foreground font-medium">
+          {retryCount > 0 ? `Tentative ${retryCount}/5...` : "Vérifiez votre connexion et réessayez."}
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Button onClick={() => { setLoading(true); setFetchError(null); setRetryCount(0); fetchReport(); }} className="bg-primary text-primary-foreground font-bold rounded-xl h-12 px-8">
+            Réessayer
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/client')} className="font-bold rounded-xl h-12 px-8">
+            Retour
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (report?.status === 'in_progress' || report?.status === 'pending') {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
