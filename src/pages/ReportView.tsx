@@ -215,17 +215,50 @@ const ReportView = () => {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  const fetchReport = async () => {
-    const { data, error } = await supabase.from('reports').select('*').eq('id', id).maybeSingle();
-    if (error || !data) { navigate('/client'); return; }
-    setReport(data);
-    setLoading(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const fetchReport = async (silent = false) => {
+    if (!silent) setFetchError(null);
+    try {
+      const { data, error } = await supabase.from('reports').select('*').eq('id', id).maybeSingle();
+      if (error) {
+        console.error('Report fetch error:', error);
+        setFetchError("Impossible de charger le rapport. Vérifiez votre connexion.");
+        setLoading(false);
+        return;
+      }
+      if (!data) {
+        // Report might not exist yet (edge function still running) - retry a few times
+        if (retryCount < 5) {
+          setTimeout(() => setRetryCount(c => c + 1), 3000);
+          return;
+        }
+        setFetchError("Rapport introuvable. Il est possible que l'analyse soit encore en cours.");
+        setLoading(false);
+        return;
+      }
+      setReport(data);
+      setFetchError(null);
+      setLoading(false);
+    } catch (e) {
+      console.error('Report fetch exception:', e);
+      setFetchError("Erreur réseau. Vérifiez votre connexion et réessayez.");
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (!id || authLoading) return;
     fetchReport();
-  }, [id, authLoading]);
+  }, [id, authLoading, retryCount]);
+
+  // Polling: re-fetch every 5s if report is pending/in_progress
+  useEffect(() => {
+    if (!report || (report.status !== 'pending' && report.status !== 'in_progress')) return;
+    const interval = setInterval(() => fetchReport(true), 5000);
+    return () => clearInterval(interval);
+  }, [report?.status, id]);
 
   const isOwner = !!user && !!report && report.user_id === user.id;
 
@@ -398,6 +431,29 @@ const ReportView = () => {
           <div className="bg-primary h-full rounded-full transition-all duration-500 ease-out relative" style={{ width: `${fastPercents[fastLoadStep]}%` }}>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[slide_2s_ease-in-out_infinite]" />
           </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Error state - show retry instead of redirecting
+  if (fetchError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-10 h-10 text-destructive" />
+        </div>
+        <h1 className="text-2xl font-black text-foreground tracking-tight">{fetchError}</h1>
+        <p className="text-muted-foreground font-medium">
+          {retryCount > 0 ? `Tentative ${retryCount}/5...` : "Vérifiez votre connexion et réessayez."}
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Button onClick={() => { setLoading(true); setFetchError(null); setRetryCount(0); fetchReport(); }} className="bg-primary text-primary-foreground font-bold rounded-xl h-12 px-8">
+            Réessayer
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/client')} className="font-bold rounded-xl h-12 px-8">
+            Retour
+          </Button>
         </div>
       </div>
     </div>
