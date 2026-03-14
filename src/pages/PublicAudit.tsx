@@ -77,6 +77,7 @@ const PublicAudit = () => {
 
   useEffect(() => {
     if (!shareToken) return;
+    let retries = 0;
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -84,9 +85,25 @@ const PublicAudit = () => {
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shareToken);
         const body = isUUID ? { reportId: shareToken } : { shareToken };
         const { data, error: fetchError } = await supabase.functions.invoke('get-public-report', { body });
-        if (fetchError || data?.error) { setError(data?.error || 'Rapport introuvable'); return; }
+        if (fetchError || data?.error) {
+          // If report not found yet and we haven't exhausted retries, try again
+          if (retries < 3) {
+            retries++;
+            setTimeout(fetchData, 3000);
+            return;
+          }
+          setError(data?.error || 'Rapport introuvable. Il est peut-être encore en cours de génération.');
+          return;
+        }
         setReport(data.report);
-      } catch { setError('Une erreur est survenue'); }
+      } catch {
+        if (retries < 2) {
+          retries++;
+          setTimeout(fetchData, 3000);
+          return;
+        }
+        setError('Une erreur réseau est survenue. Vérifiez votre connexion.');
+      }
       finally { setIsLoading(false); }
     };
     fetchData();
