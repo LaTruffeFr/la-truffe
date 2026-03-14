@@ -105,7 +105,34 @@ export default function AuditPage() {
         body: { url: trimmedUrl, manualDescription: manualDescription.trim() || undefined },
       });
 
-      if (error) throw new Error(error.message || "Erreur lors de l'appel à l'audit");
+      // Handle FunctionsHttpError / FunctionsRelayError properly
+      if (error) {
+        // Try to extract meaningful message from edge function error
+        let errorMsg = "Erreur lors de l'analyse. Réessayez.";
+        try {
+          const errorBody = error instanceof Error && 'context' in error ? (error as any).context : null;
+          if (errorBody?.body) {
+            const parsed = typeof errorBody.body === 'string' ? JSON.parse(errorBody.body) : errorBody.body;
+            errorMsg = parsed?.error || errorMsg;
+          } else if (error.message) {
+            // Check if message contains JSON
+            const jsonMatch = error.message.match(/\{.*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              errorMsg = parsed?.error || errorMsg;
+            } else {
+              errorMsg = error.message;
+            }
+          }
+        } catch { /* use default */ }
+        
+        // Detect timeout
+        if (error.message?.includes('timed out') || error.message?.includes('timeout') || error.message?.includes('504')) {
+          errorMsg = "L'analyse a pris trop de temps. Le site source est peut-être lent. Réessayez dans quelques instants.";
+        }
+        
+        throw new Error(errorMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       toast({

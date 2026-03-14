@@ -215,17 +215,50 @@ const ReportView = () => {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  const fetchReport = async () => {
-    const { data, error } = await supabase.from('reports').select('*').eq('id', id).maybeSingle();
-    if (error || !data) { navigate('/client'); return; }
-    setReport(data);
-    setLoading(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const fetchReport = async (silent = false) => {
+    if (!silent) setFetchError(null);
+    try {
+      const { data, error } = await supabase.from('reports').select('*').eq('id', id).maybeSingle();
+      if (error) {
+        console.error('Report fetch error:', error);
+        setFetchError("Impossible de charger le rapport. Vérifiez votre connexion.");
+        setLoading(false);
+        return;
+      }
+      if (!data) {
+        // Report might not exist yet (edge function still running) - retry a few times
+        if (retryCount < 5) {
+          setTimeout(() => setRetryCount(c => c + 1), 3000);
+          return;
+        }
+        setFetchError("Rapport introuvable. Il est possible que l'analyse soit encore en cours.");
+        setLoading(false);
+        return;
+      }
+      setReport(data);
+      setFetchError(null);
+      setLoading(false);
+    } catch (e) {
+      console.error('Report fetch exception:', e);
+      setFetchError("Erreur réseau. Vérifiez votre connexion et réessayez.");
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (!id || authLoading) return;
     fetchReport();
-  }, [id, authLoading]);
+  }, [id, authLoading, retryCount]);
+
+  // Polling: re-fetch every 5s if report is pending/in_progress
+  useEffect(() => {
+    if (!report || (report.status !== 'pending' && report.status !== 'in_progress')) return;
+    const interval = setInterval(() => fetchReport(true), 5000);
+    return () => clearInterval(interval);
+  }, [report?.status, id]);
 
   const isOwner = !!user && !!report && report.user_id === user.id;
 
